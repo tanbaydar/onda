@@ -138,20 +138,22 @@ Table RAW_INGEST {
 Table REJECTED_INGEST {
   id bigint [pk, increment]
   raw_ingest_id bigint [not null, ref: > RAW_INGEST.id]
-  entity_ref varchar(255) [not null, note: "Provider event identifier within the linked payload."]
+  entity_index int [not null, note: "Zero-based position of the event in the payload's listing array. Always known; locates the rejected observation."]
+  entity_ref varchar(255) [null, note: "NULL = the listed event carried no usable provider event ID; when present, always the nested event.id, never the listing-wrapper id."]
   reason rejection_reason [not null]
   detail text [null, note: "NULL = reason enum fully describes the rejection."]
   rejected_at datetime [not null]
 
   indexes {
-    (raw_ingest_id, entity_ref) [unique, name: "uq_rejection_payload_entity"]
+    (raw_ingest_id, entity_index) [unique, name: "uq_rejection_payload_index"]
   }
 
   Note: '''
   Immutable rejection occurrence: one entity verdict in one raw response. Replay uses
-  insert-or-ignore against the unique key. PARSE_FAILURE means an event-level structural
-  failure within a parseable payload, where entity_ref remains known. Whole-payload
-  parse failure belongs on RAW_INGEST.processing_status.
+  insert-or-ignore against the raw-ingest/index unique key. PARSE_FAILURE means an
+  event-level structural failure within a parseable payload. entity_ref may be NULL when
+  the listed event carried no usable provider event ID. Whole-payload parse failure
+  belongs on RAW_INGEST.processing_status.
 
   Current-state derivation:
   - quarantined: latest observation rejected and no EVENT_IDENTITY mapping exists;

@@ -128,7 +128,8 @@ class RejectedIngest(models.Model):
         on_delete=models.RESTRICT,
         related_name="rejections",
     )
-    entity_ref = models.CharField(max_length=255)
+    entity_index = models.IntegerField()
+    entity_ref = models.CharField(max_length=255, null=True, blank=True)
     reason = models.CharField(max_length=30, choices=RejectionReason)
     detail = models.TextField(null=True, blank=True)
     rejected_at = models.DateTimeField()
@@ -141,7 +142,7 @@ class RejectedIngest(models.Model):
                 name="ck_rejection_reason",
             ),
             models.UniqueConstraint(
-                fields=("raw_ingest", "entity_ref"),
-                name="uq_rejection_payload_entity",
+                fields=("raw_ingest", "entity_index"),
+                name="uq_rejection_payload_index",
             ),
         ]

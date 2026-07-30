@@ -193,3 +193,34 @@ the approved city-identity freeze break, the adjudicated model contains
 - the two app additions are the independently required registration-verification and email-change workflows;
 - the canonical addition is the required seed-area-to-city identity seam;
 - no table should be added or removed merely to match a stale count.
+
+## Freeze-break 2: REJECTED_INGEST identity gap
+
+Three frozen rulings collided: pass-1 `PARSE_FAILURE` covers listed events missing
+`event.id`; `REJECTED_INGEST.entity_ref` was `NOT NULL`; and the provider-identity rule
+forbids substituting the listing-wrapper ID for the nested event ID.
+
+The adopted fix adds required `entity_index`, the zero-based position of the event in
+the payload's listing array; makes `entity_ref` nullable, with NULL meaning no usable
+provider event ID was present; and replaces
+`uq_rejection_payload_entity(raw_ingest_id, entity_ref)` with
+`uq_rejection_payload_index(raw_ingest_id, entity_index)`. Replay idempotency is now
+enforced at the rejected-observation grain even when provider event identity is absent.
+
+An additional unique constraint on `(raw_ingest_id, entity_ref)` was considered and
+rejected. It would convert a duplicate listing in one payload—a harmless source
+oddity—into a database constraint violation.
+
+This freeze break invalidated two stale sentences outside its initially enumerated
+edit list: the DBML statement that `entity_ref` always remained known and the fixture
+README's reference to `uq_rejection_payload_entity`. The stop-on-collision rule
+surfaced both, and both now state the post-freeze-break truth.
+
+The fixture corpus's mechanical audit was also promoted from an ad-hoc sub-agent run
+to the reproducible read-only script `docs/recon/fixtures/audit_expectations.py` as
+part of this freeze-break batch.
+
+Migration `0003` was reordered before commit so the new composite unique continuously
+backs the MySQL foreign key while the old unique is removed. This edits uncommitted
+draft work, not committed migration history, and therefore does not weaken the rule
+that committed migrations remain an immutable project record.
