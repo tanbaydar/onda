@@ -29,6 +29,7 @@ otherwise.
 | Missing event ID | `ra_listing_missing_event_id.synthetic.json` | quarantined `PARSE_FAILURE`; healthy sibling admitted |
 | Whitespace-only title | `ra_listing_empty_title.synthetic.json` | quarantined `EMPTY_TITLE` |
 | String-but-unparseable date | `ra_listing_bad_date.synthetic.json` | quarantined `BAD_DATE` |
+| Duplicate event listings | `ra_listing_duplicate_event.synthetic.json` | 4 wrappers admitted; 2 unique events |
 | Whole-payload failure | `ra_listing_malformed_payload.synthetic.txt` | payload status `failed`; no event outcomes |
 | Pagination page 1 | `ra_listing_paginated_page_1.synthetic.json` | complete only together with page 2 |
 | Pagination page 2 | `ra_listing_paginated_page_2.synthetic.json` | complete only together with page 1 |
@@ -39,7 +40,7 @@ govern. On any disagreement, the block wins.
 The pagination scenario is one test case represented by two files because one fixture
 equals one HTTP response boundary. All synthetic IDs use the `syn-` prefix and can
 never be confused with captured provider identifiers.
-The synthetic corpus contains 13 files covering 12 scenarios; pagination is the one
+The synthetic corpus contains 14 files covering 13 scenarios; pagination is the one
 scenario that spans two response-boundary files.
 
 ## `ra_listing_complete.synthetic.json`
@@ -230,10 +231,10 @@ fully healthy sibling.
 - notable field assertions: one REJECTED_INGEST row is written with
   `entity_index = 0`, `entity_ref = NULL`, `reason = PARSE_FAILURE`, and a link to this
   payload. The healthy sibling remains isolated and writes its canonical and identity
-  rows. Because one listed event has no usable provider ID, the observed-union
-  cardinality cannot equal `totalResults`; SeedFetchOutcome is incomplete and
-  reconciliation is skipped for this seed in this run. The sibling's canonical writes
-  still land: incomplete fetches can add, never subtract. The arithmetic reconciles:
+  rows. Because one listing wrapper has no usable nested `event.id`, the second
+  content condition for SeedFetchOutcome completeness fails and reconciliation is
+  skipped for this seed in this run. The sibling's canonical writes still land:
+  incomplete fetches can add, never subtract. The arithmetic reconciles:
   1 admitted + 1 quarantined = 2 payload events ≥ 1 observed source ID.
 
 ## `ra_listing_empty_title.synthetic.json`
@@ -276,6 +277,30 @@ unparseable value.
   The string-valued `date = not-a-date` passes structural parsing but fails value
   validation in pass 5. Quarantine rollback leaves zero canonical writes despite the
   otherwise valid title, venue, and artist.
+
+## `ra_listing_duplicate_event.synthetic.json`
+
+Synthetic listing payload modeled on the duplicate-wrapper behavior observed during
+the first supervised live run. Four listing wrappers are present; three carry the
+same nested `event.id`, while `totalResults` counts all four wrappers.
+
+### Expected outcomes
+
+- processing_status: processed
+- events admitted: 4
+- events quarantined: 0 — []
+- events dropped: 0
+- observed source IDs: [`syn-event-duplicate`, `syn-event-duplicate-sibling`]
+- VENUE rows created: 1 — [`Synthetic Duplicate Hall`], each city = New York City
+- ARTIST rows created: 2 — [`Synthetic Repeated Artist`, `Synthetic Unique Artist`]
+- identity rows: 2 EVENT_IDENTITY, 1 VENUE_IDENTITY, 2 ARTIST_IDENTITY
+- notable field assertions: all four observations complete canonical upserts, but
+  the three wrappers carrying `syn-event-duplicate` resolve through one
+  EVENT_IDENTITY to exactly one canonical EVENT row. Final canonical state contains
+  exactly 2 EVENT rows. `observed_source_ids` is the unique event-grain set of two
+  IDs. SeedFetchOutcome is complete because wrapper coverage is
+  `4 = totalResults 4`, every wrapper carries a usable nested `event.id`, and duplicate
+  event IDs are expected and harmless.
 
 ## `ra_listing_malformed_payload.synthetic.txt`
 
@@ -357,9 +382,11 @@ SeedFetchOutcome completeness check.
   3 ARTIST_IDENTITY rows.
 - Seed-level observed source-ID union:
   [`syn-event-page-1-a`, `syn-event-page-1-b`, `syn-event-page-2-a`].
-  Its cardinality is 3, equal to the consistent `totalResults = 3`.
+  Its cardinality is 3 at event grain. This fixture happens to contain no duplicate
+  event IDs, but observed-ID cardinality is not a completeness predicate.
 - SeedFetchOutcome is complete: both expected pages were fetched, both were processed,
-  both reported the same total, and the observed-union cardinality matches that total.
+  both reported the same total, all 3 listing wrappers carry usable nested event IDs,
+  and wrapper coverage matches `totalResults = 3`.
   This seed's current-run observations are therefore eligible to feed reconciliation.
 - Negative twin: if page 2 instead fails at transport or receives a `failed`
   processing verdict, the union is partial, SeedFetchOutcome is incomplete, and
@@ -392,8 +419,13 @@ SeedFetchOutcome completeness check.
   `id`. `entity_ref = event.id` when present and is NULL when the event carries no ID;
   `entity_index` always locates the observation within its payload. A listing wrapper
   represents RA's act of listing and is not the stable event identity.
-- Arithmetic: admitted + quarantined = payload event count ≥ observed-ID count.
-  Equality holds exactly when every listed event carried an `event.id`.
+- Seed completeness has two content conditions: archived listing-wrapper coverage
+  equals wrapper-grain `totalResults`, and every wrapper carries a usable nested
+  `event.id`. Duplicate event IDs are expected and harmless. Reconciliation receives
+  the unique event-grain observed-ID set, never wrapper IDs or wrapper cardinality.
+- Arithmetic: admitted + quarantined = listing-wrapper count ≥ unique observed-ID
+  count. Equality holds exactly when every wrapper carries an `event.id` and no
+  event ID is repeated across wrappers.
 - Envelope traversal versus domain fields: `data`, `eventListings`, `totalResults`,
   the listing-wrapper `data[]`, and nested `event` are navigation keys read only to
   reach event objects and paginate completely. The wrapper's `id` and `listingDate`

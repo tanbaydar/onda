@@ -1,0 +1,93 @@
+{
+  "data": {
+    "eventListings": {
+      "data": [
+        {
+          "id": "syn-listing-duplicate-1",
+          "listingDate": "2026-08-24T00:00:00.000",
+          "event": {
+            "id": "syn-event-duplicate",
+            "date": "2026-08-24T00:00:00.000",
+            "startTime": "2026-08-24T21:00:00.000",
+            "title": "Synthetic Repeated Residency",
+            "flyerFront": null,
+            "venue": {
+              "id": "syn-venue-duplicate",
+              "name": "Synthetic Duplicate Hall"
+            },
+            "artists": [
+              {
+                "id": "syn-artist-duplicate",
+                "name": "Synthetic Repeated Artist"
+              }
+            ]
+          }
+        },
+        {
+          "id": "syn-listing-duplicate-2",
+          "listingDate": "2026-08-25T00:00:00.000",
+          "event": {
+            "id": "syn-event-duplicate",
+            "date": "2026-08-24T00:00:00.000",
+            "startTime": "2026-08-24T21:00:00.000",
+            "title": "Synthetic Repeated Residency",
+            "flyerFront": null,
+            "venue": {
+              "id": "syn-venue-duplicate",
+              "name": "Synthetic Duplicate Hall"
+            },
+            "artists": [
+              {
+                "id": "syn-artist-duplicate",
+                "name": "Synthetic Repeated Artist"
+              }
+            ]
+          }
+        },
+        {
+          "id": "syn-listing-duplicate-3",
+          "listingDate": "2026-08-26T00:00:00.000",
+          "event": {
+            "id": "syn-event-duplicate",
+            "date": "2026-08-24T00:00:00.000",
+            "startTime": "2026-08-24T21:00:00.000",
+            "title": "Synthetic Repeated Residency",
+            "flyerFront": null,
+            "venue": {
+              "id": "syn-venue-duplicate",
+              "name": "Synthetic Duplicate Hall"
+            },
+            "artists": [
+              {
+                "id": "syn-artist-duplicate",
+                "name": "Synthetic Repeated Artist"
+              }
+            ]
+          }
+        },
+        {
+          "id": "syn-listing-duplicate-unique",
+          "listingDate": "2026-08-27T00:00:00.000",
+          "event": {
+            "id": "syn-event-duplicate-sibling",
+            "date": "2026-08-27T00:00:00.000",
+            "startTime": "2026-08-27T22:00:00.000",
+            "title": "Synthetic Unique Sibling",
+            "flyerFront": null,
+            "venue": {
+              "id": "syn-venue-duplicate",
+              "name": "Synthetic Duplicate Hall"
+            },
+            "artists": [
+              {
+                "id": "syn-artist-duplicate-sibling",
+                "name": "Synthetic Unique Artist"
+              }
+            ]
+          }
+        }
+      ],
+      "totalResults": 4
+    }
+  }
+}

@@ -121,7 +121,14 @@ The fetcher is the *only* replaceable part by design: if RA tightens anti-bot me
   programming defects, and database failures escape to the runner and crash the run.
 - A typed seed outcome is complete only when every expected page has a successful HTTP
   response, a usable listing envelope with no invalidating GraphQL errors, internally
-  consistent page coverage, and a corresponding archived response.
+  consistent page coverage, and a corresponding archived response. `totalResults`
+  and coverage are listing-wrapper-grain: the archived wrapper count must equal
+  `totalResults`, and every wrapper must carry a usable nested `event.id`. Duplicate
+  event IDs across wrappers are expected and do not make a seed incomplete. The
+  observed source-ID union remains a unique event-grain set used only for
+  reconciliation.
+- Every incomplete seed contributes a concrete diagnostic with relevant page or count
+  values to `SYNC_RUN.error_summary`; completeness may never fail silently.
 - `last_synced_at` is written by the runner after a seed attempt finishes.
   `last_success_at` advances only after the entire seed outcome is complete; no
   individual page can claim seed success.

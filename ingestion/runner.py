@@ -53,6 +53,8 @@ class _SeedState:
     raws: list[RawIngest] = field(default_factory=list)
     expected_pages: int | None = None
     total_results: int | None = None
+    wrapper_count: int = 0
+    missing_event_id_count: int = 0
     fetch_valid: bool = True
     errors: list[str] = field(default_factory=list)
     observed_source_ids: set[str] = field(default_factory=set)
@@ -81,7 +83,13 @@ def _envelope_metadata(body):
         raise ValueError("eventListings.data is absent or invalid")
     if not isinstance(total, int) or isinstance(total, bool) or total < 0:
         raise ValueError("eventListings.totalResults is invalid")
-    return total
+    missing_event_id_count = 0
+    for wrapper in events:
+        event = wrapper.get("event") if isinstance(wrapper, dict) else None
+        source_id = event.get("id") if isinstance(event, dict) else None
+        if not isinstance(source_id, str) or not source_id:
+            missing_event_id_count += 1
+    return total, len(events), missing_event_id_count
 
 
 def _archive_result(
@@ -156,7 +164,11 @@ def _fetch_seed(
             )
             return
         try:
-            total_results = _envelope_metadata(result.body_text)
+            (
+                total_results,
+                wrapper_count,
+                missing_event_id_count,
+            ) = _envelope_metadata(result.body_text)
         except (json.JSONDecodeError, TypeError, ValueError) as exc:
             state.fetch_valid = False
             state.errors.append(
@@ -175,30 +187,53 @@ def _fetch_seed(
             )
             return
 
+        state.wrapper_count += wrapper_count
+        state.missing_event_id_count += missing_event_id_count
+
         if page_number >= state.expected_pages:
             return
         page_number += 1
 
 
-def _seed_is_complete(state):
+def _seed_completeness(state):
     if not state.fetch_valid:
-        return False
+        return False, list(state.errors)
     if state.expected_pages is None or state.total_results is None:
-        return False
+        return False, ["pagination totals unavailable"]
     if len(state.raws) != state.expected_pages:
-        return False
+        return False, [
+            f"page coverage {len(state.raws)} != "
+            f"expectedPages {state.expected_pages}"
+        ]
     statuses = dict(
         RawIngest.objects.filter(
             pk__in=[raw.pk for raw in state.raws]
         ).values_list("pk", "processing_status")
     )
-    if any(
-        raw.http_status != 200
-        or statuses.get(raw.pk) != RawProcessingStatus.PROCESSED
-        for raw in state.raws
-    ):
-        return False
-    return len(state.observed_source_ids) == state.total_results
+    page_errors = []
+    for raw in state.raws:
+        if raw.http_status != 200:
+            page_errors.append(
+                f"page {raw.page_number} http {raw.http_status}"
+            )
+        status = statuses.get(raw.pk)
+        if status != RawProcessingStatus.PROCESSED:
+            page_errors.append(
+                f"page {raw.page_number} processing_status {status}"
+            )
+    if page_errors:
+        return False, page_errors
+    if state.wrapper_count != state.total_results:
+        return False, [
+            f"wrapper coverage {state.wrapper_count} != "
+            f"totalResults {state.total_results}"
+        ]
+    if state.missing_event_id_count:
+        return False, [
+            f"{state.missing_event_id_count}/{state.wrapper_count} "
+            "listing wrappers missing event.id"
+        ]
+    return True, []
 
 
 def run_sync(
@@ -292,7 +327,7 @@ def run_sync(
 
         for state in states.values():
             state.seed.last_synced_at = timezone.now()
-            complete = _seed_is_complete(state)
+            complete, completeness_errors = _seed_completeness(state)
             if complete:
                 state.seed.last_success_at = timezone.now()
                 state.seed.save(
@@ -313,7 +348,7 @@ def run_sync(
             else:
                 run.seeds_failed += 1
                 state.seed.save(update_fields=["last_synced_at"])
-                errors.extend(state.errors)
+                errors.extend(completeness_errors)
 
         run.status = SyncRunStatus.COMPLETED
         run.finished_at = timezone.now()

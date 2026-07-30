@@ -224,3 +224,18 @@ Migration `0003` was reordered before commit so the new composite unique continu
 backs the MySQL foreign key while the old unique is removed. This edits uncommitted
 draft work, not committed migration history, and therefore does not weaken the rule
 that committed migrations remain an immutable project record.
+
+## Freeze-break 3: listing-wrapper completeness grain
+
+The first supervised live RA run returned 274 listing wrappers and
+`totalResults = 274`, but only 265 unique nested event IDs because RA legitimately
+listed several events under multiple wrappers. The frozen runner had conflated those
+grains by comparing the unique observed event-ID set to wrapper-grain
+`totalResults`, falsely marking complete coverage as incomplete.
+
+Completeness now compares archived listing-wrapper count with `totalResults` and
+separately requires every wrapper to carry a usable nested `event.id`. Duplicate
+event IDs remain harmless idempotent observations. Reconciliation still receives the
+unique event-grain observed-ID set. Every failed completeness condition now records a
+numeric diagnostic in `SYNC_RUN.error_summary`; the live run's silent `None` exposed
+and closed that observability gap.

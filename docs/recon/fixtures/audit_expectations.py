@@ -82,7 +82,8 @@ def event_facts(path: Path) -> tuple[int, list[str], int]:
         for wrapper in events
         if "id" in wrapper["event"]
     ]
-    return len(events), event_ids, len(events) - len(event_ids)
+    unique_event_ids = list(dict.fromkeys(event_ids))
+    return len(events), unique_event_ids, len(events) - len(event_ids)
 
 
 def main() -> int:
@@ -146,7 +147,7 @@ def main() -> int:
                     f"!= payload events({payload_count})"
                 )
 
-        expected_observed_count = payload_count - idless_count
+        expected_observed_count = len(payload_ids)
         if len(readme_observed) != expected_observed_count:
             discrepancies.append(
                 f"{path.name}: README observed count {len(readme_observed)} != "
@@ -155,7 +156,7 @@ def main() -> int:
         if readme_observed != payload_ids:
             discrepancies.append(
                 f"{path.name}: README observed IDs {readme_observed} != "
-                f"payload event.id values {payload_ids}"
+                f"unique payload event.id values {payload_ids}"
             )
         if payload_count < len(readme_observed):
             discrepancies.append(
