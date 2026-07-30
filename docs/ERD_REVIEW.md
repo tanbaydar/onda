@@ -178,6 +178,10 @@ same concrete identity pattern and two uniques as its three siblings. The runner
 the seed through `(source, area_ref)` before making requests. A missing mapping is a
 configuration defect that fails that seed loudly; it is not event-level quarantine.
 No ingestion-to-canonical foreign key was introduced, so the firewall remains intact.
+City resolution is seed-grain because the captured listing query does not request venue
+area. Venue-grain resolution remains available only through an amended query, new recon
+capture, new fixtures, and an explicit contract change; the query shape is part of the
+frozen contract and must not drift casually.
 
 ## Finding requiring documentation correction
 
