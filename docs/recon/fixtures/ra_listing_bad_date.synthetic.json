@@ -1,0 +1,31 @@
+{
+  "data": {
+    "eventListings": {
+      "totalResults": 1,
+      "data": [
+        {
+          "id": "syn-listing-bad-date",
+          "listingDate": "2026-08-23T00:00:00.000",
+          "event": {
+            "id": "syn-event-bad-date",
+            "date": "not-a-date",
+            "startTime": "2026-08-23T22:00:00.000",
+            "title": "Synthetic Bad Date Event",
+            "flyerFront": null,
+            "venue": {
+              "id": "syn-venue-bad-date",
+              "name": "Synthetic Bad Date Hall",
+              "live": true
+            },
+            "artists": [
+              {
+                "id": "syn-artist-bad-date",
+                "name": "Synthetic Bad Date Artist"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

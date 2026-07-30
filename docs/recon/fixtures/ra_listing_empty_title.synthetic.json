@@ -1,0 +1,31 @@
+{
+  "data": {
+    "eventListings": {
+      "totalResults": 1,
+      "data": [
+        {
+          "id": "syn-listing-empty-title",
+          "listingDate": "2026-08-22T00:00:00.000",
+          "event": {
+            "id": "syn-event-empty-title",
+            "date": "2026-08-22T00:00:00.000",
+            "startTime": "2026-08-22T22:00:00.000",
+            "title": " \t ",
+            "flyerFront": null,
+            "venue": {
+              "id": "syn-venue-empty-title",
+              "name": "Synthetic Empty Title Hall",
+              "live": true
+            },
+            "artists": [
+              {
+                "id": "syn-artist-empty-title",
+                "name": "Synthetic Empty Title Artist"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+}
