@@ -1,0 +1,39 @@
+{
+  "data": {
+    "eventListings": {
+      "totalResults": 1,
+      "data": [
+        {
+          "id": "syn-listing-festival",
+          "listingDate": "2026-08-18T00:00:00.000",
+          "event": {
+            "id": "syn-event-festival",
+            "date": "2026-08-18T00:00:00.000",
+            "startTime": "2026-08-18T14:00:00.000",
+            "title": "Synthetic Three-Artist Festival",
+            "flyerFront": "https://example.invalid/flyers/festival.jpg",
+            "venue": {
+              "id": "syn-venue-festival",
+              "name": "Synthetic Festival Grounds",
+              "live": true
+            },
+            "artists": [
+              {
+                "id": "syn-artist-festival-1",
+                "name": "Synthetic Opener"
+              },
+              {
+                "id": "syn-artist-festival-2",
+                "name": "Synthetic Middle"
+              },
+              {
+                "id": "syn-artist-festival-3",
+                "name": "Synthetic Headliner"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

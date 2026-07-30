@@ -1,0 +1,31 @@
+{
+  "data": {
+    "eventListings": {
+      "totalResults": 1,
+      "data": [
+        {
+          "id": "syn-listing-date-only",
+          "listingDate": "2026-08-16T00:00:00.000",
+          "event": {
+            "id": "syn-event-date-only",
+            "date": "2026-08-16T00:00:00.000",
+            "startTime": null,
+            "title": "Synthetic Date Only Event",
+            "flyerFront": null,
+            "venue": {
+              "id": "syn-venue-date-only",
+              "name": "Synthetic Date Hall",
+              "live": true
+            },
+            "artists": [
+              {
+                "id": "syn-artist-date-only",
+                "name": "Synthetic Date Artist"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

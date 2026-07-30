@@ -23,6 +23,12 @@ The exact `GET_EVENT_LISTINGS` operation has been captured in `docs/recon/fixtur
 
 **A1 explicit-cancellation gate fails for now.** The cancelled detail fixture examined (`Event:1644565`) contains no explicit cancellation boolean, enum, or status in the fields requested by RA's own detail client. It reports `live: true`; cancellation exists only in the title and prose. Title parsing is not trustworthy enough to authorize destructive behavior. The Q159 wipe branch remains unbuilt. Cancellation follows absence-to-hide and preserves user content unless a future recon discovers a typed source signal.
 
+**A8 per-event scope gate is unavailable.** No reliable per-event music/type field is
+confirmed in the listing payload. V1 admission scope therefore equals membership in an
+active tracked RA area. `OUT_OF_SCOPE` remains a reserved rejection reason and is unused
+until recon identifies a trustworthy source field. The product remains genre-agnostic;
+this is an acquisition-coverage rule, not application behavior.
+
 ## Confirmed observations
 
 ### Historical listing URLs and GraphQL ranges work

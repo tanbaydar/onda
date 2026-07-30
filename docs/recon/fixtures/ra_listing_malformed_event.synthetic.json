@@ -1,0 +1,50 @@
+{
+  "data": {
+    "eventListings": {
+      "totalResults": 2,
+      "data": [
+        {
+          "id": "syn-listing-malformed",
+          "listingDate": "2026-08-21T00:00:00.000",
+          "event": {
+            "id": "syn-event-malformed",
+            "date": {
+              "unexpected": "object"
+            },
+            "startTime": "not-a-time",
+            "title": "Synthetic Structurally Broken Event",
+            "flyerFront": null,
+            "artists": [
+              {
+                "id": "syn-artist-malformed",
+                "name": "Synthetic Malformed Artist"
+              }
+            ]
+          }
+        },
+        {
+          "id": "syn-listing-malformed-sibling",
+          "listingDate": "2026-08-21T00:00:00.000",
+          "event": {
+            "id": "syn-event-malformed-sibling",
+            "date": "2026-08-21T00:00:00.000",
+            "startTime": "2026-08-21T23:00:00.000",
+            "title": "Synthetic Healthy Sibling",
+            "flyerFront": null,
+            "venue": {
+              "id": "syn-venue-malformed-sibling",
+              "name": "Synthetic Healthy Hall",
+              "live": true
+            },
+            "artists": [
+              {
+                "id": "syn-artist-malformed-sibling",
+                "name": "Synthetic Healthy Artist"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

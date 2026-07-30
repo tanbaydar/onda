@@ -1,0 +1,40 @@
+{
+  "data": {
+    "eventListings": {
+      "totalResults": 1,
+      "data": [
+        {
+          "id": "syn-listing-sold-out",
+          "listingDate": "2026-08-19T00:00:00.000",
+          "event": {
+            "id": "syn-event-sold-out",
+            "date": "2026-08-19T00:00:00.000",
+            "startTime": "2026-08-19T21:00:00.000",
+            "title": "Synthetic Sold Out Show",
+            "flyerFront": null,
+            "venue": {
+              "id": "syn-venue-sold-out",
+              "name": "Synthetic Sold Out Hall",
+              "live": true
+            },
+            "artists": [
+              {
+                "id": "syn-artist-sold-out",
+                "name": "Synthetic Sold Out Artist"
+              }
+            ],
+            "tickets": [],
+            "ticketing": {
+              "tags": [
+                {
+                  "defaultTitle": "Sold out",
+                  "type": "SOLD_OUT"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  }
+}

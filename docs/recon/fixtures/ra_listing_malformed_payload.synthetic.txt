@@ -1,0 +1,5 @@
+<!doctype html>
+<html>
+  <head><title>Upstream challenge</title></head>
+  <body>This is intentionally not JSON.</body>
+</html>

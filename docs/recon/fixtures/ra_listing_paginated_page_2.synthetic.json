@@ -1,0 +1,31 @@
+{
+  "data": {
+    "eventListings": {
+      "totalResults": 3,
+      "data": [
+        {
+          "id": "syn-listing-page-2-a",
+          "listingDate": "2026-08-23T00:00:00.000",
+          "event": {
+            "id": "syn-event-page-2-a",
+            "date": "2026-08-23T00:00:00.000",
+            "startTime": "2026-08-23T22:00:00.000",
+            "title": "Synthetic Page Two A",
+            "flyerFront": null,
+            "venue": {
+              "id": "syn-venue-pages",
+              "name": "Synthetic Paging Hall",
+              "live": true
+            },
+            "artists": [
+              {
+                "id": "syn-artist-page-2-a",
+                "name": "Synthetic Page Artist C"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

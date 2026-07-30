@@ -1,0 +1,53 @@
+{
+  "data": {
+    "eventListings": {
+      "totalResults": 3,
+      "data": [
+        {
+          "id": "syn-listing-page-1-a",
+          "listingDate": "2026-08-22T00:00:00.000",
+          "event": {
+            "id": "syn-event-page-1-a",
+            "date": "2026-08-22T00:00:00.000",
+            "startTime": "2026-08-22T20:00:00.000",
+            "title": "Synthetic Page One A",
+            "flyerFront": null,
+            "venue": {
+              "id": "syn-venue-pages",
+              "name": "Synthetic Paging Hall",
+              "live": true
+            },
+            "artists": [
+              {
+                "id": "syn-artist-page-1-a",
+                "name": "Synthetic Page Artist A"
+              }
+            ]
+          }
+        },
+        {
+          "id": "syn-listing-page-1-b",
+          "listingDate": "2026-08-22T00:00:00.000",
+          "event": {
+            "id": "syn-event-page-1-b",
+            "date": "2026-08-22T00:00:00.000",
+            "startTime": "2026-08-22T21:00:00.000",
+            "title": "Synthetic Page One B",
+            "flyerFront": null,
+            "venue": {
+              "id": "syn-venue-pages",
+              "name": "Synthetic Paging Hall",
+              "live": true
+            },
+            "artists": [
+              {
+                "id": "syn-artist-page-1-b",
+                "name": "Synthetic Page Artist B"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+}
