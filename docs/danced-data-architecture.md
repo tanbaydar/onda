@@ -63,13 +63,12 @@ Before launch, the same acquisition path targets the trailing 24 months for thos
 
 ### Source reconnaissance gate
 
-Before explicit cancellation handling is implemented:
-
-- Find a visibly cancelled event on Resident Advisor.
-- Capture the listing and event-detail GraphQL responses for it.
-- Identify whether cancellation is represented by a typed status, boolean, enum, or another explicit field.
-- Verify that the signal is stable across at least the listing and detail shapes used by acquisition.
-- Record fixtures for active and cancelled events.
+Cancellation reconnaissance is complete. A visibly cancelled RA event returned
+`live: true`; cancellation appeared only as promoter-authored title prose, with no
+typed status, boolean, enum, or other structured signal in the captured shapes.
+Title markers are therefore preserved verbatim and never interpreted. Under
+A1-revised, cancellation handling is permanently absence-only: the Q159 cancellation
+cascade is removed from the design, not deferred.
 
 Before historical backfill is enabled:
 
@@ -77,8 +76,6 @@ Before historical backfill is enabled:
 - Capture and archive at least one historical listing response.
 - Confirm pagination behavior across bounded historical date windows.
 - Confirm that historical records contain the fields required by the admission contract.
-
-Until this reconnaissance confirms an explicit source signal, the cancellation wipe branch is designed but unbuilt. Disappearance-to-hide is the only live removal path. If no trustworthy explicit cancellation signal exists, cancellation handling reverts to absence handling: hide after the miss threshold and preserve all user content.
 
 If historical-query reconnaissance fails, the backfill is not approximated through scraping or user-path fetches. V1 falls back explicitly to launch-forward catalog coverage.
 
@@ -104,6 +101,17 @@ The fetcher is the *only* replaceable part by design: if RA tightens anti-bot me
 
 ### Acquisition execution contract
 
+- The injected client is a replaceable component exposing exactly one operation:
+  `fetch_page(seed, window_start, window_end, page_number, page_size)`.
+- `fetch_page` returns an immutable `FetchResult(status_code, body_text, fetched_at,
+  error=None)`. `status_code = None` means no HTTP response occurred; `body_text = None`
+  means no body was received. `error` is populated if and only if
+  `status_code is None`: it is a short transport-failure description, never an HTTP
+  annotation. The runner folds transport errors into `SYNC_RUN.error_summary`; raw
+  evidence remains the status/body pair actually received.
+- `run_sync` accepts optional explicit `window_start`, `window_end`, and `page_size`
+  policy. `None` delegates to the production nightly planner; explicit values are the
+  same seam used by deterministic tests and bounded backfill execution.
 - Requests are sequential and share a hard per-run request ceiling. Retries consume the
   same ceiling.
 - Bounded exponential backoff with jitter applies only to network errors, HTTP 408,
@@ -117,8 +125,11 @@ The fetcher is the *only* replaceable part by design: if RA tightens anti-bot me
 - `last_synced_at` is written by the runner after a seed attempt finishes.
   `last_success_at` advances only after the entire seed outcome is complete; no
   individual page can claim seed success.
-- One MySQL advisory lock permits exactly one active runner. Cron and manual invocations
-  use the same lock and entry point; a second invocation exits without starting a run.
+- One MySQL advisory lock permits exactly one active runner. `run_sync` receives a lock
+  dependency exposing `acquire() -> bool` and `release()`; production supplies a MySQL
+  `GET_LOCK` wrapper. Cron and manual invocations use the same lock and entry point.
+  Failed acquisition raises `SyncAlreadyRunning` and creates no `SYNC_RUN` row.
+  A successfully acquired lock is released exactly once on both completion and crash.
 - Before fetching, the runner resolves `(seed.source, seed.area_ref)` through
   `CITY_IDENTITY`. The listing and detail fixtures expose no venue-area field, so the
   request seed is the only observed city grain. A missing mapping is a configuration
@@ -188,8 +199,9 @@ zero-admission alarm.
 **Lifecycle handling** (data that changes under us):
 
 - Event edited on RA → silent in-place update; user states attached to the event follow automatically.
-- Explicit RA cancellation signal on a future-dated event → mark hidden and apply the Q159 cascade. Delete **Will Be There** states and their feed items, plus any edge-case Been entries, ratings, reviews, and likes. Because normal logging opens only at the event start, future cancellations should rarely have diary content.
-- Explicit RA cancellation signal on a past-dated event → mark hidden, preserve all user-created content, and emit a warning for later review. Historical diary integrity outranks destructive cancellation when these rules collide.
+- RA exposes no structured cancellation signal in the captured contract. Cancellation
+  prose in titles is preserved without status inference; if the event later disappears,
+  only the ordinary absence ladder may hide it. No Q159 cancellation cascade exists.
 - Future event vanishes from listings → marked `unverified` after one miss, `hidden` after three consecutive misses. Hidden events leave browsing but **user content is never deleted by the pipeline** — absence alone can only hide, never destroy.
 - A miss counter advances only after a successful, complete fetch for the event's seed omits the event.
 - Fetch failure, incomplete pagination, or an unusable source response → no miss and no lifecycle state change.
@@ -244,7 +256,10 @@ The guarantee this layer gives the application: *every row here passed the admis
 3. **One adapter boundary knows the source.** The client knows RA transport and
    pagination; the Transformer knows RA event-domain fields. No catalog consumer or app
    code knows either shape.
-4. **Destruction requires explicit signals and temporal safety.** Missing data hides; it never deletes what users created. Even an explicit cancellation signal cannot delete past-event diary history.
+4. **The pipeline never deletes user-created content.** Missing data hides; explicit
+   signals do not exist in the captured contract; and any future cancellation feature
+   must clear both an explicit-signal bar and a temporal-safety bar (past-event diary
+   history is untouchable) before a deletion branch may be designed.
 5. **Every failure has a name.** No silent data loss anywhere in the flow.
 6. **Canonical identity is source-neutral.** Provider records attach through concrete
    identity tables. Adding a provider is schema-stable but work-required: entity
