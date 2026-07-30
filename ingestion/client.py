@@ -4,8 +4,8 @@ Public, non-authenticated headers empirically required by RA's Cloudflare edge
 (verified 2026-07-30). No cookies, credentials, session tokens, CAPTCHA handling,
 or challenge circumvention. The Referer is transport metadata only; event
 geography comes solely from the seed and CITY_IDENTITY, never from headers. The
-NYC Referer's suitability for other cities (e.g. Boston) is unverified and pending
-a supervised probe.
+NYC Referer was verified against the captured area-530 Boston request with HTTP 200
+on 2026-07-30; RA's edge does not correlate it with requested geography.
 """
 
 from __future__ import annotations
@@ -29,6 +29,7 @@ MAX_ATTEMPTS = 3
 BASE_BACKOFF_SECONDS = 1.0
 MAX_BACKOFF_SECONDS = 8.0
 REQUEST_TIMEOUT_SECONDS = 20
+INTER_REQUEST_DELAY_SECONDS = 1.5
 RETRYABLE_HTTP_STATUSES = frozenset({408, 429, 500, 502, 503, 504})
 
 # This exact public, non-authenticated set passed the supervised RA edge probe.
@@ -74,11 +75,20 @@ class RaClient:
         *,
         timeout_seconds: float = REQUEST_TIMEOUT_SECONDS,
         max_attempts: int = MAX_ATTEMPTS,
+        inter_request_delay_seconds: float = INTER_REQUEST_DELAY_SECONDS,
+        delay=time.sleep,
+        before_attempt=None,
     ):
         if max_attempts < 1:
             raise ValueError("max_attempts must be at least one")
+        if inter_request_delay_seconds < 0:
+            raise ValueError("inter_request_delay_seconds cannot be negative")
         self.timeout_seconds = timeout_seconds
         self.max_attempts = max_attempts
+        self.inter_request_delay_seconds = inter_request_delay_seconds
+        self.delay = delay
+        self.before_attempt = before_attempt
+        self._page_fetches_started = 0
         with _REQUEST_FIXTURE.open(encoding="utf-8") as fixture:
             captured = json.load(fixture)
         self.operation_name = captured["operationName"]
@@ -93,6 +103,10 @@ class RaClient:
         page_number: int,
         page_size: int,
     ) -> FetchResult:
+        if self._page_fetches_started:
+            self.delay(self.inter_request_delay_seconds)
+        self._page_fetches_started += 1
+
         payload = {
             "operationName": self.operation_name,
             "variables": {
@@ -114,6 +128,8 @@ class RaClient:
 
         last_transport_error = None
         for attempt in range(1, self.max_attempts + 1):
+            if self.before_attempt is not None:
+                self.before_attempt()
             request = Request(
                 GRAPHQL_ENDPOINT,
                 data=request_body,
@@ -169,13 +185,15 @@ class RaClient:
             error=last_transport_error or "transport failure",
         )
 
+    def attach_request_budget(self, before_attempt):
+        self.before_attempt = before_attempt
+
     @staticmethod
     def _transport_error_text(exc: Exception, attempts: int) -> str:
         reason = exc.reason if isinstance(exc, URLError) else exc
         return f"{reason} after {attempts} attempt(s)"
 
-    @staticmethod
-    def _sleep_before_retry(attempt: int, retry_after: str | None):
+    def _sleep_before_retry(self, attempt: int, retry_after: str | None):
         delay = RaClient._retry_after_seconds(retry_after)
         if delay is None:
             ceiling = min(
@@ -183,7 +201,7 @@ class RaClient:
                 BASE_BACKOFF_SECONDS * (2 ** (attempt - 1)),
             )
             delay = random.uniform(0, ceiling)
-        time.sleep(delay)
+        self.delay(delay)
 
     @staticmethod
     def _retry_after_seconds(value: str | None) -> float | None:

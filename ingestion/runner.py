@@ -32,6 +32,30 @@ class SyncAlreadyRunning(Exception):
     pass
 
 
+class RequestBudgetExhausted(Exception):
+    pass
+
+
+class RequestBudget:
+    def __init__(self, *, limit):
+        if limit < 1:
+            raise ValueError("request budget limit must be at least one")
+        self.limit = limit
+        self.used = 0
+
+    @property
+    def remaining(self):
+        return self.limit - self.used
+
+    def consume(self):
+        if self.used >= self.limit:
+            raise RequestBudgetExhausted(
+                f"request ceiling {self.limit} exhausted after "
+                f"{self.used} attempts"
+            )
+        self.used += 1
+
+
 class MySqlAdvisoryLock:
     def __init__(self, name="danced_sync_ra"):
         self.name = name
@@ -125,22 +149,24 @@ def _fetch_seed(
     window_end,
     page_size,
     request_budget,
+    client_counts_attempts,
 ):
     page_number = 1
     while True:
-        if request_budget[0] >= MAX_REQUESTS_PER_RUN:
+        try:
+            if not client_counts_attempts:
+                request_budget.consume()
+            result = client.fetch_page(
+                state.seed,
+                window_start,
+                window_end,
+                page_number,
+                page_size,
+            )
+        except RequestBudgetExhausted as exc:
             state.fetch_valid = False
-            state.errors.append("hard per-run request ceiling reached")
+            state.errors.append(str(exc))
             return
-        request_budget[0] += 1
-
-        result = client.fetch_page(
-            state.seed,
-            window_start,
-            window_end,
-            page_number,
-            page_size,
-        )
         raw = _archive_result(
             seed=state.seed,
             run=run,
@@ -245,6 +271,11 @@ def run_sync(
     page_size=None,
 ):
     client = client or RaClient()
+    request_budget = RequestBudget(limit=MAX_REQUESTS_PER_RUN)
+    attach_request_budget = getattr(client, "attach_request_budget", None)
+    client_counts_attempts = attach_request_budget is not None
+    if client_counts_attempts:
+        attach_request_budget(request_budget.consume)
     lock = lock or MySqlAdvisoryLock()
     if not lock.acquire():
         raise SyncAlreadyRunning("an RA synchronization is already running")
@@ -267,8 +298,6 @@ def run_sync(
         )
         states = {}
         errors = []
-        request_budget = [0]
-
         seeds = list(
             TrackedSourcePage.objects.filter(active=True).order_by("pk")
         )
@@ -299,6 +328,7 @@ def run_sync(
                 window_end=window_end,
                 page_size=page_size,
                 request_budget=request_budget,
+                client_counts_attempts=client_counts_attempts,
             )
 
         rejection_count_before = RejectedIngest.objects.count()
