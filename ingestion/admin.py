@@ -1,3 +1,13 @@
 from django.contrib import admin
 
-# Ingestion admin registrations are introduced with the models.
+from .models import RawIngest, RejectedIngest, SyncRun, TrackedSourcePage
+
+
+admin.site.register(
+    (
+        TrackedSourcePage,
+        SyncRun,
+        RawIngest,
+        RejectedIngest,
+    )
+)
