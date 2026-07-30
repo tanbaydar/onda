@@ -1,7 +1,7 @@
 # Danced — ERD Construction Guide
 
 **Goal:** One complete, reviewed ERD covering all three zones. This document ends at "ERD finished." No models, no migrations, no code before that gate.
-**Inputs:** `PRODUCT_QA_SPEC.md`, `danced-data-architecture.md`, the assumptions register (A1 revised: no cancellation cascade; A2: 2026-year-to-date backfill), the recon fixtures.
+**Inputs:** `PRODUCT_QA_SPEC.md`, `danced-data-architecture.md`, the assumptions register (A1 revised: no cancellation cascade; A2: approximately two months around launch), the recon fixtures.
 **Method:** Draft zone-by-zone in build order → assemble → review the seams → annotate constraints → red-team → freeze.
 
 ---

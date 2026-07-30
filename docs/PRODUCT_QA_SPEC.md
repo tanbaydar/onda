@@ -87,13 +87,13 @@ No single return loop is currently designated as dominant.
 **Question:** Can users add events they attended before joining the app, including events from many years ago?
 
 **Answer:** The product supports retroactive logging for any past event present in
-Danced's canonical catalog. For v1, the target catalog window is 2026 year-to-date
-(`2026-01-01` through the supervised backfill date) in the seeded launch cities,
-loaded through a one-time pre-launch Resident Advisor backfill, plus all events
-acquired going forward. Retroactive logging is limited accordingly. This is a
-deliberate resume-project scope cut: no real users require deeper history, the
-pipeline demonstrates identically on a shallower catalog, and deeper history remains
-a one-flag rerun of the same ingestion path if ever wanted.
+Danced's canonical catalog. For v1, the target catalog window is approximately two
+months around launch—recent plus upcoming events—in the seeded launch cities, loaded
+through a one-time Resident Advisor backfill, plus all events acquired going forward.
+Retroactive logging is limited accordingly. This is a deliberate resume-project scope
+cut: the demo needs a populated, live catalog, while greater depth adds no
+demonstrative value. Deeper history remains a one-flag rerun of the same ingestion
+path if ever wanted.
 
 The historical backfill is gated on source reconnaissance confirming that RA supports past-date listing queries. If unsupported, v1 falls back to launch-forward coverage and retroactive logging is limited to events that exist in the accumulated catalog. The application never fetches RA synchronously in response to a user search or action.
 

@@ -21,10 +21,11 @@ The exact `GET_EVENT_LISTINGS` operation has been captured in `docs/recon/fixtur
 
 **A2 historical backfill gate passes.** Boston returned records at the former
 trailing-24-month probe boundary, including 2024-07-30 and 2024-08-01. This evidence
-confirms the source capability; the adopted v1 runtime scope is the shallower 2026
-year-to-date window. Page 1 and page 2 returned distinct stable listing and event IDs
-while reporting the same `totalResults`. Bounded historical backfill may be
-implemented.
+confirms the source capability. An intermediate scope decision selected 2026
+year-to-date; the final v1 runtime scope is approximately two months around launch
+(recent plus upcoming) as a resume-project scope cut. Page 1 and page 2 returned
+distinct stable listing and event IDs while reporting the same `totalResults`.
+Bounded historical backfill may be implemented.
 
 **A1 explicit-cancellation gate fails for now.** The cancelled detail fixture examined (`Event:1644565`) contains no explicit cancellation boolean, enum, or status in the fields requested by RA's own detail client. It reports `live: true`; cancellation exists only in the title and prose. Title parsing is not trustworthy enough to authorize destructive behavior. The Q159 wipe branch remains unbuilt. Cancellation follows absence-to-hide and preserves user content unless a future recon discovers a typed source signal.
 
@@ -59,8 +60,8 @@ The captured GraphQL operation accepts `listingDate.gte` and `listingDate.lte`. 
 - Historical records included stable IDs, dates, start times, venues, and artist arrays
 - New York City returned 150 results for 2024-08-01 through 2024-08-03, confirming the same historical path for the second seed
 
-The 2026-year-to-date backfill should use small chronological windows and polite
-throttling rather than requesting the full span at once.
+The approximately two-month launch backfill should use small chronological windows
+and polite throttling rather than requesting the full span at once.
 
 ### Pagination is page-number based
 

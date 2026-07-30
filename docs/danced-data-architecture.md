@@ -59,14 +59,13 @@ Three properties of the source shape everything downstream:
 
 **What we ask for:** upcoming event listings for a small set of city areas (New York, Boston), fetched nightly. Seeds are RA area IDs — a handful of rows in a registry table. Growing coverage means inserting a row, never writing code.
 
-Before launch, the same acquisition path targets 2026 year-to-date
-(`2026-01-01` through the supervised run date) for those seeded cities as a bounded
-historical backfill. It pages through date windows chronologically, with the same
-sequential requests, throttling, backoff, raw archiving, admission checks, quarantine
-behavior, and canonical upserts as the nightly job. This is a deliberate
-resume-project scope cut: no real users require deeper history, and the pipeline
-demonstrates identically on a shallower catalog. A deeper backfill remains a
-one-flag rerun of the same code path if ever wanted.
+Before launch, the same acquisition path targets approximately two months around
+launch—recent plus upcoming events—for those seeded cities as a bounded backfill. It
+pages through date windows chronologically, with the same sequential requests,
+throttling, backoff, raw archiving, admission checks, quarantine behavior, and
+canonical upserts as the nightly job. This is a deliberate resume-project scope cut:
+the demo needs a populated, live catalog, while greater depth adds no demonstrative
+value. Deeper history remains a one-flag rerun of the same code path if ever wanted.
 
 ### Source reconnaissance gate
 
@@ -154,7 +153,7 @@ The fetcher is the *only* replaceable part by design: if RA tightens anti-bot me
 Historical bootstrap is not a separate importer. It is the nightly pipeline pointed at bounded past date windows:
 
 1. Seeded cities only.
-2. 2026 year-to-date only (`2026-01-01` through the supervised run date).
+2. Approximately two months around launch: recent plus upcoming events.
 3. Windows processed chronologically.
 4. Every response archived through `RAW_INGEST`.
 5. Every event admitted, quarantined, and upserted through the same code used in live ingestion.
@@ -286,10 +285,11 @@ The guarantee this layer gives the application: *every row here passed the admis
 - Catalog coverage = RA's coverage of our cities. Gaps are accessibility facts, not bugs.
 - The de facto v1 catalog is a club-culture catalog for the seeded launch cities, initially New York and Boston. This is the launch wedge, not a permanent genre boundary.
 - Mainstream concerts outside RA coverage may not exist in v1 even though the product model supports them.
-- Target v1 history is 2026 year-to-date in seeded cities plus forward coverage.
-  Retroactive logging (Q13) is limited accordingly. This resume-project scope cut
-  preserves the pipeline demonstration while avoiding unneeded deep history; a deeper
-  catalog remains a one-flag rerun of the identical backfill path.
+- Target v1 history is approximately two months around launch—recent plus upcoming
+  events—in seeded cities, followed by forward coverage. Retroactive logging (Q13) is
+  limited accordingly. This resume-project scope cut produces a populated, live demo;
+  greater catalog depth adds no demonstrative value. Deeper history remains a
+  one-flag rerun of the identical backfill path.
 - If historical queries are unsupported, catalog history begins at first sync and retroactive logging is limited to the accumulated canonical catalog.
 - If RA blocks us, the catalog freezes (gracefully) until the fetcher is swapped.
 - RA's occasional errors (wrong date, misassigned venue) become our errors until RA corrects them and the next sync propagates the fix.

@@ -241,3 +241,4 @@ numeric diagnostic in `SYNC_RUN.error_summary`; the live run's silent `None` exp
 and closed that observability gap.
 
 - 2026-07-30 — A2 scope decision: v1 backfill is 2026 year-to-date, not trailing 24 months; deeper history remains the same runtime path with a broader window.
+- 2026-07-30 — A2 narrowed again: v1 backfill is approximately two months around launch (recent plus upcoming); deeper history remains the same runtime path with broader arguments.
