@@ -150,6 +150,18 @@ The existing `FOLLOW` row changes from `pending` to `approved`. A `request_accep
   Python-facing validation. The storage spelling differs, but MySQL still rejects every
   value outside the frozen enum set; this is a documented ORM representation delta, not
   a weakening of the invariant.
+- Django's composite-primary-key support remains unsuitable for `EVENT_ARTIST`'s
+  relationship model. The implementation adds a surrogate `id` and enforces the two
+  candidate keys as `uq_event_artist_pair` and `uq_event_artist_position`. Relationship
+  identity and lineup-position uniqueness are unchanged.
+- `uq_city_country_region_name` retains MySQL's deliberate multiple-NULL behavior:
+  rows with `region_code IS NULL` are not mutually constrained. V1 US seed rows always
+  carry a region code; any future no-region country must use the frozen sentinel
+  convention rather than relying on NULL uniqueness.
+- Django's `on_delete=models.CASCADE` is ORM collector behavior and does not emit
+  MySQL `ON DELETE CASCADE`. Catalog migration `0003` explicitly replaces the four
+  DBML-cascade foreign keys at the database layer; without it, raw SQL deletion would
+  contradict the frozen ERD even though ORM deletion appeared correct.
 
 ## Finding requiring documentation correction
 

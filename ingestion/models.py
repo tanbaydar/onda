@@ -1,8 +1,6 @@
 from django.db import models
 
-
-class Source(models.TextChoices):
-    RA = "ra", "Resident Advisor"
+from config.sources import Source
 
 
 class SyncRunType(models.TextChoices):
