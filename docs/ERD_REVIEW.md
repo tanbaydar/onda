@@ -239,3 +239,5 @@ event IDs remain harmless idempotent observations. Reconciliation still receives
 unique event-grain observed-ID set. Every failed completeness condition now records a
 numeric diagnostic in `SYNC_RUN.error_summary`; the live run's silent `None` exposed
 and closed that observability gap.
+
+- 2026-07-30 — A2 scope decision: v1 backfill is 2026 year-to-date, not trailing 24 months; deeper history remains the same runtime path with a broader window.

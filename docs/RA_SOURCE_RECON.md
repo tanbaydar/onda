@@ -19,7 +19,12 @@ Resident Advisor's public browser client uses:
 
 The exact `GET_EVENT_LISTINGS` operation has been captured in `docs/recon/fixtures/ra_event_listings_request.json` and replayed directly outside the browser with HTTP 200.
 
-**A2 historical backfill gate passes.** Boston returned records at the trailing 24-month boundary, including 2024-07-30 and 2024-08-01. Page 1 and page 2 returned distinct stable listing and event IDs while reporting the same `totalResults`. Bounded historical backfill may be implemented.
+**A2 historical backfill gate passes.** Boston returned records at the former
+trailing-24-month probe boundary, including 2024-07-30 and 2024-08-01. This evidence
+confirms the source capability; the adopted v1 runtime scope is the shallower 2026
+year-to-date window. Page 1 and page 2 returned distinct stable listing and event IDs
+while reporting the same `totalResults`. Bounded historical backfill may be
+implemented.
 
 **A1 explicit-cancellation gate fails for now.** The cancelled detail fixture examined (`Event:1644565`) contains no explicit cancellation boolean, enum, or status in the fields requested by RA's own detail client. It reports `live: true`; cancellation exists only in the title and prose. Title parsing is not trustworthy enough to authorize destructive behavior. The Q159 wipe branch remains unbuilt. Cancellation follows absence-to-hide and preserves user content unless a future recon discovers a typed source signal.
 
@@ -54,7 +59,8 @@ The captured GraphQL operation accepts `listingDate.gte` and `listingDate.lte`. 
 - Historical records included stable IDs, dates, start times, venues, and artist arrays
 - New York City returned 150 results for 2024-08-01 through 2024-08-03, confirming the same historical path for the second seed
 
-The backfill should still use small chronological windows and polite throttling rather than requesting all 24 months at once.
+The 2026-year-to-date backfill should use small chronological windows and polite
+throttling rather than requesting the full span at once.
 
 ### Pagination is page-number based
 
@@ -137,6 +143,7 @@ Listing recon is complete when the repository contains sanitized, replayable evi
 2. one second listing page proving pagination;
 3. one historical listing page;
 4. a written field map from source payloads to the admission contract;
-5. an explicit conclusion on whether cancellation cascade and 24-month backfill are enabled.
+5. an explicit conclusion on whether cancellation cascade and bounded historical
+   backfill are enabled.
 
 Those conditions are now met for Boston and New York City listings. Detail-query enrichment remains a small follow-up task only if the canonical admission contract needs fields absent from the listing operation.
