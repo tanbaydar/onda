@@ -280,10 +280,30 @@ Table ARTIST_IDENTITY {
   }
 }
 
+Table CITY_IDENTITY {
+  id bigint [pk, increment]
+  city_id bigint [not null]
+  source varchar(50) [not null, note: "Lowercase code-level registry value."]
+  source_id varchar(255) [not null, note: "Provider area identifier; equals TRACKED_SOURCE_PAGE.area_ref for seed-grain city resolution."]
+
+  indexes {
+    (source, source_id) [unique, name: "uq_city_identity_external"]
+    (city_id, source) [unique, name: "uq_city_identity_canonical_source"]
+  }
+
+  Note: '''
+  The captured listing and detail shapes expose no venue-area reference. Before a seed
+  is fetched, the runner resolves (seed.source, seed.area_ref) through this table.
+  A missing mapping is a configuration defect that fails the seed loudly; it is never
+  an event-level quarantine.
+  '''
+}
+
 // Concrete identity FK delete behavior.
 Ref: EVENT_IDENTITY.event_id > EVENT.id [delete: cascade]
 Ref: VENUE_IDENTITY.venue_id > VENUE.id [delete: cascade]
 Ref: ARTIST_IDENTITY.artist_id > ARTIST.id [delete: cascade]
+Ref: CITY_IDENTITY.city_id > CITY.id [delete: cascade]
 
 // ---------------------------------------------------------------------------
 // APP
@@ -627,6 +647,7 @@ TableGroup CANONICAL_IDENTITY {
   EVENT_IDENTITY
   VENUE_IDENTITY
   ARTIST_IDENTITY
+  CITY_IDENTITY
 }
 
 TableGroup APP {

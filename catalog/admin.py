@@ -4,6 +4,7 @@ from .models import (
     Artist,
     ArtistIdentity,
     City,
+    CityIdentity,
     Event,
     EventArtist,
     EventIdentity,
@@ -22,5 +23,6 @@ admin.site.register(
         EventIdentity,
         VenueIdentity,
         ArtistIdentity,
+        CityIdentity,
     )
 )

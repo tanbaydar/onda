@@ -7,7 +7,7 @@
 **Product/catalog boundary:** MVP catalog scope is Resident Advisor listings for the seeded launch cities. This is a coverage fact, not a product redefinition. Danced remains genre-agnostic at the application layer: diary, ratings, reviews, social behavior, profiles, and discovery contain no electronic-only rules and must work unchanged for any physical music event. The broader “all physical music events” ambition describes the product's design envelope, not v1 catalog completeness.
 
 Canonical entities are source-neutral. Provider identifiers live in the concrete
-`EVENT_IDENTITY`, `VENUE_IDENTITY`, and `ARTIST_IDENTITY` tables. Adding a provider
+`CITY_IDENTITY`, `EVENT_IDENTITY`, `VENUE_IDENTITY`, and `ARTIST_IDENTITY` tables. Adding a provider
 such as Ticketmaster requires no canonical schema change, but it does require an
 entity-matching process whose output is new identity rows. The mapping structure makes
 cross-source attachment possible; it does not make cross-source matching automatic.
@@ -119,6 +119,10 @@ The fetcher is the *only* replaceable part by design: if RA tightens anti-bot me
   individual page can claim seed success.
 - One MySQL advisory lock permits exactly one active runner. Cron and manual invocations
   use the same lock and entry point; a second invocation exits without starting a run.
+- Before fetching, the runner resolves `(seed.source, seed.area_ref)` through
+  `CITY_IDENTITY`. The listing and detail fixtures expose no venue-area field, so the
+  request seed is the only observed city grain. A missing mapping is a configuration
+  defect recorded in run telemetry; the seed is not fetched and no event is quarantined.
 
 ### Bootstrap and live ingestion are one path
 
@@ -148,13 +152,15 @@ On-demand RA fetching from search, event pages, or any other user action is perm
 
 The Transformer reads unprocessed archive rows and processes each event **individually** — one bad event never poisons its siblings — inside its own database transaction, so canonical writes are all-or-nothing. It is the only code in the entire system that knows RA's shape.
 
-Every event faces a fixed sequence of checks derived directly from the product spec:
+After the runner has resolved the seed's `CITY_IDENTITY`, every event faces a fixed
+sequence of checks derived directly from the product spec:
 
 1. **Parse** the typed payload; structurally broken → quarantine.
 2. **Scope**: v1 scope is membership in a tracked RA area. No reliable per-event type
    field is confirmed in the listing payload, so `OUT_OF_SCOPE` remains a reserved,
    currently unused reason. A future reliable field may activate explicit scope drops.
-3. **Resolve entities**: for each RA venue and artist, look up its concrete identity
+3. **Resolve entities**: assign the seed-resolved canonical city to each venue. For each
+   RA venue and artist, look up its concrete identity
    table by `(source, source_id)`. A hit resolves the canonical row. A miss creates the
    canonical row and mapping in the same transaction. Within v1, one RA identity
    therefore resolves forever to one canonical row. An event with no resolvable artist
@@ -210,11 +216,13 @@ The destination. Owned by the pipeline for writes, read-only for everything else
 - **`VENUE`** — source-neutral name and city reference. Timezone lives on the city reference table and drives when an event becomes loggable.
 - **`ARTIST`** — source-neutral artist identity and name.
 - **`EVENT_ARTIST`** — the lineup, order preserved.
-- **`EVENT_IDENTITY`, `VENUE_IDENTITY`, `ARTIST_IDENTITY`** — concrete provider
+- **`CITY_IDENTITY`, `EVENT_IDENTITY`, `VENUE_IDENTITY`, `ARTIST_IDENTITY`** — concrete provider
   mappings with real canonical foreign keys. Each table enforces
   `UNIQUE(source, source_id)` and `UNIQUE(canonical_id, source)`.
 - **`EVENT_IDENTITY` observations** — `last_seen_at` and consecutive `misses` live at
   the source-testimony grain where they are true.
+- **`CITY_IDENTITY` seed resolution** — maps a provider area reference to the canonical
+  city inherited by venues returned for that seed.
 
 Two structural rules carry the whole consistency story:
 

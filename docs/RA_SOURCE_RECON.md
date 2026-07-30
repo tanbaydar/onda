@@ -29,6 +29,13 @@ active tracked RA area. `OUT_OF_SCOPE` remains a reserved rejection reason and i
 until recon identifies a trustworthy source field. The product remains genre-agnostic;
 this is an acquisition-coverage rule, not application behavior.
 
+**City resolution is seed-grain.** The captured listing operation requests only
+`venue { id name contentUrl live }`; its response contains no venue area. The observed
+detail fixture likewise supplies no usable venue-area object. The runner must therefore
+resolve `(source, area_ref)` through `CITY_IDENTITY` before fetching. An unmapped seed
+is a configuration failure, not an `UNMAPPED_AREA` rejection; no new rejection enum
+value is introduced.
+
 ## Confirmed observations
 
 ### Historical listing URLs and GraphQL ranges work

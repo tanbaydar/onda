@@ -190,3 +190,28 @@ class ArtistIdentity(models.Model):
                 name="uq_artist_identity_canonical_source",
             ),
         ]
+
+
+class CityIdentity(models.Model):
+    city = models.ForeignKey(
+        City,
+        db_column="city_id",
+        db_index=False,
+        on_delete=models.CASCADE,
+        related_name="external_identities",
+    )
+    source = models.CharField(max_length=50, choices=Source)
+    source_id = models.CharField(max_length=255)
+
+    class Meta:
+        db_table = "CITY_IDENTITY"
+        constraints = [
+            models.UniqueConstraint(
+                fields=("source", "source_id"),
+                name="uq_city_identity_external",
+            ),
+            models.UniqueConstraint(
+                fields=("city", "source"),
+                name="uq_city_identity_canonical_source",
+            ),
+        ]

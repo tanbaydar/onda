@@ -5,6 +5,7 @@ from .models import (
     Artist,
     ArtistIdentity,
     City,
+    CityIdentity,
     Event,
     EventArtist,
     EventIdentity,
@@ -27,6 +28,16 @@ class CatalogSchemaTests(TestCase):
                 ("New York City", "NY", "US", "America/New_York"),
                 ("Boston", "MA", "US", "America/New_York"),
             ],
+        )
+
+    def test_v1_city_identities_resolve_ra_seed_areas(self):
+        self.assertEqual(
+            CityIdentity.objects.get(source="ra", source_id="8").city.name,
+            "New York City",
+        )
+        self.assertEqual(
+            CityIdentity.objects.get(source="ra", source_id="530").city.name,
+            "Boston",
         )
 
     def test_event_status_is_enforced_by_the_database(self):
@@ -69,3 +80,24 @@ class CatalogSchemaTests(TestCase):
         self.assertFalse(EventIdentity.objects.exists())
         self.assertFalse(VenueIdentity.objects.exists())
         self.assertFalse(ArtistIdentity.objects.exists())
+
+    def test_database_cascade_removes_city_identity(self):
+        city = City.objects.create(
+            name="Cascade Test City",
+            region_code="TC",
+            region_name="Test",
+            country_code="US",
+            timezone="America/New_York",
+        )
+        CityIdentity.objects.create(
+            city=city,
+            source="ra",
+            source_id="cascade-test-area",
+        )
+
+        with connection.cursor() as cursor:
+            cursor.execute("DELETE FROM CITY WHERE id = %s", [city.pk])
+
+        self.assertFalse(
+            CityIdentity.objects.filter(source_id="cascade-test-area").exists()
+        )

@@ -17,7 +17,7 @@ count mismatch is recorded below.
 
 The construction guide says “five tables” but lists only these four. No fifth ingestion table was adjudicated or required. A speculative table was not added to satisfy the incorrect count.
 
-### Canonical + identity — 8 tables
+### Canonical + identity — 9 tables
 
 1. `CITY`
 2. `VENUE`
@@ -27,6 +27,7 @@ The construction guide says “five tables” but lists only these four. No fift
 6. `EVENT_IDENTITY`
 7. `VENUE_IDENTITY`
 8. `ARTIST_IDENTITY`
+9. `CITY_IDENTITY`
 
 ### App — 15 tables
 
@@ -48,7 +49,7 @@ The construction guide says “five tables” but lists only these four. No fift
 
 The app count is higher than the guide because the review correctly added two separate, spec-required email request lifecycles.
 
-**Total: 27 tables.**
+**Total: 28 tables.**
 
 ## Seam review
 
@@ -111,7 +112,7 @@ The existing `FOLLOW` row changes from `pending` to `approved`. A `request_accep
 
 ## Red-team checklist
 
-- [x] Provider mappings use three concrete tables with real canonical FKs.
+- [x] Provider mappings use four concrete tables with real canonical FKs.
 - [x] Both required unique constraints exist on every identity table.
 - [x] Source fields exist only on seeds and identity mappings, never canonical entities.
 - [x] `UNIQUE(user_id, event_id)` exists on `DIARY_ENTRY`.
@@ -159,14 +160,32 @@ The existing `FOLLOW` row changes from `pending` to `approved`. A `request_accep
   carry a region code; any future no-region country must use the frozen sentinel
   convention rather than relying on NULL uniqueness.
 - Django's `on_delete=models.CASCADE` is ORM collector behavior and does not emit
-  MySQL `ON DELETE CASCADE`. Catalog migration `0003` explicitly replaces the four
-  DBML-cascade foreign keys at the database layer; without it, raw SQL deletion would
-  contradict the frozen ERD even though ORM deletion appeared correct.
+  MySQL `ON DELETE CASCADE`. Catalog migrations `0003` and `0005` explicitly replace
+  the five DBML-cascade foreign keys at the database layer; without them, raw SQL
+  deletion would contradict the frozen ERD even though ORM deletion appeared correct.
+
+## Post-freeze amendment: city identity
+
+The Transformer requires a deterministic city for every canonical venue. Captured RA
+listing and detail payloads expose no venue-area reference; the request seed's area is
+the only observed geographic identity. The frozen schema initially had no enforceable
+relationship between `(TRACKED_SOURCE_PAGE.source, area_ref)` and `CITY`, leaving
+label matching or a code dictionary as the only implementations. Both would encode an
+unstored convention and contradict coverage-as-data.
+
+`CITY_IDENTITY` was therefore added as a narrow, approved freeze break. It follows the
+same concrete identity pattern and two uniques as its three siblings. The runner resolves
+the seed through `(source, area_ref)` before making requests. A missing mapping is a
+configuration defect that fails that seed loudly; it is not event-level quarantine.
+No ingestion-to-canonical foreign key was introduced, so the firewall remains intact.
 
 ## Finding requiring documentation correction
 
-The old expected count of 5 ingestion + 8 canonical + 13 app tables is incorrect. The adjudicated model contains 4 + 8 + 15 = 27 tables. This is not a schema violation:
+The old expected count of 5 ingestion + 8 canonical + 13 app tables is incorrect. After
+the approved city-identity freeze break, the adjudicated model contains
+4 + 9 + 15 = 28 tables. This is not a schema violation:
 
 - the guide itself names only four ingestion tables;
 - the two app additions are the independently required registration-verification and email-change workflows;
+- the canonical addition is the required seed-area-to-city identity seam;
 - no table should be added or removed merely to match a stale count.
