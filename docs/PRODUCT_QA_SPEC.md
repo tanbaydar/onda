@@ -1475,3 +1475,21 @@ similar by the external source is still an ordinary venue and is accepted as sou
 truth. Danced does not filter venues by name or parse event titles to override the
 source. This follows Question 8's principle that Danced preserves the external
 catalog source's event boundaries rather than independently reinterpreting them.
+
+## Temporary amendment to Questions 125–126
+
+Email verification is deliberately deferred during the identity-only development
+slice; it is not cancelled. Accounts are temporarily created active and signed in
+immediately without verifying their email address. The user schema still records the
+nullable email-verification state required by the frozen design, but no behavior in
+this slice reads that field or uses it as an authorization gate.
+
+Before any public deployment or account actions beyond identity are introduced, a
+later repayment slice must add the mandatory verification flow. That slice will
+change both temporary behaviors: registration will no longer grant an active,
+immediately usable signed-in account, and the user will instead be directed to check
+their email and complete verification before account actions.
+
+The current-session API may return an authenticated user's email to that same user.
+Email is self-only account data and must never be included in any future serializer
+for another user's profile, reviews, feed activity, or other public/social surface.

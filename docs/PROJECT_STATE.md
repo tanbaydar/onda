@@ -1043,6 +1043,15 @@ changes this.
 
 ## Known limitations and risks
 
+### Quarantine baseline
+
+Recent nightly/backfill runs consistently quarantine approximately 38% of listed
+observations. Runs 5–8 were 37.7%, 37.8%, 38.4%, and 38.4%; every quarantine in
+those runs was `NO_ARTIST`, not a structural or payload-shape failure. RA commonly
+lists events before publishing an ID-bearing lineup. These observations retry
+naturally and can self-admit on a later sync; investigate if the rate materially
+changes or other rejection reasons begin contributing.
+
 ### Scheduling reliability
 
 Local launchd depends on the laptop. If that is unacceptable, deploy the whole

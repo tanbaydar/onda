@@ -140,6 +140,12 @@ The existing `FOLLOW` row changes from `pending` to `approved`. A `request_accep
 
 - Django will extend `AbstractUser`, so implementation migrations will contain framework administration and permission columns not shown in the product ERD.
 - Those framework fields have no product semantics and product code must not depend on them.
+- The implemented `DANCED_USER` therefore also stores `first_name`, `last_name`,
+  `is_staff`, `is_active`, `is_superuser`, `last_login`, `date_joined`, and Django's
+  group/permission relationships. They exist only for framework authentication and
+  administration. Product lifecycle, identity, and presentation behavior must use the
+  explicit DBML fields instead; in particular, `date_joined` does not replace the
+  product-owned `created_at`, and `is_active` does not replace product `status`.
 - DBML notes describe CHECK constraints and service invariants; Django migrations must transcribe enforceable checks explicitly rather than assuming notes generate DDL.
 - Django requires an `on_delete` policy for every foreign key. The ingestion-zone
   references omitted delete behavior in DBML because their parents and append-only raw
@@ -242,3 +248,10 @@ and closed that observability gap.
 
 - 2026-07-30 — A2 scope decision: v1 backfill is 2026 year-to-date, not trailing 24 months; deeper history remains the same runtime path with a broader window.
 - 2026-07-30 — A2 narrowed again: v1 backfill is approximately two months around launch (recent plus upcoming); deeper history remains the same runtime path with broader arguments.
+- 2026-07-31 — The custom `users.User` was introduced after Django's empty legacy
+  `auth_user` and admin schema had already been migrated locally. With a verified full
+  database dump retained outside the repository, admin migrations were unapplied, the
+  three empty legacy user tables were removed, `users.0001` established the swappable
+  user root, stale `auth.user` content-type metadata was removed idempotently, and
+  admin was reapplied above the custom user. Catalog, ingestion, and raw evidence were
+  preserved.
