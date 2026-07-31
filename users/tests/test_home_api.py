@@ -92,8 +92,9 @@ class HomeFeedContractTests(TestCase):
             [item["type"] for item in response.json()["results"][:3]],
             ["review_like", "rated_been", "follow"],
         )
-        # Two fixed Django session/auth lookups plus exactly one feed UNION.
-        self.assertEqual(len(queries), 3)
+        # Two fixed session/auth lookups, one bounded city-boundary lookup,
+        # and exactly one four-branch feed UNION.
+        self.assertEqual(len(queries), 4)
         self.assertEqual(
             sum("UNION ALL" in query["sql"] for query in queries.captured_queries),
             1,

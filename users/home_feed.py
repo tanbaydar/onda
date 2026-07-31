@@ -16,10 +16,18 @@ from django.db.models import (
 from django.db.models.functions import Cast, Concat, LPad
 from django.utils.dateparse import parse_datetime
 
-from .models import DiaryEntry, Follow, FollowStatus, Review, ReviewLike
+from .models import (
+    DiaryEntry,
+    Follow,
+    FollowStatus,
+    Review,
+    ReviewLike,
+    WillBeThere,
+    active_wbt_event_predicate,
+)
 
 
-ACTIVITY_TYPES = ("rated_been", "review_like", "follow")
+ACTIVITY_TYPES = ("will_be_there", "rated_been", "review_like", "follow")
 SOURCE_KEY_RE = re.compile(r"^\d{20}(?::\d{20})?$")
 
 
@@ -95,7 +103,7 @@ def _after_cursor(queryset, cursor):
     )
 
 
-def home_feed_rows(viewer, *, cursor=None, limit=21):
+def home_feed_rows(viewer, *, at, cursor=None, limit=21):
     followees = Follow.objects.filter(
         follower=viewer,
         status=FollowStatus.APPROVED,
@@ -176,9 +184,33 @@ def home_feed_rows(viewer, *, cursor=None, limit=21):
         **like_nulls,
     ).values(*FEED_FIELDS)
 
+    wbt_nulls = _nulls()
+    for key in ("event_id", "event_title", "event_date", "event_start_time"):
+        wbt_nulls.pop(key)
+    active_events = active_wbt_event_predicate(at)
+    will_be_there = WillBeThere.objects.visible_to(
+        viewer,
+        at,
+        event_predicate=active_events,
+    ).filter(user_id__in=followees).annotate(
+        activity_type=Value("will_be_there", output_field=CharField()),
+        activity_at=F("created_at"),
+        source_key=Concat(
+            _source_part(F("user_id")), Value(":"), _source_part(F("event_id"))
+        ),
+        actor_id=F("user_id"),
+        actor_username=F("user__username"),
+        actor_display_name=F("user__display_name"),
+        event_title=F("event__title"),
+        event_date=F("event__event_date"),
+        event_start_time=F("event__start_time"),
+        **wbt_nulls,
+    ).values(*FEED_FIELDS)
+
     combined = _after_cursor(been, cursor).union(
         _after_cursor(likes, cursor),
         _after_cursor(follows, cursor),
+        _after_cursor(will_be_there, cursor),
         all=True,
     ).order_by("-activity_at", "-activity_type", "-source_key")
     return list(combined[:limit])
@@ -210,6 +242,8 @@ def serialize_feed_row(row):
         "start_time": row["event_start_time"].isoformat() if row["event_start_time"] else None,
     }
     item["target"]["event"] = event
+    if row["activity_type"] == "will_be_there":
+        return item
     if row["activity_type"] == "rated_been":
         item["context"] = {
             "rating": float(row["rating"]),

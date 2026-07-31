@@ -15,6 +15,7 @@ from .models import (
     ReviewLike,
     User,
     UserStatus,
+    WillBeThere,
 )
 
 
@@ -36,6 +37,10 @@ class ReviewLikeConflict(Exception):
 
 
 class FollowConflict(Exception):
+    pass
+
+
+class WillBeThereExpired(Exception):
     pass
 
 
@@ -189,6 +194,48 @@ def event_is_loggable(event):
         event.start_time or time.min,
     )
     return local_wall_now >= scheduled_wall_time
+
+
+def will_be_there_is_active(event, *, at=None):
+    at = at or timezone_now()
+    local_today = at.astimezone(ZoneInfo(event.venue.city.timezone)).date()
+    return local_today <= event.event_date
+
+
+def save_will_be_there(*, user, event):
+    now = timezone_now()
+    if not will_be_there_is_active(event, at=now):
+        raise WillBeThereExpired
+    return WillBeThere.objects.get_or_create(
+        user=user,
+        event=event,
+        defaults={"created_at": now},
+    )
+
+
+def remove_will_be_there(*, user, event):
+    WillBeThere.objects.filter(user=user, event=event).delete()
+
+
+def serialize_will_be_there(entry):
+    return {
+        "event_id": entry.event_id,
+        "created_at": entry.created_at.isoformat().replace("+00:00", "Z"),
+    }
+
+
+def viewer_will_be_there_state(*, user, event):
+    active = will_be_there_is_active(event)
+    marked = active and WillBeThere.objects.filter(user=user, event=event).exists()
+    return {
+        "is_marked": marked,
+        "can_mark": active,
+        "unavailable_reason": (
+            None
+            if active
+            else "Will Be There expired at the end of the event's local date."
+        ),
+    }
 
 
 def serialize_review(review, *, include_author=False, viewer=None):

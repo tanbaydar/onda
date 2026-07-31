@@ -17,6 +17,9 @@ from .views import (
     pending_follow_requests,
     privacy_detail,
     review_like,
+    will_be_there_resource,
+    public_will_be_there,
+    circle_will_be_there,
 )
 
 
@@ -80,5 +83,20 @@ urlpatterns = [
         "reviews/<int:review_id>/like/",
         review_like,
         name="review-like",
+    ),
+    path(
+        "events/<int:event_id>/will-be-there/",
+        will_be_there_resource,
+        name="will-be-there-resource",
+    ),
+    path(
+        "events/<int:event_id>/will-be-there/public/",
+        public_will_be_there,
+        name="will-be-there-public",
+    ),
+    path(
+        "events/<int:event_id>/will-be-there/circle/",
+        circle_will_be_there,
+        name="will-be-there-circle",
     ),
 ]

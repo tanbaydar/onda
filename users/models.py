@@ -4,6 +4,7 @@ from django.contrib.auth.models import AbstractUser, UserManager
 from django.core.validators import RegexValidator
 from django.db import models
 from django.db.models import Q
+from zoneinfo import ZoneInfo
 
 
 username_validator = RegexValidator(
@@ -342,6 +343,70 @@ class ReviewLike(models.Model):
 
     class Meta:
         db_table = "REVIEW_LIKE"
+
+
+def active_wbt_event_predicate(at):
+    from catalog.models import City
+
+    predicate = Q(pk__in=[])
+    for city_id, timezone_name in City.objects.values_list("id", "timezone"):
+        local_today = at.astimezone(ZoneInfo(timezone_name)).date()
+        predicate |= Q(event__venue__city_id=city_id, event__event_date__gte=local_today)
+    return predicate
+
+
+class WillBeThereQuerySet(models.QuerySet):
+    def active_at(self, at, *, event_predicate=None):
+        predicate = event_predicate or active_wbt_event_predicate(at)
+        return self.filter(
+            predicate,
+            event__status__in=VISIBLE_EVENT_STATUSES,
+        )
+
+    def visible_to(self, viewer, at, *, event_predicate=None):
+        visible = self.active_at(at, event_predicate=event_predicate)
+        if viewer is None or not viewer.is_authenticated:
+            return visible.filter(user__is_private=False)
+        approved = Follow.objects.filter(
+            follower=viewer,
+            followee_id=models.OuterRef("user_id"),
+            status=FollowStatus.APPROVED,
+        )
+        return visible.annotate(_viewer_follows=models.Exists(approved)).filter(
+            Q(user__is_private=False) | Q(user=viewer) | Q(_viewer_follows=True)
+        )
+
+    def for_public_section(self, at):
+        return self.active_at(at).filter(user__is_private=False)
+
+    def for_circle(self, viewer, at):
+        followees = Follow.objects.filter(
+            follower=viewer,
+            status=FollowStatus.APPROVED,
+        ).values("followee_id")
+        return self.active_at(at).filter(user_id__in=followees).exclude(user=viewer)
+
+
+class WillBeThere(models.Model):
+    pk = models.CompositePrimaryKey("user_id", "event_id")
+    user = models.ForeignKey(
+        User,
+        db_column="user_id",
+        on_delete=models.CASCADE,
+        related_name="will_be_there_entries",
+    )
+    event = models.ForeignKey(
+        "catalog.Event",
+        db_column="event_id",
+        on_delete=models.RESTRICT,
+        related_name="will_be_there_entries",
+    )
+    created_at = models.DateTimeField()
+
+    objects = WillBeThereQuerySet.as_manager()
+
+    class Meta:
+        db_table = "WILL_BE_THERE"
 
 
 class NotificationType(models.TextChoices):

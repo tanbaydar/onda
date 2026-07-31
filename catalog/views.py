@@ -272,6 +272,7 @@ def event_detail(request, event_id):
         event_is_loggable,
         event_rating_summary,
         serialize_diary_entry,
+        viewer_will_be_there_state,
     )
 
     payload = _serialize_event(event)
@@ -290,5 +291,9 @@ def event_detail(request, event_id):
         )
         payload["viewer_entry"] = (
             serialize_diary_entry(entry) if entry is not None else None
+        )
+        payload["viewer_will_be_there"] = viewer_will_be_there_state(
+            user=request.user,
+            event=event,
         )
     return JsonResponse(payload)

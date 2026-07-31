@@ -31,6 +31,7 @@ from .models import (
     RATING_VALUES,
     Review,
     ReviewLike,
+    WillBeThere,
 )
 from .services import (
     EventNotStarted,
@@ -38,6 +39,7 @@ from .services import (
     ReviewLikeConflict,
     ReviewRequiresRating,
     FollowConflict,
+    WillBeThereExpired,
     accept_follow_request,
     change_privacy,
     decline_follow_request,
@@ -55,6 +57,9 @@ from .services import (
     unlike_review,
     unfollow_user,
     follow_user,
+    remove_will_be_there,
+    save_will_be_there,
+    serialize_will_be_there,
 )
 
 
@@ -356,6 +361,91 @@ def review_like(request, review_id):
     )
 
 
+@require_http_methods(["PUT", "DELETE"])
+def will_be_there_resource(request, event_id):
+    auth_error = _authentication_required(request)
+    if auth_error is not None:
+        return auth_error
+    event = _visible_event(event_id)
+    if request.method == "DELETE":
+        remove_will_be_there(user=request.user, event=event)
+        return HttpResponse(status=204)
+    try:
+        entry, created = save_will_be_there(user=request.user, event=event)
+    except WillBeThereExpired:
+        return JsonResponse(
+            {
+                "errors": {
+                    "will_be_there": [
+                        "This event's Will Be There window has expired."
+                    ]
+                }
+            },
+            status=409,
+        )
+    return JsonResponse(
+        {"will_be_there": serialize_will_be_there(entry)},
+        status=201 if created else 200,
+    )
+
+
+def _attendee_page(request, entries):
+    pagination = _pagination(request)
+    if pagination is None:
+        return JsonResponse(
+            {"error": "page and page_size must be positive integers"}, status=400
+        )
+    page_number, page_size = pagination
+    paginator = Paginator(
+        entries.select_related("user").order_by("-created_at", "-user_id"),
+        page_size,
+    )
+    try:
+        page = paginator.page(page_number)
+    except EmptyPage:
+        return JsonResponse({"error": "page out of range"}, status=404)
+    return JsonResponse(
+        {
+            "results": [
+                {
+                    "user": serialize_public_user(entry.user),
+                    "created_at": entry.created_at.isoformat().replace("+00:00", "Z"),
+                }
+                for entry in page.object_list
+            ],
+            "pagination": {
+                "page": page.number,
+                "page_size": page_size,
+                "total_results": paginator.count,
+                "total_pages": paginator.num_pages,
+                "next_page": page.next_page_number() if page.has_next() else None,
+                "previous_page": (
+                    page.previous_page_number() if page.has_previous() else None
+                ),
+            },
+        }
+    )
+
+
+@require_GET
+def public_will_be_there(request, event_id):
+    event = _visible_event(event_id)
+    entries = WillBeThere.objects.for_public_section(timezone_now()).filter(event=event)
+    return _attendee_page(request, entries)
+
+
+@require_GET
+def circle_will_be_there(request, event_id):
+    auth_error = _authentication_required(request)
+    if auth_error is not None:
+        return auth_error
+    event = _visible_event(event_id)
+    entries = WillBeThere.objects.for_circle(request.user, timezone_now()).filter(
+        event=event
+    )
+    return _attendee_page(request, entries)
+
+
 @require_http_methods(["POST", "DELETE"])
 def follow_resource(request, user_id):
     auth_error = _authentication_required(request)
@@ -530,7 +620,12 @@ def home_feed(request):
             return JsonResponse(
                 {"errors": {"cursor": ["Cursor is invalid."]}}, status=400
             )
-    rows = home_feed_rows(request.user, cursor=cursor, limit=page_size + 1)
+    rows = home_feed_rows(
+        request.user,
+        at=timezone_now(),
+        cursor=cursor,
+        limit=page_size + 1,
+    )
     has_more = len(rows) > page_size
     rows = rows[:page_size]
     return JsonResponse(

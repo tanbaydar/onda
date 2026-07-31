@@ -1613,3 +1613,16 @@ event-backed items and resurrection restores them. Removing a source row makes i
 item disappear without cleanup copies. Future Will Be There, favorite-event, and
 favorite-artist sources must join this same database union and cursor key. They may
 not be fetched and merged in Python.
+
+## Amendment to Question 93
+
+Will Be There attendee lists order newest marks first by `created_at DESC`, with
+`user_id DESC` as the stable technical pagination tiebreak. This is the same recency
+convention used by other activity surfaces; the user ID does not represent product
+ranking. Public and Your Circle attendee sections paginate independently.
+
+Expired rows are retained logically rather than swept: physical deletion would
+destroy the settled requirement that Will Be There follows a postponed event to its
+new date. Liveness is the venue-local calendar predicate `today <= event_date`.
+Dormant rows are nonexistent on read surfaces but can become live again when the
+canonical event date moves forward.
