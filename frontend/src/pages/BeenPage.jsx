@@ -94,6 +94,7 @@ export default function BeenPage({ session }) {
                       ? "Unrated"
                       : `Your rating: ${entry.rating.toFixed(1)} stars`}
                   </p>
+                  {entry.has_review ? <p>Written review</p> : null}
                 </article>
               </li>
             ))}

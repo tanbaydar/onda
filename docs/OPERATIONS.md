@@ -149,3 +149,12 @@ Create a production frontend bundle with:
 cd /path/to/danced_app/frontend
 npm run build
 ```
+
+## Standing local product-test data
+
+The local development database includes the public account
+`review.public.test`, created for the Phase C written-review browser pipeline. It is
+standing test data, not disposable cleanup. Its public Been entry and review may be
+used to verify guest review visibility and signed-in review controls. Do not use or
+alter the founder's `tan` account when a public review fixture is needed, and do not
+place test-account credentials in the repository.

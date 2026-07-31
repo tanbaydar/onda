@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
 import { ApiError, fetchJson, fetchWithCsrf } from "../api.js";
+import PublicReviews from "../components/PublicReviews.jsx";
 import { formatEventDateTime } from "../formatEventDateTime.js";
 
 const RATINGS = [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5];
@@ -11,6 +12,8 @@ export default function EventPage({ user, onAuthenticationRequired }) {
   const { eventId } = useParams();
   const [retry, setRetry] = useState(0);
   const [rating, setRating] = useState("");
+  const [reviewBody, setReviewBody] = useState("");
+  const [reviewVersion, setReviewVersion] = useState(0);
   const [saving, setSaving] = useState(false);
   const [actionError, setActionError] = useState(null);
   const [state, setState] = useState({
@@ -32,6 +35,7 @@ export default function EventPage({ user, onAuthenticationRequired }) {
             ? ""
             : String(event.viewer_entry.rating),
         );
+        setReviewBody(event.viewer_entry?.review?.body ?? "");
       })
       .catch((error) => {
         if (error.name === "AbortError") {
@@ -47,12 +51,15 @@ export default function EventPage({ user, onAuthenticationRequired }) {
     return () => controller.abort();
   }, [eventId, retry, user?.id]);
 
-  async function mutate(path, options) {
+  async function mutate(path, options, { reviewsChanged = false } = {}) {
     setSaving(true);
     setActionError(null);
     try {
       await fetchWithCsrf(path, options);
       setRetry((value) => value + 1);
+      if (reviewsChanged) {
+        setReviewVersion((value) => value + 1);
+      }
     } catch (error) {
       if (error.status === 401 || error.status === 403) {
         setActionError("Sign in required.");
@@ -78,21 +85,65 @@ export default function EventPage({ user, onAuthenticationRequired }) {
   }
 
   function removeRating() {
-    if (!window.confirm("Remove your rating? The event will remain in Been.")) {
+    const warning = state.event.viewer_entry?.review
+      ? "Remove your rating? The event will remain in Been, but your written review and all of its likes will be permanently deleted."
+      : "Remove your rating? The event will remain in Been.";
+    if (!window.confirm(warning)) {
       return;
     }
-    mutate(`/api/events/${eventId}/been/rating/`, { method: "DELETE" });
+    mutate(
+      `/api/events/${eventId}/been/rating/`,
+      { method: "DELETE" },
+      { reviewsChanged: true },
+    );
   }
 
   function removeEntry() {
     if (
       !window.confirm(
-        "Remove this event from Been? This permanently deletes its rating.",
+        state.event.viewer_entry?.review
+          ? "Remove this event from Been? This permanently deletes the entry, rating, written review, and all review likes."
+          : "Remove this event from Been? This permanently deletes its rating.",
       )
     ) {
       return;
     }
     mutate(`/api/events/${eventId}/been/`, { method: "DELETE" });
+  }
+
+  function saveReview(event) {
+    event.preventDefault();
+    const trimmedLength = reviewBody.trim().length;
+    if (trimmedLength < 1 || trimmedLength > 1000) {
+      setActionError(
+        "Written review must be between 1 and 1,000 characters after trimming.",
+      );
+      return;
+    }
+    mutate(
+      `/api/events/${eventId}/been/review/`,
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ body: reviewBody }),
+      },
+      { reviewsChanged: true },
+    );
+  }
+
+  function deleteReview() {
+    if (
+      !window.confirm(
+        "Delete your written review? Its likes will be permanently deleted. Your rating and Been entry will remain.",
+      )
+    ) {
+      return;
+    }
+    mutate(
+      `/api/events/${eventId}/been/review/`,
+      { method: "DELETE" },
+      { reviewsChanged: true },
+    );
   }
 
   if (state.loading) {
@@ -125,6 +176,7 @@ export default function EventPage({ user, onAuthenticationRequired }) {
   }
 
   const event = state.event;
+  const trimmedReviewLength = reviewBody.trim().length;
   return (
     <main>
       <article>
@@ -222,6 +274,49 @@ export default function EventPage({ user, onAuthenticationRequired }) {
                         Remove from Been
                       </button>
                     </p>
+                    {event.viewer_entry.rating !== null ? (
+                      <form onSubmit={saveReview}>
+                        <p>
+                          <label htmlFor="review-body">Written review</label>
+                        </p>
+                        <textarea
+                          id="review-body"
+                          value={reviewBody}
+                          required
+                          rows={8}
+                          onChange={(changeEvent) =>
+                            setReviewBody(changeEvent.target.value)
+                          }
+                        />
+                        <p>
+                          {trimmedReviewLength} of 1,000 stored characters
+                        </p>
+                        <button
+                          type="submit"
+                          disabled={
+                            saving ||
+                            trimmedReviewLength < 1 ||
+                            trimmedReviewLength > 1000
+                          }
+                        >
+                          {event.viewer_entry.review
+                            ? "Save review changes"
+                            : "Publish review"}
+                        </button>
+                        {event.viewer_entry.review ? (
+                          <>
+                            {" "}
+                            <button
+                              type="button"
+                              disabled={saving}
+                              onClick={deleteReview}
+                            >
+                              Delete review
+                            </button>
+                          </>
+                        ) : null}
+                      </form>
+                    ) : null}
                   </>
                 ) : null}
               </>
@@ -229,6 +324,12 @@ export default function EventPage({ user, onAuthenticationRequired }) {
           </section>
         ) : null}
       </article>
+      <PublicReviews
+        eventId={event.id}
+        user={user}
+        version={reviewVersion}
+        onAuthenticationRequired={onAuthenticationRequired}
+      />
     </main>
   );
 }
