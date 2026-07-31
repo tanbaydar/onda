@@ -1519,3 +1519,12 @@ Profile **Been** tab contains all preserved Been attendance entries, including e
 whose rating has been removed. Removing a rating does not make the attendance entry
 disappear from its owner's Been history. The **Reviews** tab remains limited to
 entries with a written review.
+
+## Interim implementation note for Question 154
+
+Before event-engagement signals are meaningful, Discover includes a city-scoped
+**Recent events** section ordered by recency through the existing past-events
+catalog contract. This is a plain recency list, not Question 154's **Popular recent
+events** section. It is an interim stand-in only; the popularity-ranked version
+remains deferred until its specified engagement signals can support a truthful
+ranking.

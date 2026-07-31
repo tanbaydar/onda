@@ -82,6 +82,16 @@ export default function DiscoverPage() {
             emptyMessage={`No upcoming events in ${selectedCity.name}.`}
             showCity={false}
           />
+          <EventList
+            key={`recent-${selectedCity.id}`}
+            heading={`Recent events in ${selectedCity.name}`}
+            scopeName="city_id"
+            scopeId={selectedCity.id}
+            when="past"
+            pageSize={10}
+            emptyMessage={`No recent events in ${selectedCity.name}.`}
+            showCity={false}
+          />
         </>
       ) : null}
     </main>

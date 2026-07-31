@@ -72,6 +72,7 @@ export default function EventList({
   scopeId,
   when,
   emptyMessage,
+  pageSize = 20,
   showVenue = true,
   showCity = true,
   omittedArtistId = null,
@@ -90,6 +91,7 @@ export default function EventList({
       when,
       [scopeName]: String(scopeId),
       page: String(page),
+      page_size: String(pageSize),
     });
 
     setState({ loading: true, error: null, data: null });
@@ -104,7 +106,7 @@ export default function EventList({
       });
 
     return () => controller.abort();
-  }, [page, retry, scopeId, scopeName, when]);
+  }, [page, pageSize, retry, scopeId, scopeName, when]);
 
   return (
     <section>
