@@ -6,11 +6,11 @@
 >
 > Branch: `main`
 >
-> Verified implementation state: Phase C Slice 4A complete through frontend,
-> including the post-slice social-state synchronization fix.
+> Verified implementation state: Phase C Slice 5 complete locally through the
+> Will Be There backend and frontend.
 >
-> Remote state: `origin/main` is at `819da58`; the working tree was clean when Slice
-> 4B began.
+> Remote state: `origin/main` is at `b59a240`; Slice 5 commits remain local and
+> unpushed.
 >
 > Purpose: provide a self-contained, evidence-based handoff for the current
 > ingestion, catalog, identity, Been, rating, and review implementation.
@@ -216,6 +216,19 @@ Complete locally and unpushed:
 - authentication-aware `/` landing and legacy `city_id` preservation;
 - login and registration landing on Home;
 - direct guest Home access and logout-on-Home redirecting to Discover.
+
+### Phase C slice 5 — Will Be There
+
+Complete locally and unpushed:
+
+- venue-local calendar liveness through the shared clock seam;
+- logically retained dormant rows so postponement can restore user intent;
+- idempotent mark/unmark state with immutable activity time;
+- privacy-aware Public and Your Circle attendee sections;
+- authenticated event-detail viewer state and zero-style controls;
+- fourth database-union Home branch;
+- bounded city-timezone query plus one four-source feed query;
+- no navigation additions.
 
 ### Not implemented
 
@@ -612,6 +625,15 @@ Physical deletion rules:
 - actor cannot equal recipient;
 - unlike and unfollow do not retract history; review deletion cascades linked likes.
 
+#### `WILL_BE_THERE`
+
+- composite primary key `(user_id, event_id)`;
+- immutable `created_at` Home activity time;
+- user deletion cascades physically; event deletion is restrictive;
+- no stored expiry or counters;
+- active while venue-local today is on or before the event date;
+- dormant rows remain stored so postponement and resurrection can restore them.
+
 Django's generated MySQL foreign key did not physically emit the DBML-required user
 cascade. The solution was deliberately split:
 
@@ -652,6 +674,8 @@ database itself to preserve the rule.
 0006_enforce_review_database_cascades
 0007_follow_notification
 0008_enforce_social_database_cascades
+0009_willbethere
+0010_enforce_wbt_user_cascade
 ```
 
 ### Custom-user migration surgery
@@ -1289,6 +1313,10 @@ Private ratings contributing to an average must never imply attributed visibilit
   conflict is treated as state drift and also refetches both without a dead-end error.
 - These live social refetches bypass the browser cache. DELETE endpoints return a
   genuinely bodyless HTTP 204 so the Vite proxy and browser can complete the request.
+- Will Be There has separate Public and Your Circle attendee sections. Guests may
+  read Public and receive the established Circle sign-in prompt. Signed-in viewers
+  can mark or silently unmark before venue-local expiry; every rendered attendee
+  projection refetches after mutation or state drift.
 
 ### Date formatting
 
@@ -1365,7 +1393,7 @@ Never call an unsafe-method check end-to-end if it omits browser security header
 Current backend suite:
 
 ```text
-146 tests
+159 tests
 ```
 
 Major groups:
@@ -1411,7 +1439,7 @@ harness is introduced.
 
 At the last implementation verification:
 
-- full Django suite: 146 green;
+- full Django suite: 159 green;
 - Django system checks: clean;
 - test runner built and destroyed a fresh database successfully;
 - fixture audit: clean across 13 JSON fixtures;

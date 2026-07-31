@@ -4,6 +4,7 @@ import { Link, useParams } from "react-router-dom";
 import { ApiError, fetchJson, fetchWithCsrf } from "../api.js";
 import PublicReviews from "../components/PublicReviews.jsx";
 import YourCircle from "../components/YourCircle.jsx";
+import WillBeThereAttendees from "../components/WillBeThereAttendees.jsx";
 import { formatEventDateTime } from "../formatEventDateTime.js";
 
 const RATINGS = [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5];
@@ -15,8 +16,10 @@ export default function EventPage({ user, onAuthenticationRequired }) {
   const [rating, setRating] = useState("");
   const [reviewBody, setReviewBody] = useState("");
   const [socialVersion, setSocialVersion] = useState(0);
+  const [willBeThereVersion, setWillBeThereVersion] = useState(0);
   const [saving, setSaving] = useState(false);
   const [actionError, setActionError] = useState(null);
+  const [willBeThereError, setWillBeThereError] = useState(null);
   const [state, setState] = useState({
     loading: true,
     error: null,
@@ -147,6 +150,30 @@ export default function EventPage({ user, onAuthenticationRequired }) {
     );
   }
 
+  async function changeWillBeThere() {
+    setSaving(true);
+    setWillBeThereError(null);
+    try {
+      await fetchWithCsrf(`/api/events/${eventId}/will-be-there/`, {
+        method: state.event.viewer_will_be_there.is_marked ? "DELETE" : "PUT",
+      });
+      setRetry((value) => value + 1);
+      setWillBeThereVersion((value) => value + 1);
+    } catch (error) {
+      if (error.status === 401 || error.status === 403) {
+        setWillBeThereError("Sign in required.");
+        onAuthenticationRequired();
+      } else if (error.status === 404 || error.status === 409) {
+        setRetry((value) => value + 1);
+        setWillBeThereVersion((value) => value + 1);
+      } else {
+        setWillBeThereError("Will Be There could not be changed.");
+      }
+    } finally {
+      setSaving(false);
+    }
+  }
+
   if (state.loading) {
     return (
       <main>
@@ -226,6 +253,21 @@ export default function EventPage({ user, onAuthenticationRequired }) {
             <p>Not enough ratings</p>
           )}
         </section>
+        {user ? (
+          <section>
+            <h2>Will Be There</h2>
+            {willBeThereError ? <p>{willBeThereError}</p> : null}
+            {event.viewer_will_be_there.can_mark ? (
+              <button type="button" disabled={saving} onClick={changeWillBeThere}>
+                {event.viewer_will_be_there.is_marked
+                  ? "Remove Will Be There"
+                  : "Mark Will Be There"}
+              </button>
+            ) : (
+              <p>{event.viewer_will_be_there.unavailable_reason}</p>
+            )}
+          </section>
+        ) : null}
         {user ? (
           <section>
             <h2>Your Been entry</h2>
@@ -325,6 +367,18 @@ export default function EventPage({ user, onAuthenticationRequired }) {
           </section>
         ) : null}
       </article>
+      <WillBeThereAttendees
+        eventId={event.id}
+        scope="circle"
+        user={user}
+        version={willBeThereVersion}
+      />
+      <WillBeThereAttendees
+        eventId={event.id}
+        scope="public"
+        user={user}
+        version={willBeThereVersion}
+      />
       <YourCircle
         eventId={event.id}
         user={user}

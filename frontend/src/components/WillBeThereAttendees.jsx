@@ -1,0 +1,93 @@
+import { useEffect, useState } from "react";
+
+import { fetchJson } from "../api.js";
+
+
+export default function WillBeThereAttendees({ eventId, scope, user, version }) {
+  const [page, setPage] = useState(1);
+  const [retry, setRetry] = useState(0);
+  const [state, setState] = useState({ loading: true, error: null, data: null });
+  const isCircle = scope === "circle";
+
+  useEffect(() => {
+    setPage(1);
+  }, [eventId, version]);
+
+  useEffect(() => {
+    if (isCircle && !user) {
+      setState({ loading: false, error: null, data: null });
+      return undefined;
+    }
+    const controller = new AbortController();
+    const query = new URLSearchParams({ page: String(page), page_size: "20" });
+    setState({ loading: true, error: null, data: null });
+    fetchJson(`/api/events/${eventId}/will-be-there/${scope}/?${query}`, {
+      cache: "no-store",
+      signal: controller.signal,
+    })
+      .then((data) => setState({ loading: false, error: null, data }))
+      .catch((error) => {
+        if (error.name !== "AbortError") {
+          setState({ loading: false, error, data: null });
+        }
+      });
+    return () => controller.abort();
+  }, [eventId, isCircle, page, retry, scope, user, version]);
+
+  const heading = isCircle ? "Your Circle — Will Be There" : "Public — Will Be There";
+  if (isCircle && !user) {
+    return (
+      <section>
+        <h2>{heading}</h2>
+        <p>Sign in to see which people in your Circle will be there.</p>
+      </section>
+    );
+  }
+  return (
+    <section>
+      <h2>{heading}</h2>
+      {state.loading ? <p>Loading attendees.</p> : null}
+      {state.error ? (
+        <>
+          <p>Attendees could not be loaded.</p>
+          <button type="button" onClick={() => setRetry((value) => value + 1)}>
+            Retry
+          </button>
+        </>
+      ) : null}
+      {state.data && state.data.results.length === 0 ? (
+        <p>No one in this section has marked Will Be There.</p>
+      ) : null}
+      {state.data && state.data.results.length > 0 ? (
+        <>
+          <ol>
+            {state.data.results.map((attendee) => (
+              <li key={attendee.user.id}>
+                {attendee.user.display_name} (@{attendee.user.username})
+              </li>
+            ))}
+          </ol>
+          <nav aria-label={`${heading} pagination`}>
+            <button
+              type="button"
+              disabled={state.data.pagination.previous_page === null}
+              onClick={() => setPage(state.data.pagination.previous_page)}
+            >
+              Previous
+            </button>
+            <span>
+              {" "}Page {state.data.pagination.page} of {state.data.pagination.total_pages}{" "}
+            </span>
+            <button
+              type="button"
+              disabled={state.data.pagination.next_page === null}
+              onClick={() => setPage(state.data.pagination.next_page)}
+            >
+              Next
+            </button>
+          </nav>
+        </>
+      ) : null}
+    </section>
+  );
+}

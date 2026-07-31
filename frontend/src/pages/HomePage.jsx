@@ -17,6 +17,18 @@ function FeedItem({ item }) {
     );
   }
   const event = item.target.event;
+  if (item.type === "will_be_there") {
+    return (
+      <article>
+        <h2>
+          {item.actor.display_name} will be at{" "}
+          <Link to={`/events/${event.id}`}>{event.title}</Link>
+        </h2>
+        <p>{formatEventDateTime(event.event_date, event.start_time)}</p>
+        <time dateTime={item.activity_at}>{new Date(item.activity_at).toLocaleString()}</time>
+      </article>
+    );
+  }
   if (item.type === "review_like") {
     return (
       <article>
