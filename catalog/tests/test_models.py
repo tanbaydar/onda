@@ -1,7 +1,7 @@
 from django.db import IntegrityError, connection, transaction
 from django.test import TestCase
 
-from .models import (
+from catalog.models import (
     Artist,
     ArtistIdentity,
     City,
