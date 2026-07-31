@@ -6,6 +6,7 @@ import PublicReviews from "../components/PublicReviews.jsx";
 import YourCircle from "../components/YourCircle.jsx";
 import WillBeThereAttendees from "../components/WillBeThereAttendees.jsx";
 import { formatEventDateTime } from "../formatEventDateTime.js";
+import FavoriteControl from "../components/FavoriteControl.jsx";
 
 const RATINGS = [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5];
 
@@ -242,6 +243,8 @@ export default function EventPage({ user, onAuthenticationRequired }) {
             ))}
           </ol>
         </section>
+        <section><h2>Will Be There attendance</h2><p>{event.will_be_there_summary.active_count} active marks.</p></section>
+        {user ? <FavoriteControl path={`/api/events/${event.id}/favorite/`} state={event.viewer_favorite} onChanged={() => setRetry((value) => value + 1)} onAuthenticationRequired={onAuthenticationRequired} /> : null}
         <section>
           <h2>Rating</h2>
           {event.rating_summary.state === "available" ? (

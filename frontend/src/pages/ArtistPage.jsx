@@ -3,8 +3,9 @@ import { Link, useParams } from "react-router-dom";
 
 import { ApiError, fetchJson } from "../api.js";
 import EventList from "../components/EventList.jsx";
+import FavoriteControl from "../components/FavoriteControl.jsx";
 
-export default function ArtistPage() {
+export default function ArtistPage({ user }) {
   const { artistId } = useParams();
   const [retry, setRetry] = useState(0);
   const [state, setState] = useState({
@@ -33,7 +34,7 @@ export default function ArtistPage() {
         });
       });
     return () => controller.abort();
-  }, [artistId, retry]);
+  }, [artistId, retry, user?.id]);
 
   if (state.loading) {
     return (
@@ -73,6 +74,7 @@ export default function ArtistPage() {
           <img src={artist.image_url} alt={artist.name} />
         ) : null}
       </article>
+      {user ? <FavoriteControl path={`/api/artists/${artist.id}/favorite/`} state={artist.viewer_favorite} onChanged={() => setRetry((value) => value + 1)} /> : null}
       <EventList
         heading="Upcoming"
         scopeName="artist_id"

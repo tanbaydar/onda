@@ -248,10 +248,19 @@ Complete and pushed:
 
 ### Phase C slice 6B — favorites, statistics, and final Home sources
 
-Implementation is in progress on top of `294d456`: the approved contracts add
-event, artist, and private venue favorites; profile statistics and normalized
-given-rating distribution; the anonymous active Will-Be-There count; and the final
-favorite-event and favorite-artist branches of the database-assembled Home feed.
+Complete locally and unpushed through `ca2e061`:
+
+- event, artist, and owner-private venue favorites with locked three-item caps for
+  profile-facing favorite types;
+- profile favorite sections, statistics, and normalized given-rating distribution;
+- anonymous-inclusive active Will-Be-There count, kept distinct from attendee-list
+  pagination totals;
+- favorite-event and favorite-artist activity as the fifth and sixth branches of
+  the database-assembled Home feed, without increasing its bounded query count;
+- zero-style detail controls, Profile summaries, and Home renderers.
+
+This completes Milestone 3's implemented social-product scope. Email verification
+and the deliberately deferred platform/account features below remain outstanding.
 
 ### Not implemented
 

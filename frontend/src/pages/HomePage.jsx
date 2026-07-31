@@ -17,6 +17,9 @@ function FeedItem({ item }) {
       </article>
     );
   }
+  if (item.type === "favorite_artist") {
+    return <article><h2><Link to={profilePath(item.actor.username)}>{item.actor.display_name}</Link> favorited <Link to={`/artists/${item.target.artist.id}`}>{item.target.artist.name}</Link></h2><time dateTime={item.activity_at}>{new Date(item.activity_at).toLocaleString()}</time></article>;
+  }
   const event = item.target.event;
   if (item.type === "will_be_there") {
     return (
@@ -29,6 +32,9 @@ function FeedItem({ item }) {
         <time dateTime={item.activity_at}>{new Date(item.activity_at).toLocaleString()}</time>
       </article>
     );
+  }
+  if (item.type === "favorite_event") {
+    return <article><h2><Link to={profilePath(item.actor.username)}>{item.actor.display_name}</Link> favorited <Link to={`/events/${event.id}`}>{event.title}</Link></h2><p>{formatEventDateTime(event.event_date, event.start_time)}</p><time dateTime={item.activity_at}>{new Date(item.activity_at).toLocaleString()}</time></article>;
   }
   if (item.type === "review_like") {
     return (
@@ -100,7 +106,7 @@ export default function HomePage({ session }) {
       {!state.loading && !state.error && state.results.length === 0 ? (
         <p>No activity from people you follow yet. <Link to="/discover">Discover events</Link>.</p>
       ) : null}
-      {state.results.length > 0 ? <ol>{state.results.map((item) => <li key={`${item.type}-${item.activity_at}-${item.actor.id}-${item.target.event?.id ?? item.target.user?.id}`}><FeedItem item={item} /></li>)}</ol> : null}
+      {state.results.length > 0 ? <ol>{state.results.map((item) => <li key={`${item.type}-${item.activity_at}-${item.actor.id}-${item.target.event?.id ?? item.target.user?.id ?? item.target.artist?.id}`}><FeedItem item={item} /></li>)}</ol> : null}
       {state.next && !state.error ? <button type="button" disabled={loadingMore} onClick={loadMore}>{loadingMore ? "Loading more." : "Load more"}</button> : null}
     </main>
   );

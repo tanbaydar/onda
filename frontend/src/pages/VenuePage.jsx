@@ -3,8 +3,9 @@ import { Link, useParams } from "react-router-dom";
 
 import { ApiError, fetchJson } from "../api.js";
 import EventList from "../components/EventList.jsx";
+import FavoriteControl from "../components/FavoriteControl.jsx";
 
-export default function VenuePage() {
+export default function VenuePage({ user }) {
   const { venueId } = useParams();
   const [retry, setRetry] = useState(0);
   const [state, setState] = useState({
@@ -33,7 +34,7 @@ export default function VenuePage() {
         });
       });
     return () => controller.abort();
-  }, [retry, venueId]);
+  }, [retry, user?.id, venueId]);
 
   if (state.loading) {
     return (
@@ -82,6 +83,7 @@ export default function VenuePage() {
           <dd>{venue.city.timezone}</dd>
         </dl>
       </article>
+      {user ? <FavoriteControl path={`/api/venues/${venue.id}/favorite/`} state={venue.viewer_favorite} onChanged={() => setRetry((value) => value + 1)} /> : null}
       <EventList
         heading="Upcoming"
         scopeName="venue_id"

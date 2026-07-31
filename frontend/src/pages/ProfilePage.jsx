@@ -200,6 +200,32 @@ function FollowRequests({ version }) {
 }
 
 
+function ProfileFavoritesAndStats({ username, owner }) {
+  const [retry, setRetry] = useState(0);
+  const [state, setState] = useState({ loading: true, error: null, favorites: null, stats: null, venues: null });
+  useEffect(() => {
+    const controller = new AbortController();
+    setState({ loading: true, error: null, favorites: null, stats: null, venues: null });
+    Promise.all([
+      fetchJson(`/api/users/${encodeURIComponent(username)}/favorites/`, { signal: controller.signal, cache: "no-store" }),
+      fetchJson(`/api/users/${encodeURIComponent(username)}/stats/`, { signal: controller.signal, cache: "no-store" }),
+      owner ? fetchJson("/api/me/favorite-venues/", { signal: controller.signal, cache: "no-store" }) : Promise.resolve(null),
+    ]).then(([favorites, stats, venues]) => setState({ loading: false, error: null, favorites, stats, venues })).catch((error) => { if (error.name !== "AbortError") setState({ loading: false, error, favorites: null, stats: null, venues: null }); });
+    return () => controller.abort();
+  }, [owner, retry, username]);
+  if (state.loading) return <section><h2>Favorites and statistics</h2><p>Loading favorites and statistics.</p></section>;
+  if (state.error) return <section><h2>Favorites and statistics</h2><p>Favorites and statistics could not be loaded.</p><button type="button" onClick={() => setRetry((value) => value + 1)}>Retry</button></section>;
+  const statistics = state.stats.statistics;
+  return <>
+    <section><h2>Favorite events</h2>{state.favorites.events.length ? <ol>{state.favorites.events.map(({ event }) => <li key={event.id}><Link to={`/events/${event.id}`}>{event.title}</Link></li>)}</ol> : <p>No favorite events.</p>}</section>
+    <section><h2>Favorite artists</h2>{state.favorites.artists.length ? <ol>{state.favorites.artists.map(({ artist }) => <li key={artist.id}><Link to={`/artists/${artist.id}`}>{artist.name}</Link></li>)}</ol> : <p>No favorite artists.</p>}</section>
+    {owner ? <section><h2>Favorite venues</h2>{state.venues.results.length ? <ol>{state.venues.results.map(({ venue }) => <li key={venue.id}><Link to={`/venues/${venue.id}`}>{venue.name}</Link></li>)}</ol> : <p>No favorite venues.</p>}</section> : null}
+    <section><h2>Statistics</h2><dl><dt>Events in Been</dt><dd>{statistics.events_in_been}</dd><dt>Written reviews</dt><dd>{statistics.written_reviews}</dd><dt>Venues visited</dt><dd>{statistics.venues_visited}</dd><dt>Cities visited</dt><dd>{statistics.cities_visited}</dd><dt>Average rating given</dt><dd>{statistics.average_rating_given.state === "available" ? statistics.average_rating_given.value.toFixed(1) : "No ratings"}</dd><dt>Followers</dt><dd>{statistics.followers}</dd><dt>Following</dt><dd>{statistics.following}</dd></dl></section>
+    <section><h2>Rating distribution</h2>{state.stats.rating_distribution.state === "empty" ? <p>No ratings.</p> : <ol>{state.stats.rating_distribution.buckets.map((bucket) => <li key={bucket.rating}><span>{bucket.rating.toFixed(1)} stars </span><meter min="0" max="1" value={bucket.relative_value}>{bucket.relative_value}</meter></li>)}</ol>}</section>
+  </>;
+}
+
+
 export default function ProfilePage({ session, tab = "been" }) {
   const { username } = useParams();
   const [retry, setRetry] = useState(0);
@@ -234,6 +260,7 @@ export default function ProfilePage({ session, tab = "been" }) {
       {data.relationship ? <section><h2>Relationship</h2>{data.relationship.follows_you ? <p>Follows you.</p> : null}{data.relationship.outgoing_status === "pending" ? <p>Request pending.</p> : null}{data.relationship.outgoing_status === "approved" ? <p>Following.</p> : null}{data.relationship.can_follow ? <button type="button" onClick={changeFollow}>{data.relationship.follow_action === "request" ? "Request to follow" : "Follow"}</button> : null}{data.relationship.can_unfollow ? <button type="button" onClick={changeFollow}>{data.relationship.outgoing_status === "pending" ? "Withdraw request" : "Unfollow"}</button> : null}</section> : null}
       {profileNavigationVisible(data.access) ? <nav aria-label="Profile sections"><ul><li><Link to={profilePath(profile.username)}>Been</Link></li><li><Link to={`${profilePath(profile.username)}/reviews`}>Reviews</Link></li></ul></nav> : null}
       {data.access === "stub" ? <p>This account is private. Follow and receive approval to see its activity.</p> : tab === "reviews" ? <ReviewsTab username={profile.username} access={data.access} sessionUser={session.user} /> : <BeenTab username={profile.username} access={data.access} />}
+      {data.access !== "stub" ? <ProfileFavoritesAndStats username={profile.username} owner={data.access === "owner"} /> : null}
       {data.access === "owner" ? <><ProfileEditor profile={profile} onSaved={(saved) => setState((current) => ({ ...current, data: { ...current.data, profile: saved } }))} /><PrivacyControl account={data.account} onChanged={(privacy) => { setState((current) => ({ ...current, data: { ...current.data, account: { is_private: privacy.is_private } } })); setRequestVersion((value) => value + 1); }} /><FollowRequests version={requestVersion} /></> : null}
     </main>
   );

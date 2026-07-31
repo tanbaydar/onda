@@ -152,8 +152,8 @@ export default function App() {
         <Route path="/u/:username" element={<ProfilePage session={session} tab="been" />} />
         <Route path="/u/:username/reviews" element={<ProfilePage session={session} tab="reviews" />} />
         <Route path="/activity" element={<ActivityPage session={session} />} />
-        <Route path="/venues/:venueId" element={<VenuePage />} />
-        <Route path="/artists/:artistId" element={<ArtistPage />} />
+        <Route path="/venues/:venueId" element={<VenuePage user={session.user} />} />
+        <Route path="/artists/:artistId" element={<ArtistPage user={session.user} />} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
       <footer>
