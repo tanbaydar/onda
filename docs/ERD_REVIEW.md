@@ -255,3 +255,9 @@ and closed that observability gap.
   user root, stale `auth.user` content-type metadata was removed idempotently, and
   admin was reapplied above the custom user. Catalog, ingestion, and raw evidence were
   preserved.
+- 2026-07-31 — `DIARY_ENTRY` uses Django's `CASCADE` relationship from user and
+  `RESTRICT` relationship from event. Because Django's MySQL schema editor does not
+  emit the DBML's database-level `ON DELETE CASCADE` action, migration `users.0004`
+  replaces that generated foreign key with the frozen database action explicitly.
+  The event foreign key remains restrictive, preserving user history against catalog
+  deletion.

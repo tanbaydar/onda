@@ -266,4 +266,28 @@ def artist_detail(request, artist_id):
 
 def event_detail(request, event_id):
     event = get_object_or_404(_event_queryset(), pk=event_id)
-    return JsonResponse(_serialize_event(event))
+    from users.models import DiaryEntry
+    from users.services import (
+        NOT_STARTED_MESSAGE,
+        event_is_loggable,
+        event_rating_summary,
+        serialize_diary_entry,
+    )
+
+    payload = _serialize_event(event)
+    loggable = event_is_loggable(event)
+    payload["rating_summary"] = event_rating_summary(event)
+    payload["been"] = {
+        "loggable": loggable,
+        "unavailable_reason": None if loggable else NOT_STARTED_MESSAGE,
+    }
+    if request.user.is_authenticated:
+        entry = (
+            DiaryEntry.objects.visible_to(request.user)
+            .filter(event=event)
+            .first()
+        )
+        payload["viewer_entry"] = (
+            serialize_diary_entry(entry) if entry is not None else None
+        )
+    return JsonResponse(payload)

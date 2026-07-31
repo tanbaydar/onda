@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.contrib.auth.models import AbstractUser, UserManager
 from django.core.validators import RegexValidator
 from django.db import models
@@ -122,3 +124,80 @@ class User(AbstractUser):
         if self.username:
             self.username = self.username.lower()
         super().save(*args, **kwargs)
+
+
+RATING_VALUES = tuple(Decimal(value) for value in (
+    "0.5",
+    "1.0",
+    "1.5",
+    "2.0",
+    "2.5",
+    "3.0",
+    "3.5",
+    "4.0",
+    "4.5",
+    "5.0",
+))
+VISIBLE_EVENT_STATUSES = ("active", "unverified")
+
+
+class DiaryEntryQuerySet(models.QuerySet):
+    def visible_to(self, viewer):
+        visible = self.filter(event__status__in=VISIBLE_EVENT_STATUSES)
+        if viewer is None or not viewer.is_authenticated:
+            return visible.none()
+        return visible.filter(user=viewer)
+
+    def for_aggregation(self):
+        return self.filter(
+            event__status__in=VISIBLE_EVENT_STATUSES,
+            rating__isnull=False,
+        )
+
+
+class DiaryEntry(models.Model):
+    user = models.ForeignKey(
+        User,
+        db_column="user_id",
+        on_delete=models.CASCADE,
+        related_name="diary_entries",
+    )
+    event = models.ForeignKey(
+        "catalog.Event",
+        db_column="event_id",
+        on_delete=models.RESTRICT,
+        related_name="diary_entries",
+    )
+    rating = models.DecimalField(
+        max_digits=2,
+        decimal_places=1,
+        null=True,
+        blank=True,
+    )
+    rated_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    objects = DiaryEntryQuerySet.as_manager()
+
+    class Meta:
+        db_table = "DIARY_ENTRY"
+        constraints = [
+            models.UniqueConstraint(
+                fields=("user", "event"),
+                name="uq_diary_user_event",
+            ),
+            models.CheckConstraint(
+                condition=(
+                    models.Q(rating__isnull=True, rated_at__isnull=True)
+                    | models.Q(rating__isnull=False, rated_at__isnull=False)
+                ),
+                name="ck_diary_rating_rated_at",
+            ),
+            models.CheckConstraint(
+                condition=(
+                    models.Q(rating__isnull=True)
+                    | models.Q(rating__in=RATING_VALUES)
+                ),
+                name="ck_diary_rating_half_star",
+            ),
+        ]

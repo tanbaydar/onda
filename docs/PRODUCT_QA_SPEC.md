@@ -1493,3 +1493,20 @@ their email and complete verification before account actions.
 The current-session API may return an authenticated user's email to that same user.
 Email is self-only account data and must never be included in any future serializer
 for another user's profile, reviews, feed activity, or other public/social surface.
+
+## Amendment to Questions 13–14 and 73–74
+
+Been logging opens at the event's scheduled venue-local wall-clock time. On the
+fall-back daylight-saving transition, an ambiguous scheduled time opens at its
+first occurrence. On the spring-forward transition, a nonexistent scheduled time
+opens immediately after the clock jump. A missing source start time continues to
+mean venue-local midnight on the event date. This is a display-boundary ruling; it
+does not invent source precision or convert the catalog's local date and time.
+
+## Implementation note for Questions 186–188
+
+Removing a rating while keeping a Been entry is supported before written reviews
+exist. The current confirmation states that the event remains in Been. The reviews
+slice must extend that warning to explain and apply the review- and like-deletion
+consequences required by Questions 187–188; those consequences are vacuous until
+review records exist.

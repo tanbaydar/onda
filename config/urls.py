@@ -28,6 +28,7 @@ from catalog.views import (
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/auth/", include("users.urls")),
+    path("api/", include("users.been_urls")),
     path("api/cities/", city_list, name="city-list"),
     path("api/events/", event_list, name="event-list"),
     path("api/events/<int:event_id>/", event_detail, name="event-detail"),

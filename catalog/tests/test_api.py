@@ -435,8 +435,17 @@ class CatalogApiTests(TestCase):
         listing = self.get_events(page_size=1)
 
         self.assertEqual(detail.status_code, 200)
-        self.assertEqual(detail.json(), listing.json()["results"][0])
-        self.assertNotIn("status", detail.json())
+        detail_payload = detail.json()
+        rating_summary = detail_payload.pop("rating_summary")
+        been = detail_payload.pop("been")
+        self.assertEqual(detail_payload, listing.json()["results"][0])
+        self.assertEqual(
+            rating_summary,
+            {"state": "not_enough_ratings", "count": 0},
+        )
+        self.assertIn("loggable", been)
+        self.assertIn("unavailable_reason", been)
+        self.assertNotIn("status", detail_payload)
 
     def test_hidden_event_detail_is_not_found(self):
         response = self.client.get(f"/api/events/{self.hidden.id}/")
