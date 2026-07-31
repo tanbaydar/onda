@@ -3,7 +3,13 @@ import { useEffect, useState } from "react";
 import { fetchJson, fetchWithCsrf } from "../api.js";
 
 
-export default function YourCircle({ eventId, user, onAuthenticationRequired }) {
+export default function YourCircle({
+  eventId,
+  user,
+  version,
+  onSocialChanged,
+  onAuthenticationRequired,
+}) {
   const [page, setPage] = useState(1);
   const [retry, setRetry] = useState(0);
   const [actionError, setActionError] = useState(null);
@@ -18,6 +24,7 @@ export default function YourCircle({ eventId, user, onAuthenticationRequired }) 
     const query = new URLSearchParams({ page: String(page), page_size: "10" });
     setState({ loading: true, error: null, data: null });
     fetchJson(`/api/events/${eventId}/circle/?${query}`, {
+      cache: "no-store",
       signal: controller.signal,
     })
       .then((data) => setState({ loading: false, error: null, data }))
@@ -27,7 +34,7 @@ export default function YourCircle({ eventId, user, onAuthenticationRequired }) 
         }
       });
     return () => controller.abort();
-  }, [eventId, page, retry, user]);
+  }, [eventId, page, retry, user, version]);
 
   async function changeLike(review) {
     setActionError(null);
@@ -35,11 +42,13 @@ export default function YourCircle({ eventId, user, onAuthenticationRequired }) 
       await fetchWithCsrf(`/api/reviews/${review.id}/like/`, {
         method: review.viewer_has_liked ? "DELETE" : "POST",
       });
-      setRetry((value) => value + 1);
+      onSocialChanged();
     } catch (error) {
       if (error.status === 401 || error.status === 403) {
         setActionError("Sign in required.");
         onAuthenticationRequired();
+      } else if (error.status === 404 || error.status === 409) {
+        onSocialChanged();
       } else {
         setActionError("The review like could not be changed.");
       }

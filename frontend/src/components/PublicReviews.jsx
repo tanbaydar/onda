@@ -7,6 +7,7 @@ export default function PublicReviews({
   eventId,
   user,
   version,
+  onSocialChanged,
   onAuthenticationRequired,
 }) {
   const [sort, setSort] = useState("most_liked");
@@ -20,6 +21,7 @@ export default function PublicReviews({
     const query = new URLSearchParams({ sort, page: String(page) });
     setState({ loading: true, error: null, data: null });
     fetchJson(`/api/events/${eventId}/reviews/?${query}`, {
+      cache: "no-store",
       signal: controller.signal,
     })
       .then((data) => setState({ loading: false, error: null, data }))
@@ -37,11 +39,13 @@ export default function PublicReviews({
       await fetchWithCsrf(`/api/reviews/${review.id}/like/`, {
         method: review.viewer_has_liked ? "DELETE" : "POST",
       });
-      setRetry((value) => value + 1);
+      onSocialChanged();
     } catch (error) {
       if (error.status === 401 || error.status === 403) {
         setActionError("Sign in required.");
         onAuthenticationRequired();
+      } else if (error.status === 404 || error.status === 409) {
+        onSocialChanged();
       } else {
         setActionError("The review like could not be changed.");
       }
@@ -54,11 +58,13 @@ export default function PublicReviews({
       await fetchWithCsrf(`/api/users/${review.author.id}/follow/`, {
         method: review.viewer_follows ? "DELETE" : "POST",
       });
-      setRetry((value) => value + 1);
+      onSocialChanged();
     } catch (error) {
       if (error.status === 401 || error.status === 403) {
         setActionError("Sign in required.");
         onAuthenticationRequired();
+      } else if (error.status === 404 || error.status === 409) {
+        onSocialChanged();
       } else {
         setActionError("The follow could not be changed.");
       }

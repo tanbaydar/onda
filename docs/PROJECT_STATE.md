@@ -6,11 +6,11 @@
 >
 > Branch: `main`
 >
-> Verified implementation state: Phase C Slice 4A complete locally through frontend,
-> with all Slice 4A commits intentionally unpushed.
+> Verified implementation state: Phase C Slice 4A complete through frontend. A
+> post-slice social-state synchronization fix is complete locally and unpushed.
 >
-> Remote state: `origin/main` is at `20eb0ba`; all Slice 4A commits are intentionally
-> local and unpushed.
+> Remote state: `origin/main` is at `3601bce`; the synchronization fix remains local
+> and unpushed.
 >
 > Purpose: provide a self-contained, evidence-based handoff for the current
 > ingestion, catalog, identity, Been, rating, and review implementation.
@@ -1269,6 +1269,11 @@ Private ratings contributing to an average must never imply attributed visibilit
 - Circle average includes the viewer's own current rating and appears at one rating;
 - Public review bylines expose follow/unfollow only to signed-in non-self viewers;
 - author names remain plain text until `/u/{username}` exists.
+- Circle and Public are sibling projections of the same review/follow state. A
+  successful mutation invalidates and refetches both projections; a 404/409 mutation
+  conflict is treated as state drift and also refetches both without a dead-end error.
+- These live social refetches bypass the browser cache. DELETE endpoints return a
+  genuinely bodyless HTTP 204 so the Vite proxy and browser can complete the request.
 
 ### Date formatting
 

@@ -14,7 +14,7 @@ export default function EventPage({ user, onAuthenticationRequired }) {
   const [retry, setRetry] = useState(0);
   const [rating, setRating] = useState("");
   const [reviewBody, setReviewBody] = useState("");
-  const [reviewVersion, setReviewVersion] = useState(0);
+  const [socialVersion, setSocialVersion] = useState(0);
   const [saving, setSaving] = useState(false);
   const [actionError, setActionError] = useState(null);
   const [state, setState] = useState({
@@ -59,7 +59,7 @@ export default function EventPage({ user, onAuthenticationRequired }) {
       await fetchWithCsrf(path, options);
       setRetry((value) => value + 1);
       if (reviewsChanged) {
-        setReviewVersion((value) => value + 1);
+        setSocialVersion((value) => value + 1);
       }
     } catch (error) {
       if (error.status === 401 || error.status === 403) {
@@ -328,12 +328,15 @@ export default function EventPage({ user, onAuthenticationRequired }) {
       <YourCircle
         eventId={event.id}
         user={user}
+        version={socialVersion}
+        onSocialChanged={() => setSocialVersion((value) => value + 1)}
         onAuthenticationRequired={onAuthenticationRequired}
       />
       <PublicReviews
         eventId={event.id}
         user={user}
-        version={reviewVersion}
+        version={socialVersion}
+        onSocialChanged={() => setSocialVersion((value) => value + 1)}
         onAuthenticationRequired={onAuthenticationRequired}
       />
     </main>

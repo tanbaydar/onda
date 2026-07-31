@@ -7,7 +7,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.core.paginator import EmptyPage, Paginator
 from django.db import transaction
 from django.db.models import Avg, Count, Exists, OuterRef, Prefetch, Q
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import (
@@ -226,7 +226,7 @@ def login_view(request):
 @require_POST
 def logout_view(request):
     logout(request)
-    return JsonResponse({}, status=204)
+    return HttpResponse(status=204)
 
 
 @require_http_methods(["PUT", "DELETE"])
@@ -238,7 +238,7 @@ def event_been(request, event_id):
     if request.method == "DELETE":
         if not remove_entry(user=request.user, event=event):
             return JsonResponse({"error": "Been entry not found."}, status=404)
-        return JsonResponse({}, status=204)
+        return HttpResponse(status=204)
 
     rating = _rating_from_payload(request)
     if rating is None:
@@ -293,7 +293,7 @@ def event_been_review(request, event_id):
     if request.method == "DELETE":
         if not delete_review(user=request.user, event=event):
             return JsonResponse({"error": "Review not found."}, status=404)
-        return JsonResponse({}, status=204)
+        return HttpResponse(status=204)
 
     body = _review_body(request)
     if body is None:
@@ -342,7 +342,7 @@ def review_like(request, review_id):
     if request.method == "DELETE":
         if not unlike_review(user=request.user, review=review):
             return JsonResponse({"error": "Review like not found."}, status=404)
-        return JsonResponse({}, status=204)
+        return HttpResponse(status=204)
     try:
         like_count = like_review(user=request.user, review=review)
     except ReviewLikeConflict as exc:
@@ -361,7 +361,7 @@ def follow_resource(request, user_id):
     if request.method == "DELETE":
         if not unfollow_user(follower_id=request.user.id, followee_id=user_id):
             return JsonResponse({"error": "Follow not found."}, status=404)
-        return JsonResponse({}, status=204)
+        return HttpResponse(status=204)
     try:
         follow = follow_user(follower_id=request.user.id, followee_id=user_id)
     except FollowConflict as exc:
@@ -442,7 +442,7 @@ def decline_request(request, follower_id):
         follower_id=follower_id,
     ):
         return JsonResponse({"error": "Follow request not found."}, status=404)
-    return JsonResponse({}, status=204)
+    return HttpResponse(status=204)
 
 
 @require_http_methods(["PUT"])

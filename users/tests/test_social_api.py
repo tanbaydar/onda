@@ -356,6 +356,7 @@ class SocialApiContractTests(TestCase):
         ).json()
 
         self.assertEqual(removed.status_code, 204)
+        self.assertEqual(removed.content, b"")
         self.assertEqual(circle["results"], [])
         self.assertEqual(Notification.objects.count(), before)
 

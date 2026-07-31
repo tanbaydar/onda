@@ -206,6 +206,7 @@ class ReviewApiContractTests(TestCase):
         self.assertEqual(liked.status_code, 201)
         self.assertEqual(duplicate.status_code, 409)
         self.assertEqual(unliked.status_code, 204)
+        self.assertEqual(unliked.content, b"")
 
     def test_public_review_visible_to_guest_and_private_review_owner_only(self):
         self.make_entry(self.public_owner)
