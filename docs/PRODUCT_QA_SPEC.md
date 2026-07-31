@@ -1528,3 +1528,19 @@ catalog contract. This is a plain recency list, not Question 154's **Popular rec
 events** section. It is an interim stand-in only; the popularity-ranked version
 remains deferred until its specified engagement signals can support a truthful
 ranking.
+
+## Amendment to Question 158
+
+Question 158's cancellation-hiding rule applies only when cancellation is conveyed
+by a trustworthy structured source signal. Cancellation prose in an event title does
+not hide the event: Danced preserves the title and keeps the event visible under its
+ordinary derived lifecycle. The live Boston catalog example `[CANCELLED] Nocturnal
+District presents: Rooftop Sessions 02` demonstrates why this distinction is
+user-visible.
+
+The ingestion pipeline must not interpret title text, strip cancellation markers,
+or synthesize lifecycle state from prose. This is consistent with Question 75's TBA
+venue amendment, Question 8's follow-the-source principle, and the no-title-parsing
+invariant. Structurally absent events already move through the three-miss
+unverified-to-hidden lifecycle. A future structured cancellation feature requires
+new source evidence and an explicit contract amendment.

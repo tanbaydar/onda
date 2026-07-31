@@ -284,6 +284,7 @@ def event_detail(request, event_id):
     if request.user.is_authenticated:
         entry = (
             DiaryEntry.objects.visible_to(request.user)
+            .select_related("review")
             .filter(event=event)
             .first()
         )

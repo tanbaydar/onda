@@ -201,3 +201,63 @@ class DiaryEntry(models.Model):
                 name="ck_diary_rating_half_star",
             ),
         ]
+
+
+class ReviewQuerySet(models.QuerySet):
+    def visible_to(self, viewer):
+        visible = self.filter(
+            entry__event__status__in=VISIBLE_EVENT_STATUSES,
+        )
+        if viewer is None or not viewer.is_authenticated:
+            return visible.filter(entry__user__is_private=False)
+        return visible.filter(
+            Q(entry__user=viewer) | Q(entry__user__is_private=False)
+        )
+
+    def for_public_section(self):
+        return self.filter(
+            entry__event__status__in=VISIBLE_EVENT_STATUSES,
+            entry__user__is_private=False,
+        )
+
+
+class Review(models.Model):
+    entry = models.OneToOneField(
+        DiaryEntry,
+        db_column="entry_id",
+        on_delete=models.CASCADE,
+        related_name="review",
+    )
+    body = models.CharField(max_length=1000)
+    published_at = models.DateTimeField()
+
+    objects = ReviewQuerySet.as_manager()
+
+    class Meta:
+        db_table = "REVIEW"
+        constraints = [
+            models.CheckConstraint(
+                condition=~Q(body__regex=r"^ *$"),
+                name="ck_review_body_nonblank",
+            ),
+        ]
+
+
+class ReviewLike(models.Model):
+    pk = models.CompositePrimaryKey("user_id", "review_id")
+    user = models.ForeignKey(
+        User,
+        db_column="user_id",
+        on_delete=models.CASCADE,
+        related_name="review_likes",
+    )
+    review = models.ForeignKey(
+        Review,
+        db_column="review_id",
+        on_delete=models.CASCADE,
+        related_name="likes",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "REVIEW_LIKE"
