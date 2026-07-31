@@ -104,10 +104,13 @@ Use these documents in this order:
    - Captured RA behavior and source reconnaissance.
 7. `docs/OPERATIONS.md`
    - Nightly command, alarm behavior, and scheduler guidance.
-8. `docs/danced-erd-guide.md`
+8. `docs/NAVIGATION.md`
+   - Binding five-destination navigation skeleton, landing rules, and interim
+     absorption register.
+9. `docs/danced-erd-guide.md`
    - Design/review method and rationale. It is a decision record, not scripture;
      later reviewed artifacts win if prose conflicts.
-9. `docs/archive/`
+10. `docs/archive/`
    - Historical and superseded material. Never treat it as current truth.
 
 When tests and prose appear to disagree, do not casually choose one. Read the

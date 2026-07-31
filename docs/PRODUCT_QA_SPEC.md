@@ -1510,3 +1510,12 @@ exist. The current confirmation states that the event remains in Been. The revie
 slice must extend that warning to explain and apply the review- and like-deletion
 consequences required by Questions 187–188; those consequences are vacuous until
 review records exist.
+
+## Amendment to Question 136
+
+Question 136's phrase “Been contains all rated events” predates the unrated-entry
+lifecycle established by Question 186. The later lifecycle ruling governs: the
+Profile **Been** tab contains all preserved Been attendance entries, including entries
+whose rating has been removed. Removing a rating does not make the attendance entry
+disappear from its owner's Been history. The **Reviews** tab remains limited to
+entries with a written review.
