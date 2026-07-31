@@ -147,6 +147,39 @@ class CatalogApiTests(TestCase):
             }
         )
 
+    def test_cities_are_canonical_fields_ordered_by_name(self):
+        response = self.client.get("/api/cities/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.json(),
+            {
+                "results": [
+                    {
+                        "id": self.boston.id,
+                        "name": "Boston",
+                        "region_code": "MA",
+                        "country_code": "US",
+                        "timezone": "America/New_York",
+                    },
+                    {
+                        "id": self.new_york.id,
+                        "name": "New York City",
+                        "region_code": "NY",
+                        "country_code": "US",
+                        "timezone": "America/New_York",
+                    },
+                    {
+                        "id": self.tokyo.id,
+                        "name": "Tokyo",
+                        "region_code": "13",
+                        "country_code": "JP",
+                        "timezone": "Asia/Tokyo",
+                    },
+                ]
+            },
+        )
+
     def test_filters_by_city_and_public_lifecycle_visibility(self):
         response = self.get_events(page_size=100)
 

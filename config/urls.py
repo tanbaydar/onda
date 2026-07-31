@@ -19,6 +19,7 @@ from django.urls import path
 
 from catalog.views import (
     artist_detail,
+    city_list,
     event_detail,
     event_list,
     venue_detail,
@@ -26,6 +27,7 @@ from catalog.views import (
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path("api/cities/", city_list, name="city-list"),
     path("api/events/", event_list, name="event-list"),
     path("api/events/<int:event_id>/", event_detail, name="event-detail"),
     path("api/venues/<int:venue_id>/", venue_detail, name="venue-detail"),

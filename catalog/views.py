@@ -100,6 +100,16 @@ def _serialize_artist(artist):
     }
 
 
+def _serialize_city_list_item(city):
+    return {
+        "id": city.id,
+        "name": city.name,
+        "region_code": city.region_code,
+        "country_code": city.country_code,
+        "timezone": city.timezone,
+    }
+
+
 def _event_queryset():
     lineup = EventArtist.objects.select_related("artist").order_by("position")
     return (
@@ -225,6 +235,18 @@ def event_list(request):
                     else None
                 ),
             },
+        }
+    )
+
+
+def city_list(request):
+    cities = City.objects.order_by("name")
+    return JsonResponse(
+        {
+            "results": [
+                _serialize_city_list_item(city)
+                for city in cities
+            ]
         }
     )
 
