@@ -46,6 +46,22 @@ class DancedUserManager(UserManager):
             raise ValueError("Superuser must have is_superuser=True.")
         return self._create_user(email, password, **extra_fields)
 
+    def profile_content_visible_to(self, viewer):
+        visible = self.get_queryset().filter(
+            status=UserStatus.ACTIVE,
+            username__isnull=False,
+        )
+        if viewer is None or not viewer.is_authenticated:
+            return visible.filter(is_private=False)
+        approved = Follow.objects.filter(
+            follower=viewer,
+            followee_id=models.OuterRef("pk"),
+            status=FollowStatus.APPROVED,
+        )
+        return visible.annotate(_viewer_follows=models.Exists(approved)).filter(
+            Q(is_private=False) | Q(pk=viewer.pk) | Q(_viewer_follows=True)
+        )
+
 
 class UserStatus(models.TextChoices):
     ACTIVE = "active", "Active"
@@ -69,7 +85,7 @@ class User(AbstractUser):
     home_city = models.ForeignKey(
         "catalog.City",
         db_column="home_city_id",
-        on_delete=models.SET_NULL,
+        on_delete=models.RESTRICT,
         null=True,
         blank=True,
         related_name="users",

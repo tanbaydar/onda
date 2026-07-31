@@ -4,9 +4,12 @@ import base64
 from decimal import Decimal
 
 from django.contrib.auth import authenticate, login, logout
+from django.core.exceptions import ValidationError
 from django.core.paginator import EmptyPage, Paginator
+from django.core.validators import URLValidator
 from django.db import transaction
 from django.db.models import Avg, Count, Exists, OuterRef, Prefetch, Q
+from django.db.models.functions import Length
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import ensure_csrf_cookie
@@ -17,7 +20,7 @@ from django.views.decorators.http import (
 )
 from django.utils.dateparse import parse_datetime
 
-from catalog.models import EventArtist
+from catalog.models import City, EventArtist
 from catalog.views import _event_queryset, _serialize_event
 from .forms import LoginForm, RegistrationForm
 from .home_feed import decode_cursor as decode_home_cursor
@@ -31,6 +34,8 @@ from .models import (
     RATING_VALUES,
     Review,
     ReviewLike,
+    User,
+    UserStatus,
     WillBeThere,
 )
 from .services import (
@@ -72,6 +77,63 @@ def _user_payload(user):
         "username": user.username,
         "display_name": user.display_name,
         "is_private": user.is_private,
+    }
+
+
+def _profile_identity(user):
+    city = user.home_city
+    return {
+        "id": user.id,
+        "username": user.username,
+        "display_name": user.display_name,
+        "avatar": user.avatar,
+        "bio": user.bio,
+        "home_city": (
+            {
+                "id": city.id,
+                "name": city.name,
+                "region_code": city.region_code,
+                "country_code": city.country_code,
+                "timezone": city.timezone,
+            }
+            if city is not None
+            else None
+        ),
+    }
+
+
+def _profile_user(username):
+    return get_object_or_404(
+        User.objects.select_related("home_city"),
+        username__iexact=username,
+        status=UserStatus.ACTIVE,
+        username__isnull=False,
+    )
+
+
+def _profile_access(viewer, profile):
+    if viewer.is_authenticated and viewer.pk == profile.pk:
+        return "owner"
+    if User.objects.profile_content_visible_to(viewer).filter(pk=profile.pk).exists():
+        return "full"
+    return "stub"
+
+
+def _private_content_response():
+    return JsonResponse(
+        {"errors": {"profile": ["This profile's content is private."]}},
+        status=403,
+    )
+
+
+def _pagination_payload(page, page_size, total):
+    return {
+        "page": page.number,
+        "page_size": page_size,
+        "total_results": total,
+        "total_pages": page.paginator.num_pages,
+        "next_page": page.next_page_number() if page.has_next() else None,
+        "previous_page": page.previous_page_number() if page.has_previous() else None,
     }
 
 
@@ -559,6 +621,246 @@ def privacy_detail(request):
                 "is_private": user.is_private,
                 "pending_requests_approved": accepted,
             }
+        }
+    )
+
+
+@require_GET
+def profile_detail(request, username):
+    profile = _profile_user(username)
+    access = _profile_access(request.user, profile)
+    payload = {"profile": _profile_identity(profile), "access": access}
+    if access == "owner":
+        payload["account"] = {"is_private": profile.is_private}
+    elif request.user.is_authenticated:
+        outgoing = Follow.objects.filter(
+            follower=request.user,
+            followee=profile,
+        ).first()
+        payload["relationship"] = {
+            "outgoing_status": outgoing.status if outgoing is not None else None,
+            "follows_you": Follow.objects.filter(
+                follower=profile,
+                followee=request.user,
+                status=FollowStatus.APPROVED,
+            ).exists(),
+            "can_follow": outgoing is None,
+            "can_unfollow": outgoing is not None,
+            "follow_action": (
+                ("request" if profile.is_private else "follow")
+                if outgoing is None
+                else None
+            ),
+        }
+    return JsonResponse(payload)
+
+
+@require_http_methods(["PUT"])
+def profile_edit(request):
+    auth_error = _authentication_required(request)
+    if auth_error is not None:
+        return auth_error
+    payload = _json_object(request)
+    if payload is None:
+        return JsonResponse(
+            {"errors": {"request": ["Request body must be a JSON object."]}},
+            status=400,
+        )
+    errors = {}
+    required = ("display_name", "avatar", "bio", "home_city_id")
+    for field in required:
+        if field not in payload:
+            errors[field] = ["This field is required."]
+
+    display_name = payload.get("display_name")
+    if "display_name" in payload:
+        if type(display_name) is not str or not 1 <= len(display_name.strip()) <= 50:
+            errors["display_name"] = [
+                "Display name must contain 1 to 50 characters after trimming."
+            ]
+        else:
+            display_name = display_name.strip()
+
+    avatar = payload.get("avatar")
+    if "avatar" in payload:
+        if avatar is not None and type(avatar) is not str:
+            errors["avatar"] = ["Avatar must be an HTTP or HTTPS URL, or null."]
+        elif type(avatar) is str:
+            avatar = avatar.strip() or None
+            if avatar is not None:
+                try:
+                    URLValidator(schemes=("http", "https"))(avatar)
+                except ValidationError:
+                    errors["avatar"] = ["Avatar must be an HTTP or HTTPS URL, or null."]
+                if len(avatar) > 2048:
+                    errors["avatar"] = ["Avatar URL cannot exceed 2,048 characters."]
+
+    bio = payload.get("bio")
+    if "bio" in payload:
+        if bio is not None and type(bio) is not str:
+            errors["bio"] = ["Bio must be text or null."]
+        elif type(bio) is str:
+            if len(bio) > 150:
+                errors["bio"] = ["Bio cannot exceed 150 characters."]
+            elif not bio.strip():
+                bio = None
+
+    home_city = None
+    home_city_id = payload.get("home_city_id")
+    if "home_city_id" in payload:
+        if home_city_id is not None and (
+            type(home_city_id) is not int or home_city_id < 1
+        ):
+            errors["home_city_id"] = ["Choose a canonical city or null."]
+        elif home_city_id is not None:
+            home_city = City.objects.filter(pk=home_city_id).first()
+            if home_city is None:
+                errors["home_city_id"] = ["Choose a canonical city or null."]
+
+    if errors:
+        return JsonResponse({"errors": errors}, status=400)
+    request.user.display_name = display_name
+    request.user.avatar = avatar
+    request.user.bio = bio
+    request.user.home_city = home_city
+    request.user.save(update_fields=("display_name", "avatar", "bio", "home_city"))
+    return JsonResponse({"profile": _profile_identity(request.user)})
+
+
+def _profile_content_target(request, username):
+    profile = _profile_user(username)
+    if not User.objects.profile_content_visible_to(request.user).filter(pk=profile.pk).exists():
+        return profile, _private_content_response()
+    return profile, None
+
+
+@require_GET
+def profile_been(request, username):
+    profile, denied = _profile_content_target(request, username)
+    if denied is not None:
+        return denied
+    pagination = _pagination(request, default=20, maximum=100)
+    if pagination is None:
+        return JsonResponse(
+            {"error": "page and page_size must be positive integers"}, status=400
+        )
+    page_number, page_size = pagination
+    lineup = EventArtist.objects.select_related("artist").order_by("position")
+    entries = (
+        DiaryEntry.objects.visible_to(request.user)
+        .filter(user=profile)
+        .select_related("event__venue__city", "review")
+        .prefetch_related(
+            Prefetch(
+                "event__event_artists",
+                queryset=lineup,
+                to_attr="_ordered_event_artists",
+            )
+        )
+        .order_by("-event__event_date", "-event_id")
+    )
+    paginator = Paginator(entries, page_size)
+    try:
+        page = paginator.page(page_number)
+    except EmptyPage:
+        return JsonResponse({"error": "page out of range"}, status=404)
+    results = [
+        {
+            "id": entry.id,
+            "rating": float(entry.rating) if entry.rating is not None else None,
+            "has_review": getattr(entry, "review", None) is not None,
+            "event": _serialize_event(entry.event),
+        }
+        for entry in page.object_list
+    ]
+    return JsonResponse(
+        {
+            "results": results,
+            "pagination": _pagination_payload(page, page_size, paginator.count),
+        }
+    )
+
+
+@require_GET
+def profile_reviews(request, username):
+    profile, denied = _profile_content_target(request, username)
+    if denied is not None:
+        return denied
+    sort = request.GET.get("sort", "newest")
+    if sort not in ("newest", "most_liked", "oldest", "longest"):
+        return JsonResponse(
+            {"errors": {"sort": ["Sort must be newest, most_liked, oldest, or longest."]}},
+            status=400,
+        )
+    pagination = _pagination(request, default=20, maximum=100)
+    if pagination is None:
+        return JsonResponse(
+            {"error": "page and page_size must be positive integers"}, status=400
+        )
+    page_number, page_size = pagination
+    lineup = EventArtist.objects.select_related("artist").order_by("position")
+    reviews = (
+        Review.objects.visible_to(request.user)
+        .filter(entry__user=profile)
+        .select_related("entry__event__venue__city")
+        .prefetch_related(
+            Prefetch(
+                "entry__event__event_artists",
+                queryset=lineup,
+                to_attr="_ordered_event_artists",
+            )
+        )
+        .annotate(
+            like_count=Count("likes__user_id", distinct=True),
+            author_follower_count=Count(
+                "entry__user__follower_relationships__follower_id",
+                filter=Q(
+                    entry__user__follower_relationships__status=FollowStatus.APPROVED
+                ),
+                distinct=True,
+            ),
+            body_length=Length("body"),
+        )
+    )
+    if request.user.is_authenticated:
+        reviews = reviews.annotate(
+            viewer_has_liked=Exists(
+                ReviewLike.objects.filter(user=request.user, review_id=OuterRef("pk"))
+            )
+        )
+    ordering = {
+        "newest": ("-published_at", "-id"),
+        "oldest": ("published_at", "id"),
+        "most_liked": (
+            "-like_count",
+            "-author_follower_count",
+            "-published_at",
+            "-id",
+        ),
+        "longest": ("-body_length", "-published_at", "-id"),
+    }[sort]
+    paginator = Paginator(reviews.order_by(*ordering), page_size)
+    try:
+        page = paginator.page(page_number)
+    except EmptyPage:
+        return JsonResponse({"error": "page out of range"}, status=404)
+    results = []
+    for review in page.object_list:
+        item = {
+            "id": review.id,
+            "event": _serialize_event(review.entry.event),
+            "rating": float(review.entry.rating),
+            "body": review.body,
+            "published_at": review.published_at.isoformat().replace("+00:00", "Z"),
+            "like_count": review.like_count,
+        }
+        if request.user.is_authenticated:
+            item["viewer_has_liked"] = review.viewer_has_liked
+        results.append(item)
+    return JsonResponse(
+        {
+            "results": results,
+            "pagination": _pagination_payload(page, page_size, paginator.count),
         }
     )
 

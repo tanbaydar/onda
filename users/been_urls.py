@@ -16,6 +16,10 @@ from .views import (
     notifications_read_all,
     pending_follow_requests,
     privacy_detail,
+    profile_been,
+    profile_detail,
+    profile_edit,
+    profile_reviews,
     review_like,
     will_be_there_resource,
     public_will_be_there,
@@ -24,6 +28,7 @@ from .views import (
 
 
 urlpatterns = [
+    path("me/profile/", profile_edit, name="profile-edit"),
     path("me/home/", home_feed, name="home-feed"),
     path("me/been/", diary_list, name="diary-list"),
     path("me/privacy/", privacy_detail, name="privacy-detail"),
@@ -58,6 +63,9 @@ urlpatterns = [
         follow_resource,
         name="follow-resource",
     ),
+    path("users/<str:username>/", profile_detail, name="profile-detail"),
+    path("users/<str:username>/been/", profile_been, name="profile-been"),
+    path("users/<str:username>/reviews/", profile_reviews, name="profile-reviews"),
     path("events/<int:event_id>/been/", event_been, name="event-been"),
     path(
         "events/<int:event_id>/been/rating/",

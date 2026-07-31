@@ -6,11 +6,10 @@
 >
 > Branch: `main`
 >
-> Verified implementation state: Phase C Slice 5 complete locally through the
+> Verified implementation state: Phase C Slice 5 complete and pushed through the
 > Will Be There backend and frontend.
 >
-> Remote state: `origin/main` is at `b59a240`; Slice 5 commits remain local and
-> unpushed.
+> Remote state: `origin/main` is at `0b780ca`.
 >
 > Purpose: provide a self-contained, evidence-based handoff for the current
 > ingestion, catalog, identity, Been, rating, and review implementation.
@@ -206,7 +205,7 @@ Complete and pushed:
 
 ### Phase C slice 4B — Home feed and landing transition
 
-Complete locally and unpushed:
+Complete and pushed:
 
 - query-time Home assembly through one database `UNION ALL`;
 - rated Been, approved-follow, and visibility-safe review-like activity;
@@ -219,7 +218,7 @@ Complete locally and unpushed:
 
 ### Phase C slice 5 — Will Be There
 
-Complete locally and unpushed:
+Complete and pushed:
 
 - venue-local calendar liveness through the shared clock seam;
 - logically retained dormant rows so postponement can restore user intent;
@@ -241,13 +240,11 @@ The following remain design-only or deferred:
 - favorites;
 - onboarding flow;
 - rating-distribution display;
-- Will Be There;
-- feeds;
 - reports and moderation UI;
 - account settings and privacy switching UI;
 - deletion/deactivation workflow;
 - search;
-- Home, Profile, and Settings product destinations;
+- Profile and Search product destinations;
 - styling and responsive visual design;
 - production deployment;
 - cloud database/scheduler;
@@ -1701,11 +1698,11 @@ tail -100 logs/sync.err.log
 
 ## Next product work
 
-Phase C Slice 4B is implemented locally and awaits review/push. Home now assembles
-source activity at query time, the Discover/landing transition is complete, and the
-inherited follow-ordering obligations are contract-tested. The next product slice
-must be chosen against the remaining documented Phase C work rather than inferred
-from an empty route stub.
+Phase C Slice 5 is implemented and pushed. Home assembles four source-activity types
+at query time, the Discover/landing transition is complete, and Will Be There follows
+venue-local expiry without destructively deleting postponed intent. Phase C Slice 6A
+is the next approved work: Profile core and absorption of every interim profile
+surface.
 
 Before deployment:
 

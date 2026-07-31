@@ -1626,3 +1626,18 @@ destroy the settled requirement that Will Be There follows a postponed event to 
 new date. Liveness is the venue-local calendar predicate `today <= event_date`.
 Dormant rows are nonexistent on read surfaces but can become live again when the
 canonical event date moves forward.
+
+## Amendment to Question 138
+
+The Profile Reviews tab's **Longest entry** sort orders by stored review-body length
+descending, then original `published_at` descending, then review ID descending. The
+newer-first product tiebreak follows the established final recency key used by review
+ordering; the ID is only a stable technical pagination tiebreak. Review edits retain
+their original publication time and therefore cannot manufacture a newer tie position.
+
+## Amendment to Question 119
+
+Profile bios are stored verbatim and measured against the 150-character limit exactly
+as stored. Surrounding whitespace and line breaks are not trimmed when at least one
+visible character exists. An empty or whitespace-only submission is semantically empty
+and normalizes to NULL; this normalization does not alter any nonempty bio text.

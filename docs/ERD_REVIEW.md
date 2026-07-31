@@ -173,6 +173,21 @@ approved-without-an-approval-time invalid states.
   the five DBML-cascade foreign keys at the database layer; without them, raw SQL
   deletion would contradict the frozen ERD even though ORM deletion appeared correct.
 
+## Corrected implementation deviation: user home-city deletion
+
+The slice-1 Django model and migration transcribed `DANCED_USER.home_city_id` as
+`SET_NULL`, while the frozen DBML specifies a restrictive city foreign key. The
+deviation was neither approved nor recorded and remained dormant until Profile began
+writing the optional home-city field. Profile preflight corrected the ORM field to
+`RESTRICT` in `users.0011`.
+
+MySQL's existing physical foreign key already used its restrictive default (`NO
+ACTION`), so the migration is deliberately a database no-op and no replacement DDL is
+emitted. Contract tests pin both layers: Django deletion raises `RestrictedError`, and
+direct SQL deletion of a referenced city raises an integrity error. This is the first
+repair of an existing migration's modeled behavior against the frozen ERD and is the
+reason schema preflight precedes consumption of previously dormant fields.
+
 ## Post-freeze amendment: city identity
 
 The Transformer requires a deterministic city for every canonical venue. Captured RA
