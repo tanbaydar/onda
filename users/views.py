@@ -20,6 +20,9 @@ from django.utils.dateparse import parse_datetime
 from catalog.models import EventArtist
 from catalog.views import _event_queryset, _serialize_event
 from .forms import LoginForm, RegistrationForm
+from .home_feed import decode_cursor as decode_home_cursor
+from .home_feed import encode_cursor as encode_home_cursor
+from .home_feed import home_feed_rows, serialize_feed_row
 from .models import (
     DiaryEntry,
     Follow,
@@ -506,6 +509,36 @@ def notification_list(request):
     )
 
 
+@require_GET
+def home_feed(request):
+    auth_error = _authentication_required(request)
+    if auth_error is not None:
+        return auth_error
+    try:
+        page_size = int(request.GET.get("page_size", 20))
+        if page_size < 1 or page_size > 100:
+            raise ValueError
+    except (TypeError, ValueError):
+        return JsonResponse(
+            {"errors": {"page_size": ["Must be an integer from 1 to 100."]}},
+            status=400,
+        )
+    cursor = None
+    if "cursor" in request.GET:
+        cursor = decode_home_cursor(request.GET["cursor"])
+        if cursor is None:
+            return JsonResponse(
+                {"errors": {"cursor": ["Cursor is invalid."]}}, status=400
+            )
+    rows = home_feed_rows(request.user, cursor=cursor, limit=page_size + 1)
+    has_more = len(rows) > page_size
+    rows = rows[:page_size]
+    return JsonResponse(
+        {
+            "results": [serialize_feed_row(row) for row in rows],
+            "next_cursor": encode_home_cursor(rows[-1]) if has_more and rows else None,
+        }
+    )
 @require_POST
 @transaction.atomic
 def notification_read(request, notification_id):

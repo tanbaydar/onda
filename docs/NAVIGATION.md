@@ -495,20 +495,22 @@ A slice is not navigation-complete until it verifies:
 
 ## Current implementation checkpoint
 
-At the time this contract was written, the actual navigation is:
+Slice 4B's coordinated transition produces this rendered navigation:
 
 Guest:
 
-1. Discover → `/`
+1. Discover → `/discover`
 2. Register → `/register`
 3. Log in → `/login`
 
 Signed in:
 
-1. Discover → `/`
-2. `Signed in as {username}` → plain status
-3. Been → `/been`
-4. Log out → session action
+1. Home → `/home`
+2. Discover → `/discover`
+3. Activity → `/activity`
+4. `Signed in as {username}` → plain status
+5. Been → `/been`
+6. Log out → session action
 
 Implemented contextual routes:
 
@@ -519,5 +521,15 @@ Implemented contextual routes:
 Slice 2.5's authorized **Recent events** section changes content within Discover and
 requires no navigation addition or interim-register entry.
 
-The mismatch is accepted only as staged implementation state. The interim register
-makes every non-final element accountable to a future absorber.
+Search and Profile remain absent rather than rendering empty stubs. The remaining
+non-final elements are classified by the interim register and remain accountable to
+their named absorber.
+
+### Slice 4B transition ruling
+
+Slice 4B executes the Home transition described above. During this interim state,
+direct guest navigation to `/home` redirects to `/discover`; logging out while on
+`/home` does the same. Home never renders as a guest destination or empty guest
+shell. A legacy root URL containing `city_id` redirects to the matching Discover URL
+before authentication-based landing is considered, so shared city state is never
+dropped.

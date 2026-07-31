@@ -1,0 +1,183 @@
+from datetime import UTC, datetime, timedelta
+
+from django.db import connection
+from django.test import Client, TestCase
+from django.test.utils import CaptureQueriesContext
+
+from catalog.models import Artist, City, Event, EventArtist, EventStatus, Venue
+from users.models import DiaryEntry, Follow, FollowStatus, Review, ReviewLike, User
+
+
+NOW = datetime(2026, 8, 20, 16, 0, tzinfo=UTC)
+
+
+class HomeFeedContractTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        city = City.objects.get(name="Boston")
+        venue = Venue.objects.create(name="Home Feed Venue", city=city)
+        artist = Artist.objects.create(name="Home Feed Artist")
+        cls.events = []
+        for index in range(5):
+            event = Event.objects.create(
+                title=f"Home Feed Event {index}",
+                event_date="2026-07-01",
+                start_time="20:00:00",
+                venue=venue,
+                status=EventStatus.ACTIVE,
+            )
+            EventArtist.objects.create(event=event, artist=artist, position=1)
+            cls.events.append(event)
+        cls.hidden_event = Event.objects.create(
+            title="Hidden Home Feed Event",
+            event_date="2026-07-02",
+            start_time="20:00:00",
+            venue=venue,
+            status=EventStatus.HIDDEN,
+        )
+        EventArtist.objects.create(event=cls.hidden_event, artist=artist, position=1)
+        cls.viewer = cls.user("home.viewer")
+        cls.actor = cls.user("home.actor")
+        cls.actor_two = cls.user("home.actor.two")
+        cls.target = cls.user("home.target")
+        cls.private_author = cls.user("home.private", is_private=True)
+
+    @classmethod
+    def user(cls, username, is_private=False):
+        return User.objects.create_user(
+            email=f"{username}@test.example",
+            password="A-real-password-123!",
+            username=username,
+            display_name=username,
+            is_private=is_private,
+        )
+
+    def client_for(self, user=None):
+        client = Client()
+        if user is not None:
+            client.force_login(user)
+        return client
+
+    def approved(self, follower, followee, *, at=NOW, created_at=None):
+        return Follow.objects.create(
+            follower=follower,
+            followee=followee,
+            status=FollowStatus.APPROVED,
+            created_at=created_at or at,
+            approved_at=at,
+        )
+
+    def entry(self, user, event, *, at=NOW, rating="4.0"):
+        return DiaryEntry.objects.create(
+            user=user, event=event, rating=rating, rated_at=at
+        )
+
+    def test_mixed_sources_order_and_query_count_are_fixed(self):
+        self.approved(self.viewer, self.actor, at=NOW - timedelta(days=1))
+        self.entry(self.actor, self.events[0], at=NOW)
+        self.approved(self.actor, self.target, at=NOW)
+        author_entry = self.entry(self.target, self.events[1], at=NOW - timedelta(days=2))
+        review = Review.objects.create(
+            entry=author_entry, body="Visible liked review", published_at=NOW
+        )
+        like = ReviewLike.objects.create(user=self.actor, review=review)
+        ReviewLike.objects.filter(pk=like.pk).update(created_at=NOW)
+
+        client = self.client_for(self.viewer)
+        with CaptureQueriesContext(connection) as queries:
+            response = client.get("/api/me/home/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            [item["type"] for item in response.json()["results"][:3]],
+            ["review_like", "rated_been", "follow"],
+        )
+        # Two fixed Django session/auth lookups plus exactly one feed UNION.
+        self.assertEqual(len(queries), 3)
+        self.assertEqual(
+            sum("UNION ALL" in query["sql"] for query in queries.captured_queries),
+            1,
+        )
+
+    def test_cursor_is_stable_when_new_activity_arrives(self):
+        self.approved(self.viewer, self.actor)
+        for index, event in enumerate(self.events[:3]):
+            self.entry(self.actor, event, at=NOW - timedelta(minutes=index + 1))
+        first = self.client_for(self.viewer).get("/api/me/home/", {"page_size": 2}).json()
+        first_ids = [item["target"]["event"]["id"] for item in first["results"]]
+        self.entry(self.actor, self.events[3], at=NOW + timedelta(minutes=1))
+        second = self.client_for(self.viewer).get(
+            "/api/me/home/", {"page_size": 2, "cursor": first["next_cursor"]}
+        ).json()
+        second_ids = [item["target"]["event"]["id"] for item in second["results"]]
+        self.assertFalse(set(first_ids) & set(second_ids))
+        self.assertEqual(second_ids, [self.events[2].id])
+
+    def test_private_actor_activity_disappears_immediately_on_unfollow(self):
+        self.actor.is_private = True
+        self.actor.save(update_fields=("is_private",))
+        relationship = self.approved(self.viewer, self.actor)
+        self.entry(self.actor, self.events[0])
+        visible = self.client_for(self.viewer).get("/api/me/home/").json()
+        relationship.delete()
+        gone = self.client_for(self.viewer).get("/api/me/home/").json()
+        self.assertEqual(len(visible["results"]), 1)
+        self.assertEqual(gone["results"], [])
+
+    def test_review_like_never_leaks_an_invisible_private_review(self):
+        self.approved(self.viewer, self.actor)
+        private_entry = self.entry(self.private_author, self.events[0])
+        review = Review.objects.create(
+            entry=private_entry, body="Private review", published_at=NOW
+        )
+        like = ReviewLike.objects.create(user=self.actor, review=review)
+        ReviewLike.objects.filter(pk=like.pk).update(created_at=NOW)
+        result = self.client_for(self.viewer).get("/api/me/home/").json()
+        self.assertEqual(result["results"], [])
+
+    def test_hidden_items_are_suppressed_and_resurrection_restores_them(self):
+        self.approved(self.viewer, self.actor)
+        self.entry(self.actor, self.hidden_event)
+        hidden = self.client_for(self.viewer).get("/api/me/home/").json()
+        self.hidden_event.status = EventStatus.ACTIVE
+        self.hidden_event.save(update_fields=("status",))
+        restored = self.client_for(self.viewer).get("/api/me/home/").json()
+        self.assertEqual(hidden["results"], [])
+        self.assertEqual(restored["results"][0]["target"]["event"]["id"], self.hidden_event.id)
+
+    def test_rating_removal_disappears_and_rerating_repositions(self):
+        self.approved(self.viewer, self.actor)
+        old = self.entry(self.actor, self.events[0], at=NOW - timedelta(days=2))
+        self.entry(self.actor, self.events[1], at=NOW - timedelta(days=1))
+        old.rating = None
+        old.rated_at = None
+        old.save(update_fields=("rating", "rated_at"))
+        removed = self.client_for(self.viewer).get("/api/me/home/").json()
+        old.rating = "5.0"
+        old.rated_at = NOW + timedelta(days=1)
+        old.save(update_fields=("rating", "rated_at"))
+        rerated = self.client_for(self.viewer).get("/api/me/home/").json()
+        self.assertEqual(len(removed["results"]), 1)
+        self.assertEqual(rerated["results"][0]["target"]["event"]["id"], self.events[0].id)
+
+    def test_follow_activity_uses_approval_time_and_composite_source_key(self):
+        self.approved(self.viewer, self.actor)
+        self.approved(self.viewer, self.actor_two)
+        delayed = self.approved(
+            self.actor, self.target, at=NOW, created_at=NOW - timedelta(days=30)
+        )
+        self.entry(self.actor, self.events[0], at=NOW - timedelta(days=1))
+        same_time = self.approved(self.actor_two, self.target, at=NOW)
+        results = self.client_for(self.viewer).get("/api/me/home/").json()["results"]
+        follows = [item for item in results if item["type"] == "follow"]
+        self.assertEqual(results[0]["activity_at"], delayed.approved_at.isoformat().replace("+00:00", "Z"))
+        self.assertEqual(
+            [item["actor"]["id"] for item in follows],
+            sorted([delayed.follower_id, same_time.follower_id], reverse=True),
+        )
+
+    def test_guest_and_invalid_cursor_errors_are_field_keyed(self):
+        self.assertEqual(self.client_for().get("/api/me/home/").status_code, 401)
+        invalid = self.client_for(self.viewer).get("/api/me/home/", {"cursor": "bad"})
+        self.assertEqual(invalid.status_code, 400)
+        self.assertIn("cursor", invalid.json()["errors"])

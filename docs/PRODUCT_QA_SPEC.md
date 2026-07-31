@@ -1595,3 +1595,21 @@ ordering surface. Slice 4B must contract-test both consequences when Home consum
 the relationship: a delayed private-request acceptance sorts by `approved_at`, not
 the preserved request `created_at`; and bulk same-time approvals order
 deterministically through the frozen heterogeneous feed tiebreak.
+
+## Amendment to Questions 102, 153, 178, and 189–190
+
+Home is assembled at query time from source-of-truth activity rows; it has no feed
+table and performs no fan-out writes. Rated Been activity uses immutable `rated_at`,
+approved-follow activity uses `approved_at`, and review-like activity uses the
+like's `created_at`. Source querysets are combined with `UNION ALL` in the database
+before cursor pagination. The frozen descending key is `(activity_at,
+activity_type, source_key)`, where activity type is a stable lexical discriminator
+and source key is a fixed-width source-scoped identifier. This is a technical
+pagination rule, not product prioritization.
+
+Visibility is enforced inside every union branch. A review-like item exists only
+when its liked review is visible to the feed viewer; hidden events suppress their
+event-backed items and resurrection restores them. Removing a source row makes its
+item disappear without cleanup copies. Future Will Be There, favorite-event, and
+favorite-artist sources must join this same database union and cursor key. They may
+not be fetched and merged in Python.

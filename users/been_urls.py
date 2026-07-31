@@ -10,6 +10,7 @@ from .views import (
     event_review_list,
     event_circle,
     follow_resource,
+    home_feed,
     notification_list,
     notification_read,
     notifications_read_all,
@@ -20,6 +21,7 @@ from .views import (
 
 
 urlpatterns = [
+    path("me/home/", home_feed, name="home-feed"),
     path("me/been/", diary_list, name="diary-list"),
     path("me/privacy/", privacy_detail, name="privacy-detail"),
     path(

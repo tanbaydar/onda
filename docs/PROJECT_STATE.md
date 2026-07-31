@@ -6,11 +6,11 @@
 >
 > Branch: `main`
 >
-> Verified implementation state: Phase C Slice 4A complete through frontend. A
-> post-slice social-state synchronization fix is complete locally and unpushed.
+> Verified implementation state: Phase C Slice 4A complete through frontend,
+> including the post-slice social-state synchronization fix.
 >
-> Remote state: `origin/main` is at `3601bce`; the synchronization fix remains local
-> and unpushed.
+> Remote state: `origin/main` is at `819da58`; the working tree was clean when Slice
+> 4B began.
 >
 > Purpose: provide a self-contained, evidence-based handoff for the current
 > ingestion, catalog, identity, Been, rating, and review implementation.
@@ -189,7 +189,7 @@ Complete:
 
 ### Phase C slice 4A — follows, notifications, Activity, and Your Circle
 
-Complete locally and awaiting push approval:
+Complete and pushed:
 
 - FOLLOW and NOTIFICATION models, constraints, and physical cascades;
 - public follows and private requests with accept/decline/withdraw/unfollow;
