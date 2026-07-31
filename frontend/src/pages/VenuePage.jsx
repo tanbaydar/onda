@@ -88,6 +88,8 @@ export default function VenuePage() {
         scopeId={venue.id}
         when="upcoming"
         emptyMessage="No upcoming events."
+        showVenue={false}
+        showCity={false}
       />
       <EventList
         heading="Past"
@@ -95,6 +97,8 @@ export default function VenuePage() {
         scopeId={venue.id}
         when="past"
         emptyMessage="No past events."
+        showVenue={false}
+        showCity={false}
       />
     </main>
   );

@@ -1466,3 +1466,12 @@ Every step is skippable.
 **Question:** What happens when a signed-out guest starts an account-only action?
 
 **Answer:** Show an account-required message only. The guest remains on the current page, and the action is not saved or resumed.
+
+## Amendment to Question 75
+
+Question 75's requirement for a specific venue means that published events cannot
+be venue-less. A venue record legitimately named **TBA**, unknown, undisclosed, or
+similar by the external source is still an ordinary venue and is accepted as source
+truth. Danced does not filter venues by name or parse event titles to override the
+source. This follows Question 8's principle that Danced preserves the external
+catalog source's event boundaries rather than independently reinterpreting them.

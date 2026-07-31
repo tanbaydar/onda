@@ -79,6 +79,7 @@ export default function ArtistPage() {
         scopeId={artist.id}
         when="upcoming"
         emptyMessage="No upcoming events."
+        omittedArtistId={artist.id}
       />
       <EventList
         heading="Past"
@@ -86,6 +87,7 @@ export default function ArtistPage() {
         scopeId={artist.id}
         when="past"
         emptyMessage="No past events."
+        omittedArtistId={artist.id}
       />
     </main>
   );

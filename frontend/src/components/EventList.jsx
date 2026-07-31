@@ -2,8 +2,18 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { fetchJson } from "../api.js";
+import { formatEventDateTime } from "../formatEventDateTime.js";
 
-function EventItem({ event }) {
+function EventItem({
+  event,
+  showVenue = true,
+  showCity = true,
+  omittedArtistId = null,
+}) {
+  const visibleArtists = event.artists.filter(
+    (artist) => String(artist.id) !== String(omittedArtistId),
+  );
+
   return (
     <li>
       <article>
@@ -14,25 +24,43 @@ function EventItem({ event }) {
           <img src={event.cover_image_url} alt={event.title} />
         ) : null}
         <p>
-          <time dateTime={event.event_date}>{event.event_date}</time>
-          {event.start_time ? ` at ${event.start_time}` : null}
+          <time
+            dateTime={
+              event.start_time
+                ? `${event.event_date}T${event.start_time}`
+                : event.event_date
+            }
+          >
+            {formatEventDateTime(event.event_date, event.start_time)}
+          </time>
         </p>
-        <p>
-          Venue: <Link to={`/venues/${event.venue.id}`}>{event.venue.name}</Link>
-          {" in "}
-          <Link to={`/?city_id=${event.venue.city.id}`}>
-            {event.venue.city.name}
-          </Link>
-        </p>
-        <p>
-          Artists:{" "}
-          {event.artists.map((artist, index) => (
-            <span key={artist.id}>
-              {index > 0 ? ", " : null}
-              <Link to={`/artists/${artist.id}`}>{artist.name}</Link>
-            </span>
-          ))}
-        </p>
+        {showVenue || showCity ? (
+          <p>
+            {showVenue ? (
+              <>
+                Venue:{" "}
+                <Link to={`/venues/${event.venue.id}`}>{event.venue.name}</Link>
+              </>
+            ) : null}
+            {showVenue && showCity ? " in " : null}
+            {showCity ? (
+              <Link to={`/?city_id=${event.venue.city.id}`}>
+                {event.venue.city.name}
+              </Link>
+            ) : null}
+          </p>
+        ) : null}
+        {visibleArtists.length > 0 ? (
+          <p>
+            Artists:{" "}
+            {visibleArtists.map((artist, index) => (
+              <span key={artist.id}>
+                {index > 0 ? ", " : null}
+                <Link to={`/artists/${artist.id}`}>{artist.name}</Link>
+              </span>
+            ))}
+          </p>
+        ) : null}
       </article>
     </li>
   );
@@ -44,6 +72,9 @@ export default function EventList({
   scopeId,
   when,
   emptyMessage,
+  showVenue = true,
+  showCity = true,
+  omittedArtistId = null,
 }) {
   const [page, setPage] = useState(1);
   const [retry, setRetry] = useState(0);
@@ -94,7 +125,13 @@ export default function EventList({
         <>
           <ul>
             {state.data.results.map((event) => (
-              <EventItem key={event.id} event={event} />
+              <EventItem
+                key={event.id}
+                event={event}
+                showVenue={showVenue}
+                showCity={showCity}
+                omittedArtistId={omittedArtistId}
+              />
             ))}
           </ul>
           <nav aria-label={`${heading} pagination`}>

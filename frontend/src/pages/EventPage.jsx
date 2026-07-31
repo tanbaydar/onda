@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
 import { ApiError, fetchJson } from "../api.js";
+import { formatEventDateTime } from "../formatEventDateTime.js";
 
 export default function EventPage() {
   const { eventId } = useParams();
@@ -72,8 +73,15 @@ export default function EventPage() {
           <img src={event.cover_image_url} alt={event.title} />
         ) : null}
         <p>
-          <time dateTime={event.event_date}>{event.event_date}</time>
-          {event.start_time ? ` at ${event.start_time}` : null}
+          <time
+            dateTime={
+              event.start_time
+                ? `${event.event_date}T${event.start_time}`
+                : event.event_date
+            }
+          >
+            {formatEventDateTime(event.event_date, event.start_time)}
+          </time>
         </p>
         <p>
           Venue: <Link to={`/venues/${event.venue.id}`}>{event.venue.name}</Link>

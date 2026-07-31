@@ -80,6 +80,7 @@ export default function DiscoverPage() {
             scopeId={selectedCity.id}
             when="upcoming"
             emptyMessage={`No upcoming events in ${selectedCity.name}.`}
+            showCity={false}
           />
         </>
       ) : null}

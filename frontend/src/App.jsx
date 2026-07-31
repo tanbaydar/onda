@@ -37,6 +37,12 @@ export default function App() {
         <Route path="/artists/:artistId" element={<ArtistPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
+      <footer>
+        <p>
+          Event data sourced from{" "}
+          <a href="https://ra.co">Resident Advisor</a>.
+        </p>
+      </footer>
     </>
   );
 }
