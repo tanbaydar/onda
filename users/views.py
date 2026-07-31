@@ -1,10 +1,12 @@
 import json
 import math
+import base64
 from decimal import Decimal
 
 from django.contrib.auth import authenticate, login, logout
 from django.core.paginator import EmptyPage, Paginator
-from django.db.models import Count, Exists, IntegerField, OuterRef, Prefetch, Value
+from django.db import transaction
+from django.db.models import Avg, Count, Exists, OuterRef, Prefetch, Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import ensure_csrf_cookie
@@ -13,25 +15,43 @@ from django.views.decorators.http import (
     require_http_methods,
     require_POST,
 )
+from django.utils.dateparse import parse_datetime
 
 from catalog.models import EventArtist
 from catalog.views import _event_queryset, _serialize_event
 from .forms import LoginForm, RegistrationForm
-from .models import DiaryEntry, RATING_VALUES, Review, ReviewLike
+from .models import (
+    DiaryEntry,
+    Follow,
+    FollowStatus,
+    Notification,
+    RATING_VALUES,
+    Review,
+    ReviewLike,
+)
 from .services import (
     EventNotStarted,
     NOT_STARTED_MESSAGE,
     ReviewLikeConflict,
     ReviewRequiresRating,
+    FollowConflict,
+    accept_follow_request,
+    change_privacy,
+    decline_follow_request,
     delete_review,
     like_review,
     remove_entry,
     remove_rating,
     save_rating,
     save_review,
+    serialize_follow,
+    serialize_public_user,
+    timezone_now,
     serialize_diary_entry,
     serialize_review,
     unlike_review,
+    unfollow_user,
+    follow_user,
 )
 
 
@@ -94,6 +114,57 @@ def _review_body(request):
         return None
     body = payload["body"].strip()
     return body if 1 <= len(body) <= 1000 else None
+
+
+def _pagination(request, *, default=20, maximum=100):
+    try:
+        page = int(request.GET.get("page", 1))
+        page_size = int(request.GET.get("page_size", default))
+        if page < 1 or page_size < 1 or page_size > maximum:
+            raise ValueError
+    except (TypeError, ValueError):
+        return None
+    return page, page_size
+
+
+def _notification_payload(notification):
+    return {
+        "id": notification.id,
+        "type": notification.type,
+        "actor": serialize_public_user(notification.actor),
+        "review": (
+            {
+                "id": notification.review_id,
+                "event_id": notification.review.entry.event_id,
+            }
+            if notification.review_id is not None
+            else None
+        ),
+        "created_at": notification.created_at.isoformat().replace("+00:00", "Z"),
+        "read_at": (
+            notification.read_at.isoformat().replace("+00:00", "Z")
+            if notification.read_at is not None
+            else None
+        ),
+    }
+
+
+def _cursor_encode(notification):
+    raw = f"{notification.created_at.isoformat()}|{notification.id}"
+    return base64.urlsafe_b64encode(raw.encode()).decode().rstrip("=")
+
+
+def _cursor_decode(value):
+    try:
+        padded = value + "=" * (-len(value) % 4)
+        timestamp, identifier = base64.urlsafe_b64decode(padded).decode().rsplit("|", 1)
+        parsed = parse_datetime(timestamp)
+        identifier = int(identifier)
+        if parsed is None or identifier < 1:
+            raise ValueError
+        return parsed, identifier
+    except (ValueError, TypeError, UnicodeError):
+        return None
 
 
 @require_GET
@@ -282,6 +353,273 @@ def review_like(request, review_id):
     )
 
 
+@require_http_methods(["POST", "DELETE"])
+def follow_resource(request, user_id):
+    auth_error = _authentication_required(request)
+    if auth_error is not None:
+        return auth_error
+    if request.method == "DELETE":
+        if not unfollow_user(follower_id=request.user.id, followee_id=user_id):
+            return JsonResponse({"error": "Follow not found."}, status=404)
+        return JsonResponse({}, status=204)
+    try:
+        follow = follow_user(follower_id=request.user.id, followee_id=user_id)
+    except FollowConflict as exc:
+        return JsonResponse({"error": str(exc)}, status=409)
+    if follow is None:
+        return JsonResponse({"error": "User not found."}, status=404)
+    return JsonResponse(
+        {"follow": serialize_follow(follow, user=follow.followee)},
+        status=201,
+    )
+
+
+@require_GET
+def pending_follow_requests(request):
+    auth_error = _authentication_required(request)
+    if auth_error is not None:
+        return auth_error
+    pagination = _pagination(request)
+    if pagination is None:
+        return JsonResponse(
+            {"error": "page and page_size must be positive integers"}, status=400
+        )
+    page_number, page_size = pagination
+    requests = (
+        Follow.objects.filter(
+            followee=request.user,
+            status=FollowStatus.PENDING,
+        )
+        .select_related("follower")
+        .order_by("-created_at", "-follower_id")
+    )
+    paginator = Paginator(requests, page_size)
+    try:
+        page = paginator.page(page_number)
+    except EmptyPage:
+        return JsonResponse({"error": "page out of range"}, status=404)
+    return JsonResponse(
+        {
+            "results": [
+                serialize_follow(follow, user=follow.follower)
+                for follow in page.object_list
+            ],
+            "pagination": {
+                "page": page.number,
+                "page_size": page_size,
+                "total_results": paginator.count,
+                "total_pages": paginator.num_pages,
+                "next_page": page.next_page_number() if page.has_next() else None,
+                "previous_page": page.previous_page_number() if page.has_previous() else None,
+            },
+        }
+    )
+
+
+@require_POST
+def accept_request(request, follower_id):
+    auth_error = _authentication_required(request)
+    if auth_error is not None:
+        return auth_error
+    follow = accept_follow_request(
+        followee_id=request.user.id,
+        follower_id=follower_id,
+    )
+    if follow is None:
+        return JsonResponse({"error": "Follow request not found."}, status=404)
+    return JsonResponse(
+        {"follow": serialize_follow(follow, user=follow.follower)}
+    )
+
+
+@require_POST
+def decline_request(request, follower_id):
+    auth_error = _authentication_required(request)
+    if auth_error is not None:
+        return auth_error
+    if not decline_follow_request(
+        followee_id=request.user.id,
+        follower_id=follower_id,
+    ):
+        return JsonResponse({"error": "Follow request not found."}, status=404)
+    return JsonResponse({}, status=204)
+
+
+@require_http_methods(["PUT"])
+def privacy_detail(request):
+    auth_error = _authentication_required(request)
+    if auth_error is not None:
+        return auth_error
+    payload = _json_object(request)
+    if payload is None or type(payload.get("is_private")) is not bool:
+        return JsonResponse(
+            {"errors": {"is_private": ["Choose Public or Private."]}},
+            status=400,
+        )
+    user, accepted = change_privacy(
+        user_id=request.user.id,
+        is_private=payload["is_private"],
+    )
+    return JsonResponse(
+        {
+            "privacy": {
+                "is_private": user.is_private,
+                "pending_requests_approved": accepted,
+            }
+        }
+    )
+
+
+@require_GET
+def notification_list(request):
+    auth_error = _authentication_required(request)
+    if auth_error is not None:
+        return auth_error
+    try:
+        page_size = int(request.GET.get("page_size", 20))
+        if page_size < 1 or page_size > 100:
+            raise ValueError
+    except (TypeError, ValueError):
+        return JsonResponse({"error": "page_size must be a positive integer"}, status=400)
+    notifications = Notification.objects.filter(recipient=request.user)
+    cursor = request.GET.get("cursor")
+    if cursor:
+        decoded = _cursor_decode(cursor)
+        if decoded is None:
+            return JsonResponse({"error": "cursor is invalid"}, status=400)
+        created_at, identifier = decoded
+        notifications = notifications.filter(
+            Q(created_at__lt=created_at)
+            | Q(created_at=created_at, id__lt=identifier)
+        )
+    rows = list(
+        notifications.select_related("actor", "review__entry")
+        .order_by("-created_at", "-id")[: page_size + 1]
+    )
+    has_more = len(rows) > page_size
+    rows = rows[:page_size]
+    return JsonResponse(
+        {
+            "results": [_notification_payload(item) for item in rows],
+            "next_cursor": _cursor_encode(rows[-1]) if has_more and rows else None,
+        }
+    )
+
+
+@require_POST
+@transaction.atomic
+def notification_read(request, notification_id):
+    auth_error = _authentication_required(request)
+    if auth_error is not None:
+        return auth_error
+    notification = (
+        Notification.objects.select_for_update()
+        .filter(pk=notification_id, recipient=request.user)
+        .first()
+    )
+    if notification is None:
+        return JsonResponse({"error": "Notification not found."}, status=404)
+    if notification.read_at is None:
+        notification.read_at = timezone_now()
+        notification.save(update_fields=("read_at",))
+    return JsonResponse(
+        {
+            "notification": {
+                "id": notification.id,
+                "read_at": notification.read_at.isoformat().replace("+00:00", "Z"),
+            }
+        }
+    )
+
+
+@require_POST
+def notifications_read_all(request):
+    auth_error = _authentication_required(request)
+    if auth_error is not None:
+        return auth_error
+    now = timezone_now()
+    updated = Notification.objects.filter(
+        recipient=request.user,
+        read_at__isnull=True,
+    ).update(read_at=now)
+    return JsonResponse(
+        {
+            "updated_count": updated,
+            "read_at": now.isoformat().replace("+00:00", "Z"),
+        }
+    )
+
+
+@require_GET
+def event_circle(request, event_id):
+    auth_error = _authentication_required(request)
+    if auth_error is not None:
+        return auth_error
+    event = _visible_event(event_id)
+    pagination = _pagination(request, default=10, maximum=50)
+    if pagination is None:
+        return JsonResponse(
+            {"error": "page and page_size must be positive integers"}, status=400
+        )
+    page_number, page_size = pagination
+    entries = (
+        DiaryEntry.objects.for_circle(request.user)
+        .filter(event=event)
+        .select_related("user", "review")
+        .order_by("-rated_at", "-id")
+    )
+    paginator = Paginator(entries, page_size)
+    try:
+        page = paginator.page(page_number)
+    except EmptyPage:
+        return JsonResponse({"error": "page out of range"}, status=404)
+    aggregate = (
+        DiaryEntry.objects.for_circle_average(request.user)
+        .filter(event=event)
+        .aggregate(count=Count("id"), average=Avg("rating"))
+    )
+    summary = {"state": "not_enough_ratings", "count": 0}
+    if aggregate["count"]:
+        summary = {
+            "state": "available",
+            "count": aggregate["count"],
+            "average": float(aggregate["average"]),
+        }
+    results = []
+    for entry in page.object_list:
+        review = getattr(entry, "review", None)
+        serialized_review = None
+        if review is not None:
+            serialized_review = serialize_review(review)
+            serialized_review["viewer_has_liked"] = ReviewLike.objects.filter(
+                user=request.user,
+                review=review,
+            ).exists()
+        results.append(
+            {
+                "id": entry.id,
+                "user": serialize_public_user(entry.user),
+                "rating": float(entry.rating),
+                "rated_at": entry.rated_at.isoformat().replace("+00:00", "Z"),
+                "review": serialized_review,
+            }
+        )
+    return JsonResponse(
+        {
+            "rating_summary": summary,
+            "results": results,
+            "pagination": {
+                "page": page.number,
+                "page_size": page_size,
+                "total_results": paginator.count,
+                "total_pages": paginator.num_pages,
+                "next_page": page.next_page_number() if page.has_next() else None,
+                "previous_page": page.previous_page_number() if page.has_previous() else None,
+            },
+        }
+    )
+
+
 @require_GET
 def event_review_list(request, event_id):
     event = _visible_event(event_id)
@@ -307,8 +645,14 @@ def event_review_list(request, event_id):
         .filter(entry__event=event)
         .select_related("entry__user")
         .annotate(
-            like_count=Count("likes"),
-            author_follower_count=Value(0, output_field=IntegerField()),
+            like_count=Count("likes__user_id", distinct=True),
+            author_follower_count=Count(
+                "entry__user__follower_relationships__follower_id",
+                filter=Q(
+                    entry__user__follower_relationships__status=FollowStatus.APPROVED
+                ),
+                distinct=True,
+            ),
         )
     )
     if request.user.is_authenticated:
@@ -318,7 +662,20 @@ def event_review_list(request, event_id):
                     user=request.user,
                     review_id=OuterRef("pk"),
                 )
-            )
+            ),
+            viewer_follows=Exists(
+                Follow.objects.filter(
+                    follower=request.user,
+                    followee_id=OuterRef("entry__user_id"),
+                    status=FollowStatus.APPROVED,
+                )
+            ),
+            viewer_has_follow_row=Exists(
+                Follow.objects.filter(
+                    follower=request.user,
+                    followee_id=OuterRef("entry__user_id"),
+                )
+            ),
         )
     order_by = (
         ("-like_count", "-author_follower_count", "-published_at", "-id")
@@ -373,6 +730,7 @@ def diary_list(request):
     lineup = EventArtist.objects.select_related("artist").order_by("position")
     entries = (
         DiaryEntry.objects.visible_to(request.user)
+        .filter(user=request.user)
         .select_related("event__venue__city", "review")
         .prefetch_related(
             Prefetch(

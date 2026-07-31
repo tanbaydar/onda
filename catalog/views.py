@@ -285,7 +285,7 @@ def event_detail(request, event_id):
         entry = (
             DiaryEntry.objects.visible_to(request.user)
             .select_related("review")
-            .filter(event=event)
+            .filter(user=request.user, event=event)
             .first()
         )
         payload["viewer_entry"] = (

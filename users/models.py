@@ -126,6 +126,52 @@ class User(AbstractUser):
         super().save(*args, **kwargs)
 
 
+class FollowStatus(models.TextChoices):
+    PENDING = "pending", "Pending"
+    APPROVED = "approved", "Approved"
+
+
+class Follow(models.Model):
+    pk = models.CompositePrimaryKey("follower_id", "followee_id")
+    follower = models.ForeignKey(
+        User,
+        db_column="follower_id",
+        on_delete=models.CASCADE,
+        related_name="following_relationships",
+    )
+    followee = models.ForeignKey(
+        User,
+        db_column="followee_id",
+        on_delete=models.CASCADE,
+        related_name="follower_relationships",
+    )
+    status = models.CharField(max_length=10, choices=FollowStatus.choices)
+    created_at = models.DateTimeField()
+    approved_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = "FOLLOW"
+        indexes = [
+            models.Index(
+                fields=("followee", "status"),
+                name="ix_follow_followee_status",
+            ),
+        ]
+        constraints = [
+            models.CheckConstraint(
+                condition=~Q(follower=models.F("followee")),
+                name="ck_follow_not_self",
+            ),
+            models.CheckConstraint(
+                condition=(
+                    Q(status=FollowStatus.APPROVED, approved_at__isnull=False)
+                    | Q(status=FollowStatus.PENDING, approved_at__isnull=True)
+                ),
+                name="ck_follow_status_approved_at",
+            ),
+        ]
+
+
 RATING_VALUES = tuple(Decimal(value) for value in (
     "0.5",
     "1.0",
@@ -145,8 +191,36 @@ class DiaryEntryQuerySet(models.QuerySet):
     def visible_to(self, viewer):
         visible = self.filter(event__status__in=VISIBLE_EVENT_STATUSES)
         if viewer is None or not viewer.is_authenticated:
-            return visible.none()
-        return visible.filter(user=viewer)
+            return visible.filter(user__is_private=False)
+        approved = Follow.objects.filter(
+            follower=viewer,
+            followee_id=models.OuterRef("user_id"),
+            status=FollowStatus.APPROVED,
+        )
+        return visible.annotate(_viewer_follows=models.Exists(approved)).filter(
+            Q(user__is_private=False) | Q(user=viewer) | Q(_viewer_follows=True)
+        )
+
+    def for_circle(self, viewer):
+        followees = Follow.objects.filter(
+            follower=viewer,
+            status=FollowStatus.APPROVED,
+        ).values("followee_id")
+        return self.filter(
+            event__status__in=VISIBLE_EVENT_STATUSES,
+            rating__isnull=False,
+            user_id__in=followees,
+        )
+
+    def for_circle_average(self, viewer):
+        followees = Follow.objects.filter(
+            follower=viewer,
+            status=FollowStatus.APPROVED,
+        ).values("followee_id")
+        return self.filter(
+            event__status__in=VISIBLE_EVENT_STATUSES,
+            rating__isnull=False,
+        ).filter(Q(user=viewer) | Q(user_id__in=followees))
 
     def for_aggregation(self):
         return self.filter(
@@ -210,8 +284,15 @@ class ReviewQuerySet(models.QuerySet):
         )
         if viewer is None or not viewer.is_authenticated:
             return visible.filter(entry__user__is_private=False)
-        return visible.filter(
-            Q(entry__user=viewer) | Q(entry__user__is_private=False)
+        approved = Follow.objects.filter(
+            follower=viewer,
+            followee_id=models.OuterRef("entry__user_id"),
+            status=FollowStatus.APPROVED,
+        )
+        return visible.annotate(_viewer_follows=models.Exists(approved)).filter(
+            Q(entry__user=viewer)
+            | Q(entry__user__is_private=False)
+            | Q(_viewer_follows=True)
         )
 
     def for_public_section(self):
@@ -261,3 +342,65 @@ class ReviewLike(models.Model):
 
     class Meta:
         db_table = "REVIEW_LIKE"
+
+
+class NotificationType(models.TextChoices):
+    REVIEW_LIKE = "review_like", "Review like"
+    FOLLOW = "follow", "Follow"
+    FOLLOW_REQUEST = "follow_request", "Follow request"
+    REQUEST_ACCEPTED = "request_accepted", "Request accepted"
+
+
+class Notification(models.Model):
+    recipient = models.ForeignKey(
+        User,
+        db_column="recipient_id",
+        on_delete=models.CASCADE,
+        related_name="notifications",
+    )
+    actor = models.ForeignKey(
+        User,
+        db_column="actor_id",
+        on_delete=models.CASCADE,
+        related_name="notification_actions",
+    )
+    type = models.CharField(max_length=20, choices=NotificationType.choices)
+    review = models.ForeignKey(
+        Review,
+        db_column="review_id",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="notifications",
+    )
+    created_at = models.DateTimeField()
+    read_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = "NOTIFICATION"
+        indexes = [
+            models.Index(
+                fields=("recipient", "created_at"),
+                name="ix_notif_recipient_created",
+            ),
+            models.Index(
+                fields=("recipient", "read_at"),
+                name="ix_notification_recipient_read",
+            ),
+        ]
+        constraints = [
+            models.CheckConstraint(
+                condition=~Q(recipient=models.F("actor")),
+                name="ck_notification_actor_recipient",
+            ),
+            models.CheckConstraint(
+                condition=(
+                    Q(type=NotificationType.REVIEW_LIKE, review__isnull=False)
+                    | (
+                        ~Q(type=NotificationType.REVIEW_LIKE)
+                        & Q(review__isnull=True)
+                    )
+                ),
+                name="ck_notification_type_review",
+            ),
+        ]

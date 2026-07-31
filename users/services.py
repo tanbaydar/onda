@@ -5,7 +5,17 @@ from django.db import IntegrityError, transaction
 from django.db.models import Avg, Count
 from django.utils.timezone import now as timezone_now
 
-from .models import DiaryEntry, Review, ReviewLike, User
+from .models import (
+    DiaryEntry,
+    Follow,
+    FollowStatus,
+    Notification,
+    NotificationType,
+    Review,
+    ReviewLike,
+    User,
+    UserStatus,
+)
 
 
 NOT_STARTED_MESSAGE = (
@@ -23,6 +33,150 @@ class ReviewRequiresRating(Exception):
 
 class ReviewLikeConflict(Exception):
     pass
+
+
+class FollowConflict(Exception):
+    pass
+
+
+def serialize_public_user(user):
+    return {
+        "id": user.id,
+        "username": user.username,
+        "display_name": user.display_name,
+    }
+
+
+def serialize_follow(follow, *, user):
+    return {
+        "user": serialize_public_user(user),
+        "status": follow.status,
+        "created_at": follow.created_at.isoformat().replace("+00:00", "Z"),
+        "approved_at": (
+            follow.approved_at.isoformat().replace("+00:00", "Z")
+            if follow.approved_at is not None
+            else None
+        ),
+    }
+
+
+@transaction.atomic
+def follow_user(*, follower_id, followee_id):
+    followee = (
+        User.objects.select_for_update()
+        .filter(pk=followee_id, status=UserStatus.ACTIVE, username__isnull=False)
+        .first()
+    )
+    if followee is None:
+        return None
+    if follower_id == followee_id:
+        raise FollowConflict("A user cannot follow themselves.")
+    if Follow.objects.filter(follower_id=follower_id, followee=followee).exists():
+        raise FollowConflict("A follow or follow request already exists.")
+    now = timezone_now()
+    status = FollowStatus.PENDING if followee.is_private else FollowStatus.APPROVED
+    follow = Follow.objects.create(
+        follower_id=follower_id,
+        followee=followee,
+        status=status,
+        created_at=now,
+        approved_at=now if status == FollowStatus.APPROVED else None,
+    )
+    Notification.objects.create(
+        recipient=followee,
+        actor_id=follower_id,
+        type=(
+            NotificationType.FOLLOW_REQUEST
+            if status == FollowStatus.PENDING
+            else NotificationType.FOLLOW
+        ),
+        created_at=now,
+    )
+    return follow
+
+
+@transaction.atomic
+def unfollow_user(*, follower_id, followee_id):
+    User.objects.select_for_update().filter(pk=followee_id).first()
+    deleted, _ = Follow.objects.filter(
+        follower_id=follower_id,
+        followee_id=followee_id,
+    ).delete()
+    return deleted > 0
+
+
+@transaction.atomic
+def accept_follow_request(*, followee_id, follower_id):
+    User.objects.select_for_update().get(pk=followee_id)
+    follow = (
+        Follow.objects.select_for_update()
+        .select_related("follower")
+        .filter(
+            follower_id=follower_id,
+            followee_id=followee_id,
+            status=FollowStatus.PENDING,
+        )
+        .first()
+    )
+    if follow is None:
+        return None
+    now = timezone_now()
+    follow.status = FollowStatus.APPROVED
+    follow.approved_at = now
+    follow.save(update_fields=("status", "approved_at"))
+    Notification.objects.create(
+        recipient_id=follower_id,
+        actor_id=followee_id,
+        type=NotificationType.REQUEST_ACCEPTED,
+        created_at=now,
+    )
+    return follow
+
+
+@transaction.atomic
+def decline_follow_request(*, followee_id, follower_id):
+    User.objects.select_for_update().get(pk=followee_id)
+    deleted, _ = Follow.objects.filter(
+        follower_id=follower_id,
+        followee_id=followee_id,
+        status=FollowStatus.PENDING,
+    ).delete()
+    return deleted > 0
+
+
+@transaction.atomic
+def change_privacy(*, user_id, is_private):
+    user = User.objects.select_for_update().get(pk=user_id)
+    if user.is_private == is_private:
+        return user, 0
+    now = timezone_now()
+    accepted = []
+    if user.is_private and not is_private:
+        accepted = list(
+            Follow.objects.select_for_update().filter(
+                followee=user,
+                status=FollowStatus.PENDING,
+            )
+        )
+        if accepted:
+            Follow.objects.filter(
+                followee=user,
+                status=FollowStatus.PENDING,
+            ).update(status=FollowStatus.APPROVED, approved_at=now)
+            Notification.objects.bulk_create(
+                [
+                    Notification(
+                        recipient_id=follow.follower_id,
+                        actor=user,
+                        type=NotificationType.REQUEST_ACCEPTED,
+                        created_at=now,
+                    )
+                    for follow in accepted
+                ]
+            )
+    user.is_private = is_private
+    user.save(update_fields=("is_private",))
+    return user, len(accepted)
 
 
 def event_is_loggable(event):
@@ -60,6 +214,27 @@ def serialize_review(review, *, include_author=False, viewer=None):
                 "viewer_has_liked",
                 ReviewLike.objects.filter(user=viewer, review=review).exists(),
             )
+            is_self = review.entry.user_id == viewer.id
+            viewer_follows = False if is_self else getattr(
+                review,
+                "viewer_follows",
+                Follow.objects.filter(
+                    follower=viewer,
+                    followee_id=review.entry.user_id,
+                    status=FollowStatus.APPROVED,
+                ).exists(),
+            )
+            has_follow_row = False if is_self else getattr(
+                review,
+                "viewer_has_follow_row",
+                Follow.objects.filter(
+                    follower=viewer,
+                    followee_id=review.entry.user_id,
+                ).exists(),
+            )
+            payload["viewer_follows"] = viewer_follows
+            payload["can_follow"] = not is_self and not has_follow_row
+            payload["can_unfollow"] = viewer_follows
     return payload
 
 
@@ -105,7 +280,7 @@ def save_rating(*, user, event, rating):
     User.objects.select_for_update().get(pk=user.pk)
     entry = (
         DiaryEntry.objects.visible_to(user)
-        .filter(event=event)
+        .filter(user=user, event=event)
         .first()
     )
     now = timezone_now()
@@ -136,7 +311,7 @@ def remove_rating(*, user, event):
     entry = (
         DiaryEntry.objects.visible_to(user)
         .select_for_update()
-        .filter(event=event)
+        .filter(user=user, event=event)
         .first()
     )
     if entry is None:
@@ -161,7 +336,7 @@ def remove_entry(*, user, event):
     entry = (
         DiaryEntry.objects.visible_to(user)
         .select_for_update()
-        .filter(event=event)
+        .filter(user=user, event=event)
         .first()
     )
     if entry is None:
@@ -175,7 +350,7 @@ def save_review(*, user, event, body):
     entry = (
         DiaryEntry.objects.visible_to(user)
         .select_for_update()
-        .filter(event=event)
+        .filter(user=user, event=event)
         .first()
     )
     if entry is None:
@@ -220,6 +395,13 @@ def like_review(*, user, review):
         ReviewLike.objects.create(user=user, review=review)
     except IntegrityError as exc:
         raise ReviewLikeConflict("Review is already liked.") from exc
+    Notification.objects.create(
+        recipient=review.entry.user,
+        actor=user,
+        type=NotificationType.REVIEW_LIKE,
+        review=review,
+        created_at=timezone_now(),
+    )
     return review.likes.count()
 
 
