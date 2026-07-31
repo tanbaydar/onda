@@ -1,16 +1,32 @@
 from zoneinfo import ZoneInfo
 
 from django.core.paginator import EmptyPage, Paginator
-from django.db.models import Prefetch
+from django.db.models import Prefetch, Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 
-from catalog.models import City, Event, EventArtist, EventStatus
+from catalog.models import (
+    Artist,
+    City,
+    Event,
+    EventArtist,
+    EventStatus,
+    Venue,
+)
 
 
 DEFAULT_PAGE_SIZE = 20
 MAX_PAGE_SIZE = 100
+SCOPE_MODELS = {
+    "city_id": City,
+    "venue_id": Venue,
+    "artist_id": Artist,
+}
+VISIBLE_EVENT_STATUSES = (
+    EventStatus.ACTIVE,
+    EventStatus.UNVERIFIED,
+)
 
 
 def _positive_integer(request, name, *, default=None, maximum=None):
@@ -61,15 +77,104 @@ def _serialize_event(event):
     }
 
 
+def _serialize_venue(venue):
+    return {
+        "id": venue.id,
+        "name": venue.name,
+        "city": {
+            "id": venue.city.id,
+            "name": venue.city.name,
+            "region_code": venue.city.region_code,
+            "region_name": venue.city.region_name,
+            "country_code": venue.city.country_code,
+            "timezone": venue.city.timezone,
+        },
+    }
+
+
+def _serialize_artist(artist):
+    return {
+        "id": artist.id,
+        "name": artist.name,
+        "image_url": artist.image_url,
+    }
+
+
+def _event_queryset():
+    lineup = EventArtist.objects.select_related("artist").order_by("position")
+    return (
+        Event.objects.filter(status__in=VISIBLE_EVENT_STATUSES)
+        .select_related("venue__city")
+        .prefetch_related(
+            Prefetch(
+                "event_artists",
+                queryset=lineup,
+                to_attr="_ordered_event_artists",
+            )
+        )
+    )
+
+
+def _scope_filter(scope_name, scope):
+    if scope_name == "city_id":
+        return Q(venue__city=scope)
+    if scope_name == "venue_id":
+        return Q(venue=scope)
+    return Q(event_artists__artist=scope)
+
+
+def _scope_cities(scope_name, scope):
+    if scope_name == "city_id":
+        return [scope]
+    if scope_name == "venue_id":
+        return [scope.city]
+    return list(
+        City.objects.filter(
+            venues__events__event_artists__artist=scope
+        ).distinct()
+    )
+
+
+def _date_filter(cities, when):
+    date_filter = Q(pk__in=[])
+    lookup = "event_date__gte" if when == "upcoming" else "event_date__lt"
+    now = timezone.now()
+    for city in cities:
+        local_today = now.astimezone(ZoneInfo(city.timezone)).date()
+        date_filter |= Q(
+            **{
+                "venue__city_id": city.id,
+                lookup: local_today,
+            }
+        )
+    return date_filter
+
+
 def event_list(request):
-    if request.GET.get("when") != "upcoming":
+    when = request.GET.get("when")
+    if when not in ("upcoming", "past"):
         return JsonResponse(
-            {"error": "when must be upcoming"},
+            {"error": "when must be upcoming or past"},
             status=400,
         )
 
+    supplied_scopes = [
+        name for name in SCOPE_MODELS if name in request.GET
+    ]
+    if len(supplied_scopes) != 1:
+        return JsonResponse(
+            {
+                "error": (
+                    "exactly one of city_id, venue_id, or artist_id "
+                    "is required"
+                )
+            },
+            status=400,
+        )
+
+    scope_name = supplied_scopes[0]
     try:
-        city_id = _positive_integer(request, "city_id")
+        scope_id = _positive_integer(request, scope_name)
         page_number = _positive_integer(request, "page", default=1)
         page_size = _positive_integer(
             request,
@@ -80,27 +185,22 @@ def event_list(request):
     except ValueError as exc:
         return JsonResponse({"error": str(exc)}, status=400)
 
-    city = get_object_or_404(City, pk=city_id)
-    local_today = timezone.now().astimezone(ZoneInfo(city.timezone)).date()
-    lineup = EventArtist.objects.select_related("artist").order_by("position")
+    scope_queryset = SCOPE_MODELS[scope_name].objects
+    if scope_name == "venue_id":
+        scope_queryset = scope_queryset.select_related("city")
+    scope = get_object_or_404(scope_queryset, pk=scope_id)
+    order_by = (
+        ("event_date", "id")
+        if when == "upcoming"
+        else ("-event_date", "-id")
+    )
     events = (
-        Event.objects.filter(
-            venue__city=city,
-            event_date__gte=local_today,
-            status__in=(
-                EventStatus.ACTIVE,
-                EventStatus.UNVERIFIED,
-            ),
+        _event_queryset()
+        .filter(
+            _scope_filter(scope_name, scope),
+            _date_filter(_scope_cities(scope_name, scope), when),
         )
-        .select_related("venue__city")
-        .prefetch_related(
-            Prefetch(
-                "event_artists",
-                queryset=lineup,
-                to_attr="_ordered_event_artists",
-            )
-        )
-        .order_by("event_date", "id")
+        .order_by(*order_by)
     )
     paginator = Paginator(events, page_size)
     try:
@@ -127,3 +227,21 @@ def event_list(request):
             },
         }
     )
+
+
+def venue_detail(request, venue_id):
+    venue = get_object_or_404(
+        Venue.objects.select_related("city"),
+        pk=venue_id,
+    )
+    return JsonResponse(_serialize_venue(venue))
+
+
+def artist_detail(request, artist_id):
+    artist = get_object_or_404(Artist, pk=artist_id)
+    return JsonResponse(_serialize_artist(artist))
+
+
+def event_detail(request, event_id):
+    event = get_object_or_404(_event_queryset(), pk=event_id)
+    return JsonResponse(_serialize_event(event))

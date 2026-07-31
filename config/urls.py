@@ -17,9 +17,17 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 
-from catalog.views import event_list
+from catalog.views import (
+    artist_detail,
+    event_detail,
+    event_list,
+    venue_detail,
+)
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/events/", event_list, name="event-list"),
+    path("api/events/<int:event_id>/", event_detail, name="event-detail"),
+    path("api/venues/<int:venue_id>/", venue_detail, name="venue-detail"),
+    path("api/artists/<int:artist_id>/", artist_detail, name="artist-detail"),
 ]
