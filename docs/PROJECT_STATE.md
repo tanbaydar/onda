@@ -6,10 +6,11 @@
 >
 > Branch: `main`
 >
-> Verified committed HEAD: `8218111`
+> Verified implementation state: Phase C Slice 4A complete locally through frontend,
+> with all Slice 4A commits intentionally unpushed.
 >
-> Remote state: `origin/main` is at `20eb0ba`; the Slice 4A amendments commit
-> `8218111` is intentionally local and unpushed.
+> Remote state: `origin/main` is at `20eb0ba`; all Slice 4A commits are intentionally
+> local and unpushed.
 >
 > Purpose: provide a self-contained, evidence-based handoff for the current
 > ingestion, catalog, identity, Been, rating, and review implementation.
@@ -183,15 +184,25 @@ Complete:
 - private-account reviews visible only to their owner until follows widen access;
 - stored review likes with no liker-identity surface;
 - Public review ordering by likes, follower count, publication time, and stable ID;
-- follower count is temporarily annotated as zero until Slice 4A;
+- Public review ordering uses real approved-follower counts;
 - standing public browser-test account `review.public.test`, documented in Operations.
 
-### Phase C slice 4A — current authorized work
+### Phase C slice 4A — follows, notifications, Activity, and Your Circle
 
-Design amendments and database preflight are complete; models and APIs have not been
-implemented. Commit `8218111` adds the approved `FOLLOW.approved_at` freeze-break,
-the Q205 service/UI split, and the temporary public-review byline follow surface.
-The next checkpoint is API shape approval before red tests or migrations.
+Complete locally and awaiting push approval:
+
+- FOLLOW and NOTIFICATION models, constraints, and physical cascades;
+- public follows and private requests with accept/decline/withdraw/unfollow;
+- serialized privacy transitions with pending-request bulk acceptance;
+- stored historical review-like/follow/request/acceptance notifications;
+- cursor-paginated Activity with read and mark-all-read actions;
+- public/private attributed visibility widening through sanctioned boundaries;
+- separately owned Circle-list and Circle-average query methods;
+- event-page Your Circle list and one-rating-threshold average;
+- real approved-follower counts in Q195 Public review ordering;
+- temporary follow controls on public-review bylines;
+- Q205 privacy API without speculative Settings UI;
+- real two-connection concurrency coverage for privacy transition versus follow.
 
 ### Not implemented
 
@@ -201,19 +212,16 @@ The following remain design-only or deferred:
 - password reset;
 - email change verification;
 - public user profiles;
-- follows and private follow requests (Slice 4A authorized, not implemented);
 - favorites;
 - onboarding flow;
 - rating-distribution display;
-- Your Circle aggregates or entry sections (Slice 4A authorized, not implemented);
 - Will Be There;
 - feeds;
-- notifications and Activity (Slice 4A authorized, not implemented);
 - reports and moderation UI;
 - account settings and privacy switching UI;
 - deletion/deactivation workflow;
 - search;
-- Home, Activity, Profile, and Settings product destinations;
+- Home, Profile, and Settings product destinations;
 - styling and responsive visual design;
 - production deployment;
 - cloud database/scheduler;
@@ -312,13 +320,18 @@ Do not automatically assume either side is correct.
 - `frontend/src/pages/RegisterPage.jsx`
 - `frontend/src/pages/LoginPage.jsx`
 - `frontend/src/pages/BeenPage.jsx`
+- `frontend/src/pages/ActivityPage.jsx`
+- `frontend/src/components/PublicReviews.jsx`
+- `frontend/src/components/YourCircle.jsx`
 
 ## Git state and important commits
 
-The verified current checkpoint is:
+The verified current local checkpoint contains:
 
 ```text
-8218111 docs: record follow approval lifecycle and interim surfaces (local)
+feat: add follow graph, notifications, and Your Circle API (local)
+docs: consolidate project state into one canonical handoff (local)
+docs: record follow approval lifecycle and interim surfaces (local)
 20eb0ba feat: add review publishing and public review interactions (pushed)
 d3b05c3 feat: add written reviews, privacy boundaries, and review likes (pushed)
 aab5b6b feat: add city-scoped recent events to Discover (pushed)
@@ -565,11 +578,24 @@ Physical deletion rules:
 - physical database cascades from both user and review;
 - counts include private likers but never expose liker identity.
 
-#### `FOLLOW` and `NOTIFICATION`
+#### `FOLLOW`
 
-Not yet migrated. Their amended frozen shapes were preflighted after commit
-`8218111`; the real database contains neither table. `FOLLOW` will record nullable
-`approved_at` with `status = approved` iff that timestamp is non-null.
+- composite primary key `(follower_id, followee_id)`;
+- status `pending|approved`;
+- immutable initiation `created_at`;
+- nullable `approved_at`, with `status = approved` iff non-null;
+- self-follow database check;
+- public follows approve immediately; private follows remain pending;
+- follow creation and privacy transition serialize on the target user row.
+
+#### `NOTIFICATION`
+
+- stored historical action records, not derived feed projections;
+- types: review like, follow, follow request, request accepted;
+- nullable `review_id` exactly for review-like notifications;
+- nullable `read_at` defines unread state;
+- actor cannot equal recipient;
+- unlike and unfollow do not retract history; review deletion cascades linked likes.
 
 Django's generated MySQL foreign key did not physically emit the DBML-required user
 cascade. The solution was deliberately split:
@@ -609,6 +635,8 @@ database itself to preserve the rule.
 0004_enforce_diary_user_cascade
 0005_review_reviewlike_review_ck_review_body_nonblank
 0006_enforce_review_database_cascades
+0007_follow_notification
+0008_enforce_social_database_cascades
 ```
 
 ### Custom-user migration surgery
@@ -1224,6 +1252,24 @@ Private ratings contributing to an average must never imply attributed visibilit
 - shared formatted dates.
 - review-presence indicator.
 
+### Activity `/activity`
+
+- signed-in destination only;
+- stored notifications ordered newest-first with cursor-based load-more;
+- unread/read text, per-item mark-read, and mark-all-read;
+- review-like activity opens the existing event page after marking read;
+- follow/request/acceptance items remain plain text until Profile exists;
+- no accept/decline controls yet because private-user discovery is deferred.
+
+### Event-page social sections
+
+- guests see the Q199 sign-in prompt instead of making a Circle request;
+- signed-in viewers fetch independently paginated Your Circle data;
+- Circle list excludes self and contains followed rating-only and reviewed entries;
+- Circle average includes the viewer's own current rating and appears at one rating;
+- Public review bylines expose follow/unfollow only to signed-in non-self viewers;
+- author names remain plain text until `/u/{username}` exists.
+
 ### Date formatting
 
 Display form:
@@ -1299,7 +1345,7 @@ Never call an unsafe-method check end-to-end if it omits browser security header
 Current backend suite:
 
 ```text
-119 tests
+138 tests
 ```
 
 Major groups:
@@ -1318,6 +1364,8 @@ Major groups:
 - username/display/email/privacy validation;
 - Been lifecycle, timing, privacy, aggregates, and database checks.
 - review lifecycle, privacy, ordering, likes, cascades, and hidden-event resurrection.
+- follow lifecycle, privacy-transition concurrency, notifications, Circle asymmetry,
+  follower-count ordering, and widened-boundary surface scoping.
 
 Important test-first lessons retained:
 
@@ -1343,11 +1391,11 @@ harness is introduced.
 
 At the last implementation verification:
 
-- full Django suite: 119 green;
+- full Django suite: 138 green;
 - Django system checks: clean;
 - test runner built and destroyed a fresh database successfully;
 - fixture audit: clean across 13 JSON fixtures;
-- frontend production build: passed, 29 transformed modules;
+- frontend production build: passed, 31 transformed modules;
 - `makemigrations --check --dry-run`: no changes;
 - `git diff --check`: clean;
 - real MySQL diary constraints inspected;
@@ -1420,23 +1468,23 @@ navigation and page content. Do not add speculative wrappers merely for future C
 The production build catches syntax/bundle failures, not interaction regressions.
 Registration error classification is the first justified test target.
 
-### Privacy architecture is not yet widened for follows
+### Privacy architecture is widened but has no Profile consumer yet
 
-`DiaryEntry.visible_to`, `Review.visible_to`, `Review.for_public_section`, and
-`DiaryEntry.for_aggregation` are established. Slice 4A must widen only the sanctioned
-attributed boundaries and add distinct Circle-list and Circle-average methods rather
-than implementing privacy filters inline in views.
+`DiaryEntry.visible_to` and `Review.visible_to` now express owner, public-account,
+and approved-follower visibility. Public, aggregate, Circle-list, and Circle-average
+rules remain separate sanctioned methods. Owner endpoints add explicit owner scope;
+the widened boundary must never be mistaken for ownership again.
 
 ### Rating threshold but no distribution
 
 Event detail exposes average and count only after three current ratings. The product
 spec's distribution UI is not implemented.
 
-### Follow/Profile reachability
+### Private Follow/Profile reachability
 
-Private users are not yet discoverable through the frontend because Search and
-Profile do not exist. Slice 4A makes the private request state machine API-complete
-while temporarily exposing public follow controls only on public-review bylines.
+Private users remain undiscoverable through the frontend because Search and Profile
+do not exist. The private request state machine is API-complete while the temporary
+public-review byline exposes only public follow/unfollow controls.
 
 ### Local scheduling and monitoring
 
@@ -1605,11 +1653,11 @@ tail -100 logs/sync.err.log
 
 ## Next product work
 
-Phase C Slice 4A is authorized: follow graph, stored notifications, Activity,
-visibility widening, follower-count ordering, and Your Circle. Documentation and
-schema preflight are complete. Before migrations, propose and obtain approval for
-the exact API shapes. Home, the `/discover` route migration, and the `/` landing
-resolver are explicitly deferred to Slice 4B.
+Phase C Slice 4A is implemented locally and awaits review/push. Slice 4B is next:
+query-time Home feed, `/discover` migration, `/` landing resolver, login/registration
+landing flip, and `/?city_id=` compatibility. The named 4B test obligation is to
+prove delayed acceptance orders by `approved_at` and same-time bulk approvals use the
+heterogeneous technical tiebreak.
 
 Before deployment:
 

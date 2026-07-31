@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 
 import { ApiError, fetchJson, fetchWithCsrf } from "../api.js";
 import PublicReviews from "../components/PublicReviews.jsx";
+import YourCircle from "../components/YourCircle.jsx";
 import { formatEventDateTime } from "../formatEventDateTime.js";
 
 const RATINGS = [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5];
@@ -324,6 +325,11 @@ export default function EventPage({ user, onAuthenticationRequired }) {
           </section>
         ) : null}
       </article>
+      <YourCircle
+        eventId={event.id}
+        user={user}
+        onAuthenticationRequired={onAuthenticationRequired}
+      />
       <PublicReviews
         eventId={event.id}
         user={user}

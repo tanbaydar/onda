@@ -3,6 +3,7 @@ import { Link, Route, Routes } from "react-router-dom";
 
 import { fetchJson, fetchWithCsrf } from "./api.js";
 import ArtistPage from "./pages/ArtistPage.jsx";
+import ActivityPage from "./pages/ActivityPage.jsx";
 import BeenPage from "./pages/BeenPage.jsx";
 import DiscoverPage from "./pages/DiscoverPage.jsx";
 import EventPage from "./pages/EventPage.jsx";
@@ -69,6 +70,9 @@ export default function App() {
             </li>
             {session.user ? (
               <>
+                <li>
+                  <Link to="/activity">Activity</Link>
+                </li>
                 <li>Signed in as {session.user.username}</li>
                 <li>
                   <Link to="/been">Been</Link>
@@ -135,6 +139,7 @@ export default function App() {
           }
         />
         <Route path="/been" element={<BeenPage session={session} />} />
+        <Route path="/activity" element={<ActivityPage session={session} />} />
         <Route path="/venues/:venueId" element={<VenuePage />} />
         <Route path="/artists/:artistId" element={<ArtistPage />} />
         <Route path="*" element={<NotFoundPage />} />
