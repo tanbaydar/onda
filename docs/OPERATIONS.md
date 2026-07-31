@@ -132,7 +132,16 @@ npm run dev
 
 Open the local URL printed by Vite. The proxy target is
 `http://127.0.0.1:8000`, so Django must use its default local address and port.
-No Django CORS configuration is needed for this development workflow.
+No Django CORS configuration is needed for this development workflow. In debug
+mode Django explicitly trusts the two documented Vite origins,
+`http://127.0.0.1:5173` and `http://localhost:5173`, for CSRF origin checking.
+This is a development-only convenience; a deployed same-origin frontend must not
+need a trusted-origin exception for its own requests.
+
+When verifying an unsafe browser request such as registration, login, logout, or a
+Been mutation outside the browser, include the browser-equivalent `Origin` header.
+A cookie-and-CSRF-header check without `Origin` does not exercise Django's origin
+validation and can pass while every real browser request receives a 403.
 
 Create a production frontend bundle with:
 

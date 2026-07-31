@@ -31,6 +31,14 @@ DEBUG = os.environ.get("DJANGO_DEBUG", "false").lower() == "true"
 
 ALLOWED_HOSTS = []
 
+# Development-only convenience for Vite's separate local origin. A deployed
+# same-origin frontend must not need trusted-origin entries for its own requests.
+if DEBUG:
+    CSRF_TRUSTED_ORIGINS = [
+        "http://127.0.0.1:5173",
+        "http://localhost:5173",
+    ]
+
 
 # Application definition
 
