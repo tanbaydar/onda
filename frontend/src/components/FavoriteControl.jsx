@@ -1,9 +1,10 @@
 import { useState } from "react";
 
 import { fetchWithCsrf } from "../api.js";
+import { classifyFavoriteError } from "../favoriteError.js";
 
 
-export default function FavoriteControl({ path, state, onChanged, onAuthenticationRequired }) {
+export default function FavoriteControl({ path, state, onChanged }) {
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
 
@@ -14,22 +15,15 @@ export default function FavoriteControl({ path, state, onChanged, onAuthenticati
       await fetchWithCsrf(path, { method: state.is_favorite ? "DELETE" : "PUT" });
       onChanged();
     } catch (requestError) {
-      if (requestError.status === 401 || requestError.status === 403) {
-        setError("Sign in required.");
-        onAuthenticationRequired?.();
-      } else if (requestError.status === 404 || requestError.status === 409) {
+      const outcome = classifyFavoriteError(requestError);
+      if (outcome.refetch) {
         onChanged();
-        if (requestError.status === 409) {
-          const messages = Object.values(requestError.data?.errors ?? {}).flat();
-          setError(messages.join(" ") || "The favorite limit has been reached.");
-        }
-      } else {
-        setError("The favorite could not be changed.");
       }
+      setError(outcome.message);
     } finally {
       setSaving(false);
     }
   }
 
-  return <section><h2>Favorite</h2><button type="button" disabled={saving} onClick={change}>{state.is_favorite ? "Remove favorite" : "Add favorite"}</button>{error ? <p>{error}</p> : null}</section>;
+  return <section><h2>Favorite</h2><button type="button" disabled={saving} onClick={change}>{state.is_favorite ? "Remove favorite" : "Add favorite"}</button>{error ? <p role="alert">{error}</p> : null}</section>;
 }

@@ -150,6 +150,19 @@ cd /path/to/danced_app/frontend
 npm run build
 ```
 
+## Favorite-cap browser click-through
+
+For event and artist favorites, verify the business-rule rejection through the
+browser rather than only calling the API:
+
+1. Sign in with a disposable account and add three favorites of the same type.
+2. Open a fourth detail page and select **Add favorite**.
+3. Confirm the control remains unselected and its field-keyed three-favorite limit
+   message appears beside the control; the page must not silently refetch it away.
+4. Remove an existing favorite, retry the fourth, and confirm it becomes selected.
+5. Remove it again and confirm the control returns to **Add favorite** without an
+   error. Repeat for both event and artist favorites.
+
 ## Standing local product-test data
 
 The local development database includes the public account

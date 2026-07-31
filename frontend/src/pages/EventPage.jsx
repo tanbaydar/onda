@@ -244,7 +244,7 @@ export default function EventPage({ user, onAuthenticationRequired }) {
           </ol>
         </section>
         <section><h2>Will Be There attendance</h2><p>{event.will_be_there_summary.active_count} active marks.</p></section>
-        {user ? <FavoriteControl path={`/api/events/${event.id}/favorite/`} state={event.viewer_favorite} onChanged={() => setRetry((value) => value + 1)} onAuthenticationRequired={onAuthenticationRequired} /> : null}
+        {user ? <FavoriteControl path={`/api/events/${event.id}/favorite/`} state={event.viewer_favorite} onChanged={() => setRetry((value) => value + 1)} /> : null}
         <section>
           <h2>Rating</h2>
           {event.rating_summary.state === "available" ? (
