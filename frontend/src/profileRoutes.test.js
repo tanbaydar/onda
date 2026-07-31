@@ -1,7 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { legacyBeenRedirect, profilePath } from "./profileRoutes.js";
+import {
+  legacyBeenRedirect,
+  profileNavigationVisible,
+  profilePath,
+} from "./profileRoutes.js";
 
 
 test("profile paths use the collision-safe canonical username namespace", () => {
@@ -12,4 +16,10 @@ test("profile paths use the collision-safe canonical username namespace", () => 
 test("legacy Been redirects owners to Profile and guests to login", () => {
   assert.equal(legacyBeenRedirect({ username: "tan" }), "/u/tan");
   assert.equal(legacyBeenRedirect(null), "/login");
+});
+
+test("private stubs do not advertise protected Profile tabs", () => {
+  assert.equal(profileNavigationVisible("stub"), false);
+  assert.equal(profileNavigationVisible("full"), true);
+  assert.equal(profileNavigationVisible("owner"), true);
 });

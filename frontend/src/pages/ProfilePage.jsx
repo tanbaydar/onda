@@ -3,7 +3,7 @@ import { Link, useParams } from "react-router-dom";
 
 import { fetchJson, fetchWithCsrf } from "../api.js";
 import { formatEventDateTime } from "../formatEventDateTime.js";
-import { profilePath } from "../profileRoutes.js";
+import { profileNavigationVisible, profilePath } from "../profileRoutes.js";
 
 
 function Pagination({ pagination, onPage }) {
@@ -232,7 +232,7 @@ export default function ProfilePage({ session, tab = "been" }) {
     <main>
       <header><h1>{profile.display_name}</h1><p>@{profile.username}</p>{profile.avatar ? <img src={profile.avatar} alt={`${profile.display_name}'s avatar`} /> : <p>Default avatar</p>}{profile.bio ? <p>{profile.bio}</p> : <p>No bio.</p>}{profile.home_city ? <p>Home city: {profile.home_city.name}, {profile.home_city.region_code}</p> : <p>No home city.</p>}</header>
       {data.relationship ? <section><h2>Relationship</h2>{data.relationship.follows_you ? <p>Follows you.</p> : null}{data.relationship.outgoing_status === "pending" ? <p>Request pending.</p> : null}{data.relationship.outgoing_status === "approved" ? <p>Following.</p> : null}{data.relationship.can_follow ? <button type="button" onClick={changeFollow}>{data.relationship.follow_action === "request" ? "Request to follow" : "Follow"}</button> : null}{data.relationship.can_unfollow ? <button type="button" onClick={changeFollow}>{data.relationship.outgoing_status === "pending" ? "Withdraw request" : "Unfollow"}</button> : null}</section> : null}
-      <nav aria-label="Profile sections"><ul><li><Link to={profilePath(profile.username)}>Been</Link></li><li><Link to={`${profilePath(profile.username)}/reviews`}>Reviews</Link></li></ul></nav>
+      {profileNavigationVisible(data.access) ? <nav aria-label="Profile sections"><ul><li><Link to={profilePath(profile.username)}>Been</Link></li><li><Link to={`${profilePath(profile.username)}/reviews`}>Reviews</Link></li></ul></nav> : null}
       {data.access === "stub" ? <p>This account is private. Follow and receive approval to see its activity.</p> : tab === "reviews" ? <ReviewsTab username={profile.username} access={data.access} sessionUser={session.user} /> : <BeenTab username={profile.username} access={data.access} />}
       {data.access === "owner" ? <><ProfileEditor profile={profile} onSaved={(saved) => setState((current) => ({ ...current, data: { ...current.data, profile: saved } }))} /><PrivacyControl account={data.account} onChanged={(privacy) => { setState((current) => ({ ...current, data: { ...current.data, account: { is_private: privacy.is_private } } })); setRequestVersion((value) => value + 1); }} /><FollowRequests version={requestVersion} /></> : null}
     </main>
