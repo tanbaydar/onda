@@ -392,7 +392,8 @@ Table FOLLOW {
   follower_id bigint [not null]
   followee_id bigint [not null]
   status follow_status [not null]
-  created_at datetime [not null, note: "Original request/follow time; approval time is deliberately unrecorded."]
+  created_at datetime [not null, note: "Immutable initiation time for the request or public follow."]
+  approved_at datetime [null, note: "When the relationship became approved; NULL while pending."]
 
   indexes {
     (follower_id, followee_id) [pk, name: "pk_follow"]
@@ -400,11 +401,16 @@ Table FOLLOW {
   }
 
   Note: '''
-  Enforced CHECK: follower_id <> followee_id.
-  Public follow inserts approved; private follow inserts pending; approval updates the
-  row; reject/unfollow deletes it. Public->private changes no rows. Private->public
-  bulk-approves incoming pending rows and inserts one request_accepted notification
-  per requester. Old requests surface using their original created_at by design.
+  Enforced CHECKs:
+  - follower_id <> followee_id;
+  - status = approved iff approved_at IS NOT NULL.
+  Public follow inserts approved with created_at = approved_at. Private follow inserts
+  pending with approved_at NULL. Approval preserves created_at and sets approved_at to
+  the true transition time; reject/unfollow deletes the row. Re-follow creates a new
+  row with new lifecycle timestamps. Public->private changes no approved rows.
+  Private->public bulk-approves incoming pending rows at one true transition timestamp
+  and inserts one request_accepted notification per requester in the same transaction.
+  Follow creation and privacy transition serialize by locking the target user row.
   '''
 }
 
@@ -528,7 +534,7 @@ Table NOTIFICATION {
   read_at datetime [null, note: "NULL = unread."]
 
   indexes {
-    (recipient_id, created_at) [name: "ix_notification_recipient_created"]
+    (recipient_id, created_at) [name: "ix_notif_recipient_created"]
     (recipient_id, read_at) [name: "ix_notification_recipient_read"]
   }
 

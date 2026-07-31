@@ -380,6 +380,20 @@ The `Danced` header text is not a navigation item because it is a plain paragrap
 If it later becomes a link, its target must follow the landing rules rather than
 create a sixth destination.
 
+### Interim contextual controls
+
+These controls are not primary navigation items, but use the same named-absorber
+discipline so temporary user-discovery surfaces cannot become permanent by accident.
+
+| Surface | Purpose | Final owner/absorber | Required absorption slice |
+|---|---|---|---|
+| Follow/unfollow control on a public-review author byline | Temporary reachable follow action for currently visible public authors; guests see no control and the author name is not a link | Public Profile at `/u/{username}` | Profile slice |
+
+Private-account request initiation is API-complete but has no current UI because
+private authors are not reachable through Public reviews. Search/Profile delivery
+adds the discoverable private-user surface and request controls; this interim does
+not authorize a dead profile link or a Settings destination.
+
 ## Absorption requirements
 
 ### Been absorption

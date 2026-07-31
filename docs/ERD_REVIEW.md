@@ -107,6 +107,9 @@ One transaction copies `username` to `recovery_username`, clears `username`, and
 ### 5. Private account approves a follower
 
 The existing `FOLLOW` row changes from `pending` to `approved`. A `request_accepted` notification is inserted. The original `FOLLOW.created_at` remains request time by design.
+`FOLLOW.approved_at` records the true approval transition time. The enforced
+status/timestamp biconditional makes pending-with-an-approval-time and
+approved-without-an-approval-time invalid states.
 
 **Result:** Pass.
 
@@ -261,3 +264,17 @@ and closed that observability gap.
   replaces that generated foreign key with the frozen database action explicitly.
   The event foreign key remains restrictive, preserving user history against catalog
   deletion.
+- 2026-07-31 — Application-schema freeze-break: `FOLLOW.approved_at` records the
+  moment a pending request becomes an approved relationship. It is NULL while
+  pending, and the database enforces `status = approved` iff `approved_at IS NOT
+  NULL`. Public follows set `created_at` and `approved_at` together; acceptance
+  preserves initiation time and assigns the true transition time. This change was
+  made before the table was migrated because a later `created_at` backfill would
+  permanently invent false approval times for delayed requests. Private-to-public
+  bulk approval uses one true transition timestamp. Follow creation and privacy
+  transitions serialize on the target user row so no concurrent request can remain
+  pending after the target becomes public.
+- 2026-07-31 — The notification recipient/time index is named
+  `ix_notif_recipient_created`; the earlier descriptive name exceeded Django's
+  enforced 30-character portable index-name limit. Only the physical identifier was
+  shortened. Its columns and newest-first access purpose are unchanged.

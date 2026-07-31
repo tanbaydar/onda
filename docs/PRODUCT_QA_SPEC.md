@@ -1544,3 +1544,54 @@ venue amendment, Question 8's follow-the-source principle, and the no-title-pars
 invariant. Structurally absent events already move through the three-miss
 unverified-to-hidden lifecycle. A future structured cancellation feature requires
 new source evidence and an explicit contract amendment.
+
+## Amendment to Questions 34–36: follow approval time
+
+The follow relationship records both its immutable initiation time and, separately,
+the moment it becomes approved. `FOLLOW.approved_at` is NULL while a private-account
+request is pending and non-NULL exactly when `status = approved`; the database
+enforces that biconditional. Public follows set initiation and approval together.
+Manual and private-to-public bulk acceptance preserve the original request time and
+record the true approval transition time.
+
+This application-schema freeze-break preserves a domain event at the only moment it
+can be recorded accurately. Deferring the column and later backfilling it from the
+request timestamp would permanently invent false approval times for delayed
+acceptances. Follow activity therefore orders by approval time, while initiation
+time remains available as distinct lifecycle evidence.
+
+## Interim implementation note for Question 205
+
+The follow-graph slice delivers and contract-tests the authenticated privacy-change
+API, including transactionally serialized public/private transitions and pending
+request auto-acceptance. It does not add a Settings or Profile control. Question
+205 is therefore service-complete but surface-pending until the Profile/Settings
+slice supplies its final UI. No interim Settings destination or navigation organ is
+introduced.
+
+## Interim implementation note for Questions 34 and 38
+
+Until Search and Profile make users—including private accounts—discoverable, the
+only temporary follow control appears on public-review author bylines. It supports
+following and unfollowing those public authors. Guests see no control, author names
+do not link to a nonexistent profile route, and private follow-request initiation
+remains API-complete but unavailable through the current UI. The Profile slice
+absorbs this control into `/u/{username}`; Search/Profile delivery supplies the
+human-reachable private-request flow required by Question 38.
+
+## Amendment to Question 59
+
+**Your Circle** orders entries by `rated_at DESC, entry_id DESC`. `rated_at` is
+the one honest activity timestamp shared by rating-only and reviewed entries. Rating
+edits remain in place, later review publication or editing does not move an entry,
+and removing then restoring a rating creates fresh activity as required by Question
+190. The entry ID is a technical stable-pagination tiebreak, not a second product
+ranking signal.
+
+## Named Slice 4B follow-ordering obligation
+
+Slice 4A records true follow approval time but has no Home or approved-follow
+ordering surface. Slice 4B must contract-test both consequences when Home consumes
+the relationship: a delayed private-request acceptance sorts by `approved_at`, not
+the preserved request `created_at`; and bulk same-time approvals order
+deterministically through the frozen heterogeneous feed tiebreak.
