@@ -204,6 +204,19 @@ Complete and pushed:
 - Q205 privacy API without speculative Settings UI;
 - real two-connection concurrency coverage for privacy transition versus follow.
 
+### Phase C slice 4B — Home feed and landing transition
+
+Complete locally and unpushed:
+
+- query-time Home assembly through one database `UNION ALL`;
+- rated Been, approved-follow, and visibility-safe review-like activity;
+- opaque cursor pagination on the frozen heterogeneous ordering key;
+- Home at `/home` with cursor-based load-more and an honest empty state;
+- Discover moved to `/discover`;
+- authentication-aware `/` landing and legacy `city_id` preservation;
+- login and registration landing on Home;
+- direct guest Home access and logout-on-Home redirecting to Discover.
+
 ### Not implemented
 
 The following remain design-only or deferred:
@@ -321,6 +334,8 @@ Do not automatically assume either side is correct.
 - `frontend/src/pages/LoginPage.jsx`
 - `frontend/src/pages/BeenPage.jsx`
 - `frontend/src/pages/ActivityPage.jsx`
+- `frontend/src/pages/HomePage.jsx`
+- `frontend/src/landing.js`
 - `frontend/src/components/PublicReviews.jsx`
 - `frontend/src/components/YourCircle.jsx`
 
@@ -1204,7 +1219,7 @@ Private ratings contributing to an average must never imply attributed visibilit
 - footer attribution links to `https://ra.co`;
 - no per-event RA/source URL.
 
-### Discover `/`
+### Discover `/discover`
 
 - city list comes from `/api/cities/`;
 - city selection lives in `?city_id=`;
@@ -1350,7 +1365,7 @@ Never call an unsafe-method check end-to-end if it omits browser security header
 Current backend suite:
 
 ```text
-138 tests
+146 tests
 ```
 
 Major groups:
@@ -1396,7 +1411,7 @@ harness is introduced.
 
 At the last implementation verification:
 
-- full Django suite: 138 green;
+- full Django suite: 146 green;
 - Django system checks: clean;
 - test runner built and destroyed a fresh database successfully;
 - fixture audit: clean across 13 JSON fixtures;
@@ -1658,11 +1673,11 @@ tail -100 logs/sync.err.log
 
 ## Next product work
 
-Phase C Slice 4A is implemented locally and awaits review/push. Slice 4B is next:
-query-time Home feed, `/discover` migration, `/` landing resolver, login/registration
-landing flip, and `/?city_id=` compatibility. The named 4B test obligation is to
-prove delayed acceptance orders by `approved_at` and same-time bulk approvals use the
-heterogeneous technical tiebreak.
+Phase C Slice 4B is implemented locally and awaits review/push. Home now assembles
+source activity at query time, the Discover/landing transition is complete, and the
+inherited follow-ordering obligations are contract-tested. The next product slice
+must be chosen against the remaining documented Phase C work rather than inferred
+from an empty route stub.
 
 Before deployment:
 

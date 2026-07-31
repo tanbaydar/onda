@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, Route, Routes } from "react-router-dom";
+import { Link, Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 
 import { fetchJson, fetchWithCsrf } from "./api.js";
 import ArtistPage from "./pages/ArtistPage.jsx";
@@ -7,9 +7,18 @@ import ActivityPage from "./pages/ActivityPage.jsx";
 import BeenPage from "./pages/BeenPage.jsx";
 import DiscoverPage from "./pages/DiscoverPage.jsx";
 import EventPage from "./pages/EventPage.jsx";
+import HomePage from "./pages/HomePage.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
 import RegisterPage from "./pages/RegisterPage.jsx";
 import VenuePage from "./pages/VenuePage.jsx";
+import { GUEST_DISCOVER, landingPath } from "./landing.js";
+
+function LandingPage({ session }) {
+  const location = useLocation();
+  if (session.loading) return <main><p>Checking session.</p></main>;
+  if (session.error) return <main><p>Landing page could not be resolved.</p></main>;
+  return <Navigate to={landingPath(session.user, location.search)} replace />;
+}
 
 function NotFoundPage() {
   return (
@@ -17,13 +26,15 @@ function NotFoundPage() {
       <h1>Page not found</h1>
       <p>The page you requested does not exist.</p>
       <p>
-        <Link to="/">Return to Discover</Link>
+        <Link to="/discover">Return to Discover</Link>
       </p>
     </main>
   );
 }
 
 export default function App() {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [retry, setRetry] = useState(0);
   const [session, setSession] = useState({
     loading: true,
@@ -54,6 +65,7 @@ export default function App() {
         headers: { "Content-Type": "application/json" },
       });
       setSession({ loading: false, error: null, user: null });
+      if (location.pathname === "/home") navigate(GUEST_DISCOVER, { replace: true });
     } catch (error) {
       setSession((current) => ({ ...current, error }));
     }
@@ -65,9 +77,8 @@ export default function App() {
         <p>Danced</p>
         <nav aria-label="Primary navigation">
           <ul>
-            <li>
-              <Link to="/">Discover</Link>
-            </li>
+            {session.user ? <li><Link to="/home">Home</Link></li> : null}
+            <li><Link to="/discover">Discover</Link></li>
             {session.user ? (
               <>
                 <li>
@@ -106,7 +117,9 @@ export default function App() {
         ) : null}
       </header>
       <Routes>
-        <Route path="/" element={<DiscoverPage />} />
+        <Route path="/" element={<LandingPage session={session} />} />
+        <Route path="/discover" element={<DiscoverPage />} />
+        <Route path="/home" element={<HomePage session={session} />} />
         <Route
           path="/register"
           element={

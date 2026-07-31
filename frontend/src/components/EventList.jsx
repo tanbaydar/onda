@@ -44,7 +44,7 @@ function EventItem({
             ) : null}
             {showVenue && showCity ? " in " : null}
             {showCity ? (
-              <Link to={`/?city_id=${event.venue.city.id}`}>
+              <Link to={`/discover?city_id=${event.venue.city.id}`}>
                 {event.venue.city.name}
               </Link>
             ) : null}

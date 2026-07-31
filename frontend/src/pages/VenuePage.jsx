@@ -48,7 +48,7 @@ export default function VenuePage() {
         <h1>Venue not found</h1>
         <p>The venue does not exist.</p>
         <p>
-          <Link to="/">Return to Discover</Link>
+          <Link to="/discover">Return to Discover</Link>
         </p>
       </main>
     );
@@ -71,7 +71,7 @@ export default function VenuePage() {
         <h1>{venue.name}</h1>
         <p>
           City:{" "}
-          <Link to={`/?city_id=${venue.city.id}`}>{venue.city.name}</Link>
+          <Link to={`/discover?city_id=${venue.city.id}`}>{venue.city.name}</Link>
         </p>
         <dl>
           <dt>Region</dt>

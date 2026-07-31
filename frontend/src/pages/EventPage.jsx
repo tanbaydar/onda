@@ -160,7 +160,7 @@ export default function EventPage({ user, onAuthenticationRequired }) {
         <h1>Event not found</h1>
         <p>The event does not exist or is no longer publicly visible.</p>
         <p>
-          <Link to="/">Return to Discover</Link>
+          <Link to="/discover">Return to Discover</Link>
         </p>
       </main>
     );
@@ -201,7 +201,7 @@ export default function EventPage({ user, onAuthenticationRequired }) {
         </p>
         <p>
           City:{" "}
-          <Link to={`/?city_id=${event.venue.city.id}`}>
+          <Link to={`/discover?city_id=${event.venue.city.id}`}>
             {event.venue.city.name}
           </Link>
         </p>

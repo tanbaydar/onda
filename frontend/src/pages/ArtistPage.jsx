@@ -48,7 +48,7 @@ export default function ArtistPage() {
         <h1>Artist not found</h1>
         <p>The artist does not exist.</p>
         <p>
-          <Link to="/">Return to Discover</Link>
+          <Link to="/discover">Return to Discover</Link>
         </p>
       </main>
     );

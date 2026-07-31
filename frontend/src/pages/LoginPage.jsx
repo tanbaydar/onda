@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { fetchWithCsrf } from "../api.js";
+import { AUTHENTICATED_LANDING } from "../landing.js";
 
 
 export default function LoginPage({ onAuthenticated }) {
@@ -24,7 +25,7 @@ export default function LoginPage({ onAuthenticated }) {
         }),
       });
       onAuthenticated(data.user);
-      navigate("/");
+      navigate(AUTHENTICATED_LANDING);
     } catch (error) {
       setErrors(
         error.data?.errors ?? {
