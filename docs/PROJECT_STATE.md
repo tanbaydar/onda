@@ -6,66 +6,55 @@
 >
 > Branch: `main`
 >
-> Verified implementation state: Phase C Slice 6A is complete and pushed through
-> Profile core, interim-surface absorption, and private-stub chrome suppression.
+> Verified implementation state: Milestone 3 — the social layer — is complete,
+> verified, and pushed.
 >
-> Remote state: `origin/main` is at `294d456`.
+> Verified Git state before this documentation commit: local `HEAD` and
+> `origin/main` both at `0e577d5a019217b713ed755f948a7588c666e98a`.
 >
-> Purpose: provide a self-contained, evidence-based handoff for the current
-> ingestion, catalog, identity, Been, rating, and review implementation.
+> Purpose: provide the single current, evidence-based handoff for ingestion,
+> catalog, product, social architecture, local operations, and the next phase.
 
 ## Status of this document
 
 This file is updated in place and is the sole current project-state document. Every
-future orientation must read `docs/PROJECT_STATE.md`; do not create numbered
-successors. The superseded Milestone 1 handoff is retained only as historical evidence
-at `docs/archive/PROJECT_STATE_MILESTONE_1_2026-07-30.md`.
+future session must read `docs/PROJECT_STATE.md`; do not create numbered successors.
+The superseded Milestone 1 handoff remains only as historical evidence at
+`docs/archive/PROJECT_STATE_MILESTONE_1_2026-07-30.md`.
 
-This file does not supersede the frozen product and architecture contracts. It
-summarizes their current implementation. When this file conflicts with an
-authoritative contract, investigate rather than silently choosing whichever text is
-more convenient.
+This document summarizes implementation. It does not supersede the frozen DBML,
+ERD review, product decisions, ingestion architecture, fixture contract, committed
+tests, migrations, or `docs/NAVIGATION.md`. If a summary here conflicts with an
+authoritative artifact, investigate the discrepancy rather than choosing whichever
+text is convenient.
 
 ## Read this first
 
-Danced is a Letterboxd-style social diary for live music. It is intended to let
-people discover events, record events they attended, rate them, write reviews,
-follow other users, and eventually browse social activity around live music.
+Danced is a Letterboxd-style social diary for live music. It now has three complete
+working foundations:
 
-The project now has three working vertical foundations:
+1. A conservative, replayable Resident Advisor ingestion pipeline over live New
+   York City and Boston catalog data.
+2. A public catalog API and semantic, deliberately unstyled React browsing shell.
+3. A session-authenticated social layer: identity, privacy, Been, ratings, reviews,
+   likes, follows, requests, notifications, Circle, Home, Will Be There, profiles,
+   favorites, and profile statistics.
 
-1. A conservative, replayable Resident Advisor ingestion pipeline.
-2. A public read-only catalog API and unstyled React browsing shell.
-3. Session-based identity and user content: Been entries, ratings, written reviews,
-   and public review likes.
+The product is no longer merely a scraper or event list. A user can browse the real
+catalog; register and choose privacy; record and rate attendance; publish and like
+reviews; follow public users or request private users; inspect Activity and Home;
+mark Will Be There; edit a profile; select favorites; and inspect privacy-safe
+profile history, statistics, and rating distribution.
 
-This is no longer merely a data-pipeline project. A founder can:
+Two standing local accounts are intentional data:
 
-- browse real New York City and Boston catalog data;
-- navigate event, venue, and artist pages;
-- register and choose a public/private account;
-- log in and out;
-- see whether an event is currently loggable;
-- add a past event to Been with a mandatory rating;
-- edit or remove that rating;
-- remove the Been entry;
-- view their own diary;
-- see global rating availability and averages on event pages;
-- write, edit, and delete a review attached to a rated Been entry;
-- browse public reviews and like or unlike another user's review.
+- `tan`: the founder's private account and real diary data;
+- `review.public.test`: a public test account for the review/social browser pipeline.
 
-On 2026-07-31, the founder completed the first real product click-through:
-
-- registered the persistent account `tan`;
-- confirmed a future event is not loggable;
-- confirmed an event happening tonight remains unavailable before its scheduled
-  venue-local start;
-- navigated through a venue's Past section;
-- rated `Martin Garrix Afterparty` 2.0 stars;
-- confirmed the entry renders on `/been`.
-
-That account and diary entry are intentional real development data and must not be
-deleted as test cleanup.
+Verification must never modify the founder's account or diary. Use disposable named
+accounts and delete them with cascade verification, or use the standing public test
+account only where its documented purpose applies. Never expose either account's
+email in handoff prose or other-user serialization.
 
 ## Workflow rule
 
@@ -74,246 +63,136 @@ The central implementation rule remains:
 > Do not silently redesign settled behavior while implementing it.
 
 Treat the DBML, ERD review, product questions, architecture contract, frozen fixture
-README, committed migrations, and committed tests as contracts. If implementation
-reveals a contradiction:
+README, navigation contract, committed migrations, and tests as contracts. When
+implementation reveals a contradiction:
 
 1. stop the affected design branch;
 2. identify the exact conflicting rulings;
 3. report the correctness hole;
 4. propose the smallest evidence-based resolution;
-5. wait for product approval when the specification does not answer the question;
-6. record any approved freeze-break or amendment;
-7. cover it with focused tests.
+5. wait for approval when the specification does not answer;
+6. record an approved freeze-break or interpretation;
+7. prove it with focused tests and, where false positives are plausible, mutation
+   evidence.
 
-Do not reopen settled ingestion behavior without concrete contradictory evidence.
-Do not make product decisions merely because a framework default is convenient.
+Do not reopen settled ingestion design without concrete contradictory evidence. Do
+not make product decisions merely because a framework default is convenient.
 
 ## Current milestone position
 
 ### Milestone 1 — ingestion and catalog foundation
 
-Complete for the current local prototype:
+Complete and pushed:
 
-- source reconnaissance and captured request fixtures;
-- append-only raw request evidence;
-- per-observation admission/quarantine;
-- source-neutral canonical catalog;
-- source identity firewall;
-- replay-safe upserts;
-- completeness-gated absence reconciliation;
-- resurrection;
-- bounded, paced acquisition;
-- local nightly scheduling and alarms;
+- captured source evidence and replayable fixtures;
+- append-only raw request archive;
+- per-observation admission and quarantine;
+- source-neutral canonical catalog and identity firewall;
+- replay-safe upserts and stable lineup ordering;
+- completeness-gated absence reconciliation and resurrection;
+- bounded, paced acquisition with run lock, telemetry, and alarms;
+- local daily scheduling;
 - live NYC and Boston data.
 
-### Milestone 2 / Phase A — read-only catalog API
-
-Complete:
-
-- cities endpoint;
-- scoped upcoming and past event lists;
-- venue, artist, and event detail;
-- visibility rules;
-- per-event venue-local date boundaries;
-- deterministic pagination;
-- contract tests.
-
-### Phase B — guest frontend shell
-
-Complete and deliberately unstyled:
-
-- Vite + React in plain JavaScript;
-- Discover city browsing;
-- event detail;
-- venue detail with independent Upcoming and Past sections;
-- artist detail with independent Upcoming and Past sections;
-- semantic loading, error, retry, empty, and not-found states;
-- Resident Advisor footer attribution;
-- shared venue-local datetime formatting;
-- contextual suppression of redundant list metadata.
-
-### Phase C slice 1 — identity
-
-Complete with an explicit temporary verification deferral:
-
-- custom Django user;
-- registration;
-- mandatory public/private choice;
-- email/password login;
-- logout;
-- current-session bootstrap;
-- CSRF-protected same-origin session authentication;
-- signed-in navigation.
-
-### Phase C slice 2 — Been and ratings
-
-Complete:
-
-- one diary entry per user/event;
-- mandatory rating on first creation;
-- nullable rating after creation;
-- start-time logging gate;
-- rating edit;
-- rating removal while retaining attendance;
-- entry deletion;
-- owner-only diary;
-- anonymous global aggregates;
-- hidden-event suppression and resurrection;
-- first real founder entry.
-
-### Phase C slice 2.5 — recent-event navigation
-
-Complete:
-
-- Discover includes city-scoped Recent events below Upcoming;
-- the section reuses the existing past-event endpoint and shared event list;
-- Upcoming and Recent paginate independently;
-- the list is explicitly an interim recency stand-in, not popularity ranking.
-
-### Phase C slice 3 — written reviews and likes
-
-Complete:
-
-- one review per rated Been entry;
-- post-trim 1–1,000-character body contract;
-- immutable original publication time and silent edits;
-- review-only deletion preserving rating and attendance;
-- rating/entry deletion cascades through review likes;
-- public-account reviews visible to guests;
-- private-account reviews visible only to their owner until follows widen access;
-- stored review likes with no liker-identity surface;
-- Public review ordering by likes, follower count, publication time, and stable ID;
-- Public review ordering uses real approved-follower counts;
-- standing public browser-test account `review.public.test`, documented in Operations.
-
-### Phase C slice 4A — follows, notifications, Activity, and Your Circle
+### Milestone 2 — catalog API and guest shell
 
 Complete and pushed:
 
-- FOLLOW and NOTIFICATION models, constraints, and physical cascades;
-- public follows and private requests with accept/decline/withdraw/unfollow;
-- serialized privacy transitions with pending-request bulk acceptance;
-- stored historical review-like/follow/request/acceptance notifications;
-- cursor-paginated Activity with read and mark-all-read actions;
-- public/private attributed visibility widening through sanctioned boundaries;
-- separately owned Circle-list and Circle-average query methods;
-- event-page Your Circle list and one-rating-threshold average;
-- real approved-follower counts in Q195 Public review ordering;
-- temporary follow controls on public-review bylines;
-- Q205 privacy API without speculative Settings UI;
-- real two-connection concurrency coverage for privacy transition versus follow.
+- canonical cities endpoint;
+- city-, venue-, and artist-scoped upcoming and past events;
+- venue-local date classification and deterministic pagination;
+- event, venue, and artist details;
+- Vite + React guest shell in plain JSX;
+- Discover with Upcoming and Recent sections;
+- event, venue, and artist pages;
+- loading, error/retry, empty, and not-found states;
+- source attribution footer and timezone-neutral display formatting;
+- no styling, placeholder imagery, speculative endpoints, or source-title parsing.
 
-### Phase C slice 4B — Home feed and landing transition
+### Milestone 3 — social layer
 
-Complete and pushed:
+**Complete, verified, and pushed.** Every planned slice shipped:
 
-- query-time Home assembly through one database `UNION ALL`;
-- rated Been, approved-follow, and visibility-safe review-like activity;
-- opaque cursor pagination on the frozen heterogeneous ordering key;
-- Home at `/home` with cursor-based load-more and an honest empty state;
-- Discover moved to `/discover`;
-- authentication-aware `/` landing and legacy `city_id` preservation;
-- login and registration landing on Home;
-- direct guest Home access and logout-on-Home redirecting to Discover.
+1. **Identity:** custom user, required privacy choice, registration, login, logout,
+   current-session bootstrap, session authentication, and CSRF.
+2. **Been and ratings:** venue-local logging gate, mandatory creation rating,
+   editable/removable rating, preserved unrated attendance, deletion, diary, and
+   anonymous global averages.
+3. **Recent events (2.5):** independently paginated city-scoped Recent section on
+   Discover as the explicit interim recency stand-in for future popularity.
+4. **Reviews and likes:** review lifecycle coupled to rated attendance, immutable
+   publication position, public/private visibility, likes, cascades, and Public
+   review ordering.
+5. **Follows, notifications, Activity, and Circle (4A):** public follows, private
+   requests, transactional privacy transitions, stored notifications, Activity,
+   widened visibility, Circle list/average, and real follower-count ordering.
+6. **Home and landing transition (4B):** query-time database-union feed, cursor
+   pagination, `/home`, `/discover`, authentication-aware `/`, and legacy city-link
+   preservation.
+7. **Will Be There:** venue-local calendar expiry, logical retention for
+   postponement recovery, Public/Circle attendees, active anonymous count, controls,
+   and Home activity.
+8. **Profile core and absorption (6A):** `/u/{username}`, Been and Reviews tabs,
+   private stub/full/owner access, identity/privacy editing, relationship controls,
+   request queue, and absorption of every interim navigation surface.
+9. **Favorites, statistics, and final feed sources (6B):** capped event/artist
+   favorites, private venue favorites, profile statistics and normalized given-
+   rating distribution, anonymous WBT count, and the fifth/sixth Home branches.
 
-### Phase C slice 5 — Will Be There
+Post-close corrections are also pushed:
 
-Complete and pushed:
+- `294d456` prevents private-profile stubs and direct protected-tab routes from
+  advertising inaccessible Been/Reviews chrome;
+- `0e577d5` preserves field-keyed favorite-cap 409 errors beside the favorite
+  control instead of refetching the message out of existence.
 
-- venue-local calendar liveness through the shared clock seam;
-- logically retained dormant rows so postponement can restore user intent;
-- idempotent mark/unmark state with immutable activity time;
-- privacy-aware Public and Your Circle attendee sections;
-- authenticated event-detail viewer state and zero-style controls;
-- fourth database-union Home branch;
-- bounded city-timezone query plus one four-source feed query;
-- no navigation additions.
+Milestone 3 closes with the backend, frontend, migrations, fixtures, browser
+security flow, concurrency contracts, and physical foreign-key behavior verified.
 
-### Phase C slice 6A — Profile core and interim absorption
+### Milestone 4 — Design
 
-Complete and pushed:
+Next phase. Begin with a direction session; do not style ad hoc.
 
-- canonical case-insensitive `/u/{username}` Profile identity;
-- explicit stub/full/owner access metadata;
-- Q37-safe private stubs and separately protected content endpoints;
-- Been and four-sort Reviews tabs through sanctioned visibility boundaries;
-- owner identity editing for display name, avatar URL, verbatim bio, and home city;
-- owner privacy control and pending follow-request queue;
-- follow/request/withdraw/unfollow controls on Profile;
-- `/been` compatibility redirects and final Profile navigation position;
-- contextual user links replacing temporary review-byline follow controls;
-- corrected ORM `RESTRICT` behavior for user home-city references.
-- private-profile stubs suppress Been/Reviews tab affordances, including direct
-  protected-tab navigation.
+The planned sequence is:
 
-### Phase C slice 6B — favorites, statistics, and final Home sources
+1. settle design direction against the actual finished semantic product;
+2. use Claude Design against the real frontend rather than a parallel mock product;
+3. integrate the approved design over the frozen semantic markup;
+4. preserve plain JavaScript/JSX, no TypeScript, and no component library unless a
+   deliberate design-time decision explicitly reverses those constraints;
+5. run the pre-design punch list below before or as part of integration where it
+   affects content hierarchy rather than decoration.
 
-Complete locally and unpushed through `ca2e061`:
+### Milestone 5 — Deployment
 
-- event, artist, and owner-private venue favorites with locked three-item caps for
-  profile-facing favorite types;
-- profile favorite sections, statistics, and normalized given-rating distribution;
-- anonymous-inclusive active Will-Be-There count, kept distinct from attendee-list
-  pagination totals;
-- favorite-event and favorite-artist activity as the fifth and sixth branches of
-  the database-assembled Home feed, without increasing its bounded query count;
-- zero-style detail controls, Profile summaries, and Home renderers.
+Planned after design:
 
-This completes Milestone 3's implemented social-product scope. Email verification
-and the deliberately deferred platform/account features below remain outstanding.
-
-### Not implemented
-
-The following remain design-only or deferred:
-
-- email verification delivery and gating;
-- password reset;
-- email change verification;
-- onboarding flow;
-- reports and moderation UI;
-- broader account settings beyond Profile identity and privacy;
-- deletion/deactivation workflow;
-- search;
-- Profile and Search product destinations;
-- styling and responsive visual design;
-- production deployment;
-- cloud database/scheduler;
-- frontend automated test harness.
-
-Do not migrate all remaining DBML application tables preemptively. Each slice should
-introduce only the tables it consumes.
+- repay mandatory email verification and change registration's immediate-use flow;
+- implement password reset under the same email-delivery foundation;
+- choose and integrate an email provider;
+- move local MySQL to a deliberately pinned supported MySQL 8.x service;
+- migrate the local LaunchAgent schedule to hosted scheduling;
+- establish backups, monitoring, environment/secrets handling, and recovery drills;
+- deploy behind link access plus basic authentication for the gated posture;
+- contact Resident Advisor by email at or before public availability;
+- complete legal/source-terms review before broad access.
 
 ## Sources of truth and authority
 
 Read current artifacts in this order:
 
-1. `docs/PRODUCT_QA_SPEC.md`
-   - 210 product decisions plus appended amendments.
-2. `docs/danced.dbml`
-   - Frozen full database blueprint.
-3. `docs/ERD_REVIEW.md`
-   - Reviewed deltas, freeze-breaks, and physical-database notes.
-4. `docs/danced-data-architecture.md`
-   - Ingestion boundaries and invariants.
-5. `docs/recon/fixtures/README.md`
-   - Frozen fixture contract and Transformer rules.
-6. Committed tests
-   - Executable contracts for implemented behavior.
-7. Committed migrations
-   - Immutable history of the physical schema.
-8. `docs/RA_SOURCE_RECON.md`
-   - Source evidence and captured request behavior.
-9. `docs/OPERATIONS.md`
-   - Current local operations and browser-equivalent CSRF verification guidance.
-10. `docs/NAVIGATION.md`
-   - Binding destination order, landing rules, and interim absorbers.
-11. This file
-    - Current implementation and runtime handoff.
-12. `docs/archive/`
-    - Superseded history only.
-
-If tests and prose appear to disagree, inspect Git history and the amendment record.
-Do not automatically assume either side is correct.
+1. `docs/PRODUCT_QA_SPEC.md` — 210 decisions plus appended amendments.
+2. `docs/danced.dbml` — frozen full database blueprint.
+3. `docs/ERD_REVIEW.md` — reviewed ORM/physical deltas and freeze-breaks.
+4. `docs/danced-data-architecture.md` — ingestion ownership and invariants.
+5. `docs/recon/fixtures/README.md` — frozen fixture and Transformer contract.
+6. Committed tests — executable contracts for implemented behavior.
+7. Committed migrations — immutable physical-schema history.
+8. `docs/NAVIGATION.md` — binding destinations, landing, and absorptions.
+9. `docs/RA_SOURCE_RECON.md` — source evidence and request behavior.
+10. `docs/OPERATIONS.md` — local operations and browser-equivalent verification.
+11. This file — current implementation and runtime handoff.
+12. `docs/archive/` — superseded history only.
 
 ## Technology and repository shape
 
@@ -321,1278 +200,433 @@ Do not automatically assume either side is correct.
 
 - Python 3.14 local runtime
 - Django 6.0.7
-- MySQL through `mysqlclient` 2.2.8
+- MySQL via `mysqlclient` 2.2.8
 - `python-dotenv` 1.1.1
-- Plain Django JSON views
-- Django session authentication
-- Django CSRF middleware
-- No Django REST Framework
-- No GraphQL server
-- No Celery or worker queue
+- plain Django JSON views
+- Django sessions and CSRF middleware
+- no DRF, GraphQL, JWT, Celery, Redis, or worker queue
 
 ### Frontend
 
 - Vite 8.2
-- React 19.2
-- React DOM 19.2
+- React and React DOM 19.2
 - React Router DOM 6.30
-- Plain JavaScript and JSX
-- Plain `fetch`
-- No TypeScript
-- No state-management library
-- No component library
-- No CSS files, inline styles, `className`, or CSS framework
+- plain JavaScript and JSX
+- plain `fetch`
+- no TypeScript
+- no global state-management library
+- no component library
+- no CSS files, inline styles, `className`, or CSS framework
 
 ### Django apps
 
-- `catalog`
-  - canonical event catalog;
-  - public read APIs.
-- `ingestion`
-  - acquisition, archival, transformation, quarantine, reconciliation, runner,
-    and command.
-- `users`
-  - custom user, authentication, diary/rating services, and APIs.
-- `config`
-  - settings, source enum, URL wiring.
+- `catalog`: canonical event catalog and public reads;
+- `ingestion`: acquisition, archival, transformation, quarantine, reconciliation,
+  runner, and command;
+- `users`: identity, authentication, social models/services, privacy boundaries,
+  and APIs;
+- `config`: settings, source enum, and URL wiring.
 
-### Important frontend files
+## Git state and closing commits
 
-- `frontend/src/App.jsx`
-  - routes, session bootstrap, global navigation, logout, footer.
-- `frontend/src/api.js`
-  - small JSON/CSRF fetch helper.
-- `frontend/src/components/EventList.jsx`
-  - shared scoped event-list and pagination UI.
-- `frontend/src/formatEventDateTime.js`
-  - timezone-neutral display formatting for already-local catalog values.
-- `frontend/src/pages/DiscoverPage.jsx`
-- `frontend/src/pages/EventPage.jsx`
-- `frontend/src/pages/VenuePage.jsx`
-- `frontend/src/pages/ArtistPage.jsx`
-- `frontend/src/pages/RegisterPage.jsx`
-- `frontend/src/pages/LoginPage.jsx`
-- `frontend/src/pages/BeenPage.jsx`
-- `frontend/src/pages/ActivityPage.jsx`
-- `frontend/src/pages/HomePage.jsx`
-- `frontend/src/landing.js`
-- `frontend/src/components/PublicReviews.jsx`
-- `frontend/src/components/YourCircle.jsx`
-
-## Git state and important commits
-
-The verified current local checkpoint contains:
+The verified pre-documentation state was clean with local and remote at:
 
 ```text
-feat: add follow graph, notifications, and Your Circle API (local)
-docs: consolidate project state into one canonical handoff (local)
-docs: record follow approval lifecycle and interim surfaces (local)
-20eb0ba feat: add review publishing and public review interactions (pushed)
-d3b05c3 feat: add written reviews, privacy boundaries, and review likes (pushed)
-aab5b6b feat: add city-scoped recent events to Discover (pushed)
-fb47ba7 docs: freeze five-destination navigation contract (pushed)
+0e577d5 fix: preserve favorite limit errors beside controls
+44080d6 feat: expose favorites and Milestone 3 profile summaries
+d51b51c feat: add favorites, profile statistics, and final Home feed sources
+294d456 fix: hide protected Profile tabs from private stubs
+1e2e04c feat: add zero-style Profile core and absorb interim surfaces
+51ca719 feat: add privacy-safe Profile core APIs and repair home-city restriction
+0b780ca feat: add zero-style Will Be There controls and attendee sections
+6231cd0 feat: add venue-local Will Be There state and Home activity
+b59a240 feat: add Home and execute authenticated landing transition
+cd1d95a feat: assemble cursor-paginated Home activity in one database union
 ```
 
-Recent vertical-slice history:
+This documentation commit advances both local and `origin/main`; its final hash is
+reported in the completion message rather than predicted inside the file.
 
-```text
-c841c80 fix: trust documented Vite origins in local development
-47f09a0 fix: render registration failures by error class
-b150fc8 feat: add zero-style Been diary and rating controls
-e5986ac feat: add Been diary, ratings, and private aggregation boundary
-6d529ec feat: add zero-style registration and login frontend
-9f2360f feat: add custom user and session auth API
-989676e feat: refine guest catalog content before styling
-059b24e feat: add unstyled guest catalog frontend
-391613f feat: add canonical cities API
-0a4e40b feat: add past catalog filters and entity detail endpoints
-6d45262 feat: read-only upcoming-events API
-cdf95dd ops: add nightly health alarms and project handoff
-```
+## Implemented database and migration state
 
-The state-consolidation commit that updates this section is intentionally separate
-from the amendments commit.
+All migrations listed here are applied to the real local database.
 
-## Implemented database
-
-All listed migrations were applied to the real local database at the last
-verification.
-
-### Catalog zone
-
-#### `CITY`
-
-Fields:
-
-- canonical ID;
-- name;
-- region code and name;
-- country code;
-- IANA timezone.
-
-Uniqueness is country + region + name.
-
-Current cities:
-
-| ID | City | Region | Country | Timezone |
-|---:|---|---|---|---|
-| 2 | Boston | MA | US | America/New_York |
-| 1 | New York City | NY | US | America/New_York |
-
-#### `VENUE`
-
-- name;
-- required canonical city;
-- restrictive city deletion.
-
-A venue always implies exactly one city. This supports suppressing both venue and
-city lines inside a venue-scoped event list.
-
-#### `ARTIST`
-
-- name;
-- optional image URL.
-
-#### `EVENT`
-
-- title;
-- venue-local `event_date`;
-- optional venue-local `start_time`;
-- required venue;
-- optional cover image;
-- derived lifecycle status.
-
-Actual lifecycle values:
-
-- `active`
-- `unverified`
-- `hidden`
-
-Public visibility is `ACTIVE` plus `UNVERIFIED`. `HIDDEN` is excluded. There is no
-`status="cancelled"` or `status="active"`-only public rule. Public responses do not
-expose lifecycle vocabulary.
-
-#### `EVENT_ARTIST`
-
-- event;
-- artist;
-- stable lineup position;
-- unique event/artist;
-- unique event/position.
-
-The pipeline never infers lineup members from event titles. A source title can name
-an artist absent from the structured lineup; the structured source relationship wins.
-
-#### Identity tables
-
-Concrete identity tables isolate provider IDs:
-
-- `CITY_IDENTITY`
-- `VENUE_IDENTITY`
-- `ARTIST_IDENTITY`
-- `EVENT_IDENTITY`
-
-Canonical tables remain source-neutral. Current source enum value is `ra`.
-
-`EVENT_IDENTITY` additionally owns:
-
-- `last_seen_at`;
-- absence `misses`.
-
-Canonical event status is derived across all identities rather than treated as
-independent source truth.
-
-### Ingestion zone
-
-#### `TRACKED_SOURCE_PAGE`
-
-Defines the bounded acquisition seeds:
-
-- source;
-- provider area reference;
-- human label;
-- active flag;
-- last sync and success times.
-
-Current active seeds:
-
-- RA area `8`: New York City
-- RA area `530`: Boston
-
-#### `SYNC_RUN`
-
-Tracks:
-
-- nightly, backfill, or replay run type;
-- running, completed, or crashed status;
-- start/end time;
-- attempted/failed seeds;
-- admitted/upserted observations;
-- quarantines;
-- drops;
-- diagnostic summary.
-
-#### `RAW_INGEST`
-
-Archives every page-level acquisition result:
-
-- seed and run;
-- requested window;
-- page number and size;
-- exact response body text;
-- HTTP status;
-- fetched time;
-- pending/processed/failed processing status.
-
-Response text is preserved even when it is not valid JSON.
-
-#### `REJECTED_INGEST`
-
-Stores one rejected observation:
-
-- raw page;
-- zero-based listing position;
-- nullable provider event reference;
-- rejection reason;
-- diagnostic detail;
-- rejection time.
-
-Replay uniqueness is raw page + listing position. Provider event ID is nullable
-because a structural failure may occur before a usable nested ID exists.
-
-### User zone
-
-#### `DANCED_USER`
-
-Custom user extends `AbstractUser`.
-
-Product fields implemented from the DBML:
-
-- unique lowercase email;
-- nullable email-verification timestamp;
-- lifecycle-nullable lowercase username;
-- recovery username;
-- display name;
-- optional bio;
-- optional avatar URL;
-- optional home city;
-- required `is_private`;
-- account status;
-- optional deletion due time;
-- creation time.
-
-Framework administrative columns inherited from `AbstractUser` are documented ORM
-deltas. Product code must not invent product semantics for them.
-
-Username lifecycle nullability is not registration optionality. Registration always
-requires a username. Null is reserved for later deactivation/deletion semantics.
-
-Current user status values:
-
-- `active`
-- `deactivated`
-- `pending_deletion`
-
-Database checks link username nullability and deletion date to lifecycle status.
-
-#### `DIARY_ENTRY`
-
-Implemented fields:
-
-- user;
-- event;
-- nullable rating;
-- nullable `rated_at`;
-- `created_at`.
-
-Constraints:
-
-- one entry per user/event;
-- rating and `rated_at` are null together or non-null together;
-- rating is null or a half-star value from 0.5 through 5.0.
-
-Physical deletion rules:
-
-- user deletion cascades diary entries;
-- event deletion is restrictive.
-
-#### `REVIEW`
-
-- one-to-one with `DIARY_ENTRY`;
-- trimmed non-empty body, maximum 1,000 stored characters;
-- immutable `published_at` and deliberately no edit timestamp;
-- database and ORM cascade from entry deletion;
-- owner/public visibility passes through `Review.visible_to(viewer)`;
-- Public event sections use the separate `for_public_section()` boundary.
-
-#### `REVIEW_LIKE`
-
-- composite primary key `(user_id, review_id)`;
-- one like per user/review;
-- self-like rejected transactionally;
-- physical database cascades from both user and review;
-- counts include private likers but never expose liker identity.
-
-#### `FOLLOW`
-
-- composite primary key `(follower_id, followee_id)`;
-- status `pending|approved`;
-- immutable initiation `created_at`;
-- nullable `approved_at`, with `status = approved` iff non-null;
-- self-follow database check;
-- public follows approve immediately; private follows remain pending;
-- follow creation and privacy transition serialize on the target user row.
-
-#### `NOTIFICATION`
-
-- stored historical action records, not derived feed projections;
-- types: review like, follow, follow request, request accepted;
-- nullable `review_id` exactly for review-like notifications;
-- nullable `read_at` defines unread state;
-- actor cannot equal recipient;
-- unlike and unfollow do not retract history; review deletion cascades linked likes.
-
-#### `WILL_BE_THERE`
-
-- composite primary key `(user_id, event_id)`;
-- immutable `created_at` Home activity time;
-- user deletion cascades physically; event deletion is restrictive;
-- no stored expiry or counters;
-- active while venue-local today is on or before the event date;
-- dormant rows remain stored so postponement and resurrection can restore them.
-
-`users.0011` corrects the ORM transcription of `DANCED_USER.home_city_id` from
-`SET_NULL` to the frozen `RESTRICT` behavior. MySQL's existing foreign key was already
-restrictive, so the migration changes Django state without replacing physical DDL.
-
-Django's generated MySQL foreign key did not physically emit the DBML-required user
-cascade. The solution was deliberately split:
-
-- `users.0003` creates `DIARY_ENTRY`;
-- `users.0004` replaces the user foreign key with physical `ON DELETE CASCADE`.
-
-Accepting an ORM-only cascade was rejected because the frozen contract requires the
-database itself to preserve the rule.
-
-## Migration history
-
-### Catalog
-
-```text
-0001_initial
-0002_seed_v1_cities
-0003_enforce_database_cascades
-0004_cityidentity
-0005_seed_city_identities_and_enforce_cascade
-```
-
-### Ingestion
-
-```text
-0001_initial
-0002_rawingest_ck_raw_processing_status_and_more
-0003_remove_rejectedingest_uq_rejection_payload_entity_and_more
-```
-
-### Users
-
-```text
-0001_initial
-0002_remove_legacy_auth_user_metadata
-0003_diaryentry
-0004_enforce_diary_user_cascade
-0005_review_reviewlike_review_ck_review_body_nonblank
-0006_enforce_review_database_cascades
-0007_follow_notification
-0008_enforce_social_database_cascades
-0009_willbethere
-0010_enforce_wbt_user_cascade
-```
-
-### Custom-user migration surgery
-
-The local database had already applied Django admin/auth migrations before the
-custom user model existed. The legacy `auth_user` and its join tables were empty, but
-changing `AUTH_USER_MODEL` after migration required remediation.
-
-The rejected fallback was resetting the entire database. That would have destroyed
-the raw archive that supposedly made the catalog rebuildable, invalidating its own
-safety rationale.
-
-The adopted sequence was:
-
-1. create and verify a full `mysqldump`;
-2. retain it outside the repository at
-   `/Users/ilkerbaydar/danced-backups/danced_pre_users_20260731.sql`;
-3. unapply admin migrations;
-4. remove only the three verified-empty legacy user tables;
-5. install `users.0001` as the swappable user root;
-6. remove stale `auth.user` content-type metadata idempotently;
-7. reapply admin;
-8. validate the graph on the real database and through the full test runner's fresh
-   database.
-
-Catalog, ingestion, and raw evidence were preserved.
-
-## Live database snapshot
-
-Snapshot taken 2026-07-31 after the founder click-through:
-
-| Entity | Count |
+| App | Applied migrations |
 |---|---:|
-| Cities | 2 |
-| Venues | 355 |
-| Artists | 3,132 |
-| Events | 2,119 |
-| Event identities | 2,119 |
-| Users | 1 |
-| Diary entries | 1 |
-| Sync runs | 4 |
-| Raw ingest pages | 301 |
-| Rejected observations | 2,255 |
-| Tracked seeds | 2 |
+| `admin` | 3 |
+| `auth` | 12 |
+| `catalog` | 5 |
+| `contenttypes` | 2 |
+| `ingestion` | 3 |
+| `sessions` | 1 |
+| `users` | 13 |
+| **Total** | **39** |
 
-Event statuses at the snapshot:
-
-| Status | Count |
-|---|---:|
-| active | 2,119 |
-| unverified | 0 |
-| hidden | 0 |
-
-Persistent founder data:
-
-- user ID 2;
-- username `tan`;
-- display name `Tan`;
-- private account;
-- active;
-- email verification still null under the approved temporary deferral.
-
-Persistent diary data:
-
-- entry ID 1;
-- event ID 2174;
-- event `Martin Garrix Afterparty`;
-- historical event date 2026-06-19;
-- rating 2.0;
-- rated and created 2026-07-31.
-
-Do not expose the founder's email in handoff documents or other-user serializers.
-
-## Ingestion runtime
-
-### Acquisition client
-
-`ingestion/client.py` owns transport only.
-
-- Endpoint: RA GraphQL.
-- Request shape comes from captured evidence.
-- Fixed public browser-style headers:
-  - Content-Type
-  - Accept
-  - Chrome User-Agent
-  - Origin
-  - NYC Referer
-  - Accept-Language
-- No cookies, account, session, CAPTCHA solving, or challenge machinery.
-- Pages are sequential.
-- Inter-page delay is 1.5 seconds after the first page.
-- Maximum three attempts per page.
-- Retryable failures:
-  - connection/timeout;
-  - 408;
-  - 429, honoring `Retry-After`;
-  - 500, 502, 503, 504.
-- Shared run ceiling: 1,000 request attempts.
-
-The Chrome User-Agent is browser impersonation. Its use is bounded by captured
-evidence and public unauthenticated access; do not euphemize it as honest client
-identification.
-
-If RA begins requiring genuine interactive challenge completion, stop. Do not begin
-an anti-bot escalation loop.
-
-### Raw archival
-
-Every fetch attempt outcome is archived before domain admission. Transport failure,
-HTTP error, malformed JSON, and valid responses all remain inspectable evidence.
-
-### Transformer
-
-`ingestion/transformer.py` processes one raw page and owns RA event shape.
-
-Admission precedence:
-
-1. structural parsing and usable nested `event.id`;
-2. scope check;
-3. seed-driven city and venue resolution;
-4. at least one ID-bearing artist;
-5. non-empty title and parseable date;
-6. canonical upsert.
-
-Canonical work occurs inside a per-event transaction. A rejected observation leaves
-no partial venue, artist, event, lineup, or identity graph. The rejection is written
-after rollback.
-
-The closed event-field set is:
-
-- provider event ID;
-- title;
-- date;
-- start time;
-- venue ID/name;
-- artist IDs/names;
-- flyer/image.
-
-Ticket state, wrapper IDs, prose tags, and unknown fields do not steer admission or
-lifecycle.
-
-Cancellation text is not parsed. Captured RA evidence did not provide a reliable
-structured cancellation signal, so titles are preserved verbatim and absence
-reconciliation owns visibility.
-
-City comes from:
+Current application migration tips:
 
 ```text
-raw seed
-  -> (source, area_ref)
-  -> CITY_IDENTITY
-  -> CITY
+catalog.0005_seed_city_identities_and_enforce_cascade
+ingestion.0003_remove_rejectedingest_uq_rejection_payload_entity_and_more
+users.0013_enforce_favorite_user_cascades
 ```
 
-Do not infer city from venue names, event titles, Referer, or fields absent from the
-captured listing request.
+The user-zone tables implemented through Milestone 3 are:
 
-### Completeness
+- `DANCED_USER`
+- `DIARY_ENTRY`
+- `REVIEW`
+- `REVIEW_LIKE`
+- `FOLLOW`
+- `NOTIFICATION`
+- `WILL_BE_THERE`
+- `FAVORITE_EVENT`
+- `FAVORITE_ARTIST`
+- `FAVORITE_VENUE`
 
-RA `totalResults` counts listing wrappers, not unique events.
-
-Completeness requires:
-
-1. archived wrapper count equals `totalResults`;
-2. every wrapper has a usable nested event ID.
-
-Use:
-
-- wrapper grain for completeness;
-- unique event-ID grain for reconciliation and canonical identity.
-
-Do not compare unique event count to `totalResults`.
-
-### Reconciliation
-
-`ingestion/reconciler.py`:
-
-- runs only for complete nightly seed windows;
-- never reconciles backfill or replay;
-- only considers future events in the covered window;
-- resets misses for observed IDs, including listed-but-quarantined observations;
-- increments misses for absent IDs;
-- derives event status across all provider identities;
-- resurrects when an event reappears;
-- never deletes canonical events or user history.
-
-Absence ladder:
-
-- zero misses across identities: active;
-- at least one miss across all identities: unverified;
-- at least three misses across all identities: hidden.
-
-Incomplete fetches may add admitted knowledge but cannot supply absence evidence.
-
-### Runner
-
-`ingestion/runner.py`:
-
-- acquires MySQL advisory lock `danced_sync_ra`;
-- refuses overlapping runs;
-- resolves each seed through `CITY_IDENTITY` before fetch;
-- archives each page;
-- transforms current and previously pending raw rows;
-- excludes recovered stale rows from tonight's completeness evidence;
-- records run telemetry;
-- releases the lock on success and failure;
-- marks crashed runs.
-
-### Command and alarm
-
-Bare nightly command:
-
-```sh
-.venv/bin/python manage.py sync_ra
-```
-
-Default nightly window:
-
-- current UTC date;
-- 30 days forward;
-- page size 20;
-- all active seeds.
-
-The command exits nonzero and logs clearly when:
-
-- the run crashes;
-- any seed fails;
-- admitted/upserted observations equal zero.
-
-It does not alarm merely because quarantines are nonzero.
-
-## Latest ingestion evidence
-
-Latest verified run:
+Important physical rules are enforced in MySQL, not merely simulated by ORM
+collection behavior. User deletion cascades through owned diary, review-like,
+follow, notification, WBT, and favorite rows as frozen. Canonical event/artist/
+venue deletion remains restrictive where user history or preferences reference it.
+The custom-user migration surgery preserved catalog and raw-ingestion evidence; its
+durable pre-surgery dump remains outside the repository at:
 
 ```text
-run ID: 8
-type: nightly
-status: completed
-started: 2026-07-31 04:26:18 UTC
-finished: 2026-07-31 04:27:35 UTC
-seeds attempted: 2
-seeds failed: 0
-events upserted: 486
-events quarantined: 303
-events dropped: 0
-error summary: none
+/Users/ilkerbaydar/danced-backups/danced_pre_users_20260731.sql
 ```
 
-Runs 7 and 8 both produced 486 admitted/upserted and 303 quarantined observations.
-Run 6 produced 509 and 309. The approximately 38% quarantine rate is currently a
-stable baseline, not a run-8 spike. In runs 5–8, quarantines were `NO_ARTIST`: RA
-commonly lists an event before publishing an ID-bearing lineup. These observations
-self-retry on later syncs.
-
-Investigate if:
-
-- the percentage materially changes;
-- structural `PARSE_FAILURE`, `BAD_DATE`, or another rejection begins contributing;
-- admitted events unexpectedly reach zero;
-- a seed fails;
-- wrapper completeness fails.
-
-## Catalog API
-
-All catalog reads remain public.
-
-### `GET /api/cities/`
-
-Returns canonical cities ordered by name:
-
-- `id`
-- `name`
-- `region_code`
-- `country_code`
-- `timezone`
-
-### `GET /api/events/`
-
-Required:
-
-- `when=upcoming|past`
-- exactly one of:
-  - `city_id`
-  - `venue_id`
-  - `artist_id`
-
-Optional:
-
-- `page`, default 1;
-- `page_size`, default 20, maximum 100.
-
-Errors:
-
-- zero or multiple scope filters: 400;
-- invalid `when`: 400;
-- invalid pagination/scope number: 400;
-- unknown scope resource: 404;
-- page beyond the last page: 404.
-
-Upcoming:
-
-- event date greater than or equal to venue-local today;
-- ordered `event_date ASC, id ASC`.
-
-Past:
-
-- event date less than venue-local today;
-- ordered `event_date DESC, id DESC`.
-
-Artist scope may cross cities and timezones. Each event is classified using its own
-venue city's local date. Filtering occurs in the database so counts and page
-boundaries remain truthful.
-
-List event payload:
-
-- event ID;
-- title;
-- local date;
-- nullable local start time;
-- nullable cover image;
-- nested venue;
-- short nested city with timezone;
-- ordered artist lineup.
-
-Internal lifecycle status is intentionally not returned.
-
-### `GET /api/venues/{id}/`
-
-Returns:
-
-- venue ID/name;
-- full city object:
-  - ID/name;
-  - region code/name;
-  - country;
-  - timezone.
-
-It does not embed events. Upcoming and Past sections use the shared event endpoint.
-A venue remains retrievable with zero visible events.
-
-### `GET /api/artists/{id}/`
-
-Returns:
-
-- artist ID/name;
-- nullable image URL.
-
-It does not embed events. An artist remains retrievable with zero visible events.
-
-### `GET /api/events/{id}/`
-
-Hidden events return 404.
-
-Returns the common event shape plus:
-
-- `rating_summary`;
-- `been.loggable`;
-- `been.unavailable_reason`;
-- authenticated-only `viewer_entry`.
-
-Guests do not receive a `viewer_entry` key. A signed-in user with no entry receives
-`viewer_entry: null`.
-
-Rating summary below threshold:
-
-```json
-{
-  "state": "not_enough_ratings",
-  "count": 2
-}
-```
-
-At three current ratings:
-
-```json
-{
-  "state": "available",
-  "count": 3,
-  "average": 4.166666666666667
-}
-```
-
-The API returns the arithmetic value. Display rounds to one decimal.
-
-## Authentication API
-
-All mutations use Django session authentication and CSRF. There are no JWT or token
-endpoints.
-
-### `GET /api/auth/session/`
-
-- bootstraps the CSRF cookie;
-- reports guest or authenticated session;
-- returns the authenticated user's own email.
-
-Email is self-only account data. Never copy this serializer into public profiles,
-reviews, or feeds.
-
-### `POST /api/auth/register/`
-
-Requires:
-
-- email;
-- password;
-- username;
-- display name;
-- strict JSON boolean `is_private`.
-
-Successful registration currently creates an active account and signs it in
-immediately.
-
-Username:
-
-- 3–30 characters;
-- letters, numbers, underscores, periods;
-- begins and ends with letter/number;
-- no consecutive periods;
-- stored and displayed lowercase;
-- case-insensitive uniqueness.
-
-Display name:
-
-- trimmed;
-- 1–50 visible characters.
-
-Email uniqueness is case-insensitive.
-
-### `POST /api/auth/login/`
-
-- accepts email + password;
-- uses one generic invalid-credentials response to avoid email enumeration;
-- establishes a session.
-
-### `POST /api/auth/logout/`
-
-- invalidates the session;
-- idempotent;
-- returns 204.
-
-### Email-verification freeze-break
-
-Q125–126 require verification before account actions. It is deliberately deferred,
-not cancelled.
-
-Current temporary behavior:
-
-- account created active;
-- registration signs in immediately;
-- `email_verified_at` exists but gates nothing.
-
-Before public deployment, a repayment slice must:
-
-- deliver verification;
-- stop immediate usable sign-in after registration;
-- direct the user to check email;
-- gate account actions until verification.
-
-## Been and rating API
-
-All writes require authenticated session + CSRF.
-
-### `PUT /api/events/{id}/been/`
-
-Upsert with:
-
-```json
-{"rating": 4.5}
-```
-
-- creation: 201;
-- edit or re-rate: 200;
-- invalid rating: field-keyed 400;
-- event not started on creation: 409;
-- guest with valid CSRF: 401;
-- missing/malformed CSRF can be rejected by middleware as 403;
-- hidden/unknown event: 404.
-
-Creation requires a rating. Existing entries may become unrated.
-
-### `DELETE /api/events/{id}/been/rating/`
-
-- removes rating and `rated_at`;
-- retains attendance;
-- idempotent while the entry exists;
-- 404 when no entry exists.
-
-### `DELETE /api/events/{id}/been/`
-
-- permanently deletes entry and rating;
-- returns 204;
-- repeated deletion returns 404;
-- the event may be re-added later as a fresh entry.
-
-### `GET /api/me/been/`
-
-- authenticated owner only;
-- paginated;
-- ordered `event_date DESC, event_id DESC`;
-- retroactive old entries appear at their historical position, not at the top.
-
-## Logging-time boundary
-
-An event becomes loggable at:
+Do not migrate unused DBML tables speculatively. A slice introduces only tables it
+consumes.
+
+## Architecture facts to defend
+
+### Catalog and lifecycle
+
+- Event lifecycle values are `active`, `unverified`, and `hidden`.
+- Public visibility includes active and unverified; hidden is suppressed.
+- Hidden rows and user relationships are retained so resurrection restores them.
+- No public payload exposes internal lifecycle vocabulary.
+- Source titles do not produce cancellation or lineup inference.
+- Venue records named TBA are ordinary source truth.
+- Event dates and start times are venue-local values; frontend formatting never
+  converts them through the browser timezone.
+
+### Sanctioned visibility boundaries
+
+Attributed and aggregate reads must use the named owned boundaries rather than
+inline privacy filters:
+
+- `User.objects.profile_content_visible_to(viewer)` — profile stub/full/owner
+  authorization basis;
+- `DiaryEntry.objects.visible_to(viewer)` — attributed diary/profile visibility;
+- `DiaryEntry.objects.for_aggregation()` — anonymous global ratings;
+- `DiaryEntry.objects.for_circle(viewer)` — followed users only, self excluded;
+- `DiaryEntry.objects.for_circle_average(viewer)` — followed ratings plus self;
+- `Review.objects.visible_to(viewer)` — attributed review visibility;
+- `Review.objects.for_public_section()` — public-account event-page reviews only;
+- `WillBeThere.objects.active_at(at)` — venue-local active-state boundary;
+- `WillBeThere.objects.visible_to(viewer, at)` — attributed attendee visibility;
+- `WillBeThere.objects.for_public_section(at)` — public attendees;
+- `WillBeThere.objects.for_circle(viewer, at)` — followed attendees, self excluded.
+
+Profile favorite and statistics endpoints first pass through the user-level profile
+content boundary. Favorite venues are private by construction: the only list route
+is `/api/me/favorite-venues/`, with no other-user identity parameter. Anonymous WBT
+counts use active rows independently of privacy-filtered attendee-list totals.
+
+### Home feed
+
+Home is query-time assembly, not a stored feed and not fan-out. Its six source
+querysets are combined with `UNION ALL` in the database before pagination:
+
+1. `will_be_there`
+2. `review_like`
+3. `rated_been`
+4. `follow`
+5. `favorite_event`
+6. `favorite_artist`
+
+The frozen descending cursor key is:
 
 ```text
-event_date + start_time in the venue city's timezone
+(activity_at, activity_type, source_key)
 ```
 
-If start time is null, the boundary is 00:00 venue-local.
-
-The gate applies only to first creation. An existing entry's rating may be edited
-later without rechecking the creation boundary.
-
-DST ruling:
-
-- ambiguous fall-back wall time opens at the first occurrence;
-- nonexistent spring-forward wall time opens immediately after the clock jump.
-
-The service owns a patchable clock dependency. Do not globally patch
-`django.utils.timezone.now` in tests: doing so previously moved Django's session
-clock forward and silently expired authenticated test sessions.
-
-This service-owned seam should be reused for future time-gated product behavior,
-including Will Be There expiry.
-
-## Diary privacy architecture
-
-There are two explicit read boundaries.
-
-### `visible_to(viewer)`
-
-The only sanctioned attributed-entry path.
-
-Current behavior:
-
-- owner sees their own entries;
-- guests see none;
-- other users see none because profiles/circles do not exist yet;
-- hidden-event entries are suppressed;
-- resurrection restores them.
-
-### `for_aggregation()`
-
-The anonymous aggregate path:
-
-- includes public and private users;
-- excludes unrated entries;
-- excludes hidden-event entries;
-- resurrection restores their contribution.
-
-No view should reproduce these filters inline.
-
-Private ratings contributing to an average must never imply attributed visibility.
-
-## Frontend behavior
-
-### Global structure
-
-- semantic HTML only;
-- browser-default presentation;
-- header and primary navigation;
-- route content;
-- footer on every route;
-- footer attribution links to `https://ra.co`;
-- no per-event RA/source URL.
-
-### Discover `/discover`
-
-- city list comes from `/api/cities/`;
-- city selection lives in `?city_id=`;
-- invalid, missing, or unknown city ID falls back to the first city;
-- city switch does not persist to account state;
-- upcoming list is independently paginated;
-- event items suppress redundant city.
-
-### Event `/events/{id}`
-
-- event facts, venue, city, artists;
-- cover image only when present;
-- no placeholder imagery;
-- rating availability or one-decimal global average;
-- signed-in Been form;
-- not-yet-started explanation;
-- confirmation for rating removal;
-- confirmation for entry removal;
-- 404 page rather than crash.
-- owner review create/edit/delete controls when the Been entry remains rated;
-- Public reviews with Most liked/Newest ordering, independent pagination, and likes;
-- guests may read public reviews and receive an account-required message on like.
-
-### Venue `/venues/{id}`
-
-- full venue/city detail;
-- separately fetched/paginated Upcoming and Past sections;
-- both venue and city suppressed inside scoped list items.
-
-### Artist `/artists/{id}`
-
-- artist fields;
-- separately fetched/paginated Upcoming and Past;
-- current artist omitted from each event's artist line;
-- other billed artists retained;
-- venue and city retained.
-
-### Been `/been`
-
-- guest sign-in prompt;
-- authenticated owner diary;
-- loading, error/retry, and empty states;
-- pagination;
-- rated and unrated entries;
-- shared formatted dates.
-- review-presence indicator.
-
-### Activity `/activity`
-
-- signed-in destination only;
-- stored notifications ordered newest-first with cursor-based load-more;
-- unread/read text, per-item mark-read, and mark-all-read;
-- review-like activity opens the existing event page after marking read;
-- follow/request/acceptance items remain plain text until Profile exists;
-- no accept/decline controls yet because private-user discovery is deferred.
-
-### Event-page social sections
-
-- guests see the Q199 sign-in prompt instead of making a Circle request;
-- signed-in viewers fetch independently paginated Your Circle data;
-- Circle list excludes self and contains followed rating-only and reviewed entries;
-- Circle average includes the viewer's own current rating and appears at one rating;
-- Public review bylines expose follow/unfollow only to signed-in non-self viewers;
-- author names remain plain text until `/u/{username}` exists.
-- Circle and Public are sibling projections of the same review/follow state. A
-  successful mutation invalidates and refetches both projections; a 404/409 mutation
-  conflict is treated as state drift and also refetches both without a dead-end error.
-- These live social refetches bypass the browser cache. DELETE endpoints return a
-  genuinely bodyless HTTP 204 so the Vite proxy and browser can complete the request.
-- Will Be There has separate Public and Your Circle attendee sections. Guests may
-  read Public and receive the established Circle sign-in prompt. Signed-in viewers
-  can mark or silently unmark before venue-local expiry; every rendered attendee
-  projection refetches after mutation or state drift.
-
-### Date formatting
-
-Display form:
-
-```text
-Friday, August 14, 2026 at 10:00 PM
-```
-
-Null time:
-
-```text
-Friday, August 14, 2026
-```
-
-The API's date/time values are already venue-local. The helper parses date parts
-directly and uses UTC calendar math only to derive weekday. It never sends the raw
-date through browser-local timezone conversion.
-
-### Registration errors
-
-The frontend distinguishes:
-
-- field-keyed 400 validation beside the matching field;
-- request-level 400 once above the form;
-- 403 secure-submission failure;
-- other HTTP/server failure;
-- network failure.
-
-The previous template duplicated a generic message as both heading and bullet. That
-block was removed. Invalid controls use `aria-invalid` and `aria-describedby`.
-
-## Local CSRF and Vite
-
-Development uses:
-
-```text
-frontend origin -> Vite :5173 -> /api proxy -> Django :8000
-```
-
-Under `DEBUG` only, Django trusts exactly:
-
-```text
-http://127.0.0.1:5173
-http://localhost:5173
-```
-
-There are no wildcards, `csrf_exempt`, disabled origin checks, or production trust
-entries. A deployed same-origin frontend must not need this development exception.
-
-### Critical testing lesson
-
-Browser-equivalent verification of POST/PUT/DELETE must include an `Origin` header.
-
-An earlier scripted check sent the cookie and matching `X-CSRFToken` but omitted
-`Origin`. It passed while every real browser registration failed with:
-
-```text
-Origin checking failed - http://127.0.0.1:5173 does not match any trusted origins.
-```
-
-After the narrow setting fix, the verified chain was:
-
-1. Origin-bearing session GET: 200 and CSRF cookie.
-2. Origin-bearing registration POST: 201.
-3. Session and CSRF cookies rotated on login.
-4. Named throwaway account deleted and absence confirmed.
-5. Founder browser registration subsequently succeeded.
-
-Never call an unsafe-method check end-to-end if it omits browser security headers.
-
-## Test contract
-
-Current backend suite:
-
-```text
-172 tests
-```
-
-Major groups:
-
-- ingestion transport pacing and retry budget;
-- wrapper-grain completeness;
-- transformation fixtures;
-- idempotency and lineup reorder;
-- reconciliation ladder and resurrection;
-- runner crash/lock/recovery/telemetry;
-- operator alarm;
-- catalog database constraints;
-- city/event/detail API;
-- per-event timezone classification;
-- identity registration/login/logout/session;
-- username/display/email/privacy validation;
-- Been lifecycle, timing, privacy, aggregates, and database checks.
-- review lifecycle, privacy, ordering, likes, cascades, and hidden-event resurrection.
-- follow lifecycle, privacy-transition concurrency, notifications, Circle asymmetry,
-  follower-count ordering, and widened-boundary surface scoping.
-
-Important test-first lessons retained:
-
-- A 404 test can falsely pass while a route is missing. Mutation-check the
-  production branch when expected missing-route behavior matches the assertion.
-- A behavior already implemented can make a newly written test green. Mutate the
-  relevant branch to prove the test detects the intended contract.
-- Expectation edits during green are high-risk and must be reported explicitly.
-- Global clock patches can alter unrelated framework behavior.
-- Browser verification must include Origin.
-
-Mutation checks already performed for Been:
-
-- remove hidden filtering from aggregation: hidden/resurrection test fails;
-- sort by entry creation: retroactive-history test fails;
-- expose average at two ratings: threshold test fails.
-
-There is still no frontend unit/component test harness. The registration
-error-classification regression is the evidence-based first candidate when such a
-harness is introduced.
-
-## Verification baseline
-
-At the last implementation verification:
-
-- full Django suite: 159 green;
-- Django system checks: clean;
-- test runner built and destroyed a fresh database successfully;
-- fixture audit: clean across 13 JSON fixtures;
-- frontend production build: passed, 31 transformed modules;
-- `makemigrations --check --dry-run`: no changes;
-- `git diff --check`: clean;
-- real MySQL diary constraints inspected;
-- migrations applied;
-- founder click-through complete through Been/ratings; automated and disposable-user
-  browser verification covers later social slices.
-
-## Nightly operations
+At identical timestamps, lexical type ordering and fixed-width source keys provide
+deterministic technical ties. Cursor predicates are distributed into every branch
+before the union. Visibility is enforced inside each branch. Hidden events suppress
+event-backed activity; unfollow, rating removal, WBT removal/expiry, and unfavorite
+make source activity disappear automatically.
+
+The authenticated Home endpoint executes four bounded queries on a mixed six-type
+page: fixed session/auth work, one bounded city-timezone lookup, and one six-branch
+feed query. The contract asserts one `UNION ALL`; adding feed types must not inflate
+the count or merge per-source results in Python.
+
+### Navigation
+
+`docs/NAVIGATION.md` owns five destination positions in order:
+
+1. Home — implemented at `/home`, signed-in only.
+2. Discover — implemented at `/discover`, guest and signed-in.
+3. Search — not implemented; no empty stub.
+4. Activity — implemented at `/activity`, signed-in only.
+5. Profile — implemented at `/u/{username}`; guests receive Register/Login account
+   access at this position.
+
+The interim register has no live items. Every former organ/control was absorbed:
+`/been` is a compatibility redirect to the owner's Profile, review-author bylines
+link to Profile, follow controls live on Profile, pending requests live on the
+owner's Profile, and account/logout controls attach to the Profile position.
+
+Guest `/` resolves to Discover; authenticated `/` resolves to Home. Legacy
+`/?city_id={id}` redirects preserve the city at `/discover?city_id={id}`.
+
+### Frontend error classification
+
+Non-2xx behavior must never disappear silently:
+
+- field-keyed 400 validation renders beside its field;
+- request-level validation renders once at the owning form/control;
+- authentication, CSRF, server, and network failures remain distinct and honest;
+- a 409 that is a true business rejection renders the server's field-keyed message;
+- a 404/409 that represents state drift deliberately refetches every affected
+  projection.
+
+The favorite-cap correction at `0e577d5` is the business-rejection precedent. A
+fourth favorite returns 409 and its `errors.favorite` message stays beside the
+unchanged control; it must not be grouped with review-like/WBT state-drift 409s,
+whose correct response is reconciliation.
+
+## Product surface at Milestone 3 close
+
+### Catalog and Discover
+
+- `/discover` has city selection, Upcoming, and Recent sections with independent
+  pagination.
+- Event, venue, and artist detail routes use real catalog data.
+- Hidden events return 404; active/unverified remain visible.
+- Shared event lists suppress contextually redundant city, venue, or artist data.
+
+### Identity and Profile
+
+- Registration requires email, password, lowercase-valid username, display name,
+  and an explicit Public/Private choice.
+- Login uses email/password; logout invalidates the session.
+- `/u/{username}` resolves case-insensitively and defaults to Been.
+- `/u/{username}/reviews` owns the Reviews tab and its four sorts.
+- Private unauthorized viewers receive only the Q37 identity stub; protected fields
+  and tab chrome are absent, not rendered as zero.
+- Owners can edit display name, URL avatar, verbatim-or-null bio, canonical home
+  city, and privacy.
+- Profiles own follow/request/withdraw/unfollow and pending-request decisions.
+- Visible profiles include favorite events/artists, statistics, and normalized
+  given-rating distribution; favorite venues are owner-only.
+
+### Been, reviews, and ratings
+
+- First Been creation requires a half-star rating from 0.5 through 5.0.
+- Logging opens at event start in the venue timezone, or local midnight when time is
+  absent; existing entries may be edited afterward.
+- Rating removal preserves unrated attendance and removes dependent review content.
+- Diary/profile history orders by event date, so retroactive entries appear at their
+  historical position.
+- Reviews require a rated entry, store 1–1,000 post-trim characters, retain original
+  publication order through edits, and cascade likes on deletion.
+- Global rating aggregates include private contributions anonymously and appear at
+  three ratings; Circle averages appear at one and include self.
+
+### Social activity
+
+- Public follows approve immediately; private accounts receive pending requests.
+- Public-to-private preserves approved followers; private-to-public transactionally
+  approves pending rows at one true timestamp.
+- Activity stores historical notifications for review likes, follows, requests, and
+  acceptances; unlike/unfollow do not rewrite history.
+- Circle lists include approved followees and exclude self; Circle averages include
+  self by explicit separate boundary.
+- Home is strictly newest-first query-time activity from followed users.
+
+### Will Be There and favorites
+
+- WBT is active through the event's venue-local calendar date and expires at local
+  midnight the following day.
+- Rows remain logically dormant so postponement can restore intent; expiry never
+  converts WBT to Been.
+- Public/Circle attendee lists are privacy-filtered; the active headline count is
+  anonymous-inclusive.
+- Event and artist favorites are capped at three under a user-row lock; repeated PUT
+  preserves `added_at`; removal is idempotent.
+- Venue favorites are uncapped, owner-only, feedless, and notification-free.
+- Profile favorite order is earliest-added first. Favorite events need not be Been.
+
+## Current verified counts
+
+Measured from the committed repository on 2026-07-31:
+
+- backend Django suite: **182 tests**, all green on a fresh test database;
+- frontend Node suite: **8 tests**, all green;
+- frozen fixture audit: **13 JSON fixtures**, clean;
+- applied migrations: **39 total** across the seven apps listed above;
+- `makemigrations --check --dry-run`: no model drift at the Milestone 3 close;
+- frontend production build: passing, 38 modules transformed at the latest build;
+- `git diff --check`: clean at the verified code checkpoint.
+
+The frontend suite is a deliberately small pure-logic harness, not a full React DOM
+component suite. Browser-equivalent CDP click-throughs cover high-risk integrated
+flows, including session/CSRF, social projection synchronization, WBT, Profile
+privacy chrome, and favorite-cap feedback.
+
+## Ingestion runtime and operational state
+
+### Runtime ownership
+
+- `ingestion/client.py` owns bounded transport and retry behavior.
+- Every fetch outcome is archived before domain admission.
+- `ingestion/transformer.py` owns RA listing shape and quarantines one observation
+  without leaving a partial canonical graph.
+- Wrapper grain proves completeness; unique event-ID grain owns identity and
+  reconciliation.
+- Incomplete fetches may add but cannot prove absence.
+- Only complete nightly windows reconcile; backfill/replay never reconcile.
+- Listed-but-quarantined IDs still count as observed for absence.
+- Reconciliation derives active/unverified/hidden across all provider identities,
+  resurrects reappearing events, and never deletes user history.
+
+### Daily scheduler
 
 Local LaunchAgent:
 
 ```text
-/Users/ilkerbaydar/Library/LaunchAgents/com.tan.danced.sync.plist
+label: com.tan.danced.sync
+schedule: daily at 16:00 local time
+program: /Users/ilkerbaydar/Desktop/danced_app/.venv/bin/python
+working directory: /Users/ilkerbaydar/Desktop/danced_app
+stdout: logs/sync.log
+stderr: logs/sync.err.log
 ```
 
-Label:
+Latest verified scheduled run:
 
 ```text
-com.tan.danced.sync
+run ID: 9
+status: completed
+started: 2026-07-31 16:00:02 EDT
+finished: 2026-07-31 16:01:32 EDT
+seeds attempted/failed: 2 / 0
+events admitted/upserted: 498
+events quarantined: 318
+events dropped: 0
+error summary: none
+scheduler exit code: 0
+stderr: empty
 ```
 
-Schedule:
+The approximately 38–39% quarantine rate is the established `NO_ARTIST` baseline:
+RA commonly lists events before publishing an ID-bearing structured lineup. Recent
+runs produced 303–318 quarantines alongside 486–498 admitted events. Investigate
+when the percentage changes materially, a different structural rejection reason
+begins contributing, admitted events unexpectedly reach zero, a seed fails, or
+wrapper completeness fails. Do not alarm merely because quarantines are nonzero.
 
-```text
-daily at 16:00 local time
-```
+### MySQL sandbox lesson
 
-Program:
+A sandboxed Django/MySQL error 2003 with local TCP errno `1` is not evidence that
+mysqld stopped. The sandbox can deny `127.0.0.1:3306` while MySQL remains healthy.
+Before restarting anything, inspect the process/service and logs or rerun the
+read-only check with appropriate local permission. Earlier “MySQL stopped” reports
+were corrected after this distinction was proven.
 
-```text
-/Users/ilkerbaydar/Desktop/danced_app/.venv/bin/python
-```
+### Local operational limitations
 
-Working directory:
+The LaunchAgent depends on the laptop, user session, network, MySQL, repository, and
+virtualenv remaining available at fixed paths. This is acceptable only for local
+development. There is no hosted uptime monitor or automated backup schedule. The
+pre-user-surgery dump is valuable historical safety evidence, not an ongoing backup
+system.
 
-```text
-/Users/ilkerbaydar/Desktop/danced_app
-```
+## Consolidated backlog and triggers
 
-Logs:
+This is the single current backlog. Do not duplicate these items in competing state
+sections.
 
-```text
-logs/sync.log
-logs/sync.err.log
-```
+### Milestone 4 / pre-design
 
-The job depends on:
+- **Event-page hierarchy:** reorder sections so WBT placement and upcoming-versus-
+  past emphasis reflect the event's state. Trigger: design direction/integration.
+- **Feed activity timestamps:** use a shared formatted timestamp or deliberately
+  chosen relative-time presentation. Trigger: design typography/content pass.
+- **Pluralization sweep:** fix phrases such as “1 active marks.” Trigger: pre-design
+  content polish; apply consistently rather than patching one string.
+- **WBT-count prominence:** make the anonymous active count appropriately prominent
+  on upcoming events without overemphasizing it on past events. Trigger: event-page
+  design hierarchy.
 
-- laptop powered on;
-- user environment available;
-- MySQL running;
-- network available;
-- repository and virtualenv remaining at fixed paths.
+### Product surfaces and decisions
 
-This is acceptable for a local prototype, not production availability.
+- **Owner-only WBT list on own Profile:** schedule after M4. It requires an explicit
+  product amendment because Profile tabs are contractually enumerated; do not add a
+  silent third tab.
+- **Search destination:** explicit keep/cut decision pending. Q142–150 fully specify
+  it, and it is the last unbuilt navigation/spec surface. If kept, it occupies the
+  existing Search position; if cut, amend the navigation/product contract.
+- **Favorite-venue notifications:** deferred during Slice 6B preflight. Trigger: a
+  future notification/discovery product decision; do not infer one from storage.
+- **Expired WBT retention policy:** dormant rows are currently retained for
+  postponement recovery. Any purge needs a product ruling; no trigger is set.
 
-## Known limitations and risks
+### Milestone 5 / deployment
+
+- **Email verification repayment:** mandatory before public deployment.
+- **Password reset:** ship with the verification/email slice and append a product
+  amendment because it is not covered by the original 210 questions.
+- **Cloud MySQL:** pin a supported MySQL 8.x version and rerun physical constraints.
+- **Scheduler migration:** replace the local LaunchAgent with hosted scheduling.
+- **Email provider:** choose alongside verification/reset delivery.
+- **Slug strategy:** decide stable event/venue/artist public URLs during deployment-
+  era routing work; current numeric URLs remain canonical until then.
+- **Gated posture:** link access plus basic authentication before broader exposure.
+- **RA contact:** email Resident Advisor at or before public availability.
+- **Seed script and smoke crawl:** post-deployment, by founder decision; include
+  canonical seed/reference data and a bounded route crawl.
+
+### Parked engineering risks
+
+- **Sockpuppet defenses:** parked until popularity/trust consumers or real-user abuse
+  make manipulation consequential.
+- **React Router v7:** upgrade when dependency-touching work next occurs, not as an
+  isolated churn slice.
+
+## Known limitations and explicit deferrals
 
 ### Email verification
 
-Deferred despite the frozen requirement. This must be repaid before public
-deployment or broader account actions.
+Q125–126 require verification before account actions. The approved freeze-break is
+temporary: accounts are created active and signed in immediately; the nullable
+verification timestamp exists but gates nothing. Milestone 5 must change both
+behaviors before public deployment.
 
-### Frontend is intentionally unstyled
+### Onboarding
 
-The semantic structure is deliberate. Styling was postponed because Phase C changes
-navigation and page content. Do not add speculative wrappers merely for future CSS.
+Q203 remains deferred. The real dependencies—favorites and suggested users—must be
+integrated deliberately after design rather than added as empty stubs. Current login
+and registration correctly land on Home.
 
-### No frontend automated tests
+### Search
 
-The production build catches syntax/bundle failures, not interaction regressions.
-Registration error classification is the first justified test target.
+Search is fully specified but unbuilt pending the explicit keep/cut decision. It is
+absent, not an empty destination.
 
-### Privacy architecture is widened but has no Profile consumer yet
+### Styling
 
-`DiaryEntry.visible_to` and `Review.visible_to` now express owner, public-account,
-and approved-follower visibility. Public, aggregate, Circle-list, and Circle-average
-rules remain separate sanctioned methods. Owner endpoints add explicit owner scope;
-the widened boundary must never be mistaken for ownership again.
+The semantic frontend is intentionally unstyled until Milestone 4. Do not add
+speculative wrappers merely for CSS. Design integrates over the markup that survived
+the complete social implementation.
 
-### Rating threshold but no distribution
+### Deployment and source dependency
 
-Event detail exposes average and count only after three current ratings. The product
-spec's distribution UI is not implemented.
-
-### Private Follow/Profile reachability
-
-Private users remain undiscoverable through the frontend because Search and Profile
-do not exist. The private request state machine is API-complete while the temporary
-public-review byline exposes only public follow/unfollow controls.
-
-### Local scheduling and monitoring
-
-There is no hosted uptime monitor, pager, or push alarm. A failure can sit in
-`logs/sync.err.log`.
-
-### Backups
-
-A pre-custom-user-surgery snapshot exists outside the repository, but there is no
-automated backup schedule. Raw evidence, user history, and reviews will require
-durable backups.
-
-### RA access
-
-RA is an unofficial source dependency. Query shape and edge behavior may change.
-Archive/replay reduces data-loss risk but cannot guarantee access or authorization.
-Perform legal/terms review before public launch.
-
-### MySQL version
-
-Local Homebrew MySQL is newer than the originally documented 8.0.16+ floor. A hosted
-deployment should deliberately pin a supported MySQL 8.x release and rerun physical
-constraint verification.
-
-### Local dev-server hygiene
-
-Duplicate Vite servers previously occupied 5173 and 5174 simultaneously. Before
-diagnosing proxy behavior, inspect listeners and run one frontend server.
+RA is an unofficial source dependency. Archive/replay limits data-loss risk but does
+not guarantee access or authorization. Complete legal/source-terms review, the RA
+contact, backups, monitoring, and version-pinned infrastructure before public use.
 
 ## Invariants to defend
 
@@ -1614,12 +648,16 @@ diagnosing proxy behavior, inspect listeners and run one frontend server.
 16. No title-text cancellation or lineup inference.
 17. No venue-name heuristics for TBA.
 18. No source display-name matching for identity.
-19. Private ratings can contribute anonymously without attribution.
-20. Attributed user data passes through `visible_to`.
-21. Aggregates pass through `for_aggregation`.
-22. Unsafe browser verification includes Origin.
-23. Production must not inherit development CSRF exceptions.
-24. No speculative schema or services without a consuming slice.
+19. Private ratings and WBT can contribute anonymously without attribution.
+20. Attributed user data passes through a sanctioned named boundary.
+21. Aggregates use explicitly separate aggregate paths.
+22. Privacy-filtered list totals never substitute for anonymous aggregate counts.
+23. Unsafe browser verification includes Origin.
+24. Production does not inherit development CSRF exceptions.
+25. Feed sources join the database union; they are never merged after pagination.
+26. Business-rule rejection messages remain visible; state drift reconciles.
+27. No speculative schema or services without a consuming slice.
+28. Founder data is never verification cleanup.
 
 ## Commands for the next session
 
@@ -1627,37 +665,26 @@ diagnosing proxy behavior, inspect listeners and run one frontend server.
 
 ```sh
 pwd
-git status --short
-git log -8 --oneline --decorate
-```
-
-### Read authority
-
-```sh
 cat docs/PROJECT_STATE.md
-cat docs/PRODUCT_QA_SPEC.md
-cat docs/ERD_REVIEW.md
+git status --short
+git rev-parse HEAD
+git rev-parse origin/main
+git log -10 --oneline --decorate
 ```
 
-Read the relevant DBML and fixture/architecture section before changing that layer.
-
-### Verify backend and fixtures
+### Verify repository contracts
 
 ```sh
 .venv/bin/python manage.py check
-.venv/bin/python manage.py test
+.venv/bin/python manage.py test --noinput
 .venv/bin/python docs/recon/fixtures/audit_expectations.py
 .venv/bin/python manage.py makemigrations --check --dry-run
+npm test --prefix frontend
+npm run build --prefix frontend
 git diff --check
 ```
 
-### Verify frontend
-
-```sh
-npm run build --prefix frontend
-```
-
-### Start local product
+### Start the local product
 
 Terminal 1:
 
@@ -1672,58 +699,9 @@ cd frontend
 npm run dev
 ```
 
-Open:
+Open `http://127.0.0.1:5173`.
 
-```text
-http://127.0.0.1:5173
-```
-
-### Inspect listeners
-
-```sh
-lsof -nP -iTCP:8000 -sTCP:LISTEN
-lsof -nP -iTCP:5173 -sTCP:LISTEN
-lsof -nP -iTCP:5174 -sTCP:LISTEN
-```
-
-### Inspect live counts without exposing email
-
-```sh
-.venv/bin/python manage.py shell -c "
-from catalog.models import City, Venue, Artist, Event
-from users.models import User, DiaryEntry
-print({
-    'cities': City.objects.count(),
-    'venues': Venue.objects.count(),
-    'artists': Artist.objects.count(),
-    'events': Event.objects.count(),
-    'users': User.objects.count(),
-    'diary_entries': DiaryEntry.objects.count(),
-})
-"
-```
-
-### Inspect latest ingestion run
-
-```sh
-.venv/bin/python manage.py shell -c "
-from ingestion.models import SyncRun
-r = SyncRun.objects.latest('id')
-print(
-    r.id,
-    r.run_type,
-    r.status,
-    r.seeds_attempted,
-    r.seeds_failed,
-    r.events_upserted,
-    r.events_quarantined,
-    r.events_dropped,
-    r.error_summary,
-)
-"
-```
-
-### Scheduler
+### Inspect the scheduler
 
 ```sh
 launchctl print gui/$(id -u)/com.tan.danced.sync
@@ -1731,57 +709,52 @@ tail -100 logs/sync.log
 tail -100 logs/sync.err.log
 ```
 
+### Inspect the latest run
+
+```sh
+.venv/bin/python manage.py shell -c "
+from ingestion.models import SyncRun
+r = SyncRun.objects.latest('id')
+print(r.id, r.run_type, r.status, r.started_at, r.finished_at,
+      r.seeds_attempted, r.seeds_failed, r.events_upserted,
+      r.events_quarantined, r.events_dropped, r.error_summary)
+"
+```
+
+If that command returns MySQL error 2003 under a restricted sandbox, verify MySQL
+process/service state before treating it as downtime or restarting it.
+
 ## Next product work
 
-Phase C Slice 6A is implemented locally and awaits review/push. Profile now owns Been,
-Reviews, identity editing, privacy, following, and pending requests; every interim
-Profile surface is absorbed. Slice 6B remains deliberately separate: favorites,
-statistics, the given-rating distribution, and favorite-derived Home branches.
-
-Before deployment:
-
-- repay email verification;
-- choose email delivery;
-- establish hosted app/database/scheduler boundary;
-- add backups and monitoring;
-- remove reliance on DEBUG-only Vite CSRF trust;
-- perform legal and source-terms review;
-- pin and verify the production database version.
+Start Milestone 4 with a design-direction session, then execute the pre-design punch
+list and integrate Claude Design over the real semantic frontend. Do not begin new
+feature work merely because Milestone 3 is closed. Search needs an explicit keep/cut
+decision; owner WBT Profile history needs a spec amendment; deployment repayment
+belongs to Milestone 5.
 
 ## Resume-project narrative
 
-Danced now demonstrates more than a catalog scraper.
+Danced's strongest claim is not feature count. It is the way boundaries preserve
+truth under unreliable external data and privacy-sensitive social reads.
 
-The ingestion side treats external data as fallible testimony:
+The ingestion side archives exact evidence, separates wrapper completeness from
+identity, quarantines without partial writes, permits incomplete data to add but not
+subtract, derives absence conservatively, resurrects safely, and never deletes user
+history.
 
-- it archives exact evidence;
-- separates wrapper completeness from event identity;
-- quarantines bad observations without partial writes;
-- permits incomplete data to add but never subtract;
-- derives absence conservatively;
-- resurrects safely;
-- never deletes user history.
+The product side consumes those guarantees: hidden events disappear coherently
+without erasing diary/favorite/WBT intent; venue-local time owns event boundaries;
+private contributions aggregate anonymously; attributed content passes through named
+visibility boundaries; feed deletion rules emerge from source rows rather than
+fan-out cleanup; and cursor pagination is stable across heterogeneous live activity.
 
-The product side now consumes those guarantees:
+The workflow's best engineering moments were correctness holes surfaced rather than
+hidden: wrapper totals were not unique events; a database reset would have destroyed
+the evidence needed to rebuild; ORM cascades did not guarantee physical MySQL rules;
+a global mocked clock expired sessions; missing Origin made a false CSRF check pass;
+private Profile chrome leaked inaccessible affordances; and a business-rule 409 was
+refetched out of visibility. Each correction narrowed ownership and made the contract
+more truthful.
 
-- hidden events disappear coherently from catalog, diary, and aggregates without
-  deleting user records;
-- venue-local time governs both browsing boundaries and logging eligibility;
-- private ratings contribute anonymously through a separate aggregate boundary;
-- retroactive history sorts by the event's historical position;
-- session/CSRF behavior is exercised through a real React flow.
-
-The strongest engineering stories are the correctness holes that were surfaced and
-resolved rather than hidden:
-
-- Cloudflare rejected the minimal acquisition headers.
-- RA wrapper count did not equal unique event count.
-- provider event identity could be absent at rejection time.
-- resetting the database would have destroyed the raw evidence needed to rebuild it.
-- Django's MySQL schema editor did not emit the required physical diary cascade.
-- a global mocked clock expired authenticated test sessions.
-- an omitted browser Origin made a false CSRF verification pass.
-
-Each correction narrowed the system toward evidence and explicit ownership rather
-than adding broad machinery. That discipline is the project’s central technical
-claim.
+Milestone 3 is complete. The next question is design direction, not another social
+feature slice.
