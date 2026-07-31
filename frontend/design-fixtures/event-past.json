@@ -1,0 +1,56 @@
+{
+  "id": 2174,
+  "title": "Martin Garrix Afterparty",
+  "event_date": "2026-06-19",
+  "start_time": "22:00:00",
+  "cover_image_url": null,
+  "venue": {
+    "id": 1031,
+    "name": "Big Night Live",
+    "city": {
+      "id": 2,
+      "name": "Boston",
+      "timezone": "America/New_York"
+    }
+  },
+  "artists": [
+    {
+      "id": 3485,
+      "name": "Martin Garrix",
+      "position": 1
+    }
+  ],
+  "rating_summary": {
+    "state": "available",
+    "count": 3,
+    "average": 3.16667
+  },
+  "been": {
+    "loggable": true,
+    "unavailable_reason": null
+  },
+  "will_be_there_summary": {
+    "active_count": 0
+  },
+  "viewer_entry": {
+    "id": 2,
+    "rating": 4.0,
+    "rated_at": "2026-07-31T17:27:16.563637Z",
+    "created_at": "2026-07-31T17:27:16.563828Z",
+    "review": {
+      "id": 1,
+      "body": "Standing public review for browser verification.",
+      "published_at": "2026-07-31T17:27:17.579973Z",
+      "like_count": 1
+    }
+  },
+  "viewer_will_be_there": {
+    "is_marked": false,
+    "can_mark": false,
+    "unavailable_reason": "Will Be There expired at the end of the event's local date."
+  },
+  "viewer_favorite": {
+    "is_favorite": false,
+    "added_at": null
+  }
+}

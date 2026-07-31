@@ -1,0 +1,455 @@
+{
+  "results": [
+    {
+      "type": "will_be_there",
+      "activity_at": "2026-07-31T23:46:11.329963Z",
+      "actor": {
+        "id": 27,
+        "username": "design.dense.10",
+        "display_name": "Dense Fixture Person 10"
+      },
+      "target": {
+        "event": {
+          "id": 1629,
+          "title": "Locals Night",
+          "event_date": "2026-08-01",
+          "start_time": "22:30:00"
+        }
+      },
+      "context": null
+    },
+    {
+      "type": "will_be_there",
+      "activity_at": "2026-07-31T23:46:11.327792Z",
+      "actor": {
+        "id": 26,
+        "username": "design.dense.09",
+        "display_name": "Dense Fixture Person 09"
+      },
+      "target": {
+        "event": {
+          "id": 1629,
+          "title": "Locals Night",
+          "event_date": "2026-08-01",
+          "start_time": "22:30:00"
+        }
+      },
+      "context": null
+    },
+    {
+      "type": "will_be_there",
+      "activity_at": "2026-07-31T23:46:11.324085Z",
+      "actor": {
+        "id": 25,
+        "username": "design.dense.08",
+        "display_name": "Dense Fixture Person 08"
+      },
+      "target": {
+        "event": {
+          "id": 1629,
+          "title": "Locals Night",
+          "event_date": "2026-08-01",
+          "start_time": "22:30:00"
+        }
+      },
+      "context": null
+    },
+    {
+      "type": "will_be_there",
+      "activity_at": "2026-07-31T23:46:11.321754Z",
+      "actor": {
+        "id": 24,
+        "username": "design.dense.07",
+        "display_name": "Dense Fixture Person 07"
+      },
+      "target": {
+        "event": {
+          "id": 1629,
+          "title": "Locals Night",
+          "event_date": "2026-08-01",
+          "start_time": "22:30:00"
+        }
+      },
+      "context": null
+    },
+    {
+      "type": "will_be_there",
+      "activity_at": "2026-07-31T23:46:11.319659Z",
+      "actor": {
+        "id": 23,
+        "username": "design.dense.06",
+        "display_name": "Dense Fixture Person 06"
+      },
+      "target": {
+        "event": {
+          "id": 1629,
+          "title": "Locals Night",
+          "event_date": "2026-08-01",
+          "start_time": "22:30:00"
+        }
+      },
+      "context": null
+    },
+    {
+      "type": "will_be_there",
+      "activity_at": "2026-07-31T23:46:11.317695Z",
+      "actor": {
+        "id": 22,
+        "username": "design.dense.05",
+        "display_name": "Dense Fixture Person 05"
+      },
+      "target": {
+        "event": {
+          "id": 1629,
+          "title": "Locals Night",
+          "event_date": "2026-08-01",
+          "start_time": "22:30:00"
+        }
+      },
+      "context": null
+    },
+    {
+      "type": "will_be_there",
+      "activity_at": "2026-07-31T23:46:11.315704Z",
+      "actor": {
+        "id": 21,
+        "username": "design.dense.04",
+        "display_name": "Dense Fixture Person 04"
+      },
+      "target": {
+        "event": {
+          "id": 1629,
+          "title": "Locals Night",
+          "event_date": "2026-08-01",
+          "start_time": "22:30:00"
+        }
+      },
+      "context": null
+    },
+    {
+      "type": "will_be_there",
+      "activity_at": "2026-07-31T23:46:11.313648Z",
+      "actor": {
+        "id": 20,
+        "username": "design.dense.03",
+        "display_name": "Dense Fixture Person 03"
+      },
+      "target": {
+        "event": {
+          "id": 1629,
+          "title": "Locals Night",
+          "event_date": "2026-08-01",
+          "start_time": "22:30:00"
+        }
+      },
+      "context": null
+    },
+    {
+      "type": "will_be_there",
+      "activity_at": "2026-07-31T23:46:11.311418Z",
+      "actor": {
+        "id": 19,
+        "username": "design.dense.02",
+        "display_name": "Dense Fixture Person 02"
+      },
+      "target": {
+        "event": {
+          "id": 1629,
+          "title": "Locals Night",
+          "event_date": "2026-08-01",
+          "start_time": "22:30:00"
+        }
+      },
+      "context": null
+    },
+    {
+      "type": "will_be_there",
+      "activity_at": "2026-07-31T23:46:11.309005Z",
+      "actor": {
+        "id": 18,
+        "username": "design.dense.01",
+        "display_name": "Dense Fixture With A Very Expansive Display Name"
+      },
+      "target": {
+        "event": {
+          "id": 1629,
+          "title": "Locals Night",
+          "event_date": "2026-08-01",
+          "start_time": "22:30:00"
+        }
+      },
+      "context": null
+    },
+    {
+      "type": "review_like",
+      "activity_at": "2026-07-31T23:46:11.306257Z",
+      "actor": {
+        "id": 29,
+        "username": "design.dense.12",
+        "display_name": "Dense Fixture Person 12"
+      },
+      "target": {
+        "event": {
+          "id": 2174,
+          "title": "Martin Garrix Afterparty",
+          "event_date": "2026-06-19",
+          "start_time": "22:00:00"
+        },
+        "review": {
+          "id": 1,
+          "body": "Standing public review for browser verification.",
+          "author": {
+            "id": 3,
+            "username": "review.public.test",
+            "display_name": "Review Public Test"
+          }
+        }
+      },
+      "context": null
+    },
+    {
+      "type": "review_like",
+      "activity_at": "2026-07-31T23:46:11.302747Z",
+      "actor": {
+        "id": 29,
+        "username": "design.dense.12",
+        "display_name": "Dense Fixture Person 12"
+      },
+      "target": {
+        "event": {
+          "id": 2174,
+          "title": "Martin Garrix Afterparty",
+          "event_date": "2026-06-19",
+          "start_time": "22:00:00"
+        },
+        "review": {
+          "id": 7,
+          "body": "I came in knowing almost nothing about the lineup and left with three names written down for later.",
+          "author": {
+            "id": 22,
+            "username": "design.dense.05",
+            "display_name": "Dense Fixture Person 05"
+          }
+        }
+      },
+      "context": null
+    },
+    {
+      "type": "review_like",
+      "activity_at": "2026-07-31T23:46:11.299367Z",
+      "actor": {
+        "id": 29,
+        "username": "design.dense.12",
+        "display_name": "Dense Fixture Person 12"
+      },
+      "target": {
+        "event": {
+          "id": 2174,
+          "title": "Martin Garrix Afterparty",
+          "event_date": "2026-06-19",
+          "start_time": "22:00:00"
+        },
+        "review": {
+          "id": 6,
+          "body": "Excellent pacing, a warm system, and enough space between the biggest moments to let them land.",
+          "author": {
+            "id": 21,
+            "username": "design.dense.04",
+            "display_name": "Dense Fixture Person 04"
+          }
+        }
+      },
+      "context": null
+    },
+    {
+      "type": "review_like",
+      "activity_at": "2026-07-31T23:46:11.295574Z",
+      "actor": {
+        "id": 29,
+        "username": "design.dense.12",
+        "display_name": "Dense Fixture Person 12"
+      },
+      "target": {
+        "event": {
+          "id": 2174,
+          "title": "Martin Garrix Afterparty",
+          "event_date": "2026-06-19",
+          "start_time": "22:00:00"
+        },
+        "review": {
+          "id": 5,
+          "body": "The room felt alive from the first record, and the crowd stayed generous all night.",
+          "author": {
+            "id": 20,
+            "username": "design.dense.03",
+            "display_name": "Dense Fixture Person 03"
+          }
+        }
+      },
+      "context": null
+    },
+    {
+      "type": "review_like",
+      "activity_at": "2026-07-31T23:46:11.292502Z",
+      "actor": {
+        "id": 29,
+        "username": "design.dense.12",
+        "display_name": "Dense Fixture Person 12"
+      },
+      "target": {
+        "event": {
+          "id": 2174,
+          "title": "Martin Garrix Afterparty",
+          "event_date": "2026-06-19",
+          "start_time": "22:00:00"
+        },
+        "review": {
+          "id": 4,
+          "body": "A concise review that still gives the layout a second line to work with.",
+          "author": {
+            "id": 19,
+            "username": "design.dense.02",
+            "display_name": "Dense Fixture Person 02"
+          }
+        }
+      },
+      "context": null
+    },
+    {
+      "type": "review_like",
+      "activity_at": "2026-07-31T23:46:11.289473Z",
+      "actor": {
+        "id": 29,
+        "username": "design.dense.12",
+        "display_name": "Dense Fixture Person 12"
+      },
+      "target": {
+        "event": {
+          "id": 2174,
+          "title": "Martin Garrix Afterparty",
+          "event_date": "2026-06-19",
+          "start_time": "22:00:00"
+        },
+        "review": {
+          "id": 3,
+          "body": "Perfect.",
+          "author": {
+            "id": 18,
+            "username": "design.dense.01",
+            "display_name": "Dense Fixture With A Very Expansive Display Name"
+          }
+        }
+      },
+      "context": null
+    },
+    {
+      "type": "review_like",
+      "activity_at": "2026-07-31T23:46:11.286272Z",
+      "actor": {
+        "id": 28,
+        "username": "design.dense.11",
+        "display_name": "Dense Fixture Person 11"
+      },
+      "target": {
+        "event": {
+          "id": 2174,
+          "title": "Martin Garrix Afterparty",
+          "event_date": "2026-06-19",
+          "start_time": "22:00:00"
+        },
+        "review": {
+          "id": 1,
+          "body": "Standing public review for browser verification.",
+          "author": {
+            "id": 3,
+            "username": "review.public.test",
+            "display_name": "Review Public Test"
+          }
+        }
+      },
+      "context": null
+    },
+    {
+      "type": "review_like",
+      "activity_at": "2026-07-31T23:46:11.282860Z",
+      "actor": {
+        "id": 28,
+        "username": "design.dense.11",
+        "display_name": "Dense Fixture Person 11"
+      },
+      "target": {
+        "event": {
+          "id": 2174,
+          "title": "Martin Garrix Afterparty",
+          "event_date": "2026-06-19",
+          "start_time": "22:00:00"
+        },
+        "review": {
+          "id": 6,
+          "body": "Excellent pacing, a warm system, and enough space between the biggest moments to let them land.",
+          "author": {
+            "id": 21,
+            "username": "design.dense.04",
+            "display_name": "Dense Fixture Person 04"
+          }
+        }
+      },
+      "context": null
+    },
+    {
+      "type": "review_like",
+      "activity_at": "2026-07-31T23:46:11.279498Z",
+      "actor": {
+        "id": 28,
+        "username": "design.dense.11",
+        "display_name": "Dense Fixture Person 11"
+      },
+      "target": {
+        "event": {
+          "id": 2174,
+          "title": "Martin Garrix Afterparty",
+          "event_date": "2026-06-19",
+          "start_time": "22:00:00"
+        },
+        "review": {
+          "id": 5,
+          "body": "The room felt alive from the first record, and the crowd stayed generous all night.",
+          "author": {
+            "id": 20,
+            "username": "design.dense.03",
+            "display_name": "Dense Fixture Person 03"
+          }
+        }
+      },
+      "context": null
+    },
+    {
+      "type": "review_like",
+      "activity_at": "2026-07-31T23:46:11.276119Z",
+      "actor": {
+        "id": 28,
+        "username": "design.dense.11",
+        "display_name": "Dense Fixture Person 11"
+      },
+      "target": {
+        "event": {
+          "id": 2174,
+          "title": "Martin Garrix Afterparty",
+          "event_date": "2026-06-19",
+          "start_time": "22:00:00"
+        },
+        "review": {
+          "id": 4,
+          "body": "A concise review that still gives the layout a second line to work with.",
+          "author": {
+            "id": 19,
+            "username": "design.dense.02",
+            "display_name": "Dense Fixture Person 02"
+          }
+        }
+      },
+      "context": null
+    }
+  ],
+  "next_cursor": "WyIyMDI2LTA3LTMxVDIzOjQ2OjExLjI3NjExOSswMDowMCIsICJyZXZpZXdfbGlrZSIsICIwMDAwMDAwMDAwMDAwMDAwMDAyODowMDAwMDAwMDAwMDAwMDAwMDAwNCJd"
+}

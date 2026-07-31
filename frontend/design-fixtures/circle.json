@@ -1,0 +1,34 @@
+{
+  "rating_summary": {
+    "state": "available",
+    "count": 2,
+    "average": 3.75
+  },
+  "results": [
+    {
+      "id": 3,
+      "user": {
+        "id": 15,
+        "username": "design.fixture.actor",
+        "display_name": "A Deliberately Long Public Design Fixture Name"
+      },
+      "rating": 3.5,
+      "rated_at": "2026-07-31T23:40:18.299717Z",
+      "review": {
+        "id": 2,
+        "body": "A deliberately plain fixture review with enough text to expose real wrapping and content hierarchy.",
+        "published_at": "2026-07-31T23:40:18.304553Z",
+        "like_count": 0,
+        "viewer_has_liked": false
+      }
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "page_size": 10,
+    "total_results": 1,
+    "total_pages": 1,
+    "next_page": null,
+    "previous_page": null
+  }
+}

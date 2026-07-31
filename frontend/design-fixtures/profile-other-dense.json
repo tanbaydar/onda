@@ -1,0 +1,166 @@
+{
+  "/api/users/design.dense.01/": {
+    "profile": {
+      "id": 18,
+      "username": "design.dense.01",
+      "display_name": "Dense Fixture With A Very Expansive Display Name",
+      "avatar": null,
+      "bio": null,
+      "home_city": null
+    },
+    "access": "full",
+    "relationship": {
+      "outgoing_status": "approved",
+      "follows_you": true,
+      "can_follow": false,
+      "can_unfollow": true,
+      "follow_action": null
+    }
+  },
+  "/api/users/design.dense.01/been/?page=1&page_size=20": {
+    "results": [
+      {
+        "id": 4,
+        "rating": 0.5,
+        "has_review": true,
+        "event": {
+          "id": 2174,
+          "title": "Martin Garrix Afterparty",
+          "event_date": "2026-06-19",
+          "start_time": "22:00:00",
+          "cover_image_url": null,
+          "venue": {
+            "id": 1031,
+            "name": "Big Night Live",
+            "city": {
+              "id": 2,
+              "name": "Boston",
+              "timezone": "America/New_York"
+            }
+          },
+          "artists": [
+            {
+              "id": 3485,
+              "name": "Martin Garrix",
+              "position": 1
+            }
+          ]
+        }
+      }
+    ],
+    "pagination": {
+      "page": 1,
+      "page_size": 20,
+      "total_results": 1,
+      "total_pages": 1,
+      "next_page": null,
+      "previous_page": null
+    }
+  },
+  "/api/users/design.dense.01/reviews/?sort=newest&page=1&page_size=20": {
+    "results": [
+      {
+        "id": 3,
+        "event": {
+          "id": 2174,
+          "title": "Martin Garrix Afterparty",
+          "event_date": "2026-06-19",
+          "start_time": "22:00:00",
+          "cover_image_url": null,
+          "venue": {
+            "id": 1031,
+            "name": "Big Night Live",
+            "city": {
+              "id": 2,
+              "name": "Boston",
+              "timezone": "America/New_York"
+            }
+          },
+          "artists": [
+            {
+              "id": 3485,
+              "name": "Martin Garrix",
+              "position": 1
+            }
+          ]
+        },
+        "rating": 0.5,
+        "body": "Perfect.",
+        "published_at": "2026-07-31T23:46:11.182741Z",
+        "like_count": 4,
+        "viewer_has_liked": false
+      }
+    ],
+    "pagination": {
+      "page": 1,
+      "page_size": 20,
+      "total_results": 1,
+      "total_pages": 1,
+      "next_page": null,
+      "previous_page": null
+    }
+  },
+  "/api/users/design.dense.01/favorites/": {
+    "events": [],
+    "artists": []
+  },
+  "/api/users/design.dense.01/stats/": {
+    "statistics": {
+      "events_in_been": 1,
+      "written_reviews": 1,
+      "venues_visited": 1,
+      "cities_visited": 1,
+      "average_rating_given": {
+        "state": "available",
+        "value": 0.5
+      },
+      "followers": 1,
+      "following": 2
+    },
+    "rating_distribution": {
+      "state": "available",
+      "buckets": [
+        {
+          "rating": 0.5,
+          "relative_value": 1.0
+        },
+        {
+          "rating": 1.0,
+          "relative_value": 0.0
+        },
+        {
+          "rating": 1.5,
+          "relative_value": 0.0
+        },
+        {
+          "rating": 2.0,
+          "relative_value": 0.0
+        },
+        {
+          "rating": 2.5,
+          "relative_value": 0.0
+        },
+        {
+          "rating": 3.0,
+          "relative_value": 0.0
+        },
+        {
+          "rating": 3.5,
+          "relative_value": 0.0
+        },
+        {
+          "rating": 4.0,
+          "relative_value": 0.0
+        },
+        {
+          "rating": 4.5,
+          "relative_value": 0.0
+        },
+        {
+          "rating": 5.0,
+          "relative_value": 0.0
+        }
+      ]
+    }
+  }
+}

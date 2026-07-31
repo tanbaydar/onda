@@ -1,0 +1,411 @@
+{
+  "/api/events/2174/": {
+    "id": 2174,
+    "title": "Martin Garrix Afterparty",
+    "event_date": "2026-06-19",
+    "start_time": "22:00:00",
+    "cover_image_url": null,
+    "venue": {
+      "id": 1031,
+      "name": "Big Night Live",
+      "city": {
+        "id": 2,
+        "name": "Boston",
+        "timezone": "America/New_York"
+      }
+    },
+    "artists": [
+      {
+        "id": 3485,
+        "name": "Martin Garrix",
+        "position": 1
+      }
+    ],
+    "rating_summary": {
+      "state": "available",
+      "count": 14,
+      "average": 2.89286
+    },
+    "been": {
+      "loggable": true,
+      "unavailable_reason": null
+    },
+    "will_be_there_summary": {
+      "active_count": 0
+    },
+    "viewer_entry": {
+      "id": 2,
+      "rating": 4.0,
+      "rated_at": "2026-07-31T17:27:16.563637Z",
+      "created_at": "2026-07-31T17:27:16.563828Z",
+      "review": {
+        "id": 1,
+        "body": "Standing public review for browser verification.",
+        "published_at": "2026-07-31T17:27:17.579973Z",
+        "like_count": 5
+      }
+    },
+    "viewer_will_be_there": {
+      "is_marked": false,
+      "can_mark": false,
+      "unavailable_reason": "Will Be There expired at the end of the event's local date."
+    },
+    "viewer_favorite": {
+      "is_favorite": false,
+      "added_at": null
+    }
+  },
+  "/api/events/2174/reviews/?sort=most_liked&page=1&page_size=20": {
+    "results": [
+      {
+        "id": 1,
+        "body": "Standing public review for browser verification.",
+        "published_at": "2026-07-31T17:27:17.579973Z",
+        "like_count": 5,
+        "rating": 4.0,
+        "author": {
+          "id": 3,
+          "username": "review.public.test",
+          "display_name": "Review Public Test"
+        },
+        "viewer_has_liked": false,
+        "viewer_follows": false,
+        "can_follow": false,
+        "can_unfollow": false
+      },
+      {
+        "id": 4,
+        "body": "A concise review that still gives the layout a second line to work with.",
+        "published_at": "2026-07-31T23:46:11.188963Z",
+        "like_count": 4,
+        "rating": 1.0,
+        "author": {
+          "id": 19,
+          "username": "design.dense.02",
+          "display_name": "Dense Fixture Person 02"
+        },
+        "viewer_has_liked": false,
+        "viewer_follows": true,
+        "can_follow": false,
+        "can_unfollow": true
+      },
+      {
+        "id": 3,
+        "body": "Perfect.",
+        "published_at": "2026-07-31T23:46:11.182741Z",
+        "like_count": 4,
+        "rating": 0.5,
+        "author": {
+          "id": 18,
+          "username": "design.dense.01",
+          "display_name": "Dense Fixture With A Very Expansive Display Name"
+        },
+        "viewer_has_liked": false,
+        "viewer_follows": true,
+        "can_follow": false,
+        "can_unfollow": true
+      },
+      {
+        "id": 5,
+        "body": "The room felt alive from the first record, and the crowd stayed generous all night.",
+        "published_at": "2026-07-31T23:46:11.195038Z",
+        "like_count": 3,
+        "rating": 1.5,
+        "author": {
+          "id": 20,
+          "username": "design.dense.03",
+          "display_name": "Dense Fixture Person 03"
+        },
+        "viewer_has_liked": false,
+        "viewer_follows": true,
+        "can_follow": false,
+        "can_unfollow": true
+      },
+      {
+        "id": 6,
+        "body": "Excellent pacing, a warm system, and enough space between the biggest moments to let them land.",
+        "published_at": "2026-07-31T23:46:11.201858Z",
+        "like_count": 2,
+        "rating": 2.0,
+        "author": {
+          "id": 21,
+          "username": "design.dense.04",
+          "display_name": "Dense Fixture Person 04"
+        },
+        "viewer_has_liked": false,
+        "viewer_follows": true,
+        "can_follow": false,
+        "can_unfollow": true
+      },
+      {
+        "id": 7,
+        "body": "I came in knowing almost nothing about the lineup and left with three names written down for later.",
+        "published_at": "2026-07-31T23:46:11.209035Z",
+        "like_count": 1,
+        "rating": 2.5,
+        "author": {
+          "id": 22,
+          "username": "design.dense.05",
+          "display_name": "Dense Fixture Person 05"
+        },
+        "viewer_has_liked": false,
+        "viewer_follows": true,
+        "can_follow": false,
+        "can_unfollow": true
+      },
+      {
+        "id": 9,
+        "body": "The venue, crowd, and programming all had distinct personalities. Some transitions were rough, but the surprising choices mattered more than polish.",
+        "published_at": "2026-07-31T23:46:11.221668Z",
+        "like_count": 0,
+        "rating": 3.5,
+        "author": {
+          "id": 24,
+          "username": "design.dense.07",
+          "display_name": "Dense Fixture Person 07"
+        },
+        "viewer_has_liked": false,
+        "viewer_follows": true,
+        "can_follow": false,
+        "can_unfollow": true
+      },
+      {
+        "id": 8,
+        "body": "A mixed night in the useful sense: one set was patient and strange, another was immediate, and the closing stretch pulled both ideas together.",
+        "published_at": "2026-07-31T23:46:11.215571Z",
+        "like_count": 0,
+        "rating": 3.0,
+        "author": {
+          "id": 23,
+          "username": "design.dense.06",
+          "display_name": "Dense Fixture Person 06"
+        },
+        "viewer_has_liked": false,
+        "viewer_follows": true,
+        "can_follow": false,
+        "can_unfollow": true
+      },
+      {
+        "id": 10,
+        "body": "A near-limit fixture review for design stress testing. Long-form criticism needs room for rhythm, disagreement, specificity, and the occasional sentence that refuses to fit neatly into a compact card. Long-form criticism needs room for rhythm, disagreement, specificity, and the occasional sentence that refuses to fit neatly into a compact card. Long-form criticism needs room for rhythm, disagreement, specificity, and the occasional sentence that refuses to fit neatly into a compact card. Long-form criticism needs room for rhythm, disagreement, specificity, and the occasional sentence that refuses to fit neatly into a compact card. Long-form criticism needs room for rhythm, disagreement, specificity, and the occasional sentence that refuses to fit neatly into a compact card. Long-form criticism needs room for rhythm, disagreement, specificity, and the occasional sentence that refuses to fit neatly into a compact card. Long-form criticism needs room for rhythm, disagreement, sp",
+        "published_at": "2026-07-31T23:46:11.227677Z",
+        "like_count": 0,
+        "rating": 4.0,
+        "author": {
+          "id": 25,
+          "username": "design.dense.08",
+          "display_name": "Dense Fixture Person 08"
+        },
+        "viewer_has_liked": false,
+        "viewer_follows": true,
+        "can_follow": false,
+        "can_unfollow": true
+      }
+    ],
+    "pagination": {
+      "page": 1,
+      "page_size": 20,
+      "total_results": 9,
+      "total_pages": 1,
+      "next_page": null,
+      "previous_page": null
+    }
+  },
+  "/api/events/2174/circle/?page=1&page_size=20": {
+    "rating_summary": {
+      "state": "available",
+      "count": 13,
+      "average": 2.96154
+    },
+    "results": [
+      {
+        "id": 15,
+        "user": {
+          "id": 29,
+          "username": "design.dense.12",
+          "display_name": "Dense Fixture Person 12"
+        },
+        "rating": 4.5,
+        "rated_at": "2026-07-31T23:46:11.241565Z",
+        "review": null
+      },
+      {
+        "id": 14,
+        "user": {
+          "id": 28,
+          "username": "design.dense.11",
+          "display_name": "Dense Fixture Person 11"
+        },
+        "rating": 2.5,
+        "rated_at": "2026-07-31T23:46:11.238037Z",
+        "review": null
+      },
+      {
+        "id": 13,
+        "user": {
+          "id": 27,
+          "username": "design.dense.10",
+          "display_name": "Dense Fixture Person 10"
+        },
+        "rating": 5.0,
+        "rated_at": "2026-07-31T23:46:11.234138Z",
+        "review": null
+      },
+      {
+        "id": 12,
+        "user": {
+          "id": 26,
+          "username": "design.dense.09",
+          "display_name": "Dense Fixture Person 09"
+        },
+        "rating": 4.5,
+        "rated_at": "2026-07-31T23:46:11.230882Z",
+        "review": null
+      },
+      {
+        "id": 11,
+        "user": {
+          "id": 25,
+          "username": "design.dense.08",
+          "display_name": "Dense Fixture Person 08"
+        },
+        "rating": 4.0,
+        "rated_at": "2026-07-31T23:46:11.224717Z",
+        "review": {
+          "id": 10,
+          "body": "A near-limit fixture review for design stress testing. Long-form criticism needs room for rhythm, disagreement, specificity, and the occasional sentence that refuses to fit neatly into a compact card. Long-form criticism needs room for rhythm, disagreement, specificity, and the occasional sentence that refuses to fit neatly into a compact card. Long-form criticism needs room for rhythm, disagreement, specificity, and the occasional sentence that refuses to fit neatly into a compact card. Long-form criticism needs room for rhythm, disagreement, specificity, and the occasional sentence that refuses to fit neatly into a compact card. Long-form criticism needs room for rhythm, disagreement, specificity, and the occasional sentence that refuses to fit neatly into a compact card. Long-form criticism needs room for rhythm, disagreement, specificity, and the occasional sentence that refuses to fit neatly into a compact card. Long-form criticism needs room for rhythm, disagreement, sp",
+          "published_at": "2026-07-31T23:46:11.227677Z",
+          "like_count": 0,
+          "viewer_has_liked": false
+        }
+      },
+      {
+        "id": 10,
+        "user": {
+          "id": 24,
+          "username": "design.dense.07",
+          "display_name": "Dense Fixture Person 07"
+        },
+        "rating": 3.5,
+        "rated_at": "2026-07-31T23:46:11.218595Z",
+        "review": {
+          "id": 9,
+          "body": "The venue, crowd, and programming all had distinct personalities. Some transitions were rough, but the surprising choices mattered more than polish.",
+          "published_at": "2026-07-31T23:46:11.221668Z",
+          "like_count": 0,
+          "viewer_has_liked": false
+        }
+      },
+      {
+        "id": 9,
+        "user": {
+          "id": 23,
+          "username": "design.dense.06",
+          "display_name": "Dense Fixture Person 06"
+        },
+        "rating": 3.0,
+        "rated_at": "2026-07-31T23:46:11.212427Z",
+        "review": {
+          "id": 8,
+          "body": "A mixed night in the useful sense: one set was patient and strange, another was immediate, and the closing stretch pulled both ideas together.",
+          "published_at": "2026-07-31T23:46:11.215571Z",
+          "like_count": 0,
+          "viewer_has_liked": false
+        }
+      },
+      {
+        "id": 8,
+        "user": {
+          "id": 22,
+          "username": "design.dense.05",
+          "display_name": "Dense Fixture Person 05"
+        },
+        "rating": 2.5,
+        "rated_at": "2026-07-31T23:46:11.205460Z",
+        "review": {
+          "id": 7,
+          "body": "I came in knowing almost nothing about the lineup and left with three names written down for later.",
+          "published_at": "2026-07-31T23:46:11.209035Z",
+          "like_count": 1,
+          "viewer_has_liked": false
+        }
+      },
+      {
+        "id": 7,
+        "user": {
+          "id": 21,
+          "username": "design.dense.04",
+          "display_name": "Dense Fixture Person 04"
+        },
+        "rating": 2.0,
+        "rated_at": "2026-07-31T23:46:11.198433Z",
+        "review": {
+          "id": 6,
+          "body": "Excellent pacing, a warm system, and enough space between the biggest moments to let them land.",
+          "published_at": "2026-07-31T23:46:11.201858Z",
+          "like_count": 2,
+          "viewer_has_liked": false
+        }
+      },
+      {
+        "id": 6,
+        "user": {
+          "id": 20,
+          "username": "design.dense.03",
+          "display_name": "Dense Fixture Person 03"
+        },
+        "rating": 1.5,
+        "rated_at": "2026-07-31T23:46:11.192039Z",
+        "review": {
+          "id": 5,
+          "body": "The room felt alive from the first record, and the crowd stayed generous all night.",
+          "published_at": "2026-07-31T23:46:11.195038Z",
+          "like_count": 3,
+          "viewer_has_liked": false
+        }
+      },
+      {
+        "id": 5,
+        "user": {
+          "id": 19,
+          "username": "design.dense.02",
+          "display_name": "Dense Fixture Person 02"
+        },
+        "rating": 1.0,
+        "rated_at": "2026-07-31T23:46:11.185937Z",
+        "review": {
+          "id": 4,
+          "body": "A concise review that still gives the layout a second line to work with.",
+          "published_at": "2026-07-31T23:46:11.188963Z",
+          "like_count": 4,
+          "viewer_has_liked": false
+        }
+      },
+      {
+        "id": 4,
+        "user": {
+          "id": 18,
+          "username": "design.dense.01",
+          "display_name": "Dense Fixture With A Very Expansive Display Name"
+        },
+        "rating": 0.5,
+        "rated_at": "2026-07-31T23:46:11.179137Z",
+        "review": {
+          "id": 3,
+          "body": "Perfect.",
+          "published_at": "2026-07-31T23:46:11.182741Z",
+          "like_count": 4,
+          "viewer_has_liked": false
+        }
+      }
+    ],
+    "pagination": {
+      "page": 1,
+      "page_size": 20,
+      "total_results": 12,
+      "total_pages": 1,
+      "next_page": null,
+      "previous_page": null
+    }
+  }
+}

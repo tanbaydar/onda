@@ -1,0 +1,152 @@
+{
+  "results": [
+    {
+      "id": 28,
+      "type": "follow",
+      "actor": {
+        "id": 15,
+        "username": "design.fixture.actor",
+        "display_name": "A Deliberately Long Public Design Fixture Name"
+      },
+      "review": null,
+      "created_at": "2026-07-31T23:40:18.293029Z",
+      "read_at": null
+    },
+    {
+      "id": 24,
+      "type": "follow",
+      "actor": {
+        "id": 2,
+        "username": "tan",
+        "display_name": "Tan"
+      },
+      "review": null,
+      "created_at": "2026-07-31T18:27:38.602173Z",
+      "read_at": null
+    },
+    {
+      "id": 23,
+      "type": "review_like",
+      "actor": {
+        "id": 2,
+        "username": "tan",
+        "display_name": "Tan"
+      },
+      "review": {
+        "id": 1,
+        "event_id": 2174
+      },
+      "created_at": "2026-07-31T18:27:36.670720Z",
+      "read_at": null
+    },
+    {
+      "id": 10,
+      "type": "review_like",
+      "actor": {
+        "id": 2,
+        "username": "tan",
+        "display_name": "Tan"
+      },
+      "review": {
+        "id": 1,
+        "event_id": 2174
+      },
+      "created_at": "2026-07-31T18:16:20.846637Z",
+      "read_at": null
+    },
+    {
+      "id": 9,
+      "type": "follow",
+      "actor": {
+        "id": 2,
+        "username": "tan",
+        "display_name": "Tan"
+      },
+      "review": null,
+      "created_at": "2026-07-31T18:16:19.984841Z",
+      "read_at": null
+    },
+    {
+      "id": 8,
+      "type": "review_like",
+      "actor": {
+        "id": 2,
+        "username": "tan",
+        "display_name": "Tan"
+      },
+      "review": {
+        "id": 1,
+        "event_id": 2174
+      },
+      "created_at": "2026-07-31T18:15:59.279105Z",
+      "read_at": null
+    },
+    {
+      "id": 7,
+      "type": "follow",
+      "actor": {
+        "id": 2,
+        "username": "tan",
+        "display_name": "Tan"
+      },
+      "review": null,
+      "created_at": "2026-07-31T18:15:44.766182Z",
+      "read_at": null
+    },
+    {
+      "id": 6,
+      "type": "follow",
+      "actor": {
+        "id": 2,
+        "username": "tan",
+        "display_name": "Tan"
+      },
+      "review": null,
+      "created_at": "2026-07-31T18:15:24.907242Z",
+      "read_at": null
+    },
+    {
+      "id": 5,
+      "type": "review_like",
+      "actor": {
+        "id": 2,
+        "username": "tan",
+        "display_name": "Tan"
+      },
+      "review": {
+        "id": 1,
+        "event_id": 2174
+      },
+      "created_at": "2026-07-31T18:14:56.589533Z",
+      "read_at": null
+    },
+    {
+      "id": 4,
+      "type": "review_like",
+      "actor": {
+        "id": 2,
+        "username": "tan",
+        "display_name": "Tan"
+      },
+      "review": {
+        "id": 1,
+        "event_id": 2174
+      },
+      "created_at": "2026-07-31T18:13:44.409321Z",
+      "read_at": null
+    },
+    {
+      "id": 3,
+      "type": "follow",
+      "actor": {
+        "id": 2,
+        "username": "tan",
+        "display_name": "Tan"
+      },
+      "review": null,
+      "created_at": "2026-07-31T18:13:32.717932Z",
+      "read_at": null
+    }
+  ],
+  "next_cursor": null
+}

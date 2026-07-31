@@ -7,6 +7,7 @@ import YourCircle from "../components/YourCircle.jsx";
 import WillBeThereAttendees from "../components/WillBeThereAttendees.jsx";
 import { formatEventDateTime } from "../formatEventDateTime.js";
 import FavoriteControl from "../components/FavoriteControl.jsx";
+import { pluralize } from "../lib/plural.js";
 
 const RATINGS = [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5];
 
@@ -243,14 +244,14 @@ export default function EventPage({ user, onAuthenticationRequired }) {
             ))}
           </ol>
         </section>
-        <section><h2>Will Be There attendance</h2><p>{event.will_be_there_summary.active_count} active marks.</p></section>
+        <section><h2>Will Be There attendance</h2><p>{pluralize(event.will_be_there_summary.active_count, "active mark")}.</p></section>
         {user ? <FavoriteControl path={`/api/events/${event.id}/favorite/`} state={event.viewer_favorite} onChanged={() => setRetry((value) => value + 1)} /> : null}
         <section>
           <h2>Rating</h2>
           {event.rating_summary.state === "available" ? (
             <p>
               {event.rating_summary.average.toFixed(1)} average from{" "}
-              {event.rating_summary.count} ratings.
+              {pluralize(event.rating_summary.count, "rating")}.
             </p>
           ) : (
             <p>Not enough ratings</p>
@@ -290,7 +291,7 @@ export default function EventPage({ user, onAuthenticationRequired }) {
                     <option value="">Choose a rating</option>
                     {RATINGS.map((value) => (
                       <option key={value} value={value}>
-                        {value.toFixed(1)} stars
+                        {pluralize(value.toFixed(1), "star")}
                       </option>
                     ))}
                   </select>{" "}

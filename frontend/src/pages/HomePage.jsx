@@ -5,6 +5,8 @@ import { fetchJson } from "../api.js";
 import { formatEventDateTime } from "../formatEventDateTime.js";
 import { homeAccessRedirect } from "../landing.js";
 import { profilePath } from "../profileRoutes.js";
+import { formatTimestamp } from "../lib/formatTimestamp.js";
+import { pluralize } from "../lib/plural.js";
 
 
 function FeedItem({ item }) {
@@ -13,12 +15,12 @@ function FeedItem({ item }) {
       <article>
         <h2><Link to={profilePath(item.actor.username)}>{item.actor.display_name}</Link> followed <Link to={profilePath(item.target.user.username)}>{item.target.user.display_name}</Link></h2>
         <p><Link to={profilePath(item.actor.username)}>@{item.actor.username}</Link> followed <Link to={profilePath(item.target.user.username)}>@{item.target.user.username}</Link>.</p>
-        <time dateTime={item.activity_at}>{new Date(item.activity_at).toLocaleString()}</time>
+        <time dateTime={item.activity_at}>{formatTimestamp(item.activity_at)}</time>
       </article>
     );
   }
   if (item.type === "favorite_artist") {
-    return <article><h2><Link to={profilePath(item.actor.username)}>{item.actor.display_name}</Link> favorited <Link to={`/artists/${item.target.artist.id}`}>{item.target.artist.name}</Link></h2><time dateTime={item.activity_at}>{new Date(item.activity_at).toLocaleString()}</time></article>;
+    return <article><h2><Link to={profilePath(item.actor.username)}>{item.actor.display_name}</Link> favorited <Link to={`/artists/${item.target.artist.id}`}>{item.target.artist.name}</Link></h2><time dateTime={item.activity_at}>{formatTimestamp(item.activity_at)}</time></article>;
   }
   const event = item.target.event;
   if (item.type === "will_be_there") {
@@ -29,12 +31,12 @@ function FeedItem({ item }) {
           <Link to={`/events/${event.id}`}>{event.title}</Link>
         </h2>
         <p>{formatEventDateTime(event.event_date, event.start_time)}</p>
-        <time dateTime={item.activity_at}>{new Date(item.activity_at).toLocaleString()}</time>
+        <time dateTime={item.activity_at}>{formatTimestamp(item.activity_at)}</time>
       </article>
     );
   }
   if (item.type === "favorite_event") {
-    return <article><h2><Link to={profilePath(item.actor.username)}>{item.actor.display_name}</Link> favorited <Link to={`/events/${event.id}`}>{event.title}</Link></h2><p>{formatEventDateTime(event.event_date, event.start_time)}</p><time dateTime={item.activity_at}>{new Date(item.activity_at).toLocaleString()}</time></article>;
+    return <article><h2><Link to={profilePath(item.actor.username)}>{item.actor.display_name}</Link> favorited <Link to={`/events/${event.id}`}>{event.title}</Link></h2><p>{formatEventDateTime(event.event_date, event.start_time)}</p><time dateTime={item.activity_at}>{formatTimestamp(item.activity_at)}</time></article>;
   }
   if (item.type === "review_like") {
     return (
@@ -44,7 +46,7 @@ function FeedItem({ item }) {
           review of <Link to={`/events/${event.id}`}>{event.title}</Link>
         </h2>
         <blockquote>{item.target.review.body}</blockquote>
-        <time dateTime={item.activity_at}>{new Date(item.activity_at).toLocaleString()}</time>
+        <time dateTime={item.activity_at}>{formatTimestamp(item.activity_at)}</time>
       </article>
     );
   }
@@ -54,10 +56,10 @@ function FeedItem({ item }) {
         <Link to={profilePath(item.actor.username)}>{item.actor.display_name}</Link> rated{" "}
         <Link to={`/events/${event.id}`}>{event.title}</Link>
       </h2>
-      <p>{item.context.rating.toFixed(1)} stars</p>
+      <p>{pluralize(item.context.rating.toFixed(1), "star")}</p>
       <p>{formatEventDateTime(event.event_date, event.start_time)}</p>
       {item.context.review ? <blockquote>{item.context.review.body}</blockquote> : null}
-      <time dateTime={item.activity_at}>{new Date(item.activity_at).toLocaleString()}</time>
+      <time dateTime={item.activity_at}>{formatTimestamp(item.activity_at)}</time>
     </article>
   );
 }

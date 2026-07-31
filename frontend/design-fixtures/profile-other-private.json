@@ -1,0 +1,18 @@
+{
+  "profile": {
+    "id": 16,
+    "username": "design.fixture.private",
+    "display_name": "Private Design Fixture",
+    "avatar": null,
+    "bio": null,
+    "home_city": null
+  },
+  "access": "stub",
+  "relationship": {
+    "outgoing_status": null,
+    "follows_you": false,
+    "can_follow": true,
+    "can_unfollow": false,
+    "follow_action": "request"
+  }
+}

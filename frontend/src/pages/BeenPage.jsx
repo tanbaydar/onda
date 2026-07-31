@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 
 import { fetchJson } from "../api.js";
 import { formatEventDateTime } from "../formatEventDateTime.js";
+import { pluralize } from "../lib/plural.js";
 
 
 export default function BeenPage({ session }) {
@@ -92,7 +93,7 @@ export default function BeenPage({ session }) {
                   <p>
                     {entry.rating === null
                       ? "Unrated"
-                      : `Your rating: ${entry.rating.toFixed(1)} stars`}
+                      : `Your rating: ${pluralize(entry.rating.toFixed(1), "star")}`}
                   </p>
                   {entry.has_review ? <p>Written review</p> : null}
                 </article>

@@ -3,6 +3,8 @@ import { Link } from "react-router-dom";
 
 import { fetchJson, fetchWithCsrf } from "../api.js";
 import { profilePath } from "../profileRoutes.js";
+import { formatTimestamp } from "../lib/formatTimestamp.js";
+import { pluralize } from "../lib/plural.js";
 
 
 export default function PublicReviews({
@@ -92,12 +94,10 @@ export default function PublicReviews({
                 <article>
                   <h3><Link to={profilePath(review.author.username)}>{review.author.display_name}</Link></h3>
                   <p><Link to={profilePath(review.author.username)}>@{review.author.username}</Link></p>
-                  <p>Rating: {review.rating.toFixed(1)} stars</p>
+                  <p>Rating: {pluralize(review.rating.toFixed(1), "star")}</p>
                   <p>{review.body}</p>
-                  <p>
-                    Published {new Date(review.published_at).toLocaleString()}
-                  </p>
-                  <p>{review.like_count} likes</p>
+                  <p><time dateTime={review.published_at}>Published {formatTimestamp(review.published_at)}</time></p>
+                  <p>{pluralize(review.like_count, "like")}</p>
                   {!user || review.author.id !== user.id ? (
                     <button type="button" onClick={() => changeLike(review)}>
                       {review.viewer_has_liked ? "Unlike" : "Like"}

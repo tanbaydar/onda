@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 
 import { fetchJson, fetchWithCsrf } from "../api.js";
 import { profilePath } from "../profileRoutes.js";
+import { pluralize } from "../lib/plural.js";
 
 
 export default function YourCircle({
@@ -84,7 +85,7 @@ export default function YourCircle({
           {state.data.rating_summary.state === "available" ? (
             <p>
               {state.data.rating_summary.average.toFixed(1)} average from{" "}
-              {state.data.rating_summary.count} Circle ratings, including yours.
+              {pluralize(state.data.rating_summary.count, "Circle rating")}, including yours.
             </p>
           ) : (
             <p>No ratings from Your Circle yet.</p>
@@ -98,11 +99,11 @@ export default function YourCircle({
                   <article>
                     <h3><Link to={profilePath(entry.user.username)}>{entry.user.display_name}</Link></h3>
                     <p><Link to={profilePath(entry.user.username)}>@{entry.user.username}</Link></p>
-                    <p>Rating: {entry.rating.toFixed(1)} stars</p>
+                    <p>Rating: {pluralize(entry.rating.toFixed(1), "star")}</p>
                     {entry.review ? (
                       <>
                         <p>{entry.review.body}</p>
-                        <p>{entry.review.like_count} likes</p>
+                        <p>{pluralize(entry.review.like_count, "like")}</p>
                         <button type="button" onClick={() => changeLike(entry.review)}>
                           {entry.review.viewer_has_liked ? "Unlike" : "Like"}
                         </button>

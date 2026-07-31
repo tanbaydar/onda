@@ -4,6 +4,8 @@ import { Link, useParams } from "react-router-dom";
 import { fetchJson, fetchWithCsrf } from "../api.js";
 import { formatEventDateTime } from "../formatEventDateTime.js";
 import { profileNavigationVisible, profilePath } from "../profileRoutes.js";
+import { formatTimestamp } from "../lib/formatTimestamp.js";
+import { pluralize } from "../lib/plural.js";
 
 
 function Pagination({ pagination, onPage }) {
@@ -57,7 +59,7 @@ function BeenTab({ username, access }) {
       {state.data?.results.length === 0 ? <p>No Been entries yet.</p> : null}
       {state.data?.results.length ? (
         <>
-          <ol>{state.data.results.map((entry) => <li key={entry.id}><article><EventFacts event={entry.event} /><p>{entry.rating === null ? "Unrated attendance" : `${entry.rating.toFixed(1)} stars`}</p>{entry.has_review ? <p>Written review</p> : null}</article></li>)}</ol>
+          <ol>{state.data.results.map((entry) => <li key={entry.id}><article><EventFacts event={entry.event} /><p>{entry.rating === null ? "Unrated attendance" : pluralize(entry.rating.toFixed(1), "star")}</p>{entry.has_review ? <p>Written review</p> : null}</article></li>)}</ol>
           <Pagination pagination={state.data.pagination} onPage={setPage} />
         </>
       ) : null}
@@ -112,7 +114,7 @@ function ReviewsTab({ username, access, sessionUser }) {
       {state.data?.results.length === 0 ? <p>No written reviews yet.</p> : null}
       {state.data?.results.length ? (
         <>
-          <ol>{state.data.results.map((review) => <li key={review.id}><article><EventFacts event={review.event} /><p>{review.rating.toFixed(1)} stars</p><p>{review.body}</p><p><time dateTime={review.published_at}>Published {new Date(review.published_at).toLocaleString()}</time></p><p>{review.like_count} likes</p>{!sessionUser || sessionUser.username !== username ? <button type="button" onClick={() => changeLike(review)}>{review.viewer_has_liked ? "Unlike" : "Like"}</button> : null}</article></li>)}</ol>
+          <ol>{state.data.results.map((review) => <li key={review.id}><article><EventFacts event={review.event} /><p>{pluralize(review.rating.toFixed(1), "star")}</p><p>{review.body}</p><p><time dateTime={review.published_at}>Published {formatTimestamp(review.published_at)}</time></p><p>{pluralize(review.like_count, "like")}</p>{!sessionUser || sessionUser.username !== username ? <button type="button" onClick={() => changeLike(review)}>{review.viewer_has_liked ? "Unlike" : "Like"}</button> : null}</article></li>)}</ol>
           <Pagination pagination={state.data.pagination} onPage={setPage} />
         </>
       ) : null}
@@ -155,7 +157,7 @@ function ProfileEditor({ profile, onSaved }) {
       <form onSubmit={submit}>
         <p><label htmlFor="profile-display-name">Display name</label><br /><input id="profile-display-name" value={form.display_name} maxLength="50" onChange={(event) => setForm({ ...form, display_name: event.target.value })} /></p>{errors.display_name ? <ul>{fieldErrors("display_name")}</ul> : null}
         <p><label htmlFor="profile-avatar">Avatar URL</label><br /><input id="profile-avatar" type="url" value={form.avatar} maxLength="2048" onChange={(event) => setForm({ ...form, avatar: event.target.value })} /></p>{errors.avatar ? <ul>{fieldErrors("avatar")}</ul> : null}
-        <p><label htmlFor="profile-bio">Bio</label><br /><textarea id="profile-bio" value={form.bio} maxLength="150" onChange={(event) => setForm({ ...form, bio: event.target.value })} /></p><p>{form.bio.length}/150 characters</p>{errors.bio ? <ul>{fieldErrors("bio")}</ul> : null}
+        <p><label htmlFor="profile-bio">Bio</label><br /><textarea id="profile-bio" value={form.bio} maxLength="150" onChange={(event) => setForm({ ...form, bio: event.target.value })} /></p><p>{pluralize(form.bio.length, "character")} of 150</p>{errors.bio ? <ul>{fieldErrors("bio")}</ul> : null}
         <p><label htmlFor="profile-city">Home city</label><br /><select id="profile-city" value={form.home_city_id} onChange={(event) => setForm({ ...form, home_city_id: event.target.value })}><option value="">No home city</option>{cities.map((city) => <option key={city.id} value={city.id}>{city.name}, {city.region_code}</option>)}</select></p>{errors.home_city_id ? <ul>{fieldErrors("home_city_id")}</ul> : null}
         <button type="submit">Save profile</button>
       </form>
@@ -221,7 +223,7 @@ function ProfileFavoritesAndStats({ username, owner }) {
     <section><h2>Favorite artists</h2>{state.favorites.artists.length ? <ol>{state.favorites.artists.map(({ artist }) => <li key={artist.id}><Link to={`/artists/${artist.id}`}>{artist.name}</Link></li>)}</ol> : <p>No favorite artists.</p>}</section>
     {owner ? <section><h2>Favorite venues</h2>{state.venues.results.length ? <ol>{state.venues.results.map(({ venue }) => <li key={venue.id}><Link to={`/venues/${venue.id}`}>{venue.name}</Link></li>)}</ol> : <p>No favorite venues.</p>}</section> : null}
     <section><h2>Statistics</h2><dl><dt>Events in Been</dt><dd>{statistics.events_in_been}</dd><dt>Written reviews</dt><dd>{statistics.written_reviews}</dd><dt>Venues visited</dt><dd>{statistics.venues_visited}</dd><dt>Cities visited</dt><dd>{statistics.cities_visited}</dd><dt>Average rating given</dt><dd>{statistics.average_rating_given.state === "available" ? statistics.average_rating_given.value.toFixed(1) : "No ratings"}</dd><dt>Followers</dt><dd>{statistics.followers}</dd><dt>Following</dt><dd>{statistics.following}</dd></dl></section>
-    <section><h2>Rating distribution</h2>{state.stats.rating_distribution.state === "empty" ? <p>No ratings.</p> : <ol>{state.stats.rating_distribution.buckets.map((bucket) => <li key={bucket.rating}><span>{bucket.rating.toFixed(1)} stars </span><meter min="0" max="1" value={bucket.relative_value}>{bucket.relative_value}</meter></li>)}</ol>}</section>
+    <section><h2>Rating distribution</h2>{state.stats.rating_distribution.state === "empty" ? <p>No ratings.</p> : <ol>{state.stats.rating_distribution.buckets.map((bucket) => <li key={bucket.rating}><span>{pluralize(bucket.rating.toFixed(1), "star")} </span><meter min="0" max="1" value={bucket.relative_value}>{bucket.relative_value}</meter></li>)}</ol>}</section>
   </>;
 }
 

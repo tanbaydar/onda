@@ -1,0 +1,270 @@
+{
+  "/api/events/1629/": {
+    "id": 1629,
+    "title": "Locals Night",
+    "event_date": "2026-08-01",
+    "start_time": "22:30:00",
+    "cover_image_url": null,
+    "venue": {
+      "id": 260,
+      "name": "BASEMENT",
+      "city": {
+        "id": 1,
+        "name": "New York City",
+        "timezone": "America/New_York"
+      }
+    },
+    "artists": [
+      {
+        "id": 2622,
+        "name": "Holden Federico",
+        "position": 1
+      },
+      {
+        "id": 1138,
+        "name": "Mos (NYC)",
+        "position": 2
+      },
+      {
+        "id": 473,
+        "name": "Katie Rex",
+        "position": 3
+      },
+      {
+        "id": 474,
+        "name": "Concrete Husband",
+        "position": 4
+      },
+      {
+        "id": 1736,
+        "name": "Ne/Re/A",
+        "position": 5
+      },
+      {
+        "id": 1510,
+        "name": "Manu Miran",
+        "position": 6
+      },
+      {
+        "id": 931,
+        "name": "Kim Anh",
+        "position": 7
+      },
+      {
+        "id": 1699,
+        "name": "Justin Cudmore",
+        "position": 8
+      },
+      {
+        "id": 549,
+        "name": "Analog Soul",
+        "position": 9
+      }
+    ],
+    "rating_summary": {
+      "state": "not_enough_ratings",
+      "count": 0
+    },
+    "been": {
+      "loggable": false,
+      "unavailable_reason": "This event can be added to Been once its scheduled start arrives."
+    },
+    "will_be_there_summary": {
+      "active_count": 10
+    },
+    "viewer_entry": null,
+    "viewer_will_be_there": {
+      "is_marked": false,
+      "can_mark": true,
+      "unavailable_reason": null
+    },
+    "viewer_favorite": {
+      "is_favorite": false,
+      "added_at": null
+    }
+  },
+  "/api/events/1629/will-be-there/public/?page=1&page_size=20": {
+    "results": [
+      {
+        "user": {
+          "id": 27,
+          "username": "design.dense.10",
+          "display_name": "Dense Fixture Person 10"
+        },
+        "created_at": "2026-07-31T23:46:11.329963Z"
+      },
+      {
+        "user": {
+          "id": 26,
+          "username": "design.dense.09",
+          "display_name": "Dense Fixture Person 09"
+        },
+        "created_at": "2026-07-31T23:46:11.327792Z"
+      },
+      {
+        "user": {
+          "id": 25,
+          "username": "design.dense.08",
+          "display_name": "Dense Fixture Person 08"
+        },
+        "created_at": "2026-07-31T23:46:11.324085Z"
+      },
+      {
+        "user": {
+          "id": 24,
+          "username": "design.dense.07",
+          "display_name": "Dense Fixture Person 07"
+        },
+        "created_at": "2026-07-31T23:46:11.321754Z"
+      },
+      {
+        "user": {
+          "id": 23,
+          "username": "design.dense.06",
+          "display_name": "Dense Fixture Person 06"
+        },
+        "created_at": "2026-07-31T23:46:11.319659Z"
+      },
+      {
+        "user": {
+          "id": 22,
+          "username": "design.dense.05",
+          "display_name": "Dense Fixture Person 05"
+        },
+        "created_at": "2026-07-31T23:46:11.317695Z"
+      },
+      {
+        "user": {
+          "id": 21,
+          "username": "design.dense.04",
+          "display_name": "Dense Fixture Person 04"
+        },
+        "created_at": "2026-07-31T23:46:11.315704Z"
+      },
+      {
+        "user": {
+          "id": 20,
+          "username": "design.dense.03",
+          "display_name": "Dense Fixture Person 03"
+        },
+        "created_at": "2026-07-31T23:46:11.313648Z"
+      },
+      {
+        "user": {
+          "id": 19,
+          "username": "design.dense.02",
+          "display_name": "Dense Fixture Person 02"
+        },
+        "created_at": "2026-07-31T23:46:11.311418Z"
+      },
+      {
+        "user": {
+          "id": 18,
+          "username": "design.dense.01",
+          "display_name": "Dense Fixture With A Very Expansive Display Name"
+        },
+        "created_at": "2026-07-31T23:46:11.309005Z"
+      }
+    ],
+    "pagination": {
+      "page": 1,
+      "page_size": 20,
+      "total_results": 10,
+      "total_pages": 1,
+      "next_page": null,
+      "previous_page": null
+    }
+  },
+  "/api/events/1629/will-be-there/circle/?page=1&page_size=20": {
+    "results": [
+      {
+        "user": {
+          "id": 27,
+          "username": "design.dense.10",
+          "display_name": "Dense Fixture Person 10"
+        },
+        "created_at": "2026-07-31T23:46:11.329963Z"
+      },
+      {
+        "user": {
+          "id": 26,
+          "username": "design.dense.09",
+          "display_name": "Dense Fixture Person 09"
+        },
+        "created_at": "2026-07-31T23:46:11.327792Z"
+      },
+      {
+        "user": {
+          "id": 25,
+          "username": "design.dense.08",
+          "display_name": "Dense Fixture Person 08"
+        },
+        "created_at": "2026-07-31T23:46:11.324085Z"
+      },
+      {
+        "user": {
+          "id": 24,
+          "username": "design.dense.07",
+          "display_name": "Dense Fixture Person 07"
+        },
+        "created_at": "2026-07-31T23:46:11.321754Z"
+      },
+      {
+        "user": {
+          "id": 23,
+          "username": "design.dense.06",
+          "display_name": "Dense Fixture Person 06"
+        },
+        "created_at": "2026-07-31T23:46:11.319659Z"
+      },
+      {
+        "user": {
+          "id": 22,
+          "username": "design.dense.05",
+          "display_name": "Dense Fixture Person 05"
+        },
+        "created_at": "2026-07-31T23:46:11.317695Z"
+      },
+      {
+        "user": {
+          "id": 21,
+          "username": "design.dense.04",
+          "display_name": "Dense Fixture Person 04"
+        },
+        "created_at": "2026-07-31T23:46:11.315704Z"
+      },
+      {
+        "user": {
+          "id": 20,
+          "username": "design.dense.03",
+          "display_name": "Dense Fixture Person 03"
+        },
+        "created_at": "2026-07-31T23:46:11.313648Z"
+      },
+      {
+        "user": {
+          "id": 19,
+          "username": "design.dense.02",
+          "display_name": "Dense Fixture Person 02"
+        },
+        "created_at": "2026-07-31T23:46:11.311418Z"
+      },
+      {
+        "user": {
+          "id": 18,
+          "username": "design.dense.01",
+          "display_name": "Dense Fixture With A Very Expansive Display Name"
+        },
+        "created_at": "2026-07-31T23:46:11.309005Z"
+      }
+    ],
+    "pagination": {
+      "page": 1,
+      "page_size": 20,
+      "total_results": 10,
+      "total_pages": 1,
+      "next_page": null,
+      "previous_page": null
+    }
+  }
+}

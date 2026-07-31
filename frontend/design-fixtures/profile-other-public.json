@@ -1,0 +1,18 @@
+{
+  "profile": {
+    "id": 15,
+    "username": "design.fixture.actor",
+    "display_name": "A Deliberately Long Public Design Fixture Name",
+    "avatar": null,
+    "bio": null,
+    "home_city": null
+  },
+  "access": "full",
+  "relationship": {
+    "outgoing_status": "approved",
+    "follows_you": true,
+    "can_follow": false,
+    "can_unfollow": true,
+    "follow_action": null
+  }
+}
