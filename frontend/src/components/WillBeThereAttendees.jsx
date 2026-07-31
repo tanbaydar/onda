@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 
 import { fetchJson } from "../api.js";
+import { profilePath } from "../profileRoutes.js";
 
 
 export default function WillBeThereAttendees({ eventId, scope, user, version }) {
@@ -63,7 +65,7 @@ export default function WillBeThereAttendees({ eventId, scope, user, version }) 
           <ol>
             {state.data.results.map((attendee) => (
               <li key={attendee.user.id}>
-                {attendee.user.display_name} (@{attendee.user.username})
+                <Link to={profilePath(attendee.user.username)}>{attendee.user.display_name} (@{attendee.user.username})</Link>
               </li>
             ))}
           </ol>

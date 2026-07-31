@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 
 import { fetchJson, fetchWithCsrf } from "../api.js";
+import { profilePath } from "../profileRoutes.js";
 
 
 export default function YourCircle({
@@ -94,8 +96,8 @@ export default function YourCircle({
               {state.data.results.map((entry) => (
                 <li key={entry.id}>
                   <article>
-                    <h3>{entry.user.display_name}</h3>
-                    <p>@{entry.user.username}</p>
+                    <h3><Link to={profilePath(entry.user.username)}>{entry.user.display_name}</Link></h3>
+                    <p><Link to={profilePath(entry.user.username)}>@{entry.user.username}</Link></p>
                     <p>Rating: {entry.rating.toFixed(1)} stars</p>
                     {entry.review ? (
                       <>

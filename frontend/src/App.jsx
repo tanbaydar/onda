@@ -4,14 +4,16 @@ import { Link, Navigate, Route, Routes, useLocation, useNavigate } from "react-r
 import { fetchJson, fetchWithCsrf } from "./api.js";
 import ArtistPage from "./pages/ArtistPage.jsx";
 import ActivityPage from "./pages/ActivityPage.jsx";
-import BeenPage from "./pages/BeenPage.jsx";
 import DiscoverPage from "./pages/DiscoverPage.jsx";
 import EventPage from "./pages/EventPage.jsx";
 import HomePage from "./pages/HomePage.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
+import LegacyBeenPage from "./pages/LegacyBeenPage.jsx";
+import ProfilePage from "./pages/ProfilePage.jsx";
 import RegisterPage from "./pages/RegisterPage.jsx";
 import VenuePage from "./pages/VenuePage.jsx";
 import { GUEST_DISCOVER, landingPath } from "./landing.js";
+import { profilePath } from "./profileRoutes.js";
 
 function LandingPage({ session }) {
   const location = useLocation();
@@ -84,28 +86,23 @@ export default function App() {
                 <li>
                   <Link to="/activity">Activity</Link>
                 </li>
-                <li>Signed in as {session.user.username}</li>
                 <li>
-                  <Link to="/been">Been</Link>
-                </li>
-                <li>
-                  <button type="button" onClick={handleLogout}>
-                    Log out
-                  </button>
+                  <Link to={profilePath(session.user.username)}>Profile</Link>
                 </li>
               </>
-            ) : (
-              <>
-                <li>
-                  <Link to="/register">Register</Link>
-                </li>
-                <li>
-                  <Link to="/login">Log in</Link>
-                </li>
-              </>
-            )}
+            ) : null}
           </ul>
         </nav>
+        <section aria-label="Account controls">
+          {session.user ? (
+            <>
+              <p>Account: @{session.user.username}</p>
+              <button type="button" onClick={handleLogout}>Log out</button>
+            </>
+          ) : (
+            <p><Link to="/register">Register</Link>{" · "}<Link to="/login">Log in</Link></p>
+          )}
+        </section>
         {session.loading ? <p>Checking session.</p> : null}
         {session.error ? (
           <>
@@ -151,7 +148,9 @@ export default function App() {
             />
           }
         />
-        <Route path="/been" element={<BeenPage session={session} />} />
+        <Route path="/been" element={<LegacyBeenPage session={session} />} />
+        <Route path="/u/:username" element={<ProfilePage session={session} tab="been" />} />
+        <Route path="/u/:username/reviews" element={<ProfilePage session={session} tab="reviews" />} />
         <Route path="/activity" element={<ActivityPage session={session} />} />
         <Route path="/venues/:venueId" element={<VenuePage />} />
         <Route path="/artists/:artistId" element={<ArtistPage />} />

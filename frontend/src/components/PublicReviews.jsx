@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 
 import { fetchJson, fetchWithCsrf } from "../api.js";
+import { profilePath } from "../profileRoutes.js";
 
 
 export default function PublicReviews({
@@ -52,25 +54,6 @@ export default function PublicReviews({
     }
   }
 
-  async function changeFollow(review) {
-    setActionError(null);
-    try {
-      await fetchWithCsrf(`/api/users/${review.author.id}/follow/`, {
-        method: review.viewer_follows ? "DELETE" : "POST",
-      });
-      onSocialChanged();
-    } catch (error) {
-      if (error.status === 401 || error.status === 403) {
-        setActionError("Sign in required.");
-        onAuthenticationRequired();
-      } else if (error.status === 404 || error.status === 409) {
-        onSocialChanged();
-      } else {
-        setActionError("The follow could not be changed.");
-      }
-    }
-  }
-
   return (
     <section>
       <h2>Public reviews</h2>
@@ -107,15 +90,8 @@ export default function PublicReviews({
             {state.data.results.map((review) => (
               <li key={review.id}>
                 <article>
-                  <h3>{review.author.display_name}</h3>
-                  <p>@{review.author.username}</p>
-                  {user && (review.can_follow || review.can_unfollow) ? (
-                    <p>
-                      <button type="button" onClick={() => changeFollow(review)}>
-                        {review.viewer_follows ? "Unfollow" : "Follow"}
-                      </button>
-                    </p>
-                  ) : null}
+                  <h3><Link to={profilePath(review.author.username)}>{review.author.display_name}</Link></h3>
+                  <p><Link to={profilePath(review.author.username)}>@{review.author.username}</Link></p>
                   <p>Rating: {review.rating.toFixed(1)} stars</p>
                   <p>{review.body}</p>
                   <p>

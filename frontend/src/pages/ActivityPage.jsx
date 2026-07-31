@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import { fetchJson, fetchWithCsrf } from "../api.js";
+import { profilePath } from "../profileRoutes.js";
 
 
 function notificationText(notification) {
@@ -145,7 +146,7 @@ export default function ActivityPage({ session }) {
                 <article>
                   <p>{notification.read_at ? "Read" : "Unread"}</p>
                   <p>{notificationText(notification)}</p>
-                  <p>@{notification.actor.username}</p>
+                  <p><Link to={profilePath(notification.actor.username)}>@{notification.actor.username}</Link></p>
                   {notification.review ? (
                     <button
                       type="button"

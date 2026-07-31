@@ -4,14 +4,15 @@ import { Link, Navigate } from "react-router-dom";
 import { fetchJson } from "../api.js";
 import { formatEventDateTime } from "../formatEventDateTime.js";
 import { homeAccessRedirect } from "../landing.js";
+import { profilePath } from "../profileRoutes.js";
 
 
 function FeedItem({ item }) {
   if (item.type === "follow") {
     return (
       <article>
-        <h2>{item.actor.display_name} followed {item.target.user.display_name}</h2>
-        <p>@{item.actor.username} followed @{item.target.user.username}.</p>
+        <h2><Link to={profilePath(item.actor.username)}>{item.actor.display_name}</Link> followed <Link to={profilePath(item.target.user.username)}>{item.target.user.display_name}</Link></h2>
+        <p><Link to={profilePath(item.actor.username)}>@{item.actor.username}</Link> followed <Link to={profilePath(item.target.user.username)}>@{item.target.user.username}</Link>.</p>
         <time dateTime={item.activity_at}>{new Date(item.activity_at).toLocaleString()}</time>
       </article>
     );
@@ -21,7 +22,7 @@ function FeedItem({ item }) {
     return (
       <article>
         <h2>
-          {item.actor.display_name} will be at{" "}
+          <Link to={profilePath(item.actor.username)}>{item.actor.display_name}</Link> will be at{" "}
           <Link to={`/events/${event.id}`}>{event.title}</Link>
         </h2>
         <p>{formatEventDateTime(event.event_date, event.start_time)}</p>
@@ -33,7 +34,7 @@ function FeedItem({ item }) {
     return (
       <article>
         <h2>
-          {item.actor.display_name} liked {item.target.review.author.display_name}&apos;s
+          <Link to={profilePath(item.actor.username)}>{item.actor.display_name}</Link> liked <Link to={profilePath(item.target.review.author.username)}>{item.target.review.author.display_name}</Link>&apos;s
           review of <Link to={`/events/${event.id}`}>{event.title}</Link>
         </h2>
         <blockquote>{item.target.review.body}</blockquote>
@@ -44,7 +45,7 @@ function FeedItem({ item }) {
   return (
     <article>
       <h2>
-        {item.actor.display_name} rated{" "}
+        <Link to={profilePath(item.actor.username)}>{item.actor.display_name}</Link> rated{" "}
         <Link to={`/events/${event.id}`}>{event.title}</Link>
       </h2>
       <p>{item.context.rating.toFixed(1)} stars</p>

@@ -6,8 +6,8 @@
 >
 > Branch: `main`
 >
-> Verified implementation state: Phase C Slice 5 complete and pushed through the
-> Will Be There backend and frontend.
+> Verified implementation state: Phase C Slice 6A complete locally through Profile
+> core and the absorption of every interim Profile surface.
 >
 > Remote state: `origin/main` is at `0b780ca`.
 >
@@ -229,6 +229,21 @@ Complete and pushed:
 - bounded city-timezone query plus one four-source feed query;
 - no navigation additions.
 
+### Phase C slice 6A — Profile core and interim absorption
+
+Complete locally and unpushed:
+
+- canonical case-insensitive `/u/{username}` Profile identity;
+- explicit stub/full/owner access metadata;
+- Q37-safe private stubs and separately protected content endpoints;
+- Been and four-sort Reviews tabs through sanctioned visibility boundaries;
+- owner identity editing for display name, avatar URL, verbatim bio, and home city;
+- owner privacy control and pending follow-request queue;
+- follow/request/withdraw/unfollow controls on Profile;
+- `/been` compatibility redirects and final Profile navigation position;
+- contextual user links replacing temporary review-byline follow controls;
+- corrected ORM `RESTRICT` behavior for user home-city references.
+
 ### Not implemented
 
 The following remain design-only or deferred:
@@ -236,12 +251,11 @@ The following remain design-only or deferred:
 - email verification delivery and gating;
 - password reset;
 - email change verification;
-- public user profiles;
 - favorites;
 - onboarding flow;
 - rating-distribution display;
 - reports and moderation UI;
-- account settings and privacy switching UI;
+- broader account settings beyond Profile identity and privacy;
 - deletion/deactivation workflow;
 - search;
 - Profile and Search product destinations;
@@ -630,6 +644,10 @@ Physical deletion rules:
 - no stored expiry or counters;
 - active while venue-local today is on or before the event date;
 - dormant rows remain stored so postponement and resurrection can restore them.
+
+`users.0011` corrects the ORM transcription of `DANCED_USER.home_city_id` from
+`SET_NULL` to the frozen `RESTRICT` behavior. MySQL's existing foreign key was already
+restrictive, so the migration changes Django state without replacing physical DDL.
 
 Django's generated MySQL foreign key did not physically emit the DBML-required user
 cascade. The solution was deliberately split:
@@ -1390,7 +1408,7 @@ Never call an unsafe-method check end-to-end if it omits browser security header
 Current backend suite:
 
 ```text
-159 tests
+172 tests
 ```
 
 Major groups:
@@ -1445,7 +1463,8 @@ At the last implementation verification:
 - `git diff --check`: clean;
 - real MySQL diary constraints inspected;
 - migrations applied;
-- founder click-through complete.
+- founder click-through complete through Been/ratings; automated and disposable-user
+  browser verification covers later social slices.
 
 ## Nightly operations
 
@@ -1698,11 +1717,10 @@ tail -100 logs/sync.err.log
 
 ## Next product work
 
-Phase C Slice 5 is implemented and pushed. Home assembles four source-activity types
-at query time, the Discover/landing transition is complete, and Will Be There follows
-venue-local expiry without destructively deleting postponed intent. Phase C Slice 6A
-is the next approved work: Profile core and absorption of every interim profile
-surface.
+Phase C Slice 6A is implemented locally and awaits review/push. Profile now owns Been,
+Reviews, identity editing, privacy, following, and pending requests; every interim
+Profile surface is absorbed. Slice 6B remains deliberately separate: favorites,
+statistics, the given-rating distribution, and favorite-derived Home branches.
 
 Before deployment:
 

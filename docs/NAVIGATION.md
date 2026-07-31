@@ -33,11 +33,11 @@ an authentication control. Its final owner and removal point are declared below.
 
 | Order | Destination | Final route | Owning specification | Current state | Delivery slice |
 |---:|---|---|---|---|---|
-| 1 | Home | `/home` | Q151–153, Q202–203 | Not implemented | Home/feed slice, after the required follows and feed-activity foundations exist |
-| 2 | Discover | `/discover` | Q127, Q152, Q201 | Implemented at interim route `/` | Existing; moved to `/discover` by the Home slice when `/` becomes the landing resolver |
+| 1 | Home | `/home` | Q151–153, Q202–203 | Implemented | Slice 4B; future feed sources join its database union |
+| 2 | Discover | `/discover` | Q127, Q152, Q201 | Implemented | Slice 4B moved Discover and installed the landing resolver |
 | 3 | Search | `/search` | Q127, Q142, Q151–152 | Not implemented | Global Search slice |
-| 4 | Activity | `/activity` | Q151–152, Q179–180 | Not implemented | Notifications/Activity slice |
-| 5 | Profile | `/u/{username}` | Q127, Q135–141, Q151–152 | Not implemented; `/been` is an interim fragment | Profile slice |
+| 4 | Activity | `/activity` | Q151–152, Q179–180 | Implemented | Slice 4A |
+| 5 | Profile | `/u/{username}` | Q127, Q135–141, Q151–152 | Implemented core; statistics/favorites deferred | Slice 6A core and absorptions; Slice 6B statistics/favorites |
 
 The order is fixed. Visual treatments may change, but no implementation may reorder
 the five positions without an approved product-spec amendment.
@@ -356,22 +356,22 @@ The Profile position links to:
 Account controls, including logout and future settings access, are structurally
 attached to the Profile position. They are not additional primary destinations.
 
-The current plain-text `Signed in as {username}` status is temporary. The Profile
-slice absorbs that identity signal into the Profile position and removes the
-standalone primary-nav list item.
+Slice 6A absorbed the former plain-text `Signed in as {username}` signal into the
+Profile position and removed the standalone primary-nav list item.
 
-## Interim register
+## Absorbed interim register
 
-Every currently rendered navigation item that is not one of the five final
-destinations is classified here. Nothing currently rendered remains unclassified.
+Slice 6A absorbed every previously rendered interim item. The register remains as
+historical accountability for where each element went; none remains as an independent
+primary-navigation item.
 
-| Current item | Current route/action | Classification | Final owner/absorber | Required absorption slice |
+| Former item | Former route/action | Classification | Final owner/absorber | Status |
 |---|---|---|---|---|
-| Register | `/register` | Auth control | Guest auth access attached to the Profile position | Profile slice |
-| Log in | `/login` | Auth control | Guest auth access attached to the Profile position | Profile slice |
-| `Signed in as {username}` | No route; status text | Interim account-status UI | Authenticated Profile position | Profile slice |
-| Been | `/been` | Interim organ | Profile's default Been tab at `/u/{username}` | Profile slice |
-| Log out | Session-ending button | Auth control | Account actions attached to the Profile position | Profile slice |
+| Register | `/register` | Auth control | Guest auth access attached to the Profile position | Absorbed in Slice 6A |
+| Log in | `/login` | Auth control | Guest auth access attached to the Profile position | Absorbed in Slice 6A |
+| `Signed in as {username}` | No route; status text | Interim account-status UI | Authenticated Profile position | Absorbed and removed in Slice 6A |
+| Been | `/been` | Interim organ | Profile's default Been tab at `/u/{username}` | Absorbed in Slice 6A; compatibility redirect retained |
+| Log out | Session-ending button | Auth control | Account actions attached to the Profile position | Absorbed in Slice 6A |
 
 Discover is not listed because it is one of the five final destinations. Its current
 `/` route is transitional and governed by the landing rules.
@@ -385,14 +385,14 @@ create a sixth destination.
 These controls are not primary navigation items, but use the same named-absorber
 discipline so temporary user-discovery surfaces cannot become permanent by accident.
 
-| Surface | Purpose | Final owner/absorber | Required absorption slice |
+| Surface | Purpose | Final owner/absorber | Status |
 |---|---|---|---|
-| Follow/unfollow control on a public-review author byline | Temporary reachable follow action for currently visible public authors; guests see no control and the author name is not a link | Public Profile at `/u/{username}` | Profile slice |
+| Follow/unfollow control on a public-review author byline | Temporary reachable follow action for currently visible public authors | Public Profile at `/u/{username}` | Absorbed and removed in Slice 6A; author now links to Profile |
 
-Private-account request initiation is API-complete but has no current UI because
-private authors are not reachable through Public reviews. Search/Profile delivery
-adds the discoverable private-user surface and request controls; this interim does
-not authorize a dead profile link or a Settings destination.
+Private-account request initiation and the pending-request queue now have Profile
+surfaces. Search remains the future general discovery route; direct and contextual
+Profile links already support the complete request lifecycle without adding a
+Settings destination.
 
 ## Absorption requirements
 
@@ -497,6 +497,8 @@ A slice is not navigation-complete until it verifies:
 
 Slice 4B's coordinated transition produces this rendered navigation:
 
+### Current implementation checkpoint after Slice 6A
+
 Guest:
 
 1. Discover → `/discover`
@@ -508,22 +510,28 @@ Signed in:
 1. Home → `/home`
 2. Discover → `/discover`
 3. Activity → `/activity`
-4. `Signed in as {username}` → plain status
-5. Been → `/been`
-6. Log out → session action
+4. Profile → `/u/{current_username}`
+
+Guest Register/Login and signed-in Logout are account controls attached structurally
+to the Profile position, not additional primary destinations. The former standalone
+signed-in status and Been navigation items no longer render. `/been` remains only as
+a compatibility route: signed-in viewers redirect to their canonical Profile; guests
+redirect to Login.
 
 Implemented contextual routes:
 
 - `/events/{id}`
 - `/venues/{id}`
 - `/artists/{id}`
+- `/u/{username}`
+- `/u/{username}/reviews`
 
 Slice 2.5's authorized **Recent events** section changes content within Discover and
 requires no navigation addition or interim-register entry.
 
-Search and Profile remain absent rather than rendering empty stubs. The remaining
-non-final elements are classified by the interim register and remain accountable to
-their named absorber.
+Search remains absent rather than rendering an empty stub. Profile is implemented,
+and the absorbed register above records the removal or relocation of every prior
+interim element.
 
 ### Slice 4B transition ruling
 
