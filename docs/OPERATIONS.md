@@ -109,3 +109,34 @@ Use `--backfill` only for a deliberately approved historical window:
   --window-end YYYY-MM-DD \
   --page-size 20
 ```
+
+## Local guest frontend
+
+The guest React shell runs through Vite and proxies `/api` requests to Django.
+Run the backend and frontend in two terminals from the repository.
+
+Terminal 1:
+
+```sh
+cd /path/to/danced_app
+.venv/bin/python manage.py runserver
+```
+
+Terminal 2:
+
+```sh
+cd /path/to/danced_app/frontend
+npm install
+npm run dev
+```
+
+Open the local URL printed by Vite. The proxy target is
+`http://127.0.0.1:8000`, so Django must use its default local address and port.
+No Django CORS configuration is needed for this development workflow.
+
+Create a production frontend bundle with:
+
+```sh
+cd /path/to/danced_app/frontend
+npm run build
+```
