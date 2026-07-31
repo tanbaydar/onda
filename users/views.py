@@ -20,8 +20,8 @@ from django.views.decorators.http import (
 )
 from django.utils.dateparse import parse_datetime
 
-from catalog.models import City, EventArtist
-from catalog.views import _event_queryset, _serialize_event
+from catalog.models import Artist, City, EventArtist, Venue
+from catalog.views import _event_queryset, _serialize_artist, _serialize_event, _serialize_venue
 from .forms import LoginForm, RegistrationForm
 from .home_feed import decode_cursor as decode_home_cursor
 from .home_feed import encode_cursor as encode_home_cursor
@@ -37,6 +37,9 @@ from .models import (
     User,
     UserStatus,
     WillBeThere,
+    FavoriteArtist,
+    FavoriteEvent,
+    FavoriteVenue,
 )
 from .services import (
     EventNotStarted,
@@ -65,6 +68,9 @@ from .services import (
     remove_will_be_there,
     save_will_be_there,
     serialize_will_be_there,
+    FavoriteLimitReached,
+    save_favorite,
+    remove_favorite,
 )
 
 
@@ -863,6 +869,116 @@ def profile_reviews(request, username):
             "pagination": _pagination_payload(page, page_size, paginator.count),
         }
     )
+
+
+def _favorite_resource(request, *, target, model, target_field, limit):
+    auth_error = _authentication_required(request)
+    if auth_error is not None:
+        return auth_error
+    if request.method == "PUT":
+        try:
+            favorite, created = save_favorite(
+                user_id=request.user.id, model=model, target_field=target_field,
+                target_id=target.id, limit=limit,
+            )
+        except FavoriteLimitReached:
+            return JsonResponse(
+                {"errors": {"favorite": [f"You may favorite at most {limit} items of this type."]}},
+                status=409,
+            )
+        return JsonResponse(
+            {"favorite": {"is_favorite": True, "added_at": favorite.added_at.isoformat().replace("+00:00", "Z")}},
+            status=201 if created else 200,
+        )
+    remove_favorite(
+        user_id=request.user.id, model=model, target_field=target_field,
+        target_id=target.id,
+    )
+    return HttpResponse(status=204)
+
+
+@require_http_methods(["PUT", "DELETE"])
+def event_favorite(request, event_id):
+    return _favorite_resource(request, target=_visible_event(event_id), model=FavoriteEvent, target_field="event", limit=3)
+
+
+@require_http_methods(["PUT", "DELETE"])
+def artist_favorite(request, artist_id):
+    return _favorite_resource(request, target=get_object_or_404(Artist, pk=artist_id), model=FavoriteArtist, target_field="artist", limit=3)
+
+
+@require_http_methods(["PUT", "DELETE"])
+def venue_favorite(request, venue_id):
+    return _favorite_resource(request, target=get_object_or_404(Venue, pk=venue_id), model=FavoriteVenue, target_field="venue", limit=None)
+
+
+@require_GET
+def profile_favorites(request, username):
+    profile, denied = _profile_content_target(request, username)
+    if denied is not None:
+        return denied
+    lineup = EventArtist.objects.select_related("artist").order_by("position")
+    events = FavoriteEvent.objects.filter(
+        user=profile, event__status__in=("active", "unverified")
+    ).select_related("event__venue__city").prefetch_related(
+        Prefetch("event__event_artists", queryset=lineup, to_attr="_ordered_event_artists")
+    ).order_by("added_at", "event_id")
+    artists = FavoriteArtist.objects.filter(user=profile).select_related("artist").order_by("added_at", "artist_id")
+    return JsonResponse({
+        "events": [{"event": _serialize_event(row.event), "added_at": row.added_at.isoformat().replace("+00:00", "Z")} for row in events],
+        "artists": [{"artist": _serialize_artist(row.artist), "added_at": row.added_at.isoformat().replace("+00:00", "Z")} for row in artists],
+    })
+
+
+@require_GET
+def favorite_venues(request):
+    auth_error = _authentication_required(request)
+    if auth_error is not None:
+        return auth_error
+    pagination = _pagination(request, default=20, maximum=100)
+    if pagination is None:
+        return JsonResponse({"errors": {"page": ["Invalid pagination."]}}, status=400)
+    page_number, page_size = pagination
+    rows = FavoriteVenue.objects.filter(user=request.user).select_related("venue__city").order_by("added_at", "venue_id")
+    paginator = Paginator(rows, page_size)
+    try:
+        page = paginator.page(page_number)
+    except EmptyPage:
+        return JsonResponse({"error": "page out of range"}, status=404)
+    return JsonResponse({
+        "results": [{"venue": _serialize_venue(row.venue), "added_at": row.added_at.isoformat().replace("+00:00", "Z")} for row in page.object_list],
+        "pagination": _pagination_payload(page, page_size, paginator.count),
+    })
+
+
+@require_GET
+def profile_stats(request, username):
+    profile, denied = _profile_content_target(request, username)
+    if denied is not None:
+        return denied
+    entries = DiaryEntry.objects.visible_to(request.user).filter(user=profile)
+    rated = entries.filter(rating__isnull=False)
+    distribution = {float(value): 0 for value in RATING_VALUES}
+    for row in rated.values("rating").annotate(count=Count("id")):
+        distribution[float(row["rating"])] = row["count"]
+    maximum = max(distribution.values(), default=0)
+    average = rated.aggregate(value=Avg("rating"))["value"]
+    rating_payload = {"state": "empty"} if maximum == 0 else {
+        "state": "available",
+        "buckets": [{"rating": rating, "relative_value": count / maximum} for rating, count in distribution.items()],
+    }
+    return JsonResponse({
+        "statistics": {
+            "events_in_been": entries.count(),
+            "written_reviews": Review.objects.visible_to(request.user).filter(entry__user=profile).count(),
+            "venues_visited": entries.values("event__venue_id").distinct().count(),
+            "cities_visited": entries.values("event__venue__city_id").distinct().count(),
+            "average_rating_given": ({"state": "empty"} if average is None else {"state": "available", "value": float(average)}),
+            "followers": Follow.objects.filter(followee=profile, status=FollowStatus.APPROVED).count(),
+            "following": Follow.objects.filter(follower=profile, status=FollowStatus.APPROVED).count(),
+        },
+        "rating_distribution": rating_payload,
+    })
 
 
 @require_GET

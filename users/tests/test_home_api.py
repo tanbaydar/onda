@@ -5,7 +5,8 @@ from django.test import Client, TestCase
 from django.test.utils import CaptureQueriesContext
 
 from catalog.models import Artist, City, Event, EventArtist, EventStatus, Venue
-from users.models import DiaryEntry, Follow, FollowStatus, Review, ReviewLike, User
+from users.models import (DiaryEntry, FavoriteArtist, FavoriteEvent, Follow,
+                          FollowStatus, Review, ReviewLike, User, WillBeThere)
 
 
 NOW = datetime(2026, 8, 20, 16, 0, tzinfo=UTC)
@@ -72,7 +73,7 @@ class HomeFeedContractTests(TestCase):
             user=user, event=event, rating=rating, rated_at=at
         )
 
-    def test_mixed_sources_order_and_query_count_are_fixed(self):
+    def test_six_type_identical_timestamp_order_and_source_key_tiebreak_are_fixed(self):
         self.approved(self.viewer, self.actor, at=NOW - timedelta(days=1))
         self.entry(self.actor, self.events[0], at=NOW)
         self.approved(self.actor, self.target, at=NOW)
@@ -82,6 +83,12 @@ class HomeFeedContractTests(TestCase):
         )
         like = ReviewLike.objects.create(user=self.actor, review=review)
         ReviewLike.objects.filter(pk=like.pk).update(created_at=NOW)
+        self.events[2].event_date = "2099-01-01"
+        self.events[2].save(update_fields=("event_date",))
+        WillBeThere.objects.create(user=self.actor, event=self.events[2], created_at=NOW)
+        FavoriteEvent.objects.create(user=self.actor, event=self.events[3], added_at=NOW)
+        FavoriteEvent.objects.create(user=self.actor, event=self.events[4], added_at=NOW)
+        FavoriteArtist.objects.create(user=self.actor, artist=Artist.objects.get(name="Home Feed Artist"), added_at=NOW)
 
         client = self.client_for(self.viewer)
         with CaptureQueriesContext(connection) as queries:
@@ -89,11 +96,20 @@ class HomeFeedContractTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
-            [item["type"] for item in response.json()["results"][:3]],
-            ["review_like", "rated_been", "follow"],
+            [item["type"] for item in response.json()["results"][:7]],
+            ["will_be_there", "review_like", "rated_been", "follow", "favorite_event", "favorite_event", "favorite_artist"],
+        )
+        favorite_event_ids = [
+            item["target"]["event"]["id"]
+            for item in response.json()["results"]
+            if item["type"] == "favorite_event"
+        ]
+        self.assertEqual(
+            favorite_event_ids,
+            sorted((self.events[3].id, self.events[4].id), reverse=True),
         )
         # Two fixed session/auth lookups, one bounded city-boundary lookup,
-        # and exactly one four-branch feed UNION.
+        # and exactly one six-branch feed UNION.
         self.assertEqual(len(queries), 4)
         self.assertEqual(
             sum("UNION ALL" in query["sql"] for query in queries.captured_queries),

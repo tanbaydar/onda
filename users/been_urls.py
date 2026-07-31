@@ -24,12 +24,19 @@ from .views import (
     will_be_there_resource,
     public_will_be_there,
     circle_will_be_there,
+    event_favorite,
+    artist_favorite,
+    venue_favorite,
+    profile_favorites,
+    favorite_venues,
+    profile_stats,
 )
 
 
 urlpatterns = [
     path("me/profile/", profile_edit, name="profile-edit"),
     path("me/home/", home_feed, name="home-feed"),
+    path("me/favorite-venues/", favorite_venues, name="favorite-venues"),
     path("me/been/", diary_list, name="diary-list"),
     path("me/privacy/", privacy_detail, name="privacy-detail"),
     path(
@@ -66,6 +73,11 @@ urlpatterns = [
     path("users/<str:username>/", profile_detail, name="profile-detail"),
     path("users/<str:username>/been/", profile_been, name="profile-been"),
     path("users/<str:username>/reviews/", profile_reviews, name="profile-reviews"),
+    path("users/<str:username>/favorites/", profile_favorites, name="profile-favorites"),
+    path("users/<str:username>/stats/", profile_stats, name="profile-stats"),
+    path("events/<int:event_id>/favorite/", event_favorite, name="event-favorite"),
+    path("artists/<int:artist_id>/favorite/", artist_favorite, name="artist-favorite"),
+    path("venues/<int:venue_id>/favorite/", venue_favorite, name="venue-favorite"),
     path("events/<int:event_id>/been/", event_been, name="event-been"),
     path(
         "events/<int:event_id>/been/rating/",

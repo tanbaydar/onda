@@ -23,11 +23,13 @@ from .models import (
     Review,
     ReviewLike,
     WillBeThere,
+    FavoriteEvent,
+    FavoriteArtist,
     active_wbt_event_predicate,
 )
 
 
-ACTIVITY_TYPES = ("will_be_there", "rated_been", "review_like", "follow")
+ACTIVITY_TYPES = ("will_be_there", "review_like", "rated_been", "follow", "favorite_event", "favorite_artist")
 SOURCE_KEY_RE = re.compile(r"^\d{20}(?::\d{20})?$")
 
 
@@ -50,6 +52,9 @@ def _nulls():
         "target_user_id": Value(None, output_field=IntegerField()),
         "target_username": Value(None, output_field=CharField()),
         "target_display_name": Value(None, output_field=CharField()),
+        "artist_id": Value(None, output_field=IntegerField()),
+        "artist_name": Value(None, output_field=CharField()),
+        "artist_image_url": Value(None, output_field=CharField()),
     }
 
 
@@ -60,6 +65,7 @@ FEED_FIELDS = (
     "rating", "review_id", "review_body", "review_author_id",
     "review_author_username", "review_author_display_name",
     "target_user_id", "target_username", "target_display_name",
+    "artist_id", "artist_name", "artist_image_url",
 )
 
 
@@ -207,10 +213,43 @@ def home_feed_rows(viewer, *, at, cursor=None, limit=21):
         **wbt_nulls,
     ).values(*FEED_FIELDS)
 
+    favorite_event_nulls = _nulls()
+    for key in ("event_id", "event_title", "event_date", "event_start_time"):
+        favorite_event_nulls.pop(key)
+    favorite_events = FavoriteEvent.objects.filter(
+        user_id__in=followees,
+        event__status__in=("active", "unverified"),
+    ).filter(
+        Q(user__is_private=False) | Q(user_id__in=followees)
+    ).annotate(
+        activity_type=Value("favorite_event", output_field=CharField()),
+        activity_at=F("added_at"),
+        source_key=Concat(_source_part(F("user_id")), Value(":"), _source_part(F("event_id"))),
+        actor_id=F("user_id"), actor_username=F("user__username"), actor_display_name=F("user__display_name"),
+        event_title=F("event__title"), event_date=F("event__event_date"), event_start_time=F("event__start_time"),
+        **favorite_event_nulls,
+    ).values(*FEED_FIELDS)
+
+    favorite_artist_nulls = _nulls()
+    for key in ("artist_id", "artist_name", "artist_image_url"):
+        favorite_artist_nulls.pop(key)
+    favorite_artists = FavoriteArtist.objects.filter(user_id__in=followees).filter(
+        Q(user__is_private=False) | Q(user_id__in=followees)
+    ).annotate(
+        activity_type=Value("favorite_artist", output_field=CharField()),
+        activity_at=F("added_at"),
+        source_key=Concat(_source_part(F("user_id")), Value(":"), _source_part(F("artist_id"))),
+        actor_id=F("user_id"), actor_username=F("user__username"), actor_display_name=F("user__display_name"),
+        artist_name=F("artist__name"), artist_image_url=F("artist__image_url"),
+        **favorite_artist_nulls,
+    ).values(*FEED_FIELDS)
+
     combined = _after_cursor(been, cursor).union(
         _after_cursor(likes, cursor),
         _after_cursor(follows, cursor),
         _after_cursor(will_be_there, cursor),
+        _after_cursor(favorite_events, cursor),
+        _after_cursor(favorite_artists, cursor),
         all=True,
     ).order_by("-activity_at", "-activity_type", "-source_key")
     return list(combined[:limit])
@@ -235,6 +274,12 @@ def serialize_feed_row(row):
             "display_name": row["target_display_name"],
         }
         return item
+    if row["activity_type"] == "favorite_artist":
+        item["target"]["artist"] = {
+            "id": row["artist_id"], "name": row["artist_name"],
+            "image_url": row["artist_image_url"],
+        }
+        return item
     event = {
         "id": row["event_id"],
         "title": row["event_title"],
@@ -242,7 +287,7 @@ def serialize_feed_row(row):
         "start_time": row["event_start_time"].isoformat() if row["event_start_time"] else None,
     }
     item["target"]["event"] = event
-    if row["activity_type"] == "will_be_there":
+    if row["activity_type"] in ("will_be_there", "favorite_event"):
         return item
     if row["activity_type"] == "rated_been":
         item["context"] = {

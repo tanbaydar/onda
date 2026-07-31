@@ -256,17 +256,27 @@ def venue_detail(request, venue_id):
         Venue.objects.select_related("city"),
         pk=venue_id,
     )
-    return JsonResponse(_serialize_venue(venue))
+    payload = _serialize_venue(venue)
+    if request.user.is_authenticated:
+        from users.models import FavoriteVenue
+        favorite = FavoriteVenue.objects.filter(user=request.user, venue=venue).first()
+        payload["viewer_favorite"] = {"is_favorite": favorite is not None, "added_at": favorite.added_at.isoformat().replace("+00:00", "Z") if favorite else None}
+    return JsonResponse(payload)
 
 
 def artist_detail(request, artist_id):
     artist = get_object_or_404(Artist, pk=artist_id)
-    return JsonResponse(_serialize_artist(artist))
+    payload = _serialize_artist(artist)
+    if request.user.is_authenticated:
+        from users.models import FavoriteArtist
+        favorite = FavoriteArtist.objects.filter(user=request.user, artist=artist).first()
+        payload["viewer_favorite"] = {"is_favorite": favorite is not None, "added_at": favorite.added_at.isoformat().replace("+00:00", "Z") if favorite else None}
+    return JsonResponse(payload)
 
 
 def event_detail(request, event_id):
     event = get_object_or_404(_event_queryset(), pk=event_id)
-    from users.models import DiaryEntry
+    from users.models import DiaryEntry, FavoriteEvent, WillBeThere
     from users.services import (
         NOT_STARTED_MESSAGE,
         event_is_loggable,
@@ -282,6 +292,9 @@ def event_detail(request, event_id):
         "loggable": loggable,
         "unavailable_reason": None if loggable else NOT_STARTED_MESSAGE,
     }
+    payload["will_be_there_summary"] = {
+        "active_count": WillBeThere.objects.active_at(timezone.now()).filter(event=event).count()
+    }
     if request.user.is_authenticated:
         entry = (
             DiaryEntry.objects.visible_to(request.user)
@@ -296,4 +309,6 @@ def event_detail(request, event_id):
             user=request.user,
             event=event,
         )
+        favorite = FavoriteEvent.objects.filter(user=request.user, event=event).first()
+        payload["viewer_favorite"] = {"is_favorite": favorite is not None, "added_at": favorite.added_at.isoformat().replace("+00:00", "Z") if favorite else None}
     return JsonResponse(payload)

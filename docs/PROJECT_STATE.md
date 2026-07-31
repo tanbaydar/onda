@@ -6,10 +6,10 @@
 >
 > Branch: `main`
 >
-> Verified implementation state: Phase C Slice 6A complete locally through Profile
-> core and the absorption of every interim Profile surface.
+> Verified implementation state: Phase C Slice 6A is complete and pushed through
+> Profile core, interim-surface absorption, and private-stub chrome suppression.
 >
-> Remote state: `origin/main` is at `0b780ca`.
+> Remote state: `origin/main` is at `294d456`.
 >
 > Purpose: provide a self-contained, evidence-based handoff for the current
 > ingestion, catalog, identity, Been, rating, and review implementation.
@@ -231,7 +231,7 @@ Complete and pushed:
 
 ### Phase C slice 6A — Profile core and interim absorption
 
-Complete locally and unpushed:
+Complete and pushed:
 
 - canonical case-insensitive `/u/{username}` Profile identity;
 - explicit stub/full/owner access metadata;
@@ -243,6 +243,15 @@ Complete locally and unpushed:
 - `/been` compatibility redirects and final Profile navigation position;
 - contextual user links replacing temporary review-byline follow controls;
 - corrected ORM `RESTRICT` behavior for user home-city references.
+- private-profile stubs suppress Been/Reviews tab affordances, including direct
+  protected-tab navigation.
+
+### Phase C slice 6B — favorites, statistics, and final Home sources
+
+Implementation is in progress on top of `294d456`: the approved contracts add
+event, artist, and private venue favorites; profile statistics and normalized
+given-rating distribution; the anonymous active Will-Be-There count; and the final
+favorite-event and favorite-artist branches of the database-assembled Home feed.
 
 ### Not implemented
 
@@ -251,9 +260,7 @@ The following remain design-only or deferred:
 - email verification delivery and gating;
 - password reset;
 - email change verification;
-- favorites;
 - onboarding flow;
-- rating-distribution display;
 - reports and moderation UI;
 - broader account settings beyond Profile identity and privacy;
 - deletion/deactivation workflow;

@@ -16,6 +16,9 @@ from .models import (
     User,
     UserStatus,
     WillBeThere,
+    FavoriteEvent,
+    FavoriteArtist,
+    FavoriteVenue,
 )
 
 
@@ -42,6 +45,31 @@ class FollowConflict(Exception):
 
 class WillBeThereExpired(Exception):
     pass
+
+
+class FavoriteLimitReached(Exception):
+    pass
+
+
+@transaction.atomic
+def save_favorite(*, user_id, model, target_field, target_id, limit=None):
+    User.objects.select_for_update().get(pk=user_id)
+    lookup = {"user_id": user_id, f"{target_field}_id": target_id}
+    existing = model.objects.filter(**lookup).first()
+    if existing is not None:
+        return existing, False
+    if limit is not None and model.objects.filter(user_id=user_id).count() >= limit:
+        raise FavoriteLimitReached
+    return model.objects.create(**lookup, added_at=timezone_now()), True
+
+
+@transaction.atomic
+def remove_favorite(*, user_id, model, target_field, target_id):
+    User.objects.select_for_update().get(pk=user_id)
+    model.objects.filter(
+        user_id=user_id,
+        **{f"{target_field}_id": target_id},
+    ).delete()
 
 
 def serialize_public_user(user):

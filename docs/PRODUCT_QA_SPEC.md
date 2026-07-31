@@ -1641,3 +1641,20 @@ Profile bios are stored verbatim and measured against the 150-character limit ex
 as stored. Surrounding whitespace and line breaks are not trimmed when at least one
 visible character exists. An empty or whitespace-only submission is semantically empty
 and normalizes to NULL; this normalization does not alter any nonempty bio text.
+
+## Amendment to Questions 84–85
+
+The owner's private favorite-venues list orders by `added_at ASC, venue_id ASC`.
+This applies the same earliest-added-first chronology used by profile-facing event
+and artist favorites; venue ID is only a stable technical tiebreak. The specification
+is silent about favorite-venue order, so this is a product interpretation rather than
+an inferred source rule.
+
+## Amendment to Questions 93 and 196–198
+
+An event exposes an anonymous-inclusive active **Will Be There** count. Every active
+mark contributes regardless of account privacy, following the same aggregate-versus-
+attribution separation used for ratings in Question 32. This count is distinct from
+the privacy-filtered Public and Your Circle attendee lists: list pagination totals
+must never be presented as the anonymous aggregate. Expired or otherwise dormant
+marks do not contribute.

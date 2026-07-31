@@ -425,6 +425,36 @@ class WillBeThere(models.Model):
         db_table = "WILL_BE_THERE"
 
 
+class FavoriteEvent(models.Model):
+    pk = models.CompositePrimaryKey("user_id", "event_id")
+    user = models.ForeignKey(User, db_column="user_id", on_delete=models.CASCADE, related_name="favorite_events")
+    event = models.ForeignKey("catalog.Event", db_column="event_id", on_delete=models.RESTRICT, related_name="favorited_by")
+    added_at = models.DateTimeField()
+
+    class Meta:
+        db_table = "FAVORITE_EVENT"
+
+
+class FavoriteArtist(models.Model):
+    pk = models.CompositePrimaryKey("user_id", "artist_id")
+    user = models.ForeignKey(User, db_column="user_id", on_delete=models.CASCADE, related_name="favorite_artists")
+    artist = models.ForeignKey("catalog.Artist", db_column="artist_id", on_delete=models.RESTRICT, related_name="favorited_by")
+    added_at = models.DateTimeField()
+
+    class Meta:
+        db_table = "FAVORITE_ARTIST"
+
+
+class FavoriteVenue(models.Model):
+    pk = models.CompositePrimaryKey("user_id", "venue_id")
+    user = models.ForeignKey(User, db_column="user_id", on_delete=models.CASCADE, related_name="favorite_venues")
+    venue = models.ForeignKey("catalog.Venue", db_column="venue_id", on_delete=models.RESTRICT, related_name="favorited_by")
+    added_at = models.DateTimeField()
+
+    class Meta:
+        db_table = "FAVORITE_VENUE"
+
+
 class NotificationType(models.TextChoices):
     REVIEW_LIKE = "review_like", "Review like"
     FOLLOW = "follow", "Follow"
