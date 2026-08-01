@@ -71,7 +71,7 @@ sequenceDiagram
 
     Cmd->>Lock: GET_LOCK(..., 0)
     alt lock already held
-        Lock-->>Cmd: refused; no run row
+        Lock-->>Cmd: refused — no run row
     else lock acquired
         Cmd->>Run: begin nightly window
         loop each mapped active seed and expected page
