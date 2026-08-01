@@ -8,3 +8,5 @@ logs/
 db.sqlite3
 frontend/node_modules/
 frontend/dist/
+
+docs/CODEX_DATA_FLOW_BRIEF.md
