@@ -5,6 +5,7 @@ import { fetchJson } from "../api.js";
 import EventList from "../components/EventList.jsx";
 
 export default function DiscoverPage() {
+  const [view, setView] = useState("upcoming");
   const [searchParams, setSearchParams] = useSearchParams();
   const [retry, setRetry] = useState(0);
   const [state, setState] = useState({
@@ -73,6 +74,11 @@ export default function DiscoverPage() {
               ))}
             </select>
           </form>
+          <h2 className="discover-city">{selectedCity.name}</h2>
+          <nav className="section-tabs" aria-label="Event timeframe">
+            <button type="button" className={view === "upcoming" ? "active" : ""} aria-pressed={view === "upcoming"} onClick={() => setView("upcoming")}>Upcoming</button>
+            <button type="button" className={view === "recent" ? "active" : ""} aria-pressed={view === "recent"} onClick={() => setView("recent")}>Recent</button>
+          </nav>
           <EventList
             key={selectedCity.id}
             heading={`Upcoming events in ${selectedCity.name}`}
@@ -81,6 +87,8 @@ export default function DiscoverPage() {
             when="upcoming"
             emptyMessage={`No upcoming events in ${selectedCity.name}.`}
             showCity={false}
+            hidden={view !== "upcoming"}
+            quietHeading
           />
           <EventList
             key={`recent-${selectedCity.id}`}
@@ -91,6 +99,8 @@ export default function DiscoverPage() {
             pageSize={10}
             emptyMessage={`No recent events in ${selectedCity.name}.`}
             showCity={false}
+            hidden={view !== "recent"}
+            quietHeading
           />
         </>
       ) : null}

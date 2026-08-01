@@ -76,6 +76,8 @@ export default function EventList({
   showVenue = true,
   showCity = true,
   omittedArtistId = null,
+  hidden = false,
+  quietHeading = false,
 }) {
   const [page, setPage] = useState(1);
   const [retry, setRetry] = useState(0);
@@ -109,8 +111,8 @@ export default function EventList({
   }, [page, pageSize, retry, scopeId, scopeName, when]);
 
   return (
-    <section className="event-list">
-      <h2>{heading}</h2>
+    <section className="event-list" hidden={hidden}>
+      <h2 className={quietHeading ? "sr-only" : undefined}>{heading}</h2>
       {state.loading ? <p>Loading events.</p> : null}
       {state.error ? (
         <>
@@ -136,8 +138,9 @@ export default function EventList({
               />
             ))}
           </ul>
-          <nav aria-label={`${heading} pagination`}>
+          <nav className="ledger-pagination" aria-label={`${heading} pagination`}>
             <button
+              className="quiet-control"
               type="button"
               disabled={state.data.pagination.previous_page === null}
               onClick={() => setPage(state.data.pagination.previous_page)}
@@ -150,6 +153,7 @@ export default function EventList({
               {state.data.pagination.total_pages}{" "}
             </span>
             <button
+              className="quiet-control"
               type="button"
               disabled={state.data.pagination.next_page === null}
               onClick={() => setPage(state.data.pagination.next_page)}
