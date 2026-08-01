@@ -1,0 +1,158 @@
+/* ============================================================
+   DANCED — DESIGN TOKENS + INTEGRATION NOTES · Phase 3 LOCKED 2026-08-01
+   One-file handoff. Records: spec/PHASE3_MATERIAL.md · spec/phase3-scales.md
+   Applied reference render: spec/color-pass.html (all screens, both widths)
+   Rules of the system: white surface · hairline separation · no cards, no
+   shadows, no gradients · radius 0 everywhere (avatars full-circle = lone
+   exception) · display type rationed to event/artist/venue names, wordmark,
+   big numerals · ONE accent (judgment green) + danger wine, nothing else.
+   ============================================================ */
+
+@font-face{font-family:"Rozha One";src:url("./fonts/RozhaOne-Regular.woff2") format("woff2");font-style:normal;font-weight:400;font-display:swap}
+@font-face{font-family:"General Sans";src:url("./fonts/GeneralSans-Regular.woff2") format("woff2");font-style:normal;font-weight:400;font-display:swap}
+@font-face{font-family:"General Sans";src:url("./fonts/GeneralSans-Medium.woff2") format("woff2");font-style:normal;font-weight:500;font-display:swap}
+@font-face{font-family:"General Sans";src:url("./fonts/GeneralSans-Semibold.woff2") format("woff2");font-style:normal;font-weight:600;font-display:swap}
+@font-face{font-family:"Gambetta";src:url("./fonts/Gambetta-Regular.woff2") format("woff2");font-style:normal;font-weight:400;font-display:swap}
+@font-face{font-family:"Gambetta";src:url("./fonts/Gambetta-Italic.woff2") format("woff2");font-style:italic;font-weight:400;font-display:swap}
+
+:root{
+  /* ---- SPACING (px; the only legal gaps; never ad-hoc) ---- */
+  --sp-2:2px; --sp-4:4px; --sp-6:6px; --sp-8:8px; --sp-12:12px; --sp-16:16px;
+  --sp-24:24px; --sp-32:32px; --sp-48:48px; --sp-64:64px; --sp-96:96px; --sp-128:128px;
+  /* Law: space AROUND a group > space WITHIN it. Canonical: row internals 4–8;
+     between ledger rows 12–16 + hairline; heading ≥2× above vs below (32/12);
+     sections ≥32 mobile / ≥48 desktop; label→input 6; field→field 16. */
+
+  /* ---- MEASURES & FIXED GEOMETRY (ruled) ---- */
+  --measure-prose:640px;      /* reviews/reading; 680px ruled ceiling */
+  --measure-rows:800px;       /* desktop ledgers */
+  --gutter-mobile:24px; --gutter-desktop:106px; --auth-col:360px;
+  --thumb:56px; --thumb-h:70px;                  /* row flier slot 4:5; absent = slot stays EMPTY, text x holds */
+  --flier-sm:80px; --flier-sm-h:100px;           /* mobile reduced flier 4:5 */
+  --flier-md:160px; --flier-md-h:200px;          /* desktop identity-block flier */
+  --radius:0; --hairline:1px; --breakpoint-desktop:768px;
+
+  /* ---- TYPE ---- */
+  --font-display:"Rozha One",serif;      /* 400 only (native didone mass) */
+  --font-prose:"Gambetta",serif;
+  --font-fn:"General Sans",sans-serif;
+  --w-regular:400; /* @kind font */ --w-medium:500; /* @kind font */ --w-semibold:600; /* @kind font */
+  /* sizes: mobile values; desktop overrides in the media query below */
+  --text-micro:12px;        /* timestamps, caps overlines, counts, quiet chrome */
+  --text-ui:14px;           /* meta, labels, buttons, lineups, user-name lines */
+  --text-body:16px;         /* review prose @ measure, lh 1.6 */
+  --text-body-lg:18px;
+  --text-row-title:18px;    /* event names in rows — display face */
+  --text-title-past:20px;   /* event-past compact header title — display face */
+  --text-numeral-sm:20px;   /* inline/row rating numerals — display face */
+  --text-numeral-md:24px;   /* profile P numerals — display face */
+  --text-title:30px;        /* upcoming/detail-page names — display face */
+  --text-numeral-lg:48px;   /* event-past average + WBT count — display face */
+  /* line-height: numerals/titles 1.0–1.2 · ui/micro 1.4 · body 1.6.
+     Caps overlines: +0.05em tracking. Display ≥30px: -0.01em. */
+
+  /* ---- COLOR (semantic roles; no other colors exist) ---- */
+  --bg:#FFFFFF; --bg-subtle:#F1F1F1;              /* bg-subtle: unverified banner only */
+  --backdrop:rgba(27,27,27,.4);                   /* ConfirmDialog dim */
+  --text:#1B1B1B;                                 /* ink; never #000 */
+  --text-secondary:#4F4F4F; --text-muted:#8A8A8A; /* muted = floor for text */
+  --border-strong:#C4C4C4;                        /* inputs, quiet controls */
+  --border:#E6E6E6;                               /* the ledger hairline */
+  --border-muted:#F1F1F1;                         /* quiet-row hairline */
+  --image-slot:#ECECEC; --avatar:#DEDEDE;
+  --action:#1B1B1B;                               /* primary buttons, destructive verbs — NEVER accent */
+  --judgment:#1D6D48;                             /* THE accent: stars, likes, WBT, rating numerals, histogram (6.3:1 — carries 12px text) */
+  --judgment-text:#1D6D48;                        /* same step; kept as a distinct token for future re-anchoring */
+  --judgment-muted:#82CEAB;                       /* RESERVE — unused (histogram ruled same-color) */
+  --chart:var(--judgment);                        /* histogram bars = judgment, ruled */
+  --danger:#753129; --danger-text:#57241E;        /* wine, derived at forest depth: validation + error/Retry text & borders ONLY; never buttons */
+}
+@media (min-width:768px){:root{
+  --text-row-title:20px; --text-title-past:24px; --text-numeral-sm:24px;
+  --text-numeral-md:30px; --text-title:36px; --text-numeral-lg:60px;
+}}
+
+/* ============================================================
+   PER-COMPONENT NOTES (locked anatomy per spec/wireframes.html v1.5;
+   registers per spec/color-pass.html — the render is the visual truth)
+   ------------------------------------------------------------
+   GLOBAL CHROME — wordmark "Danced": display 16px. Mobile bottom tabs:
+   fn 12px, inactive text-muted, active text + 600. Desktop header: wordmark
+   left, nav right fn 14px (active 600), hairline --border below. No left rail.
+
+   SECTION HEADING (final) — fn 12px / 500 / caps / +0.05em / text-muted;
+   32–48 above, 12 below. Hairlines never between sections (whitespace only);
+   hairlines ONLY between repeating siblings.
+
+   CONTROLS — pad v×h: sm 4×8 (12px text, e.g. FollowControl/Cancel),
+   md 8×16 (14px — WBT toggle, standard), lg 12×24 (16px — auth primary).
+   Primary/toggle border: 1.5px --action; quiet control: 1px --border-strong,
+   text-secondary. Destructive verb: --action ink fill, #fff text. Radius 0.
+
+   STARS — fn face (glyph runs ★★★★½), tracking 2px (3px at feed-large 20px),
+   color --judgment, all sizes, everywhere.
+
+   RATING BLOCK (event-past primary) — numeral --text-numeral-lg display
+   --judgment; histogram beside at numeral base: 10 bars, gap 2, h 26, w 120,
+   bars --chart; count line "average from N ratings." micro text-secondary.
+   not_enough (<3): numeral block withheld; the line "Not enough ratings for
+   an average yet." ui text-secondary takes the slot; no layout jump at 3rd.
+
+   WBT — count numeral: display, --judgment, ALWAYS accent (others' judgment).
+   Toggle: ink resting ("Mark Will Be There"), accent border+text when marked
+   (favorites state grammar). On PAST events: absent at 0; at ≥1 one quiet ink
+   line, last, no expiry narration. Feed WBT row joins the channel through its
+   mark — TIMESTAMPS ARE GREY PERMANENTLY (register 13 closed).
+
+   REVIEW CARD — head: avatar 34 circle + name fn 14/500 + sub micro muted
+   ("@handle · Circle · stars"). Body: prose 16/1.6 at measure; clamp 4 lines
+   in feed (whole item → event), ~8–10 on event/profile with in-place quiet
+   "Read more". Meta line micro muted: "Published <date> · N likes · Like";
+   Like link --judgment-text 500. Own entry: "· Yours" in sub, ONE quiet
+   "Edit ▾" affordance, no like control on own.
+
+   ROWS (EventListRow/BeenRow) — thumb slot 56×70 left (EMPTY when flier
+   absent — never a placeholder box; text x holds). Mobile stack: row-title
+   (display) → date ui/500 → venue micro secondary → lineup micro muted,
+   1-line clip. Desktop spread (ledger 800): [thumb | title+lineup] left,
+   [date ui/500; venue micro secondary] right column, right-aligned.
+   BeenRow appends stars + "Written review" micro muted. Whole row = target.
+   12–16px padding + --border-muted hairline between rows.
+
+   META STACKS — past events date-led: date ui/500 text → venue secondary →
+   city muted (three-step grey recession, same size). Upcoming venue-led,
+   16px fn: venue 500 text → date regular → city muted.
+
+   PROFILE — user names are NEVER display face (fn 600, 20/24). Fused header:
+   avatar 72 + name + handle/relationship micro muted; FollowControl one quiet
+   button both widths. 5 P numerals: display --text-numeral-md, ink (identity
+   data, not judgment), caps micro labels below; "N venues · M cities" micro
+   muted subline. Histogram: small, only at ≥5 ratings, --chart. Tabs
+   Been|Reviews: fn 14, active 600 + 2px ink underline.
+
+   ACTIVITY — sentence ui with names 600 ink; sub micro muted "@handle ·
+   (event ·) time". Zero action chrome; whole row routes. Read = recession
+   only: all text drops to muted, names 500.
+
+   FEED (three scales, chronology kept) — rated_been LARGE: actor line micro
+   muted → event title row-title display → stars 20px → body clamp 4 → meta
+   micro muted. will_be_there = row scale. favorite/follow = one quiet micro
+   line each (grouping legal), --border-muted hairlines.
+
+   AUTH — column 360 centered; labels caps micro muted 500 above inputs
+   (gap 6); inputs 1px --border-strong, pad 12, fn 16; primary full-width
+   lg control; secondary quiet. Errors: --danger border, --danger-text text
+   (the ONLY danger surfaces, with error/Retry states).
+
+   CONFIRMDIALOG — --backdrop dim; white box, hairline outline, pad 24;
+   title fn 16/600; consequence body ui secondary; Cancel quiet sm control +
+   destructive verb ink fill. Reversible actions never summon it.
+
+   STATES — flier-absent = designed collapse (identity reflows to type).
+   Empty lines are ui secondary or micro muted, in place, no illustration.
+   Loading/error/Retry keep the same slot. Depth system: NONE — hairlines
+   and the dialog backdrop are the only separation; no elevation shadows.
+
+   OPEN (carried, not blocking): histogram bar-weight/width-cap fine-tune ·
+   register 18 (unrated-viewer entry point on past events).
+   ============================================================ */
