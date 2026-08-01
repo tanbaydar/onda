@@ -29,27 +29,28 @@ The construction guide says “five tables” but lists only these four. No fift
 8. `ARTIST_IDENTITY`
 9. `CITY_IDENTITY`
 
-### App — 15 tables
+### App — 14 tables
 
 1. `DANCED_USER`
 2. `USERNAME_HOLD`
-3. `EMAIL_VERIFICATION_REQUEST`
-4. `EMAIL_CHANGE_REQUEST`
-5. `FOLLOW`
-6. `DIARY_ENTRY`
-7. `REVIEW`
-8. `REVIEW_LIKE`
-9. `WILL_BE_THERE`
-10. `FAVORITE_EVENT`
-11. `FAVORITE_ARTIST`
-12. `FAVORITE_VENUE`
-13. `NOTIFICATION`
-14. `REPORT`
-15. `RECENT_SEARCH`
+3. `ACCOUNT_CODE`
+4. `FOLLOW`
+5. `DIARY_ENTRY`
+6. `REVIEW`
+7. `REVIEW_LIKE`
+8. `WILL_BE_THERE`
+9. `FAVORITE_EVENT`
+10. `FAVORITE_ARTIST`
+11. `FAVORITE_VENUE`
+12. `NOTIFICATION`
+13. `REPORT`
+14. `RECENT_SEARCH`
 
-The app count is higher than the guide because the review correctly added two separate, spec-required email request lifecycles.
+The app schema uses one shared, purpose-keyed `ACCOUNT_CODE` lifecycle for email
+verification and password reset, as authorized by the product amendment and implemented
+physically.
 
-**Total: 28 tables.**
+**Total: 27 tables.**
 
 ## Seam review
 
@@ -210,11 +211,12 @@ frozen contract and must not drift casually.
 ## Finding requiring documentation correction
 
 The old expected count of 5 ingestion + 8 canonical + 13 app tables is incorrect. After
-the approved city-identity freeze break, the adjudicated model contains
-4 + 9 + 15 = 28 tables. This is not a schema violation:
+the approved city-identity and account-code freeze breaks, the adjudicated model contains
+4 + 9 + 14 = 27 tables. This is not a schema violation:
 
 - the guide itself names only four ingestion tables;
-- the two app additions are the independently required registration-verification and email-change workflows;
+- the app addition is the shared, purpose-keyed account-code lifecycle required for
+  verification and password reset;
 - the canonical addition is the required seed-area-to-city identity seam;
 - no table should be added or removed merely to match a stale count.
 
@@ -293,3 +295,12 @@ and closed that observability gap.
   `ix_notif_recipient_created`; the earlier descriptive name exceeded Django's
   enforced 30-character portable index-name limit. Only the physical identifier was
   shortened. Its columns and newest-first access purpose are unchanged.
+- 2026-08-01 — Post-Stage-4 contract-adjudication freeze-break: Layer 1 archival is
+  defined at one terminal `FetchResult` per requested page. Retry attempts consume the
+  shared request budget but do not create individual raw rows; terminal-result
+  archival plus budget telemetry preserves evidentiary value without per-retry rows.
+- 2026-08-01 — Post-Stage-4 contract-adjudication freeze-break: the two speculative
+  email-request tables are replaced by the physically implemented `ACCOUNT_CODE`
+  table. Its purpose enum shares the six-digit-code lifecycle between email
+  verification and password reset, matching the authorized `PRODUCT_QA_SPEC`
+  amendment and reducing the adjudicated schema to 27 tables.

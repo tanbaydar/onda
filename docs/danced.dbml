@@ -56,6 +56,11 @@ Enum follow_status {
   approved
 }
 
+Enum account_code_purpose {
+  email_verification
+  password_reset
+}
+
 Enum notification_type {
   review_like
   follow
@@ -357,34 +362,30 @@ Table USERNAME_HOLD {
   '''
 }
 
-Table EMAIL_VERIFICATION_REQUEST {
+Table ACCOUNT_CODE {
   id bigint [pk, increment]
-  user_id bigint [not null, unique]
-  token_hash varchar(128) [not null, unique]
-  requested_at datetime [not null]
+  user_id bigint [not null]
+  purpose account_code_purpose [not null]
+  code_hash varchar(64) [not null]
+  sent_at datetime [not null]
   expires_at datetime [not null]
+  failed_attempts smallint [not null, default: 0]
+  consumed_at datetime [null]
+
+  indexes {
+    (user_id, purpose) [unique, name: "uq_account_code_user_purpose"]
+  }
 
   Note: '''
-  Successful verification sets DANCED_USER.email_verified_at and deletes this row.
-  Expired never-verified registrations are hard-deleted because they could never act.
-  Registration eagerly purges an expired unverified account using the requested email
-  before creating its replacement; a live verification claim reserves the email.
-  '''
-}
+  Shared six-digit-code lifecycle authorized by the PRODUCT_QA_SPEC amendment for
+  email verification and password reset. One live lifecycle row exists per user and
+  purpose. Codes expire after 15 minutes, permit at most five failed attempts, and
+  may be resent after a 60-second cooldown. Successful consumption records
+  consumed_at; successful password reset also invalidates existing sessions.
 
-Table EMAIL_CHANGE_REQUEST {
-  id bigint [pk, increment]
-  user_id bigint [not null, unique]
-  new_email varchar(254) [not null, note: "Deliberately non-unique among pending requests; unverified proposals reserve nothing."]
-  token_hash varchar(128) [not null, unique]
-  requested_at datetime [not null]
-  expires_at datetime [not null]
-
-  Note: '''
-  A new request replaces the user's prior row and invalidates its token. Request-time
-  email availability is a UX check; confirmation rechecks DANCED_USER.email inside
-  the update transaction, and its UNIQUE constraint is authoritative. First verifier
-  wins. Expired requests cannot confirm and are purged as hygiene.
+  Enforced CHECKs:
+  - failed_attempts <= 5;
+  - expires_at > sent_at.
   '''
 }
 
@@ -597,8 +598,7 @@ Table RECENT_SEARCH {
 // ---------------------------------------------------------------------------
 
 Ref: USERNAME_HOLD.user_id > DANCED_USER.id [delete: cascade]
-Ref: EMAIL_VERIFICATION_REQUEST.user_id > DANCED_USER.id [delete: cascade]
-Ref: EMAIL_CHANGE_REQUEST.user_id > DANCED_USER.id [delete: cascade]
+Ref: ACCOUNT_CODE.user_id > DANCED_USER.id [delete: cascade]
 Ref: FOLLOW.follower_id > DANCED_USER.id [delete: cascade]
 Ref: FOLLOW.followee_id > DANCED_USER.id [delete: cascade]
 
@@ -661,8 +661,7 @@ TableGroup CANONICAL_IDENTITY {
 TableGroup APP {
   DANCED_USER
   USERNAME_HOLD
-  EMAIL_VERIFICATION_REQUEST
-  EMAIL_CHANGE_REQUEST
+  ACCOUNT_CODE
   FOLLOW
   DIARY_ENTRY
   REVIEW

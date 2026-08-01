@@ -89,17 +89,21 @@ If historical-query reconnaissance fails, the backfill is not approximated throu
 
 ## Layer 1 — Acquisition (find the data, lose nothing)
 
-One nightly job. For each active city seed, it sends RA's own listing query — the same request the RA website makes — pages through results politely (sequential, delayed, backoff on errors), and writes every response **verbatim** into an append-only archive table:
+One nightly job. For each active city seed, it sends RA's own listing query — the same request the RA website makes — pages through results politely (sequential, delayed, backoff on errors), and writes the terminal `FetchResult` for each requested page **verbatim** into an archive table:
 
 **`RAW_INGEST`** — the payload exactly as received, which seed produced it, when, and the HTTP status.
 
 This layer performs no event-domain transformation. The RA client knows only request
 construction and the transport/pagination envelope (`totalResults`, page coverage, and
 GraphQL errors); the Transformer alone knows event-domain shape and canonical mappings.
-Every response body is archived verbatim regardless of transient envelope metadata.
+The archival grain is one terminal `FetchResult` per requested page. Retry attempts
+consume the shared request budget but are not archived individually. Terminal-result
+archival plus request-budget telemetry preserves the evidence needed to reconstruct
+page outcomes and resource consumption without introducing one raw row per retry.
+Every terminal response body is archived verbatim regardless of transient envelope metadata.
 That separation of *fetching* from *understanding* is what makes the system survivable:
 
-- **RA changes their schema →** we fix one module downstream and replay the archive. Zero data loss, ever.
+- **RA changes their schema →** we fix one module downstream and replay the archived terminal page evidence.
 - **A fetch fails →** the failure is recorded as data (status code, no payload) and the seed is flagged for this run. A failed fetch must never be mistaken for "the events are gone" — this distinction feeds Layer 2's lifecycle logic.
 - **We were wrong about a mapping →** replay the archive through the corrected logic. The archive is the system's undo button.
 
@@ -119,7 +123,8 @@ The fetcher is the *only* replaceable part by design: if RA tightens anti-bot me
   policy. `None` delegates to the production nightly planner; explicit values are the
   same seam used by deterministic tests and bounded backfill execution.
 - Requests are sequential and share a hard per-run request ceiling. Retries consume the
-  same ceiling.
+  same ceiling but are not archived individually; `RAW_INGEST` stores the terminal
+  `FetchResult` for each requested page.
 - Bounded exponential backoff with jitter applies only to network errors, HTTP 408,
   HTTP 429 (honoring `Retry-After`), and HTTP 500/502/503/504. Ordinary 4xx responses
   are not retried.
