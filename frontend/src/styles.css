@@ -49,6 +49,8 @@ dt{color:var(--text-muted);font-size:var(--text-micro);text-transform:uppercase}
 dd{margin:0;font-family:var(--font-display);font-size:var(--text-numeral-md)}
 meter{accent-color:var(--chart);width:120px}
 .stars,.rating-value,.wbt-count{color:var(--judgment);font-family:var(--font-display)}
+.rating-value{font-size:var(--text-numeral-lg);line-height:1.1}
+.wbt-marked{border-color:var(--judgment);color:var(--judgment)}
 .review-body{max-width:var(--measure-prose);font-family:var(--font-prose);line-height:1.6}
 .review-body.is-clamped{display:-webkit-box;overflow:hidden;-webkit-box-orient:vertical;-webkit-line-clamp:9}
 .feed-review.is-clamped{-webkit-line-clamp:4}
@@ -90,6 +92,7 @@ dialog .destructive{border-color:var(--action);background:var(--action);color:va
  h2{margin-top:var(--sp-48)}
  main article>img,.identity>img{width:var(--flier-md);height:var(--flier-md-h)}
  .identity{min-height:var(--flier-md-h);padding-left:calc(var(--flier-md) + var(--sp-32));position:relative}
+ .identity:not(:has(>img)){min-height:0;padding-left:0}
  .identity>img{position:absolute;top:0;left:0}
  .ledger>li article{display:grid;grid-template-columns:minmax(0,1fr) 200px;column-gap:var(--sp-32)}
  .profile-header{margin:calc(-1 * var(--sp-48)) calc(-1 * var(--gutter-desktop)) 0;padding:var(--sp-48) var(--gutter-desktop)}

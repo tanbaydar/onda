@@ -5,6 +5,7 @@ import { fetchJson, fetchWithCsrf } from "../api.js";
 import { profilePath } from "../profileRoutes.js";
 import { formatTimestamp } from "../lib/formatTimestamp.js";
 import { pluralize } from "../lib/plural.js";
+import ExpandableText from "./ExpandableText.jsx";
 
 
 export default function PublicReviews({
@@ -94,12 +95,12 @@ export default function PublicReviews({
                 <article>
                   <h3><Link to={profilePath(review.author.username)}>{review.author.display_name}</Link></h3>
                   <p><Link to={profilePath(review.author.username)}>@{review.author.username}</Link></p>
-                  <p>Rating: {pluralize(review.rating.toFixed(1), "star")}</p>
-                  <p>{review.body}</p>
+                  <p className="stars">Rating: {pluralize(review.rating.toFixed(1), "star")}</p>
+                  <ExpandableText>{review.body}</ExpandableText>
                   <p><time dateTime={review.published_at}>Published {formatTimestamp(review.published_at)}</time></p>
                   <p>{pluralize(review.like_count, "like")}</p>
                   {!user || review.author.id !== user.id ? (
-                    <button type="button" onClick={() => changeLike(review)}>
+                    <button className="like-action" type="button" onClick={() => changeLike(review)}>
                       {review.viewer_has_liked ? "Unlike" : "Like"}
                     </button>
                   ) : null}

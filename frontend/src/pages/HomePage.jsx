@@ -7,6 +7,7 @@ import { homeAccessRedirect } from "../landing.js";
 import { profilePath } from "../profileRoutes.js";
 import { formatTimestamp } from "../lib/formatTimestamp.js";
 import { pluralize } from "../lib/plural.js";
+import ExpandableText from "../components/ExpandableText.jsx";
 
 
 function FeedItem({ item }) {
@@ -45,7 +46,7 @@ function FeedItem({ item }) {
           <Link to={profilePath(item.actor.username)}>{item.actor.display_name}</Link> liked <Link to={profilePath(item.target.review.author.username)}>{item.target.review.author.display_name}</Link>&apos;s
           review of <Link to={`/events/${event.id}`}>{event.title}</Link>
         </h2>
-        <blockquote>{item.target.review.body}</blockquote>
+        <ExpandableText feed destination={`/events/${event.id}`}>{item.target.review.body}</ExpandableText>
         <time dateTime={item.activity_at}>{formatTimestamp(item.activity_at)}</time>
       </article>
     );
@@ -56,9 +57,9 @@ function FeedItem({ item }) {
         <Link to={profilePath(item.actor.username)}>{item.actor.display_name}</Link> rated{" "}
         <Link to={`/events/${event.id}`}>{event.title}</Link>
       </h2>
-      <p>{pluralize(item.context.rating.toFixed(1), "star")}</p>
+      <p className="stars">{pluralize(item.context.rating.toFixed(1), "star")}</p>
       <p>{formatEventDateTime(event.event_date, event.start_time)}</p>
-      {item.context.review ? <blockquote>{item.context.review.body}</blockquote> : null}
+      {item.context.review ? <ExpandableText feed destination={`/events/${event.id}`}>{item.context.review.body}</ExpandableText> : null}
       <time dateTime={item.activity_at}>{formatTimestamp(item.activity_at)}</time>
     </article>
   );
@@ -99,7 +100,7 @@ export default function HomePage({ session }) {
   const redirect = homeAccessRedirect(session.user);
   if (redirect) return <Navigate to={redirect} replace />;
   return (
-    <main>
+    <main className="feed-page">
       <h1>Home</h1>
       {state.loading ? <p>Loading activity.</p> : null}
       {state.error ? (
@@ -108,7 +109,7 @@ export default function HomePage({ session }) {
       {!state.loading && !state.error && state.results.length === 0 ? (
         <p>No activity from people you follow yet. <Link to="/discover">Discover events</Link>.</p>
       ) : null}
-      {state.results.length > 0 ? <ol>{state.results.map((item) => <li key={`${item.type}-${item.activity_at}-${item.actor.id}-${item.target.event?.id ?? item.target.user?.id ?? item.target.artist?.id}`}><FeedItem item={item} /></li>)}</ol> : null}
+      {state.results.length > 0 ? <ol className="feed-list">{state.results.map((item) => <li key={`${item.type}-${item.activity_at}-${item.actor.id}-${item.target.event?.id ?? item.target.user?.id ?? item.target.artist?.id}`}><FeedItem item={item} /></li>)}</ol> : null}
       {state.next && !state.error ? <button type="button" disabled={loadingMore} onClick={loadMore}>{loadingMore ? "Loading more." : "Load more"}</button> : null}
     </main>
   );

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import { fetchWithCsrf } from "../api.js";
 import { AUTHENTICATED_LANDING } from "../landing.js";
@@ -38,7 +38,7 @@ export default function LoginPage({ onAuthenticated }) {
   }
 
   return (
-    <main>
+    <main className="auth-page">
       <h1>Log in</h1>
       {errors ? (
         <section aria-label="Login errors">
@@ -79,6 +79,7 @@ export default function LoginPage({ onAuthenticated }) {
           </button>
         </p>
       </form>
+      <p><Link to="/reset-password">Forgot password?</Link></p>
     </main>
   );
 }

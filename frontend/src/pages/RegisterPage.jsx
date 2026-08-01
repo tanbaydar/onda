@@ -70,7 +70,7 @@ export default function RegisterPage({ onAuthenticated }) {
   }
 
   return (
-    <main>
+    <main className="auth-page">
       <h1>Register</h1>
       {formError ? <p role="alert">{formError}</p> : null}
       <form onSubmit={handleSubmit}>

@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 import { fetchJson, fetchWithCsrf } from "../api.js";
-import { profilePath } from "../profileRoutes.js";
+import { formatTimestamp } from "../lib/formatTimestamp.js";
 
 
 function notificationText(notification) {
@@ -38,8 +38,11 @@ export default function ActivityPage({ session }) {
     }
     const controller = new AbortController();
     setState({ loading: true, error: null, results: [], nextCursor: null });
-    fetchJson("/api/me/notifications/", { signal: controller.signal })
-      .then((data) =>
+    Promise.all([
+      fetchJson("/api/me/notifications/", { signal: controller.signal }),
+      fetchWithCsrf("/api/me/notifications/read-all/", { method: "POST", signal: controller.signal }),
+    ])
+      .then(([data]) =>
         setState({
           loading: false,
           error: null,
@@ -73,45 +76,8 @@ export default function ActivityPage({ session }) {
     }
   }
 
-  async function markRead(notification, destination = null) {
-    setActionError(null);
-    try {
-      const data = await fetchWithCsrf(
-        `/api/me/notifications/${notification.id}/read/`,
-        { method: "POST" },
-      );
-      setState((current) => ({
-        ...current,
-        results: current.results.map((item) =>
-          item.id === notification.id
-            ? { ...item, read_at: data.notification.read_at }
-            : item,
-        ),
-      }));
-      if (destination) {
-        navigate(destination);
-      }
-    } catch {
-      setActionError("The notification could not be marked as read.");
-    }
-  }
-
-  async function markAllRead() {
-    setActionError(null);
-    try {
-      const data = await fetchWithCsrf("/api/me/notifications/read-all/", {
-        method: "POST",
-      });
-      setState((current) => ({
-        ...current,
-        results: current.results.map((item) => ({
-          ...item,
-          read_at: item.read_at ?? data.read_at,
-        })),
-      }));
-    } catch {
-      setActionError("Activity could not be marked as read.");
-    }
+  function openNotification(notification) {
+    navigate(notification.review ? `/events/${notification.review.event_id}` : `/u/${notification.actor.username}`);
   }
 
   if (session.loading) {
@@ -122,7 +88,7 @@ export default function ActivityPage({ session }) {
   }
 
   return (
-    <main>
+    <main className="activity-page">
       <h1>Activity</h1>
       {actionError ? <p>{actionError}</p> : null}
       {state.loading ? <p>Loading activity.</p> : null}
@@ -139,29 +105,13 @@ export default function ActivityPage({ session }) {
       ) : null}
       {state.results.length > 0 ? (
         <>
-          <p><button type="button" onClick={markAllRead}>Mark all as read</button></p>
-          <ol>
+          <ol className="activity-list">
             {state.results.map((notification) => (
               <li key={notification.id}>
-                <article>
-                  <p>{notification.read_at ? "Read" : "Unread"}</p>
-                  <p>{notificationText(notification)}</p>
-                  <p><Link to={profilePath(notification.actor.username)}>@{notification.actor.username}</Link></p>
-                  {notification.review ? (
-                    <button
-                      type="button"
-                      onClick={() =>
-                        markRead(notification, `/events/${notification.review.event_id}`)
-                      }
-                    >
-                      Open event
-                    </button>
-                  ) : !notification.read_at ? (
-                    <button type="button" onClick={() => markRead(notification)}>
-                      Mark as read
-                    </button>
-                  ) : null}
-                </article>
+                <button className={`activity-row ${notification.read_at ? "read" : "unread"}`} type="button" onClick={() => openNotification(notification)}>
+                  <p><strong>{notificationText(notification)}</strong></p>
+                  <p>@{notification.actor.username} · <time dateTime={notification.created_at}>{formatTimestamp(notification.created_at)}</time></p>
+                </button>
               </li>
             ))}
           </ol>

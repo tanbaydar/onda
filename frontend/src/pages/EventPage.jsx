@@ -8,6 +8,7 @@ import WillBeThereAttendees from "../components/WillBeThereAttendees.jsx";
 import { formatEventDateTime } from "../formatEventDateTime.js";
 import FavoriteControl from "../components/FavoriteControl.jsx";
 import { pluralize } from "../lib/plural.js";
+import ConfirmDialog from "../components/ConfirmDialog.jsx";
 
 const RATINGS = [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5];
 
@@ -22,6 +23,7 @@ export default function EventPage({ user, onAuthenticationRequired }) {
   const [saving, setSaving] = useState(false);
   const [actionError, setActionError] = useState(null);
   const [willBeThereError, setWillBeThereError] = useState(null);
+  const [confirmation, setConfirmation] = useState(null);
   const [state, setState] = useState({
     loading: true,
     error: null,
@@ -94,27 +96,11 @@ export default function EventPage({ user, onAuthenticationRequired }) {
     const warning = state.event.viewer_entry?.review
       ? "Remove your rating? The event will remain in Been, but your written review and all of its likes will be permanently deleted."
       : "Remove your rating? The event will remain in Been.";
-    if (!window.confirm(warning)) {
-      return;
-    }
-    mutate(
-      `/api/events/${eventId}/been/rating/`,
-      { method: "DELETE" },
-      { reviewsChanged: true },
-    );
+    setConfirmation({ title: "Remove your rating?", consequence: warning.replace("Remove your rating? ", ""), label: "Remove rating", action: () => mutate(`/api/events/${eventId}/been/rating/`, { method: "DELETE" }, { reviewsChanged: true }) });
   }
 
   function removeEntry() {
-    if (
-      !window.confirm(
-        state.event.viewer_entry?.review
-          ? "Remove this event from Been? This permanently deletes the entry, rating, written review, and all review likes."
-          : "Remove this event from Been? This permanently deletes its rating.",
-      )
-    ) {
-      return;
-    }
-    mutate(`/api/events/${eventId}/been/`, { method: "DELETE" });
+    setConfirmation({ title: "Remove this event from Been?", consequence: state.event.viewer_entry?.review ? "This permanently deletes the entry, rating, written review, and all review likes." : "This permanently deletes its rating.", label: "Remove from Been", action: () => mutate(`/api/events/${eventId}/been/`, { method: "DELETE" }) });
   }
 
   function saveReview(event) {
@@ -138,18 +124,7 @@ export default function EventPage({ user, onAuthenticationRequired }) {
   }
 
   function deleteReview() {
-    if (
-      !window.confirm(
-        "Delete your written review? Its likes will be permanently deleted. Your rating and Been entry will remain.",
-      )
-    ) {
-      return;
-    }
-    mutate(
-      `/api/events/${eventId}/been/review/`,
-      { method: "DELETE" },
-      { reviewsChanged: true },
-    );
+    setConfirmation({ title: "Delete your written review?", consequence: "Its likes will be permanently deleted. Your rating and Been entry will remain.", label: "Delete review", action: () => mutate(`/api/events/${eventId}/been/review/`, { method: "DELETE" }, { reviewsChanged: true }) });
   }
 
   async function changeWillBeThere() {
@@ -208,8 +183,8 @@ export default function EventPage({ user, onAuthenticationRequired }) {
   const event = state.event;
   const trimmedReviewLength = reviewBody.trim().length;
   return (
-    <main>
-      <article>
+    <main className="event-page">
+      <article className="identity">
         <h1>{event.title}</h1>
         {event.cover_image_url ? (
           <img src={event.cover_image_url} alt={event.title} />
@@ -249,12 +224,12 @@ export default function EventPage({ user, onAuthenticationRequired }) {
         <section>
           <h2>Rating</h2>
           {event.rating_summary.state === "available" ? (
-            <p>
+            <p className="rating-value">
               {event.rating_summary.average.toFixed(1)} average from{" "}
               {pluralize(event.rating_summary.count, "rating")}.
             </p>
           ) : (
-            <p>Not enough ratings</p>
+            <p>Not enough ratings for an average yet.</p>
           )}
         </section>
         {user ? (
@@ -262,7 +237,7 @@ export default function EventPage({ user, onAuthenticationRequired }) {
             <h2>Will Be There</h2>
             {willBeThereError ? <p>{willBeThereError}</p> : null}
             {event.viewer_will_be_there.can_mark ? (
-              <button type="button" disabled={saving} onClick={changeWillBeThere}>
+              <button className={event.viewer_will_be_there.is_marked ? "wbt-marked" : ""} type="button" disabled={saving} onClick={changeWillBeThere}>
                 {event.viewer_will_be_there.is_marked
                   ? "Remove Will Be There"
                   : "Mark Will Be There"}
@@ -397,6 +372,7 @@ export default function EventPage({ user, onAuthenticationRequired }) {
         onSocialChanged={() => setSocialVersion((value) => value + 1)}
         onAuthenticationRequired={onAuthenticationRequired}
       />
+      <ConfirmDialog open={Boolean(confirmation)} title={confirmation?.title ?? ""} consequence={confirmation?.consequence ?? ""} confirmLabel={confirmation?.label ?? "Confirm"} onCancel={() => setConfirmation(null)} onConfirm={() => { const action = confirmation?.action; setConfirmation(null); action?.(); }} />
     </main>
   );
 }

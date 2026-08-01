@@ -6,6 +6,8 @@ import { formatEventDateTime } from "../formatEventDateTime.js";
 import { profileNavigationVisible, profilePath } from "../profileRoutes.js";
 import { formatTimestamp } from "../lib/formatTimestamp.js";
 import { pluralize } from "../lib/plural.js";
+import ConfirmDialog from "../components/ConfirmDialog.jsx";
+import ExpandableText from "../components/ExpandableText.jsx";
 
 
 function Pagination({ pagination, onPage }) {
@@ -114,7 +116,7 @@ function ReviewsTab({ username, access, sessionUser }) {
       {state.data?.results.length === 0 ? <p>No written reviews yet.</p> : null}
       {state.data?.results.length ? (
         <>
-          <ol>{state.data.results.map((review) => <li key={review.id}><article><EventFacts event={review.event} /><p>{pluralize(review.rating.toFixed(1), "star")}</p><p>{review.body}</p><p><time dateTime={review.published_at}>Published {formatTimestamp(review.published_at)}</time></p><p>{pluralize(review.like_count, "like")}</p>{!sessionUser || sessionUser.username !== username ? <button type="button" onClick={() => changeLike(review)}>{review.viewer_has_liked ? "Unlike" : "Like"}</button> : null}</article></li>)}</ol>
+          <ol>{state.data.results.map((review) => <li key={review.id}><article><EventFacts event={review.event} /><p className="stars">{pluralize(review.rating.toFixed(1), "star")}</p><ExpandableText>{review.body}</ExpandableText><p><time dateTime={review.published_at}>Published {formatTimestamp(review.published_at)}</time></p><p>{pluralize(review.like_count, "like")}</p>{!sessionUser || sessionUser.username !== username ? <button className="like-action" type="button" onClick={() => changeLike(review)}>{review.viewer_has_liked ? "Unlike" : "Like"}</button> : null}</article></li>)}</ol>
           <Pagination pagination={state.data.pagination} onPage={setPage} />
         </>
       ) : null}
@@ -168,10 +170,9 @@ function ProfileEditor({ profile, onSaved }) {
 
 function PrivacyControl({ account, onChanged }) {
   const [error, setError] = useState(null);
+  const [confirming, setConfirming] = useState(false);
   async function changePrivacy() {
     const next = !account.is_private;
-    const warning = next ? "Switch to Private? Existing approved followers keep access, and future follows require approval." : "Switch to Public? Your profile and attributed content become public, and every pending request is accepted immediately.";
-    if (!window.confirm(warning)) return;
     setError(null);
     try {
       const data = await fetchWithCsrf("/api/me/privacy/", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ is_private: next }) });
@@ -180,7 +181,8 @@ function PrivacyControl({ account, onChanged }) {
       setError(requestError.status === 401 || requestError.status === 403 ? "Sign in required before changing privacy." : "Privacy could not be changed.");
     }
   }
-  return <section><h2>Account privacy</h2><p>Your account is {account.is_private ? "Private" : "Public"}.</p><button type="button" onClick={changePrivacy}>Switch to {account.is_private ? "Public" : "Private"}</button>{error ? <p>{error}</p> : null}</section>;
+  const consequence = account.is_private ? "Your profile and attributed content become public, and every pending request is accepted immediately." : "Existing approved followers keep access, and future follows require approval.";
+  return <section><h2>Account privacy</h2><p>Your account is {account.is_private ? "Private" : "Public"}.</p><button type="button" onClick={() => setConfirming(true)}>Switch to {account.is_private ? "Public" : "Private"}</button>{error ? <p>{error}</p> : null}<ConfirmDialog open={confirming} title={`Switch to ${account.is_private ? "Public" : "Private"}?`} consequence={consequence} confirmLabel="Switch privacy" onCancel={() => setConfirming(false)} onConfirm={() => { setConfirming(false); changePrivacy(); }} /></section>;
 }
 
 
@@ -257,8 +259,8 @@ export default function ProfilePage({ session, tab = "been" }) {
   const data = state.data;
   const profile = data.profile;
   return (
-    <main>
-      <header><h1>{profile.display_name}</h1><p>@{profile.username}</p>{profile.avatar ? <img src={profile.avatar} alt={`${profile.display_name}'s avatar`} /> : <p>Default avatar</p>}{profile.bio ? <p>{profile.bio}</p> : <p>No bio.</p>}{profile.home_city ? <p>Home city: {profile.home_city.name}, {profile.home_city.region_code}</p> : <p>No home city.</p>}</header>
+    <main className="profile-page">
+      <header className="profile-header"><h1>{profile.display_name}</h1><p>@{profile.username}</p>{profile.avatar ? <img src={profile.avatar} alt={`${profile.display_name}'s avatar`} /> : <p>Default avatar</p>}{profile.bio ? <p>{profile.bio}</p> : <p>No bio.</p>}{profile.home_city ? <p>Home city: {profile.home_city.name}, {profile.home_city.region_code}</p> : <p>No home city.</p>}</header>
       {data.relationship ? <section><h2>Relationship</h2>{data.relationship.follows_you ? <p>Follows you.</p> : null}{data.relationship.outgoing_status === "pending" ? <p>Request pending.</p> : null}{data.relationship.outgoing_status === "approved" ? <p>Following.</p> : null}{data.relationship.can_follow ? <button type="button" onClick={changeFollow}>{data.relationship.follow_action === "request" ? "Request to follow" : "Follow"}</button> : null}{data.relationship.can_unfollow ? <button type="button" onClick={changeFollow}>{data.relationship.outgoing_status === "pending" ? "Withdraw request" : "Unfollow"}</button> : null}</section> : null}
       {profileNavigationVisible(data.access) ? <nav aria-label="Profile sections"><ul><li><Link to={profilePath(profile.username)}>Been</Link></li><li><Link to={`${profilePath(profile.username)}/reviews`}>Reviews</Link></li></ul></nav> : null}
       {data.access === "stub" ? <p>This account is private. Follow and receive approval to see its activity.</p> : tab === "reviews" ? <ReviewsTab username={profile.username} access={data.access} sessionUser={session.user} /> : <BeenTab username={profile.username} access={data.access} />}

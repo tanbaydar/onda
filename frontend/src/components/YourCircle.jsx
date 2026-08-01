@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { fetchJson, fetchWithCsrf } from "../api.js";
 import { profilePath } from "../profileRoutes.js";
 import { pluralize } from "../lib/plural.js";
+import ExpandableText from "./ExpandableText.jsx";
 
 
 export default function YourCircle({
@@ -16,6 +17,7 @@ export default function YourCircle({
   const [page, setPage] = useState(1);
   const [retry, setRetry] = useState(0);
   const [actionError, setActionError] = useState(null);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [state, setState] = useState({ loading: true, error: null, data: null });
 
   useEffect(() => {
@@ -25,17 +27,19 @@ export default function YourCircle({
     }
     const controller = new AbortController();
     const query = new URLSearchParams({ page: String(page), page_size: "10" });
-    setState({ loading: true, error: null, data: null });
+    if (page === 1) setState({ loading: true, error: null, data: null });
+    else setLoadingMore(true);
     fetchJson(`/api/events/${eventId}/circle/?${query}`, {
       cache: "no-store",
       signal: controller.signal,
     })
-      .then((data) => setState({ loading: false, error: null, data }))
+      .then((data) => { setState((current) => ({ loading: false, error: null, data: page === 1 || !current.data ? data : { ...data, results: [...current.data.results, ...data.results] } })); setLoadingMore(false); })
       .catch((error) => {
         if (error.name !== "AbortError") {
           setState({ loading: false, error, data: null });
         }
-      });
+      })
+      .finally(() => setLoadingMore(false));
     return () => controller.abort();
   }, [eventId, page, retry, user, version]);
 
@@ -99,12 +103,12 @@ export default function YourCircle({
                   <article>
                     <h3><Link to={profilePath(entry.user.username)}>{entry.user.display_name}</Link></h3>
                     <p><Link to={profilePath(entry.user.username)}>@{entry.user.username}</Link></p>
-                    <p>Rating: {pluralize(entry.rating.toFixed(1), "star")}</p>
+                    <p className="stars">Rating: {pluralize(entry.rating.toFixed(1), "star")}</p>
                     {entry.review ? (
                       <>
-                        <p>{entry.review.body}</p>
+                        <ExpandableText>{entry.review.body}</ExpandableText>
                         <p>{pluralize(entry.review.like_count, "like")}</p>
-                        <button type="button" onClick={() => changeLike(entry.review)}>
+                        <button className="like-action" type="button" onClick={() => changeLike(entry.review)}>
                           {entry.review.viewer_has_liked ? "Unlike" : "Like"}
                         </button>
                       </>
@@ -116,26 +120,7 @@ export default function YourCircle({
               ))}
             </ol>
           )}
-          <nav aria-label="Your Circle pagination">
-            <button
-              type="button"
-              disabled={state.data.pagination.previous_page === null}
-              onClick={() => setPage(state.data.pagination.previous_page)}
-            >
-              Previous
-            </button>
-            <span>
-              {" "}Page {state.data.pagination.page} of{" "}
-              {state.data.pagination.total_pages}{" "}
-            </span>
-            <button
-              type="button"
-              disabled={state.data.pagination.next_page === null}
-              onClick={() => setPage(state.data.pagination.next_page)}
-            >
-              Next
-            </button>
-          </nav>
+          {state.data.pagination.next_page ? <button className="quiet-action" type="button" disabled={loadingMore} onClick={() => setPage(state.data.pagination.next_page)}>{loadingMore ? "Loading more Circle entries." : `Show ${state.data.pagination.total_results - state.data.results.length} more Circle entries`}</button> : null}
         </>
       ) : null}
     </section>
