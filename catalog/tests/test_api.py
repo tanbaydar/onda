@@ -445,7 +445,10 @@ class CatalogApiTests(TestCase):
             rating_summary,
             {"state": "not_enough_ratings", "count": 0},
         )
-        self.assertEqual(rating_distribution, {"state": "empty"})
+        self.assertEqual(
+            rating_distribution,
+            {"state": "not_enough_ratings"},
+        )
         self.assertIn("loggable", been)
         self.assertIn("unavailable_reason", been)
         self.assertEqual(will_be_there_summary, {"active_count": 0})

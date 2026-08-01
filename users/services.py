@@ -358,11 +358,13 @@ def event_rating_summary(event):
     }
 
 
-def rating_distribution_payload(entries):
+def rating_distribution_payload(entries, *, minimum_count=0):
     rated = entries.filter(rating__isnull=False)
     distribution = {float(value): 0 for value in RATING_VALUES}
     for row in rated.values("rating").annotate(count=Count("id")):
         distribution[float(row["rating"])] = row["count"]
+    if sum(distribution.values()) < minimum_count:
+        return {"state": "not_enough_ratings"}
     maximum = max(distribution.values(), default=0)
     if maximum == 0:
         return {"state": "empty"}

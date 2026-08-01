@@ -23,14 +23,14 @@
   "rating_summary": {
     "state": "available",
     "count": 3,
-    "average": 3.16667
+    "average": 2.16667
   },
   "rating_distribution": {
     "state": "available",
     "buckets": [
       {
         "rating": 0.5,
-        "relative_value": 0.0
+        "relative_value": 1.0
       },
       {
         "rating": 1.0,
@@ -54,7 +54,7 @@
       },
       {
         "rating": 3.5,
-        "relative_value": 1.0
+        "relative_value": 0.0
       },
       {
         "rating": 4.0,

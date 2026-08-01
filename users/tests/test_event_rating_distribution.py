@@ -49,11 +49,33 @@ class EventRatingDistributionTests(TestCase):
             rated_at=NOW,
         )
 
-    def test_empty_event_has_explicit_empty_distribution(self):
-        self.assertEqual(self.detail_distribution(), {"state": "empty"})
+    def test_empty_event_has_explicit_not_enough_distribution(self):
+        self.assertEqual(
+            self.detail_distribution(),
+            {"state": "not_enough_ratings"},
+        )
 
-    def test_single_rating_returns_all_ten_buckets(self):
-        self.rate("single", "1.0")
+    def test_single_private_rating_is_suppressed(self):
+        self.rate("single-private", "1.0", private=True)
+
+        self.assertEqual(
+            self.detail_distribution(),
+            {"state": "not_enough_ratings"},
+        )
+
+    def test_two_ratings_are_still_suppressed(self):
+        self.rate("two-a", "1.0")
+        self.rate("two-private", "4.0", private=True)
+
+        self.assertEqual(
+            self.detail_distribution(),
+            {"state": "not_enough_ratings"},
+        )
+
+    def test_three_mixed_public_private_ratings_render_at_exact_threshold(self):
+        self.rate("thr-a", "1.0")
+        self.rate("thr-private", "4.0", private=True)
+        self.rate("thr-b", "5.0")
 
         distribution = self.detail_distribution()
 
@@ -67,7 +89,7 @@ class EventRatingDistributionTests(TestCase):
             next(
                 bucket["relative_value"]
                 for bucket in distribution["buckets"]
-                if bucket["rating"] == 1.0
+                if bucket["rating"] == 4.0
             ),
             1.0,
         )
@@ -88,8 +110,10 @@ class EventRatingDistributionTests(TestCase):
         self.assertEqual(buckets[5.0], 0.5)
         self.assertEqual(buckets[1.5], 0.0)
 
-    def test_private_rating_contributes_anonymously_while_unrated_entry_does_not(self):
+    def test_private_rating_contributes_above_threshold_while_unrated_entry_does_not(self):
         self.rate("private", "4.0", private=True)
+        self.rate("public-a", "3.0")
+        self.rate("public-b", "5.0")
         DiaryEntry.objects.create(
             user=self.user("unrated"),
             event=self.event,
@@ -107,17 +131,28 @@ class EventRatingDistributionTests(TestCase):
         )
         self.assertEqual(
             sum(bucket["relative_value"] for bucket in distribution["buckets"]),
-            1.0,
+            3.0,
         )
 
-    def test_event_and_profile_distributions_have_identical_shape(self):
+    def test_event_and_profile_distributions_have_identical_available_shape(self):
         owner = self.user("parity")
-        DiaryEntry.objects.create(
-            user=owner,
-            event=self.event,
-            rating="3.5",
-            rated_at=NOW,
-        )
+        for index in range(3):
+            event = self.event
+            if index:
+                event = Event.objects.create(
+                    title=f"Parity Event {index}",
+                    event_date="2026-07-01",
+                    venue=self.venue,
+                    status=EventStatus.ACTIVE,
+                )
+            DiaryEntry.objects.create(
+                user=owner,
+                event=event,
+                rating="3.5",
+                rated_at=NOW,
+            )
+        self.rate("parity-other-a", "3.5")
+        self.rate("parity-other-b", "3.5")
 
         event_distribution = self.detail_distribution()
         profile_distribution = Client().get(

@@ -290,7 +290,8 @@ def event_detail(request, event_id):
     loggable = event_is_loggable(event)
     payload["rating_summary"] = event_rating_summary(event)
     payload["rating_distribution"] = rating_distribution_payload(
-        DiaryEntry.objects.for_aggregation().filter(event=event)
+        DiaryEntry.objects.for_aggregation().filter(event=event),
+        minimum_count=3,
     )
     payload["been"] = {
         "loggable": loggable,

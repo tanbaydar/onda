@@ -167,14 +167,21 @@ The planned sequence is:
 
 Planned after design:
 
-- enable the already-built-dark mandatory email-verification gate and change
-  registration's immediate-use flow;
+- execute the named **verification-enforcement slice** before flipping
+  `EMAIL_VERIFICATION_ENFORCED`: make unverified sessions guest-equivalent for
+  attributed/private reads, expose self-only verification state in the session
+  payload, and route registration/login through `/verify-email` until verified;
+- only after that slice is green, enable the already-built-dark mandatory email-
+  verification gate and replace registration's immediate-use flow;
 - activate the already-built password-reset screens and choose production email
   delivery; both flows share the six-digit-code foundation;
 - choose and integrate an email provider;
 - move local MySQL to a deliberately pinned supported MySQL 8.x service;
 - migrate the local LaunchAgent schedule to hosted scheduling;
 - establish backups, monitoring, environment/secrets handling, and recovery drills;
+- complete the deployment security checklist: secure session and CSRF cookies,
+  correct reverse-proxy HTTPS recognition or end-to-end TLS, HTTPS redirect/HSTS
+  as appropriate, deployment hosts, and a clean `manage.py check --deploy`;
 - deploy behind link access plus basic authentication for the gated posture;
 - contact Resident Advisor by email at or before public availability;
 - complete legal/source-terms review before broad access.
@@ -578,9 +585,11 @@ sections.
 
 ### Milestone 5 / deployment
 
-- **Email verification repayment:** the code lifecycle, capability gate, JSON API,
+- **Verification-enforcement slice:** the code lifecycle, capability gate, JSON API,
   and unstyled screen are built dark behind `EMAIL_VERIFICATION_ENFORCED=False`.
-  Deployment must enable the flag and replace registration's immediate-use landing.
+  Before enabling it, make unverified sessions guest-equivalent at sanctioned read
+  boundaries, add self-only verification state to the session payload, and route
+  registration/login to `/verify-email`; then replace the immediate-use landing.
 - **Password reset:** the non-enumerating six-digit-code API and unstyled screens are
   built dark. Production activation needs only the deployment email backend; the
   product amendment is recorded in `PRODUCT_QA_SPEC.md`.
@@ -593,6 +602,22 @@ sections.
 - **RA contact:** email Resident Advisor at or before public availability.
 - **Seed script and smoke crawl:** post-deployment, by founder decision; include
   canonical seed/reference data and a bounded route crawl.
+- **Deployment transport security:** explicitly configure secure session/CSRF
+  cookies, reverse-proxy HTTPS recognition or end-to-end TLS, HTTPS redirect/HSTS
+  where appropriate, deployment hosts, and run `manage.py check --deploy`.
+- **Security-review accepted risks:** login/registration/reset and social-mutation
+  throttling, reset timing equalization, audit logging, lockout policy, CSP, and
+  remote-avatar policy may remain behind the gated link+basic-auth posture. Their
+  trigger is removal of that gate or broader public access; password-reset timing
+  and delivery throttling are also revisited with the production email provider.
+
+The focused security-boundary review is recorded in
+`docs/SECURITY_BOUNDARY_REVIEW.md`. Its first finding is resolved: public event
+rating distributions now require the same three-rated-entry anonymity threshold as
+the global average. Below three they return `not_enough_ratings`; exactly three
+renders. Profile distributions were deliberately left unchanged because strangers
+receive 403 for private profiles, public profiles intentionally expose attributed
+ratings, and approved followers can already see the corresponding private diary.
 
 ### Parked engineering risks
 
@@ -610,8 +635,11 @@ temporary and remains the default: accounts are created active and signed in
 immediately, and `EMAIL_VERIFICATION_ENFORCED` defaults false. The additive code
 table, 15-minute/six-digit lifecycle, service-owned capability gate, console-email
 delivery, JSON endpoints, and unstyled verification/reset screens are built dark.
-Milestone 5 must enable enforcement, change the registration flow, and configure a
-production email backend before public deployment.
+Milestone 5 must first complete the named verification-enforcement slice: an
+unverified session receives guest-equivalent attributed/private read visibility,
+the self-session payload exposes verification state, and registration/login route
+through `/verify-email`. Only then may it enable enforcement, change the landing
+flow, and configure a production email backend before public deployment.
 
 ### Onboarding
 

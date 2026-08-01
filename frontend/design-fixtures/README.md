@@ -7,3 +7,9 @@ The original files are sparse variants that preserve ordinary empty and low-dens
 The files in `docs/recon/fixtures/` are Resident Advisor ingestion **input**. They must not be used as a design data source.
 
 Captured from the local development database on 2026-07-31 as `review.public.test`, using Django's test client. Disposable supporting accounts created through the normal registration API were removed after capture; no founder data was used or changed.
+
+`event-past.json` and `event-past-dense.json` were recaptured on 2026-08-01
+after the three-rating anonymity threshold shipped. The sparse event is the exact
+three-rating boundary; the dense event has twelve ratings. Both deliberately retain
+an available distribution. Their disposable supporting accounts were cascade-
+deleted after capture, and founder data was not modified.
