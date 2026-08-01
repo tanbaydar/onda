@@ -1,0 +1,127 @@
+from datetime import UTC, datetime
+
+from django.test import Client, TestCase
+
+from catalog.models import City, Event, EventStatus, Venue
+from users.models import DiaryEntry, User
+
+
+NOW = datetime(2026, 8, 1, 12, 0, tzinfo=UTC)
+
+
+class EventRatingDistributionTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.city = City.objects.create(
+            name="Distribution City",
+            region_code="MA",
+            country_code="US",
+            timezone="America/New_York",
+        )
+        cls.venue = Venue.objects.create(name="Distribution Venue", city=cls.city)
+        cls.event = Event.objects.create(
+            title="Distribution Event",
+            event_date="2026-07-01",
+            venue=cls.venue,
+            status=EventStatus.ACTIVE,
+        )
+
+    @classmethod
+    def user(cls, suffix, *, private=False):
+        return User.objects.create_user(
+            email=f"distribution.{suffix}@test.example",
+            password="A-real-password-123!",
+            username=f"distribution.{suffix}",
+            display_name=f"Distribution {suffix}",
+            is_private=private,
+        )
+
+    def detail_distribution(self):
+        response = Client().get(f"/api/events/{self.event.id}/")
+        self.assertEqual(response.status_code, 200)
+        return response.json()["rating_distribution"]
+
+    def rate(self, suffix, rating, *, private=False):
+        return DiaryEntry.objects.create(
+            user=self.user(suffix, private=private),
+            event=self.event,
+            rating=rating,
+            rated_at=NOW,
+        )
+
+    def test_empty_event_has_explicit_empty_distribution(self):
+        self.assertEqual(self.detail_distribution(), {"state": "empty"})
+
+    def test_single_rating_returns_all_ten_buckets(self):
+        self.rate("single", "1.0")
+
+        distribution = self.detail_distribution()
+
+        self.assertEqual(distribution["state"], "available")
+        self.assertEqual(len(distribution["buckets"]), 10)
+        self.assertEqual(
+            [bucket["rating"] for bucket in distribution["buckets"]],
+            [0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0],
+        )
+        self.assertEqual(
+            next(
+                bucket["relative_value"]
+                for bucket in distribution["buckets"]
+                if bucket["rating"] == 1.0
+            ),
+            1.0,
+        )
+
+    def test_half_star_values_land_in_exact_normalized_buckets(self):
+        self.rate("half-a", "0.5")
+        self.rate("half-b", "0.5")
+        self.rate("one", "1.0")
+        self.rate("five", "5.0")
+
+        buckets = {
+            bucket["rating"]: bucket["relative_value"]
+            for bucket in self.detail_distribution()["buckets"]
+        }
+
+        self.assertEqual(buckets[0.5], 1.0)
+        self.assertEqual(buckets[1.0], 0.5)
+        self.assertEqual(buckets[5.0], 0.5)
+        self.assertEqual(buckets[1.5], 0.0)
+
+    def test_private_rating_contributes_anonymously_while_unrated_entry_does_not(self):
+        self.rate("private", "4.0", private=True)
+        DiaryEntry.objects.create(
+            user=self.user("unrated"),
+            event=self.event,
+        )
+
+        distribution = self.detail_distribution()
+
+        self.assertEqual(
+            next(
+                bucket["relative_value"]
+                for bucket in distribution["buckets"]
+                if bucket["rating"] == 4.0
+            ),
+            1.0,
+        )
+        self.assertEqual(
+            sum(bucket["relative_value"] for bucket in distribution["buckets"]),
+            1.0,
+        )
+
+    def test_event_and_profile_distributions_have_identical_shape(self):
+        owner = self.user("parity")
+        DiaryEntry.objects.create(
+            user=owner,
+            event=self.event,
+            rating="3.5",
+            rated_at=NOW,
+        )
+
+        event_distribution = self.detail_distribution()
+        profile_distribution = Client().get(
+            f"/api/users/{owner.username}/stats/"
+        ).json()["rating_distribution"]
+
+        self.assertEqual(event_distribution, profile_distribution)

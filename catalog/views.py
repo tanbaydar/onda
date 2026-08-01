@@ -281,6 +281,7 @@ def event_detail(request, event_id):
         NOT_STARTED_MESSAGE,
         event_is_loggable,
         event_rating_summary,
+        rating_distribution_payload,
         serialize_diary_entry,
         viewer_will_be_there_state,
     )
@@ -288,6 +289,9 @@ def event_detail(request, event_id):
     payload = _serialize_event(event)
     loggable = event_is_loggable(event)
     payload["rating_summary"] = event_rating_summary(event)
+    payload["rating_distribution"] = rating_distribution_payload(
+        DiaryEntry.objects.for_aggregation().filter(event=event)
+    )
     payload["been"] = {
         "loggable": loggable,
         "unavailable_reason": None if loggable else NOT_STARTED_MESSAGE,

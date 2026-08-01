@@ -12,6 +12,7 @@ from .models import (
     FollowStatus,
     Notification,
     NotificationType,
+    RATING_VALUES,
     Review,
     ReviewLike,
     User,
@@ -357,6 +358,23 @@ def event_rating_summary(event):
         "state": "available",
         "count": aggregate["count"],
         "average": float(aggregate["average"]),
+    }
+
+
+def rating_distribution_payload(entries):
+    rated = entries.filter(rating__isnull=False)
+    distribution = {float(value): 0 for value in RATING_VALUES}
+    for row in rated.values("rating").annotate(count=Count("id")):
+        distribution[float(row["rating"])] = row["count"]
+    maximum = max(distribution.values(), default=0)
+    if maximum == 0:
+        return {"state": "empty"}
+    return {
+        "state": "available",
+        "buckets": [
+            {"rating": rating, "relative_value": count / maximum}
+            for rating, count in distribution.items()
+        ],
     }
 
 

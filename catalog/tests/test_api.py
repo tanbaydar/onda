@@ -437,6 +437,7 @@ class CatalogApiTests(TestCase):
         self.assertEqual(detail.status_code, 200)
         detail_payload = detail.json()
         rating_summary = detail_payload.pop("rating_summary")
+        rating_distribution = detail_payload.pop("rating_distribution")
         been = detail_payload.pop("been")
         will_be_there_summary = detail_payload.pop("will_be_there_summary")
         self.assertEqual(detail_payload, listing.json()["results"][0])
@@ -444,6 +445,7 @@ class CatalogApiTests(TestCase):
             rating_summary,
             {"state": "not_enough_ratings", "count": 0},
         )
+        self.assertEqual(rating_distribution, {"state": "empty"})
         self.assertIn("loggable", been)
         self.assertIn("unavailable_reason", been)
         self.assertEqual(will_be_there_summary, {"active_count": 0})

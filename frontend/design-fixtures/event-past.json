@@ -25,6 +25,51 @@
     "count": 3,
     "average": 3.16667
   },
+  "rating_distribution": {
+    "state": "available",
+    "buckets": [
+      {
+        "rating": 0.5,
+        "relative_value": 0.0
+      },
+      {
+        "rating": 1.0,
+        "relative_value": 0.0
+      },
+      {
+        "rating": 1.5,
+        "relative_value": 0.0
+      },
+      {
+        "rating": 2.0,
+        "relative_value": 1.0
+      },
+      {
+        "rating": 2.5,
+        "relative_value": 0.0
+      },
+      {
+        "rating": 3.0,
+        "relative_value": 0.0
+      },
+      {
+        "rating": 3.5,
+        "relative_value": 1.0
+      },
+      {
+        "rating": 4.0,
+        "relative_value": 1.0
+      },
+      {
+        "rating": 4.5,
+        "relative_value": 0.0
+      },
+      {
+        "rating": 5.0,
+        "relative_value": 0.0
+      }
+    ]
+  },
   "been": {
     "loggable": true,
     "unavailable_reason": null

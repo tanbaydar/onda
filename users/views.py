@@ -79,6 +79,7 @@ from .services import (
     unfollow_user,
     follow_user,
     remove_will_be_there,
+    rating_distribution_payload,
     save_will_be_there,
     serialize_will_be_there,
     FavoriteLimitReached,
@@ -1105,15 +1106,8 @@ def profile_stats(request, username):
         return denied
     entries = DiaryEntry.objects.visible_to(request.user).filter(user=profile)
     rated = entries.filter(rating__isnull=False)
-    distribution = {float(value): 0 for value in RATING_VALUES}
-    for row in rated.values("rating").annotate(count=Count("id")):
-        distribution[float(row["rating"])] = row["count"]
-    maximum = max(distribution.values(), default=0)
     average = rated.aggregate(value=Avg("rating"))["value"]
-    rating_payload = {"state": "empty"} if maximum == 0 else {
-        "state": "available",
-        "buckets": [{"rating": rating, "relative_value": count / maximum} for rating, count in distribution.items()],
-    }
+    rating_payload = rating_distribution_payload(entries)
     return JsonResponse({
         "statistics": {
             "events_in_been": entries.count(),
