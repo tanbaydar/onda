@@ -621,6 +621,10 @@ ratings, and approved followers can already see the corresponding private diary.
 
 ### Parked engineering risks
 
+- **Unexpectedly empty ingestion pages:** implement immediate termination in
+  `_fetch_seed` when a page is unexpectedly empty. Correctness is already protected
+  by completeness gating; this is request-budget hygiene. Trigger: next
+  ingestion-touching slice.
 - **Sockpuppet defenses:** parked until popularity/trust consumers or real-user abuse
   make manipulation consequential.
 - **React Router v7:** upgrade when dependency-touching work next occurs, not as an
