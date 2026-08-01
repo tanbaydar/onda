@@ -8,7 +8,7 @@ from django.db import IntegrityError, close_old_connections, transaction
 from django.test import Client, TestCase, TransactionTestCase
 
 from catalog.models import Artist, City, Event, EventArtist, EventStatus, Venue
-from users.models import DiaryEntry, Review, ReviewLike, User
+from users.models import DiaryEntry, Review, User
 
 
 NOW = datetime(2026, 8, 20, 16, 0, tzinfo=UTC)

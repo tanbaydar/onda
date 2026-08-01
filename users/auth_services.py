@@ -146,18 +146,6 @@ def _consume_account_code_locked(*, user, purpose, code):
     return now, None
 
 
-def consume_account_code(*, user, purpose, code):
-    with transaction.atomic():
-        now, error = _consume_account_code_locked(
-            user=user,
-            purpose=purpose,
-            code=code,
-        )
-    if error is not None:
-        raise error
-    return now
-
-
 def verify_email(*, user, code):
     with transaction.atomic():
         locked_user = User.objects.select_for_update().get(pk=user.pk)

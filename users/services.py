@@ -18,9 +18,6 @@ from .models import (
     User,
     UserStatus,
     WillBeThere,
-    FavoriteEvent,
-    FavoriteArtist,
-    FavoriteVenue,
 )
 
 

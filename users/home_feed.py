@@ -5,7 +5,6 @@ import re
 from django.db.models import (
     CharField,
     DateField,
-    DateTimeField,
     DecimalField,
     F,
     IntegerField,
