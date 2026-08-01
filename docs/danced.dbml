@@ -480,8 +480,10 @@ Table WILL_BE_THERE {
   visibility, and cleanup eligibility: venue-local time is before midnight following
   EVENT.event_date. Reads enforce logical expiration immediately; cleanup deletion is
   storage hygiene only. Rescheduling therefore changes liveness without row updates.
-  Hidden events suppress WBT on public surfaces/feeds but preserve the row so it can
-  resurface; the owner's own profile still shows it. WBT and Been may coexist.
+  Hidden events suppress WBT on implemented surfaces and feeds but preserve the row;
+  resurrection restores its visibility. Owner-profile display of hidden-event WBT is
+  a planned post-M4 surface that requires the already-recorded product amendment; it
+  is not current behavior. WBT and Been may coexist.
   '''
 }
 

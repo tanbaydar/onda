@@ -304,3 +304,7 @@ and closed that observability gap.
   table. Its purpose enum shares the six-digit-code lifecycle between email
   verification and password reset, matching the authorized `PRODUCT_QA_SPEC`
   amendment and reducing the adjudicated schema to 27 tables.
+- 2026-08-01 — Post-Stage-4 contract-adjudication freeze-break: the `WILL_BE_THERE`
+  note now freezes preservation through hidden lifecycle state and visibility after
+  resurrection as implemented behavior. Owner-profile display for hidden-event WBT
+  remains a planned post-M4 surface requiring the already-recorded product amendment.
