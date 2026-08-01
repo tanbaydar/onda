@@ -6,6 +6,7 @@
 - `danced-data-architecture.md` — ingestion and data architecture
 - `danced.dbml` — frozen authoritative ERD
 - `ERD_REVIEW.md` — ERD review record and documented implementation deltas
+- `erd/` — generated crow's-foot SVGs and their reproducible DBML-to-Graphviz toolchain
 - `RA_SOURCE_RECON.md` — observed Resident Advisor source behavior
 - `recon/fixtures/` — captured request and response evidence
 

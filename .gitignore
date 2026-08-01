@@ -2,6 +2,7 @@
 .env
 .venv/
 __pycache__/
+docs/erd/__pycache__/
 *.py[cod]
 *.log
 logs/
