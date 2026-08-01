@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
+import { Link, Navigate, NavLink, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 
 import { fetchJson, fetchWithCsrf } from "./api.js";
 import ArtistPage from "./pages/ArtistPage.jsx";
@@ -82,15 +82,15 @@ export default function App() {
         <p>Danced</p>
         <nav aria-label="Primary navigation">
           <ul>
-            {session.user ? <li><Link to="/home">Home</Link></li> : null}
-            <li><Link to="/discover">Discover</Link></li>
+            {session.user ? <li><NavLink to="/home">Home</NavLink></li> : null}
+            <li><NavLink to="/discover">Discover</NavLink></li>
             {session.user ? (
               <>
                 <li>
-                  <Link to="/activity">Activity</Link>
+                  <NavLink to="/activity">Activity</NavLink>
                 </li>
                 <li>
-                  <Link to={profilePath(session.user.username)}>Profile</Link>
+                  <NavLink to={profilePath(session.user.username)}>Profile</NavLink>
                 </li>
               </>
             ) : null}
