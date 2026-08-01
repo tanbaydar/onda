@@ -3,7 +3,7 @@ import math
 import base64
 from decimal import Decimal
 
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import authenticate, login, logout, password_validation
 from django.core.exceptions import ValidationError
 from django.core.paginator import EmptyPage, Paginator
 from django.core.validators import URLValidator
@@ -26,7 +26,20 @@ from .forms import LoginForm, RegistrationForm
 from .home_feed import decode_cursor as decode_home_cursor
 from .home_feed import encode_cursor as encode_home_cursor
 from .home_feed import home_feed_rows, serialize_feed_row
+from .auth_services import (
+    CodeAttemptLimit,
+    CodeCooldown,
+    CodeExpired,
+    CodeInvalid,
+    VERIFICATION_REQUIRED_MESSAGE,
+    account_actions_allowed,
+    issue_account_code,
+    request_password_reset,
+    reset_password,
+    verify_email,
+)
 from .models import (
+    AccountCodePurpose,
     DiaryEntry,
     Follow,
     FollowStatus,
@@ -159,11 +172,40 @@ def _form_errors(form):
 
 
 def _authentication_required(request):
+    if not request.user.is_authenticated:
+        return JsonResponse(
+            {"errors": {"authentication": ["Authentication required."]}},
+            status=401,
+        )
+    if not account_actions_allowed(request.user):
+        return JsonResponse(
+            {"errors": {"verification": [VERIFICATION_REQUIRED_MESSAGE]}},
+            status=403,
+        )
+    return None
+
+
+def _session_required(request):
     if request.user.is_authenticated:
         return None
     return JsonResponse(
         {"errors": {"authentication": ["Authentication required."]}},
         status=401,
+    )
+
+
+def _code_from_payload(request):
+    payload = _json_object(request)
+    if payload is None or not isinstance(payload.get("code"), str):
+        return None
+    code = payload["code"]
+    return code if len(code) == 6 and code.isascii() and code.isdigit() else None
+
+
+def _code_error(exc):
+    return JsonResponse(
+        {"errors": {"code": [str(exc)]}},
+        status=400,
     )
 
 
@@ -303,6 +345,111 @@ def login_view(request):
 def logout_view(request):
     logout(request)
     return HttpResponse(status=204)
+
+
+@require_POST
+def verification_code_request(request):
+    auth_error = _session_required(request)
+    if auth_error is not None:
+        return auth_error
+    if request.user.email_verified_at is not None:
+        return JsonResponse({"sent": False, "already_verified": True})
+    try:
+        issue_account_code(
+            user=request.user,
+            purpose=AccountCodePurpose.EMAIL_VERIFICATION,
+        )
+    except CodeCooldown as exc:
+        return JsonResponse(
+            {
+                "errors": {
+                    "code": [
+                        f"Wait {exc.retry_after} seconds before requesting another code."
+                    ]
+                },
+                "retry_after": exc.retry_after,
+            },
+            status=429,
+        )
+    return JsonResponse({"sent": True, "cooldown_seconds": 60})
+
+
+@require_POST
+def verification_code_confirm(request):
+    auth_error = _session_required(request)
+    if auth_error is not None:
+        return auth_error
+    code = _code_from_payload(request)
+    if code is None:
+        return JsonResponse(
+            {"errors": {"code": ["Enter a 6-digit code."]}},
+            status=400,
+        )
+    try:
+        verified_at = verify_email(user=request.user, code=code)
+    except (CodeAttemptLimit, CodeExpired, CodeInvalid) as exc:
+        return _code_error(exc)
+    request.user.email_verified_at = verified_at
+    return JsonResponse({"verified": True})
+
+
+@require_POST
+def password_reset_request(request):
+    payload = _json_object(request)
+    if payload is None or not isinstance(payload.get("email"), str):
+        return JsonResponse(
+            {"errors": {"email": ["Enter a valid email address."]}},
+            status=400,
+        )
+    request_password_reset(email=payload["email"].strip().lower())
+    return JsonResponse({"accepted": True})
+
+
+@require_POST
+def password_reset_confirm(request):
+    payload = _json_object(request)
+    if payload is None:
+        return JsonResponse(
+            {"errors": {"request": ["Request body must be a JSON object."]}},
+            status=400,
+        )
+    email = payload.get("email")
+    password = payload.get("password")
+    code = payload.get("code")
+    errors = {}
+    if not isinstance(email, str) or not email.strip():
+        errors["email"] = ["Enter a valid email address."]
+    if not isinstance(code, str) or len(code) != 6 or not code.isascii() or not code.isdigit():
+        errors["code"] = ["Enter a 6-digit code."]
+    if not isinstance(password, str):
+        errors["password"] = ["Enter a new password."]
+    if errors:
+        return JsonResponse({"errors": errors}, status=400)
+    try:
+        # Validate without account attributes before lookup so an invalid reset
+        # submission cannot use user-specific errors for account enumeration.
+        password_validation.validate_password(password)
+    except ValidationError as exc:
+        return JsonResponse(
+            {"errors": {"password": list(exc.messages)}},
+            status=400,
+        )
+    user = User.objects.filter(email__iexact=email.strip()).first()
+    if user is None:
+        return JsonResponse(
+            {"errors": {"code": ["The code is invalid."]}},
+            status=400,
+        )
+    try:
+        reset_password(user=user, code=code, password=password)
+    except ValidationError as exc:
+        return JsonResponse(
+            {"errors": {"password": list(exc.messages)}},
+            status=400,
+        )
+    except (CodeAttemptLimit, CodeExpired, CodeInvalid) as exc:
+        return _code_error(exc)
+    return JsonResponse({"reset": True})
 
 
 @require_http_methods(["PUT", "DELETE"])

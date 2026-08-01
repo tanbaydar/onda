@@ -8,10 +8,13 @@ import DiscoverPage from "./pages/DiscoverPage.jsx";
 import EventPage from "./pages/EventPage.jsx";
 import HomePage from "./pages/HomePage.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
+import PasswordResetFormPage from "./pages/PasswordResetFormPage.jsx";
+import PasswordResetRequestPage from "./pages/PasswordResetRequestPage.jsx";
 import LegacyBeenPage from "./pages/LegacyBeenPage.jsx";
 import ProfilePage from "./pages/ProfilePage.jsx";
 import RegisterPage from "./pages/RegisterPage.jsx";
 import VenuePage from "./pages/VenuePage.jsx";
+import VerifyEmailPage from "./pages/VerifyEmailPage.jsx";
 import { GUEST_DISCOVER, landingPath } from "./landing.js";
 import { profilePath } from "./profileRoutes.js";
 
@@ -137,6 +140,9 @@ export default function App() {
             />
           }
         />
+        <Route path="/verify-email" element={<VerifyEmailPage />} />
+        <Route path="/reset-password" element={<PasswordResetRequestPage />} />
+        <Route path="/reset-password/confirm" element={<PasswordResetFormPage />} />
         <Route
           path="/events/:eventId"
           element={

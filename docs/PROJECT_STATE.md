@@ -167,8 +167,10 @@ The planned sequence is:
 
 Planned after design:
 
-- repay mandatory email verification and change registration's immediate-use flow;
-- implement password reset under the same email-delivery foundation;
+- enable the already-built-dark mandatory email-verification gate and change
+  registration's immediate-use flow;
+- activate the already-built password-reset screens and choose production email
+  delivery; both flows share the six-digit-code foundation;
 - choose and integrate an email provider;
 - move local MySQL to a deliberately pinned supported MySQL 8.x service;
 - migrate the local LaunchAgent schedule to hosted scheduling;
@@ -576,9 +578,12 @@ sections.
 
 ### Milestone 5 / deployment
 
-- **Email verification repayment:** mandatory before public deployment.
-- **Password reset:** ship with the verification/email slice and append a product
-  amendment because it is not covered by the original 210 questions.
+- **Email verification repayment:** the code lifecycle, capability gate, JSON API,
+  and unstyled screen are built dark behind `EMAIL_VERIFICATION_ENFORCED=False`.
+  Deployment must enable the flag and replace registration's immediate-use landing.
+- **Password reset:** the non-enumerating six-digit-code API and unstyled screens are
+  built dark. Production activation needs only the deployment email backend; the
+  product amendment is recorded in `PRODUCT_QA_SPEC.md`.
 - **Cloud MySQL:** pin a supported MySQL 8.x version and rerun physical constraints.
 - **Scheduler migration:** replace the local LaunchAgent with hosted scheduling.
 - **Email provider:** choose alongside verification/reset delivery.
@@ -601,9 +606,12 @@ sections.
 ### Email verification
 
 Q125–126 require verification before account actions. The approved freeze-break is
-temporary: accounts are created active and signed in immediately; the nullable
-verification timestamp exists but gates nothing. Milestone 5 must change both
-behaviors before public deployment.
+temporary and remains the default: accounts are created active and signed in
+immediately, and `EMAIL_VERIFICATION_ENFORCED` defaults false. The additive code
+table, 15-minute/six-digit lifecycle, service-owned capability gate, console-email
+delivery, JSON endpoints, and unstyled verification/reset screens are built dark.
+Milestone 5 must enable enforcement, change the registration flow, and configure a
+production email backend before public deployment.
 
 ### Onboarding
 

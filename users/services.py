@@ -5,6 +5,7 @@ from django.db import IntegrityError, transaction
 from django.db.models import Avg, Count
 from django.utils.timezone import now as timezone_now
 
+from .auth_services import require_account_action, require_account_action_for_user_id
 from .models import (
     DiaryEntry,
     Follow,
@@ -53,6 +54,7 @@ class FavoriteLimitReached(Exception):
 
 @transaction.atomic
 def save_favorite(*, user_id, model, target_field, target_id, limit=None):
+    require_account_action_for_user_id(user_id)
     User.objects.select_for_update().get(pk=user_id)
     lookup = {"user_id": user_id, f"{target_field}_id": target_id}
     existing = model.objects.filter(**lookup).first()
@@ -65,6 +67,7 @@ def save_favorite(*, user_id, model, target_field, target_id, limit=None):
 
 @transaction.atomic
 def remove_favorite(*, user_id, model, target_field, target_id):
+    require_account_action_for_user_id(user_id)
     User.objects.select_for_update().get(pk=user_id)
     model.objects.filter(
         user_id=user_id,
@@ -95,6 +98,7 @@ def serialize_follow(follow, *, user):
 
 @transaction.atomic
 def follow_user(*, follower_id, followee_id):
+    require_account_action_for_user_id(follower_id)
     followee = (
         User.objects.select_for_update()
         .filter(pk=followee_id, status=UserStatus.ACTIVE, username__isnull=False)
@@ -130,6 +134,7 @@ def follow_user(*, follower_id, followee_id):
 
 @transaction.atomic
 def unfollow_user(*, follower_id, followee_id):
+    require_account_action_for_user_id(follower_id)
     User.objects.select_for_update().filter(pk=followee_id).first()
     deleted, _ = Follow.objects.filter(
         follower_id=follower_id,
@@ -140,6 +145,7 @@ def unfollow_user(*, follower_id, followee_id):
 
 @transaction.atomic
 def accept_follow_request(*, followee_id, follower_id):
+    require_account_action_for_user_id(followee_id)
     User.objects.select_for_update().get(pk=followee_id)
     follow = (
         Follow.objects.select_for_update()
@@ -168,6 +174,7 @@ def accept_follow_request(*, followee_id, follower_id):
 
 @transaction.atomic
 def decline_follow_request(*, followee_id, follower_id):
+    require_account_action_for_user_id(followee_id)
     User.objects.select_for_update().get(pk=followee_id)
     deleted, _ = Follow.objects.filter(
         follower_id=follower_id,
@@ -179,6 +186,7 @@ def decline_follow_request(*, followee_id, follower_id):
 
 @transaction.atomic
 def change_privacy(*, user_id, is_private):
+    require_account_action_for_user_id(user_id)
     user = User.objects.select_for_update().get(pk=user_id)
     if user.is_private == is_private:
         return user, 0
@@ -231,6 +239,7 @@ def will_be_there_is_active(event, *, at=None):
 
 
 def save_will_be_there(*, user, event):
+    require_account_action(user)
     now = timezone_now()
     if not will_be_there_is_active(event, at=now):
         raise WillBeThereExpired
@@ -242,6 +251,7 @@ def save_will_be_there(*, user, event):
 
 
 def remove_will_be_there(*, user, event):
+    require_account_action(user)
     WillBeThere.objects.filter(user=user, event=event).delete()
 
 
@@ -352,6 +362,7 @@ def event_rating_summary(event):
 
 @transaction.atomic
 def save_rating(*, user, event, rating):
+    require_account_action(user)
     User.objects.select_for_update().get(pk=user.pk)
     entry = (
         DiaryEntry.objects.visible_to(user)
@@ -383,6 +394,7 @@ def save_rating(*, user, event, rating):
 
 @transaction.atomic
 def remove_rating(*, user, event):
+    require_account_action(user)
     entry = (
         DiaryEntry.objects.visible_to(user)
         .select_for_update()
@@ -408,6 +420,7 @@ def remove_rating(*, user, event):
 
 @transaction.atomic
 def remove_entry(*, user, event):
+    require_account_action(user)
     entry = (
         DiaryEntry.objects.visible_to(user)
         .select_for_update()
@@ -422,6 +435,7 @@ def remove_entry(*, user, event):
 
 @transaction.atomic
 def save_review(*, user, event, body):
+    require_account_action(user)
     entry = (
         DiaryEntry.objects.visible_to(user)
         .select_for_update()
@@ -449,6 +463,7 @@ def save_review(*, user, event, body):
 
 @transaction.atomic
 def delete_review(*, user, event):
+    require_account_action(user)
     review = (
         Review.objects.visible_to(user)
         .select_for_update()
@@ -463,6 +478,7 @@ def delete_review(*, user, event):
 
 @transaction.atomic
 def like_review(*, user, review):
+    require_account_action(user)
     review = Review.objects.select_for_update().get(pk=review.pk)
     if review.entry.user_id == user.id:
         raise ReviewLikeConflict("A user cannot like their own review.")
@@ -482,5 +498,6 @@ def like_review(*, user, review):
 
 @transaction.atomic
 def unlike_review(*, user, review):
+    require_account_action(user)
     deleted, _ = ReviewLike.objects.filter(user=user, review=review).delete()
     return deleted > 0

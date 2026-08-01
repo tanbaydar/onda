@@ -139,3 +139,17 @@ USE_TZ = True
 STATIC_URL = "static/"
 
 AUTH_USER_MODEL = "users.User"
+
+# Built dark during Milestone 4 preparation. Deployment repays Q125–126 by
+# enabling this flag; local development preserves the Milestone 3 behavior.
+EMAIL_VERIFICATION_ENFORCED = (
+    os.environ.get("EMAIL_VERIFICATION_ENFORCED", "false").lower() == "true"
+)
+
+# Development delivery is intentionally provider-free. Deployment changes only
+# this setting when an email provider is selected.
+EMAIL_BACKEND = os.environ.get(
+    "DJANGO_EMAIL_BACKEND",
+    "django.core.mail.backends.console.EmailBackend",
+)
+DEFAULT_FROM_EMAIL = os.environ.get("DJANGO_DEFAULT_FROM_EMAIL", "noreply@danced.local")

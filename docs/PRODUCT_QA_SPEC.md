@@ -1658,3 +1658,21 @@ attribution separation used for ratings in Question 32. This count is distinct f
 the privacy-filtered Public and Your Circle attendee lists: list pagination totals
 must never be presented as the anonymous aggregate. Expired or otherwise dormant
 marks do not contribute.
+
+## Amendment: password reset and dark verification machinery
+
+Password reset was not addressed by the original 210 questions. Danced supports a
+non-enumerating email reset request followed by a six-digit code and a new password.
+The request response never reveals whether an account exists. Codes expire after 15
+minutes, permit at most five failed entry attempts, and may be resent after a 60-second
+cooldown. A successful reset invalidates every existing session for that account.
+
+Email verification uses the same six-digit-code lifecycle. Development delivery uses
+Django's console email backend; a deployment provider remains a settings-only choice.
+The machinery is initially built dark behind `EMAIL_VERIFICATION_ENFORCED`, whose
+default is false. While false, the existing Questions 125–126 freeze-break remains
+exactly in force: registration creates an active account, signs it in immediately, and
+verification gates nothing. When deployment enables the flag, an unverified account
+retains its own session and guest-equivalent public browsing but cannot perform account
+actions until verification. Enabling the flag and changing registration's destination
+remain explicit Milestone 5 deployment actions, not behavior of the dark build.

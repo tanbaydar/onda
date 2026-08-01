@@ -143,6 +143,43 @@ class User(AbstractUser):
         super().save(*args, **kwargs)
 
 
+class AccountCodePurpose(models.TextChoices):
+    EMAIL_VERIFICATION = "email_verification", "Email verification"
+    PASSWORD_RESET = "password_reset", "Password reset"
+
+
+class AccountCode(models.Model):
+    user = models.ForeignKey(
+        User,
+        db_column="user_id",
+        on_delete=models.CASCADE,
+        related_name="account_codes",
+    )
+    purpose = models.CharField(max_length=20, choices=AccountCodePurpose.choices)
+    code_hash = models.CharField(max_length=64)
+    sent_at = models.DateTimeField()
+    expires_at = models.DateTimeField()
+    failed_attempts = models.PositiveSmallIntegerField(default=0)
+    consumed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = "ACCOUNT_CODE"
+        constraints = [
+            models.UniqueConstraint(
+                fields=("user", "purpose"),
+                name="uq_account_code_user_purpose",
+            ),
+            models.CheckConstraint(
+                condition=Q(failed_attempts__lte=5),
+                name="ck_account_code_attempts",
+            ),
+            models.CheckConstraint(
+                condition=Q(expires_at__gt=models.F("sent_at")),
+                name="ck_account_code_expiry",
+            ),
+        ]
+
+
 class FollowStatus(models.TextChoices):
     PENDING = "pending", "Pending"
     APPROVED = "approved", "Approved"
