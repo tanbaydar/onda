@@ -67,8 +67,8 @@ export default function VenuePage({ user }) {
 
   const venue = state.venue;
   return (
-    <main>
-      <article>
+    <main className="detail-page">
+      <article className="identity">
         <h1>{venue.name}</h1>
         <p>
           City:{" "}

@@ -67,8 +67,8 @@ export default function ArtistPage({ user }) {
 
   const artist = state.artist;
   return (
-    <main>
-      <article>
+    <main className="detail-page">
+      <article className="identity">
         <h1>{artist.name}</h1>
         {artist.image_url ? (
           <img src={artist.image_url} alt={artist.name} />

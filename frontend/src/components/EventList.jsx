@@ -16,7 +16,7 @@ function EventItem({
 
   return (
     <li>
-      <article>
+      <article className="event-row">
         <h3>
           <Link to={`/events/${event.id}`}>{event.title}</Link>
         </h3>
@@ -109,7 +109,7 @@ export default function EventList({
   }, [page, pageSize, retry, scopeId, scopeName, when]);
 
   return (
-    <section>
+    <section className="event-list">
       <h2>{heading}</h2>
       {state.loading ? <p>Loading events.</p> : null}
       {state.error ? (
@@ -125,7 +125,7 @@ export default function EventList({
       ) : null}
       {state.data && state.data.results.length > 0 ? (
         <>
-          <ul>
+          <ul className="ledger">
             {state.data.results.map((event) => (
               <EventItem
                 key={event.id}

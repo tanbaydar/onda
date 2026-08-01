@@ -41,7 +41,7 @@ export default function DiscoverPage() {
   }, [requestedCityId, selectedCity, setSearchParams]);
 
   return (
-    <main>
+    <main className="discover-page">
       <h1>Discover</h1>
       {state.loading ? <p>Loading cities.</p> : null}
       {state.error ? (
