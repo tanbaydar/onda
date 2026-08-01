@@ -4,7 +4,7 @@ from datetime import UTC, datetime
 from django.test import Client, TestCase, override_settings
 
 from catalog.models import Artist, City, Event, EventArtist, EventStatus, Venue
-from users.models import DiaryEntry, Follow, FollowStatus, Review, User
+from users.models import DiaryEntry, Follow, FollowStatus, Review, ReviewLike, User
 
 
 NOW = datetime(2026, 8, 20, 16, 0, tzinfo=UTC)
@@ -75,8 +75,9 @@ class CircleQueryCountContractTests(TestCase):
             cls.make_user(
                 f"circle.followee.{index}@example.com", f"circle.followee.{index}"
             )
-            for index in range(1, 4)
+            for index in range(1, 9)
         ]
+        cls.reviews = []
         for index, followee in enumerate(cls.followees):
             entry = DiaryEntry.objects.create(
                 user=followee,
@@ -84,11 +85,13 @@ class CircleQueryCountContractTests(TestCase):
                 rating=str(4 - index / 2),
                 rated_at=NOW,
             )
-            if index < 2:
-                Review.objects.create(
-                    entry=entry,
-                    body=f"Reviewed Circle entry {index}",
-                    published_at=NOW,
+            if index % 2 == 0:
+                cls.reviews.append(
+                    Review.objects.create(
+                        entry=entry,
+                        body=f"Reviewed Circle entry {index}",
+                        published_at=NOW,
+                    )
                 )
             Follow.objects.create(
                 follower=cls.viewer,
@@ -97,6 +100,8 @@ class CircleQueryCountContractTests(TestCase):
                 created_at=NOW,
                 approved_at=NOW,
             )
+        ReviewLike.objects.create(user=cls.viewer, review=cls.reviews[0])
+        ReviewLike.objects.create(user=cls.followees[1], review=cls.reviews[0])
 
     @classmethod
     def make_user(cls, email, username):
@@ -108,14 +113,29 @@ class CircleQueryCountContractTests(TestCase):
             is_private=False,
         )
 
-    def test_circle_mixed_page_query_count_is_pinned_as_a_refactor_ceiling(self):
+    def test_circle_mixed_page_query_count_is_constant_across_page_sizes(self):
         client = Client()
         client.force_login(self.viewer)
 
-        # Eleven includes seven fixed queries plus two queries for each of the
-        # two reviewed rows. It is a ceiling to reduce, never to increase.
-        with self.assertNumQueries(11):
-            response = client.get(f"/api/events/{self.event.id}/circle/")
+        with self.assertNumQueries(7):
+            small = client.get(
+                f"/api/events/{self.event.id}/circle/", {"page_size": 3}
+            )
+        with self.assertNumQueries(7):
+            large = client.get(
+                f"/api/events/{self.event.id}/circle/", {"page_size": 8}
+            )
 
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.json()["results"]), 3)
+        self.assertEqual(small.status_code, 200)
+        self.assertEqual(large.status_code, 200)
+        self.assertEqual(len(small.json()["results"]), 3)
+        self.assertEqual(len(large.json()["results"]), 8)
+        reviews = {
+            item["review"]["id"]: item["review"]
+            for item in large.json()["results"]
+            if item["review"] is not None
+        }
+        self.assertEqual(reviews[self.reviews[0].id]["like_count"], 2)
+        self.assertTrue(reviews[self.reviews[0].id]["viewer_has_liked"])
+        self.assertEqual(reviews[self.reviews[1].id]["like_count"], 0)
+        self.assertFalse(reviews[self.reviews[1].id]["viewer_has_liked"])

@@ -1253,6 +1253,15 @@ def event_circle(request, event_id):
         DiaryEntry.objects.for_circle(request.user)
         .filter(event=event)
         .select_related("user", "review")
+        .annotate(
+            review_like_count=Count("review__likes"),
+            viewer_has_liked=Exists(
+                ReviewLike.objects.filter(
+                    user=request.user,
+                    review_id=OuterRef("review__pk"),
+                )
+            ),
+        )
         .order_by("-rated_at", "-id")
     )
     paginator = Paginator(entries, page_size)
@@ -1277,11 +1286,9 @@ def event_circle(request, event_id):
         review = getattr(entry, "review", None)
         serialized_review = None
         if review is not None:
+            review.like_count = entry.review_like_count
             serialized_review = serialize_review(review)
-            serialized_review["viewer_has_liked"] = ReviewLike.objects.filter(
-                user=request.user,
-                review=review,
-            ).exists()
+            serialized_review["viewer_has_liked"] = entry.viewer_has_liked
         results.append(
             {
                 "id": entry.id,
