@@ -45,7 +45,7 @@ main nav button+span,main nav span+button{margin-left:var(--sp-8)}
 .quick-search{position:relative;width:100%;max-width:320px}
 .quick-search-input-wrap{position:relative}
 .quick-search input{padding:var(--sp-8) var(--sp-32) var(--sp-8) var(--sp-12);border:var(--hairline) solid var(--border-strong);font-size:var(--text-ui)}
-.quick-search input:focus{outline:none}
+.quick-search input:focus,.search-primary:focus{outline:none}
 .quick-search-clear{position:absolute;top:50%;right:var(--sp-8);min-height:0;padding:0;border:0;color:var(--text);font-size:var(--text-body);line-height:1;transform:translateY(-50%)}
 .search-panel{position:absolute;z-index:8;isolation:isolate;top:100%;left:0;width:min(480px,calc(100vw - 2 * var(--gutter-mobile)));max-height:70vh;overflow:auto;border:var(--hairline) solid var(--border-strong);background-color:var(--bg);box-shadow:none;opacity:1}
 .discover-search{max-width:none;margin-bottom:var(--sp-16)}
@@ -199,8 +199,7 @@ dialog .destructive{border-color:var(--action);background:var(--action);color:va
  body>div>header nav ul{gap:var(--sp-24)}
  body>div>header nav a{font-size:var(--text-ui)}
  body>div>header nav li{display:flex;align-items:center}
- .search-nav-link:has(>a[aria-current="page"])>a{display:none}
- .search-nav-link:has(>a[aria-current="page"])>.quick-search{display:block;width:320px}
+ .search-nav-link>.quick-search{display:block;width:320px}
  .header-search .search-panel{right:0;left:auto}
  .discover-search{max-width:320px}
  body>div>header>section{display:block;font-size:var(--text-micro)}

@@ -5,7 +5,7 @@ import { fetchJson } from "../api.js";
 import SearchResults from "./SearchResults.jsx";
 import { recordRecentSearch } from "../recentSearches.js";
 
-export default function QuickSearch({ cityId = null, discover = false }) {
+export default function QuickSearch({ cityId = null, discover = false, autoFocus = false, onNavigate = () => {} }) {
   const navigate = useNavigate();
   const rootRef = useRef(null);
   const [query, setQuery] = useState("");
@@ -30,12 +30,12 @@ export default function QuickSearch({ cityId = null, discover = false }) {
   }, []);
 
   const count = data ? (discover ? data.results.length : Object.values(data.groups).reduce((sum, group) => sum + group.results.length, 0)) : 0;
-  function openSearch(scope = "all") { if (trimmed) { recordRecentSearch(query); navigate(`/search?${new URLSearchParams({ q: trimmed, ...(scope === "all" ? {} : { scope }) })}`); } }
+  function openSearch(scope = "all") { if (trimmed) { recordRecentSearch(query); onNavigate(); navigate(`/search?${new URLSearchParams({ q: trimmed, ...(scope === "all" ? {} : { scope }) })}`); } }
 
   return (
     <div className={`quick-search ${discover ? "discover-search" : "header-search"}`} ref={rootRef}>
       <div className="quick-search-input-wrap">
-        <input type="text" value={query} aria-label={discover ? "Search events in selected city" : "Quick search"} placeholder={discover ? "Search events in this city" : "Search"} onChange={(event) => setQuery(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") openSearch(discover ? "events" : "all"); if (event.key === "Escape") { setQuery(""); setData(null); } }} />
+        <input type="text" value={query} autoFocus={autoFocus} aria-label={discover ? "Search events in selected city" : "Quick search"} placeholder={discover ? "Search events in this city" : "Search"} onChange={(event) => setQuery(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") openSearch(discover ? "events" : "all"); if (event.key === "Escape") { setQuery(""); setData(null); } }} />
         {query ? <button className="quick-search-clear" type="button" aria-label="Clear search" onClick={() => { setQuery(""); setData(null); }}>×</button> : null}
       </div>
       {trimmed && data ? (
