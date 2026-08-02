@@ -2,242 +2,101 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
 import { fetchJson, fetchWithCsrf } from "../api.js";
-import { formatEventDateTime } from "../formatEventDateTime.js";
-import { profileNavigationVisible, profilePath } from "../profileRoutes.js";
-import { formatTimestamp } from "../lib/formatTimestamp.js";
-import { pluralize } from "../lib/plural.js";
-import ConfirmDialog from "../components/ConfirmDialog.jsx";
-import ExpandableText from "../components/ExpandableText.jsx";
-import RatingHistogram from "../components/RatingHistogram.jsx";
-import CityDropdown from "../components/CityDropdown.jsx";
 import FollowControl from "../components/FollowControl.jsx";
+import ProfileAvatar from "../components/ProfileAvatar.jsx";
+import ProfileDiaryRow from "../components/ProfileDiaryRow.jsx";
+import RatingHistogram from "../components/RatingHistogram.jsx";
+import { PROFILE_EMPTY_STATES, profileTabPath } from "../profilePresentation.js";
+import { profileNavigationVisible, profilePath } from "../profileRoutes.js";
 import { profileRatingBuckets } from "../ratingHistogram.js";
 
-
 function Pagination({ pagination, onPage }) {
-  return (
-    <nav aria-label="Profile content pagination">
-      <button type="button" disabled={pagination.previous_page === null} onClick={() => onPage(pagination.previous_page)}>Previous</button>
-      <span> Page {pagination.page} of {pagination.total_pages} </span>
-      <button type="button" disabled={pagination.next_page === null} onClick={() => onPage(pagination.next_page)}>Next</button>
-    </nav>
-  );
+  return <nav className="profile-pagination" aria-label="Profile content pagination"><button className="quiet-control" type="button" disabled={pagination.previous_page === null} onClick={() => onPage(pagination.previous_page)}>Previous</button><span>Page {pagination.page} of {pagination.total_pages}</span><button className="quiet-control" type="button" disabled={pagination.next_page === null} onClick={() => onPage(pagination.next_page)}>Next</button></nav>;
 }
 
-
-function EventFacts({ event }) {
-  return (
-    <>
-      <h3><Link to={`/events/${event.id}`}>{event.title}</Link></h3>
-      <p><time dateTime={event.start_time ? `${event.event_date}T${event.start_time}` : event.event_date}>{formatEventDateTime(event.event_date, event.start_time)}</time></p>
-      <p><Link to={`/venues/${event.venue.id}`}>{event.venue.name}</Link>, {event.venue.city.name}</p>
-    </>
-  );
-}
-
-
-function BeenTab({ username, access }) {
+function BeenTab({ username }) {
   const [page, setPage] = useState(1);
   const [retry, setRetry] = useState(0);
   const [state, setState] = useState({ loading: true, error: null, data: null });
-
   useEffect(() => {
-    if (access === "stub") {
-      setState({ loading: false, error: null, data: null });
-      return undefined;
-    }
     const controller = new AbortController();
     setState({ loading: true, error: null, data: null });
-    fetchJson(`/api/users/${encodeURIComponent(username)}/been/?page=${page}`, { signal: controller.signal, cache: "no-store" })
-      .then((data) => setState({ loading: false, error: null, data }))
-      .catch((error) => {
-        if (error.name !== "AbortError") setState({ loading: false, error, data: null });
-      });
+    fetchJson(`/api/users/${encodeURIComponent(username)}/been/?page=${page}`, { signal: controller.signal, cache: "no-store" }).then((data) => setState({ loading: false, error: null, data })).catch((error) => { if (error.name !== "AbortError") setState({ loading: false, error, data: null }); });
     return () => controller.abort();
-  }, [access, page, retry, username]);
-
-  if (access === "stub") return <p>This account&apos;s Been history is private.</p>;
+  }, [page, retry, username]);
   return (
-    <section>
-      <h2>Been</h2>
+    <section className="profile-tab-panel" aria-label="Been">
       {state.loading ? <p>Loading Been history.</p> : null}
-      {state.error ? <><p>Been history could not be loaded.</p><button type="button" onClick={() => setRetry((value) => value + 1)}>Retry</button></> : null}
-      {state.data?.results.length === 0 ? <p>No Been entries yet.</p> : null}
-      {state.data?.results.length ? (
-        <>
-          <ol>{state.data.results.map((entry) => <li key={entry.id}><article><EventFacts event={entry.event} /><p>{entry.rating === null ? "Unrated attendance" : pluralize(entry.rating.toFixed(1), "star")}</p>{entry.has_review ? <p>Written review</p> : null}</article></li>)}</ol>
-          <Pagination pagination={state.data.pagination} onPage={setPage} />
-        </>
-      ) : null}
+      {state.error ? <><p>Been history could not be loaded.</p><button className="quiet-control" type="button" onClick={() => setRetry((value) => value + 1)}>Retry</button></> : null}
+      {state.data?.results.length === 0 ? <p className="profile-tab-empty">{PROFILE_EMPTY_STATES.been}</p> : null}
+      {state.data?.results.length ? <><ol className="profile-diary-list">{state.data.results.map((entry) => <ProfileDiaryRow key={entry.id} event={entry.event} rating={entry.rating} hasReview={entry.has_review} />)}</ol><Pagination pagination={state.data.pagination} onPage={setPage} /></> : null}
     </section>
   );
 }
 
-
-function ReviewsTab({ username, access, sessionUser }) {
+function ReviewsTab({ username }) {
   const [sort, setSort] = useState("newest");
   const [page, setPage] = useState(1);
   const [retry, setRetry] = useState(0);
   const [state, setState] = useState({ loading: true, error: null, data: null });
-  const [actionError, setActionError] = useState(null);
-
   useEffect(() => {
-    if (access === "stub") {
-      setState({ loading: false, error: null, data: null });
-      return undefined;
-    }
     const controller = new AbortController();
     const query = new URLSearchParams({ sort, page: String(page) });
     setState({ loading: true, error: null, data: null });
-    fetchJson(`/api/users/${encodeURIComponent(username)}/reviews/?${query}`, { signal: controller.signal, cache: "no-store" })
-      .then((data) => setState({ loading: false, error: null, data }))
-      .catch((error) => {
-        if (error.name !== "AbortError") setState({ loading: false, error, data: null });
-      });
+    fetchJson(`/api/users/${encodeURIComponent(username)}/reviews/?${query}`, { signal: controller.signal, cache: "no-store" }).then((data) => setState({ loading: false, error: null, data })).catch((error) => { if (error.name !== "AbortError") setState({ loading: false, error, data: null }); });
     return () => controller.abort();
-  }, [access, page, retry, sort, username]);
-
-  async function changeLike(review) {
-    setActionError(null);
-    try {
-      await fetchWithCsrf(`/api/reviews/${review.id}/like/`, { method: review.viewer_has_liked ? "DELETE" : "POST" });
-      setRetry((value) => value + 1);
-    } catch (error) {
-      if (error.status === 401 || error.status === 403) setActionError("Sign in required.");
-      else if (error.status === 404 || error.status === 409) setRetry((value) => value + 1);
-      else setActionError("The review like could not be changed.");
-    }
-  }
-
-  if (access === "stub") return <p>This account&apos;s reviews are private.</p>;
+  }, [page, retry, sort, username]);
   return (
-    <section>
-      <h2>Reviews</h2>
-      <p><label htmlFor="profile-review-sort">Sort reviews</label>{" "}<select id="profile-review-sort" value={sort} onChange={(event) => { setSort(event.target.value); setPage(1); }}><option value="newest">Newest</option><option value="most_liked">Most liked</option><option value="oldest">Oldest</option><option value="longest">Longest entry</option></select></p>
-      {actionError ? <p>{actionError}</p> : null}
+    <section className="profile-tab-panel" aria-label="Reviews">
+      <label className="profile-review-sort" htmlFor="profile-review-sort">Sort reviews<select id="profile-review-sort" value={sort} onChange={(event) => { setSort(event.target.value); setPage(1); }}><option value="newest">Newest</option><option value="most_liked">Most liked</option><option value="oldest">Oldest</option><option value="longest">Longest entry</option></select></label>
       {state.loading ? <p>Loading reviews.</p> : null}
-      {state.error ? <><p>Reviews could not be loaded.</p><button type="button" onClick={() => setRetry((value) => value + 1)}>Retry</button></> : null}
-      {state.data?.results.length === 0 ? <p>No written reviews yet.</p> : null}
-      {state.data?.results.length ? (
-        <>
-          <ol>{state.data.results.map((review) => <li key={review.id}><article><EventFacts event={review.event} /><p className="stars">{pluralize(review.rating.toFixed(1), "star")}</p><ExpandableText>{review.body}</ExpandableText><p><time dateTime={review.published_at}>Published {formatTimestamp(review.published_at)}</time></p><p>{pluralize(review.like_count, "like")}</p>{!sessionUser || sessionUser.username !== username ? <button className="like-action" type="button" onClick={() => changeLike(review)}>{review.viewer_has_liked ? "Unlike" : "Like"}</button> : null}</article></li>)}</ol>
-          <Pagination pagination={state.data.pagination} onPage={setPage} />
-        </>
-      ) : null}
+      {state.error ? <><p>Reviews could not be loaded.</p><button className="quiet-control" type="button" onClick={() => setRetry((value) => value + 1)}>Retry</button></> : null}
+      {state.data?.results.length === 0 ? <p className="profile-tab-empty">{PROFILE_EMPTY_STATES.reviews}</p> : null}
+      {state.data?.results.length ? <><ol className="profile-diary-list">{state.data.results.map((review) => <ProfileDiaryRow key={review.id} event={review.event} rating={review.rating} hasReview />)}</ol><Pagination pagination={state.data.pagination} onPage={setPage} /></> : null}
     </section>
   );
 }
 
-
-function ProfileEditor({ profile, onSaved }) {
-  const [cities, setCities] = useState([]);
-  const [form, setForm] = useState({ display_name: profile.display_name, avatar: profile.avatar ?? "", bio: profile.bio ?? "", home_city_id: profile.home_city?.id ?? "" });
-  const [errors, setErrors] = useState({});
-  const [message, setMessage] = useState(null);
-
-  useEffect(() => {
-    fetchJson("/api/cities/").then((data) => setCities(data.results)).catch(() => setMessage("Cities could not be loaded."));
-  }, []);
-
-  async function submit(event) {
-    event.preventDefault();
-    setErrors({});
-    setMessage(null);
-    try {
-      const data = await fetchWithCsrf("/api/me/profile/", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...form, avatar: form.avatar || null, bio: form.bio, home_city_id: form.home_city_id === "" ? null : Number(form.home_city_id) }) });
-      onSaved(data.profile);
-      setMessage("Profile saved.");
-    } catch (error) {
-      if (error.status === 400) setErrors(error.data?.errors ?? { request: ["Profile could not be saved."] });
-      else if (error.status === 401 || error.status === 403) setMessage("Sign in required before changing your profile.");
-      else setMessage("Something went wrong. Try again.");
-    }
-  }
-
-  function fieldErrors(name) { return errors[name]?.map((error) => <li key={error}>{error}</li>); }
-  return (
-    <section>
-      <h2>Edit profile</h2>
-      {message ? <p>{message}</p> : null}
-      {errors.request ? <ul>{fieldErrors("request")}</ul> : null}
-      <form onSubmit={submit}>
-        <p><label htmlFor="profile-display-name">Display name</label><br /><input id="profile-display-name" value={form.display_name} maxLength="50" onChange={(event) => setForm({ ...form, display_name: event.target.value })} /></p>{errors.display_name ? <ul>{fieldErrors("display_name")}</ul> : null}
-        <p><label htmlFor="profile-avatar">Avatar URL</label><br /><input id="profile-avatar" type="url" value={form.avatar} maxLength="2048" onChange={(event) => setForm({ ...form, avatar: event.target.value })} /></p>{errors.avatar ? <ul>{fieldErrors("avatar")}</ul> : null}
-        <p><label htmlFor="profile-bio">Bio</label><br /><textarea id="profile-bio" value={form.bio} maxLength="150" onChange={(event) => setForm({ ...form, bio: event.target.value })} /></p><p>{pluralize(form.bio.length, "character")} of 150</p>{errors.bio ? <ul>{fieldErrors("bio")}</ul> : null}
-        <CityDropdown cities={cities} selectedCity={cities.find((city) => String(city.id) === String(form.home_city_id)) ?? null} nullOptionLabel="No home city" label="Home city" getOptionLabel={(city) => `${city.name}, ${city.region_code}`} onSelect={(cityId) => setForm({ ...form, home_city_id: cityId === null ? "" : String(cityId) })} />{errors.home_city_id ? <ul>{fieldErrors("home_city_id")}</ul> : null}
-        <button type="submit">Save profile</button>
-      </form>
-    </section>
-  );
-}
-
-
-function PrivacyControl({ account, onChanged }) {
-  const [error, setError] = useState(null);
-  const [confirming, setConfirming] = useState(false);
-  async function changePrivacy() {
-    const next = !account.is_private;
-    setError(null);
-    try {
-      const data = await fetchWithCsrf("/api/me/privacy/", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ is_private: next }) });
-      onChanged(data.privacy);
-    } catch (requestError) {
-      setError(requestError.status === 401 || requestError.status === 403 ? "Sign in required before changing privacy." : "Privacy could not be changed.");
-    }
-  }
-  const consequence = account.is_private ? "Your profile and attributed content become public, and every pending request is accepted immediately." : "Existing approved followers keep access, and future follows require approval.";
-  return <section><h2>Account privacy</h2><p>Your account is {account.is_private ? "Private" : "Public"}.</p><button type="button" onClick={() => setConfirming(true)}>Switch to {account.is_private ? "Public" : "Private"}</button>{error ? <p>{error}</p> : null}<ConfirmDialog open={confirming} title={`Switch to ${account.is_private ? "Public" : "Private"}?`} consequence={consequence} confirmLabel="Switch privacy" onCancel={() => setConfirming(false)} onConfirm={() => { setConfirming(false); changePrivacy(); }} /></section>;
-}
-
-
-function FollowRequests({ version }) {
-  const [page, setPage] = useState(1);
+function ProfileStatistics({ username }) {
   const [retry, setRetry] = useState(0);
   const [state, setState] = useState({ loading: true, error: null, data: null });
   useEffect(() => {
     const controller = new AbortController();
     setState({ loading: true, error: null, data: null });
-    fetchJson(`/api/me/follow-requests/?page=${page}`, { signal: controller.signal, cache: "no-store" }).then((data) => setState({ loading: false, error: null, data })).catch((error) => { if (error.name !== "AbortError") setState({ loading: false, error, data: null }); });
+    fetchJson(`/api/users/${encodeURIComponent(username)}/stats/`, { signal: controller.signal, cache: "no-store" }).then((data) => setState({ loading: false, error: null, data })).catch((error) => { if (error.name !== "AbortError") setState({ loading: false, error, data: null }); });
     return () => controller.abort();
-  }, [page, retry, version]);
-  async function decide(userId, action) {
-    try { await fetchWithCsrf(`/api/me/follow-requests/${userId}/${action}/`, { method: "POST" }); setRetry((value) => value + 1); }
-    catch { setState((current) => ({ ...current, error: new Error("request") })); }
-  }
-  return <section><h2>Follow requests</h2>{state.loading ? <p>Loading follow requests.</p> : null}{state.error ? <><p>Follow requests could not be changed or loaded.</p><button type="button" onClick={() => setRetry((value) => value + 1)}>Retry</button></> : null}{state.data?.results.length === 0 ? <p>No pending follow requests.</p> : null}{state.data?.results.length ? <><ul>{state.data.results.map((request) => <li key={request.user.id}><Link to={profilePath(request.user.username)}>{request.user.display_name} (@{request.user.username})</Link>{" "}<button type="button" onClick={() => decide(request.user.id, "accept")}>Accept</button>{" "}<button type="button" onClick={() => decide(request.user.id, "decline")}>Decline</button></li>)}</ul><Pagination pagination={state.data.pagination} onPage={setPage} /></> : null}</section>;
+  }, [retry, username]);
+  if (state.loading) return <section className="profile-statistics"><h2>Statistics</h2><p>Loading statistics.</p></section>;
+  if (state.error) return <section className="profile-statistics"><h2>Statistics</h2><p>Statistics could not be loaded.</p><button className="quiet-control" type="button" onClick={() => setRetry((value) => value + 1)}>Retry</button></section>;
+  const statistics = state.data.statistics;
+  const ratingBuckets = profileRatingBuckets(state.data.rating_distribution);
+  return <section className="profile-statistics"><h2>Statistics</h2><div className="profile-statistics-strip"><div className="profile-stat stat-lead"><span className="stat-value">{statistics.events_in_been}</span><span className="stat-label">Events in Been</span></div><div className="profile-stat stat-reviews"><span className="stat-value">{statistics.written_reviews}</span><span className="stat-label">Written reviews</span></div><div className="profile-stat stat-venues"><span className="stat-value">{statistics.venues_visited}</span><span className="stat-label">Venues visited</span></div><div className="profile-stat stat-cities"><span className="stat-value">{statistics.cities_visited}</span><span className="stat-label">Cities visited</span></div><div className="profile-judgment-unit"><div className="profile-stat"><span className="stat-value">{statistics.average_rating_given.state === "available" ? statistics.average_rating_given.value.toFixed(1) : "—"}</span><span className="stat-label">Average rating given</span></div><RatingHistogram className="profile-stat-histogram" buckets={ratingBuckets} /></div></div></section>;
 }
 
-
-function ProfileFavoritesAndStats({ username, owner }) {
+function ProfileFavorites({ username, owner }) {
   const [retry, setRetry] = useState(0);
-  const [state, setState] = useState({ loading: true, error: null, favorites: null, stats: null, venues: null });
+  const [state, setState] = useState({ loading: true, error: null, favorites: null, venues: null });
   useEffect(() => {
     const controller = new AbortController();
-    setState({ loading: true, error: null, favorites: null, stats: null, venues: null });
     Promise.all([
       fetchJson(`/api/users/${encodeURIComponent(username)}/favorites/`, { signal: controller.signal, cache: "no-store" }),
-      fetchJson(`/api/users/${encodeURIComponent(username)}/stats/`, { signal: controller.signal, cache: "no-store" }),
       owner ? fetchJson("/api/me/favorite-venues/", { signal: controller.signal, cache: "no-store" }) : Promise.resolve(null),
-    ]).then(([favorites, stats, venues]) => setState({ loading: false, error: null, favorites, stats, venues })).catch((error) => { if (error.name !== "AbortError") setState({ loading: false, error, favorites: null, stats: null, venues: null }); });
+    ]).then(([favorites, venues]) => setState({ loading: false, error: null, favorites, venues })).catch((error) => { if (error.name !== "AbortError") setState({ loading: false, error, favorites: null, venues: null }); });
     return () => controller.abort();
   }, [owner, retry, username]);
-  if (state.loading) return <section><h2>Favorites and statistics</h2><p>Loading favorites and statistics.</p></section>;
-  if (state.error) return <section><h2>Favorites and statistics</h2><p>Favorites and statistics could not be loaded.</p><button type="button" onClick={() => setRetry((value) => value + 1)}>Retry</button></section>;
-  const statistics = state.stats.statistics;
-  const ratingBuckets = profileRatingBuckets(state.stats.rating_distribution);
-  return <>
-    <section><h2>Favorite events</h2>{state.favorites.events.length ? <ol>{state.favorites.events.map(({ event }) => <li key={event.id}><Link to={`/events/${event.id}`}>{event.title}</Link></li>)}</ol> : <p>No favorite events.</p>}</section>
-    <section><h2>Favorite artists</h2>{state.favorites.artists.length ? <ol>{state.favorites.artists.map(({ artist }) => <li key={artist.id}><Link to={`/artists/${artist.id}`}>{artist.name}</Link></li>)}</ol> : <p>No favorite artists.</p>}</section>
-    {owner ? <section><h2>Favorite venues</h2>{state.venues.results.length ? <ol>{state.venues.results.map(({ venue }) => <li key={venue.id}><Link to={`/venues/${venue.id}`}>{venue.name}</Link></li>)}</ol> : <p>No favorite venues.</p>}</section> : null}
-    <section className="profile-statistics"><h2>Statistics</h2><div className="profile-statistics-strip"><div className="profile-stat stat-lead"><span className="stat-value">{statistics.events_in_been}</span><span className="stat-label">Events in Been</span></div><div className="profile-stat stat-reviews"><span className="stat-value">{statistics.written_reviews}</span><span className="stat-label">Written reviews</span></div><div className="profile-stat stat-venues"><span className="stat-value">{statistics.venues_visited}</span><span className="stat-label">Venues visited</span></div><div className="profile-stat stat-cities"><span className="stat-value">{statistics.cities_visited}</span><span className="stat-label">Cities visited</span></div><div className="profile-judgment-unit"><div className="profile-stat"><span className="stat-value">{statistics.average_rating_given.state === "available" ? statistics.average_rating_given.value.toFixed(1) : "—"}</span><span className="stat-label">Average rating given</span></div><RatingHistogram className="profile-stat-histogram" buckets={ratingBuckets} /></div></div></section>
-  </>;
+  if (state.loading) return <section className="profile-favorites"><h2>Favorites</h2><p>Loading favorites.</p></section>;
+  if (state.error) return <section className="profile-favorites"><h2>Favorites</h2><p>Favorites could not be loaded.</p><button className="quiet-control" type="button" onClick={() => setRetry((value) => value + 1)}>Retry</button></section>;
+  const items = [
+    ...state.favorites.events.map(({ event }) => <Link key={`event-${event.id}`} to={`/events/${event.id}`}>{event.title}</Link>),
+    ...state.favorites.artists.map(({ artist }) => <Link key={`artist-${artist.id}`} to={`/artists/${artist.id}`}>{artist.name}</Link>),
+    ...(owner ? state.venues.results.map(({ venue }) => <Link key={`venue-${venue.id}`} to={`/venues/${venue.id}`}>{venue.name}</Link>) : []),
+  ];
+  return <section className="profile-favorites"><h2>Favorites</h2>{items.length ? <p>{items.map((item, index) => <span key={item.key}>{index ? " · " : null}{item}</span>)}</p> : <p>No favorites yet.</p>}</section>;
 }
-
 
 export default function ProfilePage({ session, tab = "been" }) {
   const { username } = useParams();
   const [retry, setRetry] = useState(0);
-  const [requestVersion, setRequestVersion] = useState(0);
   const [state, setState] = useState({ loading: true, error: null, data: null });
   useEffect(() => {
     const controller = new AbortController();
@@ -262,13 +121,23 @@ export default function ProfilePage({ session, tab = "been" }) {
   if (state.error) return <main><p>Profile could not be loaded.</p><button type="button" onClick={() => setRetry((value) => value + 1)}>Retry</button></main>;
   const data = state.data;
   const profile = data.profile;
+  const owner = data.access === "owner";
   return (
     <main className="profile-page">
-      <header className="profile-header"><h1>{profile.display_name}</h1><p className="profile-handle-line">@{profile.username}{data.relationship?.follows_you ? " · Follows you" : ""}{data.relationship?.outgoing_status === "approved" ? " · Following" : ""}</p><div className="profile-social-counts"><span><strong>{profile.follower_count}</strong><small>Followers</small></span><span><strong>{profile.following_count}</strong><small>Following</small></span></div><FollowControl relationship={data.relationship} onChange={changeFollow} />{profile.avatar ? <img src={profile.avatar} alt={`${profile.display_name}'s avatar`} /> : <p>Default avatar</p>}{profile.bio ? <p>{profile.bio}</p> : <p>No bio.</p>}{profile.home_city ? <p>Home city: {profile.home_city.name}, {profile.home_city.region_code}</p> : <p>No home city.</p>}</header>
-      {profileNavigationVisible(data.access) ? <nav aria-label="Profile sections"><ul><li><Link to={profilePath(profile.username)}>Been</Link></li><li><Link to={`${profilePath(profile.username)}/reviews`}>Reviews</Link></li></ul></nav> : null}
-      {data.access === "stub" ? <p>This account is private. Follow and receive approval to see its activity.</p> : tab === "reviews" ? <ReviewsTab username={profile.username} access={data.access} sessionUser={session.user} /> : <BeenTab username={profile.username} access={data.access} />}
-      {data.access !== "stub" ? <ProfileFavoritesAndStats username={profile.username} owner={data.access === "owner"} /> : null}
-      {data.access === "owner" ? <><ProfileEditor profile={profile} onSaved={(saved) => setState((current) => ({ ...current, data: { ...current.data, profile: saved } }))} /><PrivacyControl account={data.account} onChanged={(privacy) => { setState((current) => ({ ...current, data: { ...current.data, account: { is_private: privacy.is_private } } })); setRequestVersion((value) => value + 1); }} /><FollowRequests version={requestVersion} /></> : null}
+      <header className="profile-header">
+        <ProfileAvatar profile={profile} />
+        <div className="profile-identity-copy">
+          <h1>{profile.display_name}</h1>
+          <p className="profile-handle-line">@{profile.username}{profile.home_city ? ` · ${profile.home_city.name}` : ""}{data.relationship?.follows_you ? " · Follows you" : ""}{data.relationship?.outgoing_status === "approved" ? " · Following" : ""}</p>
+          <div className="profile-social-counts"><span><strong>{profile.follower_count}</strong><small>Followers</small></span><span><strong>{profile.following_count}</strong><small>Following</small></span></div>
+          {owner ? <Link className="profile-edit-link" to="/settings/profile">Edit profile</Link> : <FollowControl relationship={data.relationship} onChange={changeFollow} />}
+          {profile.bio ? <p className="profile-bio">{profile.bio}</p> : null}
+        </div>
+      </header>
+      {data.access !== "stub" ? <ProfileStatistics username={profile.username} /> : null}
+      {profileNavigationVisible(data.access) ? <nav className="profile-tabs" aria-label="Profile sections"><Link className={tab === "been" ? "active" : ""} aria-current={tab === "been" ? "page" : undefined} to={profileTabPath(profile.username, "been")}>Been</Link><Link className={tab === "reviews" ? "active" : ""} aria-current={tab === "reviews" ? "page" : undefined} to={profileTabPath(profile.username, "reviews")}>Reviews</Link></nav> : null}
+      {data.access === "stub" ? <p className="profile-private-stub">This account is private. Follow and receive approval to see its activity.</p> : tab === "reviews" ? <ReviewsTab username={profile.username} /> : <BeenTab username={profile.username} />}
+      {data.access !== "stub" ? <ProfileFavorites username={profile.username} owner={owner} /> : null}
     </main>
   );
 }

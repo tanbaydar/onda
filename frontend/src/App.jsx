@@ -6,6 +6,7 @@ import ArtistPage from "./pages/ArtistPage.jsx";
 import ActivityPage from "./pages/ActivityPage.jsx";
 import DiscoverPage from "./pages/DiscoverPage.jsx";
 import EventPage from "./pages/EventPage.jsx";
+import EditProfilePage from "./pages/EditProfilePage.jsx";
 import HomePage from "./pages/HomePage.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
 import PasswordResetFormPage from "./pages/PasswordResetFormPage.jsx";
@@ -148,6 +149,7 @@ export default function App() {
         <Route path="/been" element={<LegacyBeenPage session={session} />} />
         <Route path="/u/:username" element={<ProfilePage session={session} tab="been" />} />
         <Route path="/u/:username/reviews" element={<ProfilePage session={session} tab="reviews" />} />
+        <Route path="/settings/profile" element={<EditProfilePage session={session} />} />
         <Route path="/activity" element={<ActivityPage session={session} />} />
         <Route path="/venues/:venueId" element={<VenuePage user={session.user} />} />
         <Route path="/artists/:artistId" element={<ArtistPage user={session.user} />} />
