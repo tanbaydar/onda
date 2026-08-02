@@ -15,6 +15,8 @@ import ProfilePage from "./pages/ProfilePage.jsx";
 import RegisterPage from "./pages/RegisterPage.jsx";
 import VenuePage from "./pages/VenuePage.jsx";
 import VerifyEmailPage from "./pages/VerifyEmailPage.jsx";
+import SearchPage from "./pages/SearchPage.jsx";
+import QuickSearch from "./components/QuickSearch.jsx";
 import { GUEST_DISCOVER, landingPath } from "./landing.js";
 import { profilePath } from "./profileRoutes.js";
 
@@ -84,6 +86,7 @@ export default function App() {
           <ul>
             {session.user ? <li><NavLink to="/home">Home</NavLink></li> : null}
             <li><NavLink to="/discover">Discover</NavLink></li>
+            <li className="search-nav-link"><NavLink to="/search">Search</NavLink><QuickSearch /></li>
             {session.user ? (
               <>
                 <li>
@@ -119,6 +122,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<LandingPage session={session} />} />
         <Route path="/discover" element={<DiscoverPage />} />
+        <Route path="/search" element={<SearchPage />} />
         <Route path="/home" element={<HomePage session={session} />} />
         <Route
           path="/register"

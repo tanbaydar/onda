@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { fetchJson } from "../api.js";
 import { formatEventDateTime } from "../formatEventDateTime.js";
 
-function EventItem({
+export function EventItem({
   event,
   showVenue = true,
   showCity = true,

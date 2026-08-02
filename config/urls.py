@@ -24,12 +24,14 @@ from catalog.views import (
     event_list,
     venue_detail,
 )
+from catalog.search import search
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/auth/", include("users.urls")),
     path("api/", include("users.been_urls")),
     path("api/cities/", city_list, name="city-list"),
+    path("api/search/", search, name="search"),
     path("api/events/", event_list, name="event-list"),
     path("api/events/<int:event_id>/", event_detail, name="event-detail"),
     path("api/venues/<int:venue_id>/", venue_detail, name="venue-detail"),

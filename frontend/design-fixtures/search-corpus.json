@@ -1,0 +1,43 @@
+{
+  "cases": [
+    {
+      "name": "single-character prefix",
+      "query": "a",
+      "scope": "all",
+      "expected_titles": ["Avalon Emerson", "Nowadays", "Anna Morgan"]
+    },
+    {
+      "name": "exact then prefix then popularity",
+      "query": "mar",
+      "scope": "all",
+      "expected_titles": ["Mar", "Marble Bar", "Market Hotel", "The Marías"]
+    },
+    {
+      "name": "empty result",
+      "query": "zzzz-no-match",
+      "scope": "all",
+      "expected_titles": []
+    }
+  ],
+  "entities": {
+    "events": [
+      {"id": 9101, "title": "Mar", "event_date": "2026-08-20", "start_time": "22:00:00", "cover_image_url": null, "venue": {"id": 9201, "name": "Nowadays", "city": {"id": 1, "name": "New York City"}}, "artists": [{"id": 9301, "name": "Anna Morgan"}], "popularity": 4},
+      {"id": 9102, "title": "Market Hotel Anniversary", "event_date": "2026-08-22", "start_time": "21:00:00", "cover_image_url": "https://images.ra.co/example.jpg", "venue": {"id": 9202, "name": "Market Hotel", "city": {"id": 1, "name": "New York City"}}, "artists": [{"id": 9302, "name": "Avalon Emerson"}], "popularity": 30}
+    ],
+    "artists": [
+      {"id": 9302, "name": "Avalon Emerson", "popularity": 40},
+      {"id": 9301, "name": "Anna Morgan", "popularity": 12},
+      {"id": 9303, "name": "Mar", "popularity": 3},
+      {"id": 9304, "name": "The Marías", "popularity": 50}
+    ],
+    "venues": [
+      {"id": 9201, "name": "Nowadays", "city": {"id": 1, "name": "New York City"}, "popularity": 22},
+      {"id": 9202, "name": "Market Hotel", "city": {"id": 1, "name": "New York City"}, "popularity": 18},
+      {"id": 9203, "name": "Marble Bar", "city": {"id": 2, "name": "Boston"}, "popularity": 8}
+    ],
+    "people": [
+      {"id": 9401, "username": "mar", "display_name": "Mar", "avatar": null, "popularity": 2},
+      {"id": 9402, "username": "marble", "display_name": "Marble", "avatar": null, "popularity": 12}
+    ]
+  }
+}
