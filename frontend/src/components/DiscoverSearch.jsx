@@ -5,7 +5,7 @@ import { fetchJson } from "../api.js";
 import { recordRecentSearch } from "../recentSearches.js";
 import SearchResults from "./SearchResults.jsx";
 
-export default function DiscoverSearch({ cityId }) {
+export default function DiscoverSearch({ cityId, cityName = "this city" }) {
   const navigate = useNavigate();
   const rootRef = useRef(null);
   const [query, setQuery] = useState("");
@@ -37,7 +37,7 @@ export default function DiscoverSearch({ cityId }) {
   return (
     <div className="discover-search" ref={rootRef}>
       <div className="discover-search-input-wrap">
-        <input type="text" value={query} aria-label="Search events in selected city" placeholder="Search events in this city" onChange={(event) => setQuery(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") openSearch(); if (event.key === "Escape") { setQuery(""); setData(null); } }} />
+        <input type="text" value={query} aria-label={`Search events in ${cityName}`} placeholder={`Search events in ${cityName}`} onChange={(event) => setQuery(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") openSearch(); if (event.key === "Escape") { setQuery(""); setData(null); } }} />
         {query ? <button className="discover-search-clear" type="button" aria-label="Clear search" onClick={() => { setQuery(""); setData(null); }}>×</button> : null}
       </div>
       {trimmed && data ? (

@@ -3,6 +3,8 @@ import { Link } from "react-router-dom";
 
 import { fetchJson } from "../api.js";
 import { formatEventDateTime } from "../formatEventDateTime.js";
+import { formatCompactEventDateTime } from "../formatEventDateTime.js";
+import { compactLineup } from "../discoverPresentation.js";
 import { artistPath, eventPath, venuePath } from "../entityRoutes.js";
 
 export function EventItem({
@@ -10,10 +12,31 @@ export function EventItem({
   showVenue = true,
   showCity = true,
   omittedArtistId = null,
+  discover = false,
 }) {
   const visibleArtists = event.artists.filter(
     (artist) => String(artist.id) !== String(omittedArtistId),
   );
+
+  if (discover) {
+    const lineup = compactLineup(event.artists, omittedArtistId);
+    const venueName = event.venue?.name?.trim();
+    const venueIsTba = !venueName || venueName.toUpperCase() === "TBA";
+    return (
+      <li>
+        <Link className="discover-event-row" to={eventPath(event)}>
+          <span className="discover-event-flier" aria-hidden="true">
+            {event.cover_image_url ? <img src={event.cover_image_url} alt="" referrerPolicy="no-referrer" /> : null}
+          </span>
+          <span className="discover-event-copy">
+            <strong className="discover-event-title">{event.title}</strong>
+            <span className="discover-event-meta"><time dateTime={event.start_time ? `${event.event_date}T${event.start_time}` : event.event_date}>{formatCompactEventDateTime(event.event_date, event.start_time)}</time><span aria-hidden="true"> · </span><span className={venueIsTba ? "discover-venue-tba" : ""}>{venueIsTba ? "venue TBA" : venueName}</span></span>
+            {lineup ? <span className="discover-event-lineup">{lineup}</span> : null}
+          </span>
+        </Link>
+      </li>
+    );
+  }
 
   return (
     <li>
@@ -79,6 +102,7 @@ export default function EventList({
   omittedArtistId = null,
   hidden = false,
   quietHeading = false,
+  discover = false,
 }) {
   const [page, setPage] = useState(1);
   const [retry, setRetry] = useState(0);
@@ -97,10 +121,10 @@ export default function EventList({
       page_size: String(pageSize),
     });
 
-    setState({ loading: true, error: null, data: null });
+    setState((current) => ({ loading: true, error: null, data: discover && page > 1 ? current.data : null }));
     fetchJson(`/api/events/?${query}`, { signal: controller.signal })
       .then((data) => {
-        setState({ loading: false, error: null, data });
+        setState((current) => ({ loading: false, error: null, data: discover && page > 1 && current.data ? { ...data, results: [...current.data.results, ...data.results] } : data }));
       })
       .catch((error) => {
         if (error.name !== "AbortError") {
@@ -109,7 +133,7 @@ export default function EventList({
       });
 
     return () => controller.abort();
-  }, [page, pageSize, retry, scopeId, scopeName, when]);
+  }, [discover, page, pageSize, retry, scopeId, scopeName, when]);
 
   return (
     <section className="event-list" hidden={hidden}>
@@ -128,7 +152,7 @@ export default function EventList({
       ) : null}
       {state.data && state.data.results.length > 0 ? (
         <>
-          <ul className="ledger">
+          <ul className={discover ? "discover-event-ledger" : "ledger"}>
             {state.data.results.map((event) => (
               <EventItem
                 key={event.id}
@@ -136,10 +160,11 @@ export default function EventList({
                 showVenue={showVenue}
                 showCity={showCity}
                 omittedArtistId={omittedArtistId}
+                discover={discover}
               />
             ))}
           </ul>
-          <nav className="ledger-pagination" aria-label={`${heading} pagination`}>
+          {discover ? (state.data.pagination.next_page ? <button className="discover-load-more" type="button" disabled={state.loading} onClick={() => setPage(state.data.pagination.next_page)}>{state.loading ? "Loading…" : "Load more"}</button> : null) : <nav className="ledger-pagination" aria-label={`${heading} pagination`}>
             <button
               className="quiet-control"
               type="button"
@@ -161,7 +186,7 @@ export default function EventList({
             >
               Next
             </button>
-          </nav>
+          </nav>}
         </>
       ) : null}
     </section>

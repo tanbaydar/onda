@@ -5,6 +5,7 @@ import { fetchJson } from "../api.js";
 import EventList from "../components/EventList.jsx";
 import DiscoverSearch from "../components/DiscoverSearch.jsx";
 import CityDropdown from "../components/CityDropdown.jsx";
+import "../discover.css";
 
 export default function DiscoverPage() {
   const [view, setView] = useState("upcoming");
@@ -45,7 +46,6 @@ export default function DiscoverPage() {
 
   return (
     <main className="discover-page">
-      <h1>Discover</h1>
       {state.loading ? <p>Loading cities.</p> : null}
       {state.error ? (
         <>
@@ -60,9 +60,13 @@ export default function DiscoverPage() {
       ) : null}
       {selectedCity ? (
         <>
-          <CityDropdown cities={state.cities} selectedCity={selectedCity} onSelect={(cityId) => setSearchParams({ city_id: String(cityId) })} />
-          <h2 className="discover-city">{selectedCity.name}</h2>
-          <DiscoverSearch cityId={String(selectedCity.id)} />
+          <div className="discover-header-band">
+            <h1>{selectedCity.name}</h1>
+            <div className="discover-control-pair">
+              <CityDropdown cities={state.cities} selectedCity={selectedCity} label="City" hideLabel onSelect={(cityId) => setSearchParams({ city_id: String(cityId) })} />
+              <DiscoverSearch cityId={String(selectedCity.id)} cityName={selectedCity.name} />
+            </div>
+          </div>
           <nav className="section-tabs" aria-label="Event timeframe">
             <button type="button" className={view === "upcoming" ? "active" : ""} aria-pressed={view === "upcoming"} onClick={() => setView("upcoming")}>Upcoming</button>
             <button type="button" className={view === "recent" ? "active" : ""} aria-pressed={view === "recent"} onClick={() => setView("recent")}>Recent</button>
@@ -77,6 +81,7 @@ export default function DiscoverPage() {
             showCity={false}
             hidden={view !== "upcoming"}
             quietHeading
+            discover
           />
           <EventList
             key={`recent-${selectedCity.id}`}
@@ -89,6 +94,7 @@ export default function DiscoverPage() {
             showCity={false}
             hidden={view !== "recent"}
             quietHeading
+            discover
           />
         </>
       ) : null}

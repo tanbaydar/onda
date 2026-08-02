@@ -40,3 +40,12 @@ export function formatEventDateTime(eventDate, startTime) {
 
   return `${formattedDate} at ${displayHour}:${String(minute).padStart(2, "0")} ${period}`;
 }
+
+export function formatCompactEventDateTime(eventDate, startTime) {
+  const [year, month, day] = eventDate.split("-").map(Number);
+  const weekday = WEEKDAYS[new Date(Date.UTC(year, month - 1, day)).getUTCDay()].slice(0, 3);
+  const date = `${weekday} ${day} ${MONTHS[month - 1].slice(0, 3)}`;
+  if (!startTime) return date;
+  const [hour, minute] = startTime.split(":").map(Number);
+  return `${date}, ${hour % 12 || 12}:${String(minute).padStart(2, "0")} ${hour >= 12 ? "pm" : "am"}`;
+}
