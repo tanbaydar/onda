@@ -21,7 +21,7 @@ test("registration errors retain entered field values", () => {
   assert.notEqual(retainRegistrationValues(values), values);
 });
 
-test("auth errors use the ruled danger register and code entry is one field", () => {
+test("auth CSS and page sources contain the danger register and one code field per step", () => {
   const css = readFileSync(new URL("./styles.css", import.meta.url), "utf8");
   const verify = readFileSync(new URL("./pages/VerifyEmailPage.jsx", import.meta.url), "utf8");
   const reset = readFileSync(new URL("./pages/PasswordResetFormPage.jsx", import.meta.url), "utf8");

@@ -21,7 +21,7 @@ test("profile tab empty states are the ruled single lines", () => {
   assert.doesNotMatch(PROFILE_EMPTY_STATES.been + PROFILE_EMPTY_STATES.reviews, /\n/);
 });
 
-test("tab routes change only the content selection below the shared profile shell", () => {
+test("ProfilePage source places tab-selected content below the shared shell", () => {
   assert.equal(profileTabPath("Listener", "been"), "/u/listener");
   assert.equal(profileTabPath("Listener", "reviews"), "/u/listener/reviews");
   const source = readFileSync(new URL("./pages/ProfilePage.jsx", import.meta.url), "utf8");
@@ -29,13 +29,13 @@ test("tab routes change only the content selection below the shared profile shel
   assert.ok(source.indexOf('className="profile-tabs"') < source.indexOf('tab === "reviews" ? <ReviewsTab'));
 });
 
-test("profile surfaces never render the old default-avatar words", () => {
+test("profile page sources omit the retired default-avatar copy", () => {
   const profile = readFileSync(new URL("./pages/ProfilePage.jsx", import.meta.url), "utf8");
   const editor = readFileSync(new URL("./pages/EditProfilePage.jsx", import.meta.url), "utf8");
   assert.doesNotMatch(profile + editor, /Default avatar/);
 });
 
-test("profile reviews use the four ruled sort options without a native select", () => {
+test("ProfilePage source uses the four-option custom sort contract without select markup", () => {
   assert.deepEqual(PROFILE_REVIEW_SORTS.map(({ label }) => label), ["Newest", "Most liked", "Oldest", "Longest entry"]);
   const profile = readFileSync(new URL("./pages/ProfilePage.jsx", import.meta.url), "utf8");
   assert.doesNotMatch(profile, /<select/);

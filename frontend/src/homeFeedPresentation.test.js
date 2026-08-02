@@ -10,7 +10,7 @@ const pageSource = readFileSync(new URL("./pages/HomePage.jsx", import.meta.url)
 const excerptSource = readFileSync(new URL("./components/FeedReviewExcerpt.jsx", import.meta.url), "utf8");
 const styles = readFileSync(new URL("./styles.css", import.meta.url), "utf8");
 
-test("dense Home fixture renders all six feed activity types", () => {
+test("dense Home fixture and HomePage source cover all six feed activity types", () => {
   const types = [...new Set(dense.results.map(({ type }) => type))].sort();
   assert.deepEqual(types, Object.keys(HOME_FEED_VERBS).sort());
   for (const type of types) assert.match(pageSource, /HOME_FEED_VERBS\[item\.type\]/);
@@ -18,7 +18,7 @@ test("dense Home fixture renders all six feed activity types", () => {
   assert.ok(dense.results.some(({ target }) => target.event?.cover_image_url === null));
 });
 
-test("actor verbs survive name and object truncation", () => {
+test("Home feed CSS source keeps verbs inflexible beside truncating names", () => {
   assert.deepEqual(Object.values(HOME_FEED_VERBS), ["rated", "will be at", "followed", "liked a review of", "favorited", "favorited"]);
   assert.ok(dense.results.some(({ actor }) => actor.display_name.length > 35));
   assert.ok(dense.results.some(({ target }) => (target.event?.title ?? target.artist?.name ?? "").length > 60));
@@ -34,14 +34,14 @@ test("compact timestamps use the shared feed register", () => {
   assert.equal(compactRelativeTime("2026-07-12T12:00:00Z", now), "3w");
 });
 
-test("empty Home fixture uses one ruled line and one Discover affordance", () => {
+test("empty Home fixture and HomePage source contain the ruled empty affordance", () => {
   assert.deepEqual(empty.results, []);
   assert.equal(HOME_EMPTY_COPY, "No activity from people you follow yet.");
   assert.doesNotMatch(HOME_EMPTY_COPY, /\n/);
   assert.match(pageSource, /to="\/discover">Discover events<\/Link>/);
 });
 
-test("feed more is inline and only renders for measured truncation", () => {
+test("FeedReviewExcerpt and CSS sources gate an inline more marker on measurement", () => {
   assert.match(excerptSource, /probe\.scrollHeight <= maxHeight/);
   assert.match(excerptSource, /rendered\.truncated \? <>… <small>more<\/small><\/> : null/);
   assert.doesNotMatch(styles, /\.home-feed-review small\{[^}]*position:/);

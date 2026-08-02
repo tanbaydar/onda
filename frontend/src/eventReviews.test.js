@@ -8,7 +8,7 @@ const circle = readFileSync(new URL("./components/YourCircle.jsx", import.meta.u
 const publicReviews = readFileSync(new URL("./components/PublicReviews.jsx", import.meta.url), "utf8");
 const fixture = JSON.parse(readFileSync(new URL("../design-fixtures/event-past-dense.json", import.meta.url)));
 
-test("event review surfaces share the attributed row anatomy", () => {
+test("event review source files all compose EventReviewRow", () => {
   assert.match(page, /<EventReviewRow/);
   assert.match(circle, /<EventReviewRow/);
   assert.match(publicReviews, /<EventReviewRow/);
@@ -17,7 +17,7 @@ test("event review surfaces share the attributed row anatomy", () => {
   assert.match(row, /event-review-handle/);
 });
 
-test("event review ratings render glyphs rather than rating prose", () => {
+test("EventReviewRow source composes RatingStars and omits rating prose", () => {
   assert.match(row, /<RatingStars className="event-review-stars" value=\{rating\}/);
   assert.doesNotMatch(row + circle + publicReviews, /Rating:\s*\{/);
   assert.match(row, /event-review-stars/);
@@ -29,8 +29,8 @@ test("event review fixtures cover image and initials avatar paths", () => {
   assert.ok(avatars.some((avatar) => avatar === null));
 });
 
-test("event review sort reuses the custom menu with its existing two-option contract", () => {
-  assert.match(publicReviews, /<ProfileSortMenu/);
+test("PublicReviews source composes SortMenu with the two-option event contract", () => {
+  assert.match(publicReviews, /<SortMenu/);
   assert.match(publicReviews, /value: "most_liked", label: "Most liked"/);
   assert.match(publicReviews, /value: "newest", label: "Newest"/);
   assert.doesNotMatch(page + circle + publicReviews, /<select/);

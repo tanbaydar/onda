@@ -24,7 +24,7 @@ test("keyboard arrows retain half-star steps and clamp to the slider range", () 
   assert.equal(keyboardStep(5, "ArrowRight"), 5);
 });
 
-test("shared StarInput retains Enter commit and pointer capture interaction", () => {
+test("StarInput source wires Enter commit and pointer-capture handlers", () => {
   const source = readFileSync(new URL("./components/StarInput.jsx", import.meta.url), "utf8");
   assert.match(source, /event\.key === "Enter"/);
   assert.match(source, /onCommit\(numericValue\)/);
@@ -34,12 +34,12 @@ test("shared StarInput retains Enter commit and pointer capture interaction", ()
   assert.match(source, /role="slider"/);
 });
 
-test("the effective target remains 44px around each 32px glyph", () => {
+test("StarInput CSS source declares a 44px target around each 32px glyph", () => {
   const css = readFileSync(new URL("./styles.css", import.meta.url), "utf8");
   assert.match(css, /\.star-input-glyph\{[^}]*width:44px;height:44px;padding:var\(--sp-6\)[^}]*font-size:32px/);
 });
 
-test("half fills clip inside the visible one-em glyph and every rating surface shares it", () => {
+test("rating CSS and surface sources share the one-em clipped glyph implementation", () => {
   const css = readFileSync(new URL("./styles.css", import.meta.url), "utf8");
   const starInput = readFileSync(new URL("./components/StarInput.jsx", import.meta.url), "utf8");
   const review = readFileSync(new URL("./components/EventReviewRow.jsx", import.meta.url), "utf8");

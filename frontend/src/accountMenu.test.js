@@ -5,7 +5,7 @@ import test from "node:test";
 const component = readFileSync(new URL("./components/AccountMenu.jsx", import.meta.url), "utf8");
 const app = readFileSync(new URL("./App.jsx", import.meta.url), "utf8");
 
-test("account menu opens from the username and closes by selection, Escape, or outside click", () => {
+test("AccountMenu source wires disclosure, Escape, outside-click, and selection handlers", () => {
   assert.match(component, /aria-expanded=\{open\}/);
   assert.match(component, /setOpen\(\(current\) => !current\)/);
   assert.match(component, /event\.key === "Escape"/);
@@ -16,13 +16,13 @@ test("account menu opens from the username and closes by selection, Escape, or o
   assert.equal((component.match(/role="menuitem"/g) ?? []).length, 2);
 });
 
-test("logout uses the shipped endpoint, clears session, and lands on guest Discover", () => {
+test("App source wires logout to the shipped endpoint, session clear, and guest destination", () => {
   assert.match(app, /fetchWithCsrf\("\/api\/auth\/logout\/"/);
   assert.match(app, /setSession\(\{ loading: false, error: null, user: null \}\)/);
   assert.match(app, /navigate\(GUEST_DISCOVER, \{ replace: true \}\)/);
 });
 
-test("guest header has no account menu", () => {
+test("App source gates AccountMenu to signed-in sessions and exposes guest auth links", () => {
   assert.match(app, /session\.user \? \(\s*<AccountMenu/);
   assert.doesNotMatch(component, /Register|Log in/);
   assert.match(app, /className="guest-register" to="\/register">Register<\/Link>/);

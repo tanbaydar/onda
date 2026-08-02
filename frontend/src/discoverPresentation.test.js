@@ -7,9 +7,10 @@ import { formatCompactEventDateTime } from "./formatEventDateTime.js";
 
 const page = readFileSync(new URL("./pages/DiscoverPage.jsx", import.meta.url), "utf8");
 const eventList = readFileSync(new URL("./components/EventList.jsx", import.meta.url), "utf8");
+const eventRow = readFileSync(new URL("./components/DiscoverEventRow.jsx", import.meta.url), "utf8");
 const styles = readFileSync(new URL("./discover.css", import.meta.url), "utf8");
 
-test("Discover title is the selected city and the old heading is absent", () => {
+test("DiscoverPage source binds the city name as its only h1", () => {
   assert.match(page, /<h1>\{selectedCity\.name\}<\/h1>/);
   assert.doesNotMatch(page, /<h1>Discover<\/h1>/);
 });
@@ -26,15 +27,14 @@ test("Discover lineup keeps listing order and collapses after two names", () => 
   assert.equal(compactLineup([], null), "");
 });
 
-test("Discover rows use compact dates and contain no prose labels", () => {
+test("DiscoverEventRow source uses compact dates and contains no prose labels", () => {
   assert.equal(formatCompactEventDateTime("2026-08-06", "22:00:00"), "Thu 6 Aug, 10:00 pm");
-  const branchStart = eventList.indexOf("if (discover)");
-  const branch = eventList.slice(branchStart, eventList.indexOf("\n  return (", branchStart));
-  assert.doesNotMatch(branch, /Venue:|Artists:/);
-  assert.match(eventList, /discover-event-row/);
+  assert.doesNotMatch(eventRow, /Venue:|Artists:/);
+  assert.match(eventRow, /discover-event-row/);
+  assert.match(eventList, /<DiscoverEventRow/);
 });
 
-test("Discover uses the ruled tab and two-line title registers", () => {
+test("DiscoverPage and CSS sources contain the ruled tabs and two-line title register", () => {
   assert.match(page, /className="section-tabs"/);
   assert.match(styles, /\.discover-event-title\{[^}]*-webkit-line-clamp:2/);
   assert.match(styles, /\.discover-page>\.section-tabs/);

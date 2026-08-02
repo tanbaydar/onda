@@ -12,7 +12,7 @@ test("follow control exposes all four ruled states through one label path", () =
   assert.equal(followControlLabel({ outgoing_status: "pending", follow_action: null }), "Requested");
 });
 
-test("all follow states share the same fixed control dimensions", () => {
+test("follow-control CSS source fixes one box size for every state", () => {
   const css = readFileSync(new URL("./styles.css", import.meta.url), "utf8");
   const rule = css.match(/\.profile-follow-control\{([^}]+)\}/)?.[1] ?? "";
   assert.match(rule, /min-width:150px/);

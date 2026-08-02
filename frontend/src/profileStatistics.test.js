@@ -13,7 +13,7 @@ test("dense profile fixture carries four-digit identity and strip counts", () =>
   }
 });
 
-test("profile histogram has one fixed data-register size at both widths", () => {
+test("profile histogram CSS source declares one placement size outside media overrides", () => {
   const occurrences = css.match(/\.rating-histogram\.profile-stat-histogram\{width:104px;flex:0 0 104px\}/g) ?? [];
   assert.equal(occurrences.length, 1);
   assert.match(css, /\.profile-stat-histogram \.hist-bars\{height:30px\}/);

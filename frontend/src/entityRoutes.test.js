@@ -32,7 +32,7 @@ test("all search entity links use the shared canonical builder", () => {
   assert.equal(entityResultPath("people", { username: "listener" }), "/u/listener");
 });
 
-test("detail routes retain legacy entries and canonical SPA entries", () => {
+test("App source retains legacy and canonical detail route declarations", () => {
   const app = readFileSync(new URL("./App.jsx", import.meta.url), "utf8");
   for (const path of ["/e/:eventKey", "/v/:venueKey", "/a/:artistKey", "/events/:eventKey", "/venues/:venueKey", "/artists/:artistKey"]) {
     assert.match(app, new RegExp(`path="${path.replaceAll("/", "\\/")}"`));
@@ -49,7 +49,7 @@ test("bare, stale, and legacy paths replace while canonical paths remain", () =>
   assert.equal(canonicalReplacement("/e/7", { id: 7, title: "🎉" }, eventPath), null);
 });
 
-test("named internal-link surfaces contain no legacy entity link generation", () => {
+test("named internal-link source files contain no legacy entity path literals", () => {
   for (const file of [
     "./components/EventList.jsx", "./components/ProfileDiaryRow.jsx", "./components/SearchResults.jsx",
     "./homeFeedPresentation.js", "./pages/ActivityPage.jsx", "./pages/EventPage.jsx", "./pages/ProfilePage.jsx",
