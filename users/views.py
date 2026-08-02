@@ -108,6 +108,14 @@ def _profile_identity(user):
         "display_name": user.display_name,
         "avatar": user.avatar,
         "bio": user.bio,
+        "follower_count": Follow.objects.filter(
+            followee=user,
+            status=FollowStatus.APPROVED,
+        ).count(),
+        "following_count": Follow.objects.filter(
+            follower=user,
+            status=FollowStatus.APPROVED,
+        ).count(),
         "home_city": (
             {
                 "id": city.id,

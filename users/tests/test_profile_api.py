@@ -108,18 +108,37 @@ class ProfileApiContractTests(TestCase):
         self.private_user.home_city = self.boston
         self.private_user.save(update_fields=("avatar", "bio", "home_city"))
         self.entry(self.private_user, self.events[0])
+        self.approve(self.follower, self.private_user)
+        self.approve(self.private_user, self.public_user)
 
         response = self.client.get(f"/api/users/{self.private_user.username}/")
+        statistics = self.client.get(
+            f"/api/users/{self.private_user.username}/stats/"
+        )
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(set(response.json()), {"profile", "access"})
         self.assertEqual(response.json()["access"], "stub")
         self.assertEqual(
             set(response.json()["profile"]),
-            {"id", "username", "display_name", "avatar", "bio", "home_city"},
+            {
+                "id",
+                "username",
+                "display_name",
+                "avatar",
+                "bio",
+                "home_city",
+                "follower_count",
+                "following_count",
+            },
         )
+        self.assertEqual(response.json()["profile"]["follower_count"], 1)
+        self.assertEqual(response.json()["profile"]["following_count"], 1)
+        self.assertEqual(statistics.status_code, 403)
+        self.assertNotIn("followers", response.json())
+        self.assertNotIn("following", response.json())
         serialized = json.dumps(response.json())
-        for forbidden in ("email", "is_private", "followers", "following", "statistics", "diary"):
+        for forbidden in ("email", "is_private", "statistics", "diary"):
             self.assertNotIn(forbidden, serialized)
 
     def test_public_approved_follower_and_owner_access_are_named(self):
@@ -139,6 +158,8 @@ class ProfileApiContractTests(TestCase):
         self.assertEqual(owner.json()["account"], {"is_private": True})
         self.assertNotIn("account", public.json())
         self.assertNotIn("relationship", owner.json())
+        self.assertEqual(follower.json()["profile"]["follower_count"], 1)
+        self.assertEqual(owner.json()["profile"]["follower_count"], 1)
 
     def test_relationship_capabilities_cover_follow_request_withdraw_and_follows_you(self):
         inverse = self.approve(self.public_user, self.viewer)
