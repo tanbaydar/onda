@@ -42,6 +42,9 @@ def _nulls():
         "event_title": Value(None, output_field=CharField()),
         "event_date": Value(None, output_field=DateField()),
         "event_start_time": Value(None, output_field=TimeField()),
+        "event_cover_image_url": Value(None, output_field=CharField()),
+        "event_venue_name": Value(None, output_field=CharField()),
+        "event_city_name": Value(None, output_field=CharField()),
         "rating": Value(None, output_field=DecimalField(max_digits=2, decimal_places=1)),
         "review_id": Value(None, output_field=IntegerField()),
         "review_body": Value(None, output_field=CharField()),
@@ -59,8 +62,9 @@ def _nulls():
 
 FEED_FIELDS = (
     "activity_type", "activity_at", "source_key",
-    "actor_id", "actor_username", "actor_display_name",
+    "actor_id", "actor_username", "actor_display_name", "actor_avatar",
     "event_id", "event_title", "event_date", "event_start_time",
+    "event_cover_image_url", "event_venue_name", "event_city_name",
     "rating", "review_id", "review_body", "review_author_id",
     "review_author_username", "review_author_display_name",
     "target_user_id", "target_username", "target_display_name",
@@ -115,7 +119,7 @@ def home_feed_rows(viewer, *, at, cursor=None, limit=21):
     ).values("followee_id")
 
     been_nulls = _nulls()
-    for key in ("event_id", "event_title", "event_date", "event_start_time", "rating", "review_id", "review_body"):
+    for key in ("event_id", "event_title", "event_date", "event_start_time", "event_cover_image_url", "event_venue_name", "event_city_name", "rating", "review_id", "review_body"):
         been_nulls.pop(key)
     been = DiaryEntry.objects.visible_to(viewer).filter(
         user_id__in=followees,
@@ -128,9 +132,13 @@ def home_feed_rows(viewer, *, at, cursor=None, limit=21):
         actor_id=F("user_id"),
         actor_username=F("user__username"),
         actor_display_name=F("user__display_name"),
+        actor_avatar=F("user__avatar"),
         event_title=F("event__title"),
         event_date=F("event__event_date"),
         event_start_time=F("event__start_time"),
+        event_cover_image_url=F("event__cover_image_url"),
+        event_venue_name=F("event__venue__name"),
+        event_city_name=F("event__venue__city__name"),
         review_id=F("review__id"),
         review_body=F("review__body"),
         **been_nulls,
@@ -152,6 +160,7 @@ def home_feed_rows(viewer, *, at, cursor=None, limit=21):
         actor_id=F("follower_id"),
         actor_username=F("follower__username"),
         actor_display_name=F("follower__display_name"),
+        actor_avatar=F("follower__avatar"),
         target_user_id=F("followee_id"),
         target_username=F("followee__username"),
         target_display_name=F("followee__display_name"),
@@ -162,6 +171,7 @@ def home_feed_rows(viewer, *, at, cursor=None, limit=21):
     like_nulls = _nulls()
     for key in (
         "event_id", "event_title", "event_date", "event_start_time",
+        "event_cover_image_url", "event_venue_name", "event_city_name",
         "review_id", "review_body", "review_author_id",
         "review_author_username", "review_author_display_name",
     ):
@@ -178,10 +188,14 @@ def home_feed_rows(viewer, *, at, cursor=None, limit=21):
         actor_id=F("user_id"),
         actor_username=F("user__username"),
         actor_display_name=F("user__display_name"),
+        actor_avatar=F("user__avatar"),
         event_id=F("review__entry__event_id"),
         event_title=F("review__entry__event__title"),
         event_date=F("review__entry__event__event_date"),
         event_start_time=F("review__entry__event__start_time"),
+        event_cover_image_url=F("review__entry__event__cover_image_url"),
+        event_venue_name=F("review__entry__event__venue__name"),
+        event_city_name=F("review__entry__event__venue__city__name"),
         review_body=F("review__body"),
         review_author_id=F("review__entry__user_id"),
         review_author_username=F("review__entry__user__username"),
@@ -190,7 +204,7 @@ def home_feed_rows(viewer, *, at, cursor=None, limit=21):
     ).values(*FEED_FIELDS)
 
     wbt_nulls = _nulls()
-    for key in ("event_id", "event_title", "event_date", "event_start_time"):
+    for key in ("event_id", "event_title", "event_date", "event_start_time", "event_cover_image_url", "event_venue_name", "event_city_name"):
         wbt_nulls.pop(key)
     active_events = active_wbt_event_predicate(at)
     will_be_there = WillBeThere.objects.visible_to(
@@ -206,14 +220,18 @@ def home_feed_rows(viewer, *, at, cursor=None, limit=21):
         actor_id=F("user_id"),
         actor_username=F("user__username"),
         actor_display_name=F("user__display_name"),
+        actor_avatar=F("user__avatar"),
         event_title=F("event__title"),
         event_date=F("event__event_date"),
         event_start_time=F("event__start_time"),
+        event_cover_image_url=F("event__cover_image_url"),
+        event_venue_name=F("event__venue__name"),
+        event_city_name=F("event__venue__city__name"),
         **wbt_nulls,
     ).values(*FEED_FIELDS)
 
     favorite_event_nulls = _nulls()
-    for key in ("event_id", "event_title", "event_date", "event_start_time"):
+    for key in ("event_id", "event_title", "event_date", "event_start_time", "event_cover_image_url", "event_venue_name", "event_city_name"):
         favorite_event_nulls.pop(key)
     favorite_events = FavoriteEvent.objects.filter(
         user_id__in=followees,
@@ -224,8 +242,9 @@ def home_feed_rows(viewer, *, at, cursor=None, limit=21):
         activity_type=Value("favorite_event", output_field=CharField()),
         activity_at=F("added_at"),
         source_key=Concat(_source_part(F("user_id")), Value(":"), _source_part(F("event_id"))),
-        actor_id=F("user_id"), actor_username=F("user__username"), actor_display_name=F("user__display_name"),
+        actor_id=F("user_id"), actor_username=F("user__username"), actor_display_name=F("user__display_name"), actor_avatar=F("user__avatar"),
         event_title=F("event__title"), event_date=F("event__event_date"), event_start_time=F("event__start_time"),
+        event_cover_image_url=F("event__cover_image_url"), event_venue_name=F("event__venue__name"), event_city_name=F("event__venue__city__name"),
         **favorite_event_nulls,
     ).values(*FEED_FIELDS)
 
@@ -238,7 +257,7 @@ def home_feed_rows(viewer, *, at, cursor=None, limit=21):
         activity_type=Value("favorite_artist", output_field=CharField()),
         activity_at=F("added_at"),
         source_key=Concat(_source_part(F("user_id")), Value(":"), _source_part(F("artist_id"))),
-        actor_id=F("user_id"), actor_username=F("user__username"), actor_display_name=F("user__display_name"),
+        actor_id=F("user_id"), actor_username=F("user__username"), actor_display_name=F("user__display_name"), actor_avatar=F("user__avatar"),
         artist_name=F("artist__name"), artist_image_url=F("artist__image_url"),
         **favorite_artist_nulls,
     ).values(*FEED_FIELDS)
@@ -262,6 +281,7 @@ def serialize_feed_row(row):
             "id": row["actor_id"],
             "username": row["actor_username"],
             "display_name": row["actor_display_name"],
+            "avatar": row["actor_avatar"],
         },
         "target": {},
         "context": None,
@@ -284,6 +304,11 @@ def serialize_feed_row(row):
         "title": row["event_title"],
         "event_date": row["event_date"].isoformat(),
         "start_time": row["event_start_time"].isoformat() if row["event_start_time"] else None,
+        "cover_image_url": row["event_cover_image_url"],
+        "venue": {
+            "name": row["event_venue_name"],
+            "city": {"name": row["event_city_name"]},
+        },
     }
     item["target"]["event"] = event
     if row["activity_type"] in ("will_be_there", "favorite_event"):

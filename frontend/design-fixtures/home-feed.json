@@ -6,7 +6,8 @@
       "actor": {
         "id": 15,
         "username": "design.fixture.actor",
-        "display_name": "A Deliberately Long Public Design Fixture Name"
+        "display_name": "A Deliberately Long Public Design Fixture Name",
+        "avatar": null
       },
       "target": {
         "artist": {
@@ -23,14 +24,22 @@
       "actor": {
         "id": 15,
         "username": "design.fixture.actor",
-        "display_name": "A Deliberately Long Public Design Fixture Name"
+        "display_name": "A Deliberately Long Public Design Fixture Name",
+        "avatar": null
       },
       "target": {
         "event": {
           "id": 1629,
           "title": "Locals Night",
           "event_date": "2026-08-01",
-          "start_time": "22:30:00"
+          "start_time": "22:30:00",
+          "cover_image_url": "https://images.ra.co/5ffdadcc47b2da94f0397d36980df12751a417c9.jpg",
+          "venue": {
+            "name": "BASEMENT",
+            "city": {
+              "name": "New York City"
+            }
+          }
         }
       },
       "context": null
@@ -41,14 +50,22 @@
       "actor": {
         "id": 15,
         "username": "design.fixture.actor",
-        "display_name": "A Deliberately Long Public Design Fixture Name"
+        "display_name": "A Deliberately Long Public Design Fixture Name",
+        "avatar": null
       },
       "target": {
         "event": {
           "id": 1629,
           "title": "Locals Night",
           "event_date": "2026-08-01",
-          "start_time": "22:30:00"
+          "start_time": "22:30:00",
+          "cover_image_url": "https://images.ra.co/5ffdadcc47b2da94f0397d36980df12751a417c9.jpg",
+          "venue": {
+            "name": "BASEMENT",
+            "city": {
+              "name": "New York City"
+            }
+          }
         }
       },
       "context": null
@@ -59,14 +76,22 @@
       "actor": {
         "id": 15,
         "username": "design.fixture.actor",
-        "display_name": "A Deliberately Long Public Design Fixture Name"
+        "display_name": "A Deliberately Long Public Design Fixture Name",
+        "avatar": null
       },
       "target": {
         "event": {
           "id": 2174,
           "title": "Martin Garrix Afterparty",
           "event_date": "2026-06-19",
-          "start_time": "22:00:00"
+          "start_time": "22:00:00",
+          "cover_image_url": null,
+          "venue": {
+            "name": "Big Night Live",
+            "city": {
+              "name": "Boston"
+            }
+          }
         }
       },
       "context": {
@@ -83,7 +108,8 @@
       "actor": {
         "id": 15,
         "username": "design.fixture.actor",
-        "display_name": "A Deliberately Long Public Design Fixture Name"
+        "display_name": "A Deliberately Long Public Design Fixture Name",
+        "avatar": null
       },
       "target": {
         "user": {

@@ -6,14 +6,22 @@
       "actor": {
         "id": 27,
         "username": "design.dense.10",
-        "display_name": "Dense Fixture Person 10"
+        "display_name": "Dense Fixture Person 10",
+        "avatar": null
       },
       "target": {
         "event": {
           "id": 1629,
           "title": "Locals Night",
           "event_date": "2026-08-01",
-          "start_time": "22:30:00"
+          "start_time": "22:30:00",
+          "cover_image_url": "https://images.ra.co/5ffdadcc47b2da94f0397d36980df12751a417c9.jpg",
+          "venue": {
+            "name": "BASEMENT",
+            "city": {
+              "name": "New York City"
+            }
+          }
         }
       },
       "context": null
@@ -24,14 +32,22 @@
       "actor": {
         "id": 26,
         "username": "design.dense.09",
-        "display_name": "Dense Fixture Person 09"
+        "display_name": "Dense Fixture Person 09",
+        "avatar": null
       },
       "target": {
         "event": {
           "id": 1629,
           "title": "Locals Night",
           "event_date": "2026-08-01",
-          "start_time": "22:30:00"
+          "start_time": "22:30:00",
+          "cover_image_url": "https://images.ra.co/5ffdadcc47b2da94f0397d36980df12751a417c9.jpg",
+          "venue": {
+            "name": "BASEMENT",
+            "city": {
+              "name": "New York City"
+            }
+          }
         }
       },
       "context": null
@@ -42,14 +58,22 @@
       "actor": {
         "id": 25,
         "username": "design.dense.08",
-        "display_name": "Dense Fixture Person 08"
+        "display_name": "Dense Fixture Person 08",
+        "avatar": null
       },
       "target": {
         "event": {
           "id": 1629,
           "title": "Locals Night",
           "event_date": "2026-08-01",
-          "start_time": "22:30:00"
+          "start_time": "22:30:00",
+          "cover_image_url": "https://images.ra.co/5ffdadcc47b2da94f0397d36980df12751a417c9.jpg",
+          "venue": {
+            "name": "BASEMENT",
+            "city": {
+              "name": "New York City"
+            }
+          }
         }
       },
       "context": null
@@ -60,14 +84,22 @@
       "actor": {
         "id": 24,
         "username": "design.dense.07",
-        "display_name": "Dense Fixture Person 07"
+        "display_name": "Dense Fixture Person 07",
+        "avatar": null
       },
       "target": {
         "event": {
           "id": 1629,
           "title": "Locals Night",
           "event_date": "2026-08-01",
-          "start_time": "22:30:00"
+          "start_time": "22:30:00",
+          "cover_image_url": "https://images.ra.co/5ffdadcc47b2da94f0397d36980df12751a417c9.jpg",
+          "venue": {
+            "name": "BASEMENT",
+            "city": {
+              "name": "New York City"
+            }
+          }
         }
       },
       "context": null
@@ -78,14 +110,22 @@
       "actor": {
         "id": 23,
         "username": "design.dense.06",
-        "display_name": "Dense Fixture Person 06"
+        "display_name": "Dense Fixture Person 06",
+        "avatar": null
       },
       "target": {
         "event": {
           "id": 1629,
           "title": "Locals Night",
           "event_date": "2026-08-01",
-          "start_time": "22:30:00"
+          "start_time": "22:30:00",
+          "cover_image_url": "https://images.ra.co/5ffdadcc47b2da94f0397d36980df12751a417c9.jpg",
+          "venue": {
+            "name": "BASEMENT",
+            "city": {
+              "name": "New York City"
+            }
+          }
         }
       },
       "context": null
@@ -96,14 +136,22 @@
       "actor": {
         "id": 22,
         "username": "design.dense.05",
-        "display_name": "Dense Fixture Person 05"
+        "display_name": "Dense Fixture Person 05",
+        "avatar": null
       },
       "target": {
         "event": {
           "id": 1629,
           "title": "Locals Night",
           "event_date": "2026-08-01",
-          "start_time": "22:30:00"
+          "start_time": "22:30:00",
+          "cover_image_url": "https://images.ra.co/5ffdadcc47b2da94f0397d36980df12751a417c9.jpg",
+          "venue": {
+            "name": "BASEMENT",
+            "city": {
+              "name": "New York City"
+            }
+          }
         }
       },
       "context": null
@@ -114,14 +162,22 @@
       "actor": {
         "id": 21,
         "username": "design.dense.04",
-        "display_name": "Dense Fixture Person 04"
+        "display_name": "Dense Fixture Person 04",
+        "avatar": null
       },
       "target": {
         "event": {
           "id": 1629,
           "title": "Locals Night",
           "event_date": "2026-08-01",
-          "start_time": "22:30:00"
+          "start_time": "22:30:00",
+          "cover_image_url": "https://images.ra.co/5ffdadcc47b2da94f0397d36980df12751a417c9.jpg",
+          "venue": {
+            "name": "BASEMENT",
+            "city": {
+              "name": "New York City"
+            }
+          }
         }
       },
       "context": null
@@ -132,14 +188,22 @@
       "actor": {
         "id": 20,
         "username": "design.dense.03",
-        "display_name": "Dense Fixture Person 03"
+        "display_name": "Dense Fixture Person 03",
+        "avatar": null
       },
       "target": {
         "event": {
           "id": 1629,
           "title": "Locals Night",
           "event_date": "2026-08-01",
-          "start_time": "22:30:00"
+          "start_time": "22:30:00",
+          "cover_image_url": "https://images.ra.co/5ffdadcc47b2da94f0397d36980df12751a417c9.jpg",
+          "venue": {
+            "name": "BASEMENT",
+            "city": {
+              "name": "New York City"
+            }
+          }
         }
       },
       "context": null
@@ -150,14 +214,22 @@
       "actor": {
         "id": 19,
         "username": "design.dense.02",
-        "display_name": "Dense Fixture Person 02"
+        "display_name": "Dense Fixture Person 02",
+        "avatar": null
       },
       "target": {
         "event": {
           "id": 1629,
           "title": "Locals Night",
           "event_date": "2026-08-01",
-          "start_time": "22:30:00"
+          "start_time": "22:30:00",
+          "cover_image_url": "https://images.ra.co/5ffdadcc47b2da94f0397d36980df12751a417c9.jpg",
+          "venue": {
+            "name": "BASEMENT",
+            "city": {
+              "name": "New York City"
+            }
+          }
         }
       },
       "context": null
@@ -168,14 +240,22 @@
       "actor": {
         "id": 18,
         "username": "design.dense.01",
-        "display_name": "Dense Fixture With A Very Expansive Display Name"
+        "display_name": "Dense Fixture With A Very Expansive Display Name",
+        "avatar": null
       },
       "target": {
         "event": {
           "id": 1629,
           "title": "Locals Night",
           "event_date": "2026-08-01",
-          "start_time": "22:30:00"
+          "start_time": "22:30:00",
+          "cover_image_url": "https://images.ra.co/5ffdadcc47b2da94f0397d36980df12751a417c9.jpg",
+          "venue": {
+            "name": "BASEMENT",
+            "city": {
+              "name": "New York City"
+            }
+          }
         }
       },
       "context": null
@@ -186,14 +266,22 @@
       "actor": {
         "id": 29,
         "username": "design.dense.12",
-        "display_name": "Dense Fixture Person 12"
+        "display_name": "Dense Fixture Person 12",
+        "avatar": null
       },
       "target": {
         "event": {
           "id": 2174,
           "title": "Martin Garrix Afterparty",
           "event_date": "2026-06-19",
-          "start_time": "22:00:00"
+          "start_time": "22:00:00",
+          "cover_image_url": null,
+          "venue": {
+            "name": "Big Night Live",
+            "city": {
+              "name": "Boston"
+            }
+          }
         },
         "review": {
           "id": 1,
@@ -213,14 +301,22 @@
       "actor": {
         "id": 29,
         "username": "design.dense.12",
-        "display_name": "Dense Fixture Person 12"
+        "display_name": "Dense Fixture Person 12",
+        "avatar": null
       },
       "target": {
         "event": {
           "id": 2174,
           "title": "Martin Garrix Afterparty",
           "event_date": "2026-06-19",
-          "start_time": "22:00:00"
+          "start_time": "22:00:00",
+          "cover_image_url": null,
+          "venue": {
+            "name": "Big Night Live",
+            "city": {
+              "name": "Boston"
+            }
+          }
         },
         "review": {
           "id": 7,
@@ -240,14 +336,22 @@
       "actor": {
         "id": 29,
         "username": "design.dense.12",
-        "display_name": "Dense Fixture Person 12"
+        "display_name": "Dense Fixture Person 12",
+        "avatar": null
       },
       "target": {
         "event": {
           "id": 2174,
           "title": "Martin Garrix Afterparty",
           "event_date": "2026-06-19",
-          "start_time": "22:00:00"
+          "start_time": "22:00:00",
+          "cover_image_url": null,
+          "venue": {
+            "name": "Big Night Live",
+            "city": {
+              "name": "Boston"
+            }
+          }
         },
         "review": {
           "id": 6,
@@ -267,14 +371,22 @@
       "actor": {
         "id": 29,
         "username": "design.dense.12",
-        "display_name": "Dense Fixture Person 12"
+        "display_name": "Dense Fixture Person 12",
+        "avatar": null
       },
       "target": {
         "event": {
           "id": 2174,
           "title": "Martin Garrix Afterparty",
           "event_date": "2026-06-19",
-          "start_time": "22:00:00"
+          "start_time": "22:00:00",
+          "cover_image_url": null,
+          "venue": {
+            "name": "Big Night Live",
+            "city": {
+              "name": "Boston"
+            }
+          }
         },
         "review": {
           "id": 5,
@@ -294,14 +406,22 @@
       "actor": {
         "id": 29,
         "username": "design.dense.12",
-        "display_name": "Dense Fixture Person 12"
+        "display_name": "Dense Fixture Person 12",
+        "avatar": null
       },
       "target": {
         "event": {
           "id": 2174,
           "title": "Martin Garrix Afterparty",
           "event_date": "2026-06-19",
-          "start_time": "22:00:00"
+          "start_time": "22:00:00",
+          "cover_image_url": null,
+          "venue": {
+            "name": "Big Night Live",
+            "city": {
+              "name": "Boston"
+            }
+          }
         },
         "review": {
           "id": 4,
@@ -321,14 +441,22 @@
       "actor": {
         "id": 29,
         "username": "design.dense.12",
-        "display_name": "Dense Fixture Person 12"
+        "display_name": "Dense Fixture Person 12",
+        "avatar": null
       },
       "target": {
         "event": {
           "id": 2174,
           "title": "Martin Garrix Afterparty",
           "event_date": "2026-06-19",
-          "start_time": "22:00:00"
+          "start_time": "22:00:00",
+          "cover_image_url": null,
+          "venue": {
+            "name": "Big Night Live",
+            "city": {
+              "name": "Boston"
+            }
+          }
         },
         "review": {
           "id": 3,
@@ -348,14 +476,22 @@
       "actor": {
         "id": 28,
         "username": "design.dense.11",
-        "display_name": "Dense Fixture Person 11"
+        "display_name": "Dense Fixture Person 11",
+        "avatar": null
       },
       "target": {
         "event": {
           "id": 2174,
           "title": "Martin Garrix Afterparty",
           "event_date": "2026-06-19",
-          "start_time": "22:00:00"
+          "start_time": "22:00:00",
+          "cover_image_url": null,
+          "venue": {
+            "name": "Big Night Live",
+            "city": {
+              "name": "Boston"
+            }
+          }
         },
         "review": {
           "id": 1,
@@ -375,14 +511,22 @@
       "actor": {
         "id": 28,
         "username": "design.dense.11",
-        "display_name": "Dense Fixture Person 11"
+        "display_name": "Dense Fixture Person 11",
+        "avatar": null
       },
       "target": {
         "event": {
           "id": 2174,
           "title": "Martin Garrix Afterparty",
           "event_date": "2026-06-19",
-          "start_time": "22:00:00"
+          "start_time": "22:00:00",
+          "cover_image_url": null,
+          "venue": {
+            "name": "Big Night Live",
+            "city": {
+              "name": "Boston"
+            }
+          }
         },
         "review": {
           "id": 6,
@@ -402,14 +546,22 @@
       "actor": {
         "id": 28,
         "username": "design.dense.11",
-        "display_name": "Dense Fixture Person 11"
+        "display_name": "Dense Fixture Person 11",
+        "avatar": null
       },
       "target": {
         "event": {
           "id": 2174,
           "title": "Martin Garrix Afterparty",
           "event_date": "2026-06-19",
-          "start_time": "22:00:00"
+          "start_time": "22:00:00",
+          "cover_image_url": null,
+          "venue": {
+            "name": "Big Night Live",
+            "city": {
+              "name": "Boston"
+            }
+          }
         },
         "review": {
           "id": 5,
@@ -429,14 +581,22 @@
       "actor": {
         "id": 28,
         "username": "design.dense.11",
-        "display_name": "Dense Fixture Person 11"
+        "display_name": "Dense Fixture Person 11",
+        "avatar": null
       },
       "target": {
         "event": {
           "id": 2174,
           "title": "Martin Garrix Afterparty",
           "event_date": "2026-06-19",
-          "start_time": "22:00:00"
+          "start_time": "22:00:00",
+          "cover_image_url": null,
+          "venue": {
+            "name": "Big Night Live",
+            "city": {
+              "name": "Boston"
+            }
+          }
         },
         "review": {
           "id": 4,
@@ -446,6 +606,100 @@
             "username": "design.dense.02",
             "display_name": "Dense Fixture Person 02"
           }
+        }
+      },
+      "context": null
+    },
+    {
+      "type": "favorite_artist",
+      "activity_at": "2026-07-31T23:40:18.328541Z",
+      "actor": {
+        "id": 15,
+        "username": "design.fixture.actor",
+        "display_name": "A Deliberately Long Public Design Fixture Name",
+        "avatar": null
+      },
+      "target": {
+        "artist": {
+          "id": 2622,
+          "name": "Holden Federico Presents an Intentionally Long Artist Object Name for Feed Truncation QA",
+          "image_url": null
+        }
+      },
+      "context": null
+    },
+    {
+      "type": "favorite_event",
+      "activity_at": "2026-07-31T23:40:18.325625Z",
+      "actor": {
+        "id": 15,
+        "username": "design.fixture.actor",
+        "display_name": "A Deliberately Long Public Design Fixture Name",
+        "avatar": null
+      },
+      "target": {
+        "event": {
+          "id": 1629,
+          "title": "Locals Night",
+          "event_date": "2026-08-01",
+          "start_time": "22:30:00",
+          "cover_image_url": "https://images.ra.co/5ffdadcc47b2da94f0397d36980df12751a417c9.jpg",
+          "venue": {
+            "name": "BASEMENT",
+            "city": {
+              "name": "New York City"
+            }
+          }
+        }
+      },
+      "context": null
+    },
+    {
+      "type": "rated_been",
+      "activity_at": "2026-07-31T23:40:18.299717Z",
+      "actor": {
+        "id": 15,
+        "username": "design.fixture.actor",
+        "display_name": "A Deliberately Long Public Design Fixture Name",
+        "avatar": null
+      },
+      "target": {
+        "event": {
+          "id": 2174,
+          "title": "Martin Garrix Afterparty",
+          "event_date": "2026-06-19",
+          "start_time": "22:00:00",
+          "cover_image_url": null,
+          "venue": {
+            "name": "Big Night Live",
+            "city": {
+              "name": "Boston"
+            }
+          }
+        }
+      },
+      "context": {
+        "rating": 3.5,
+        "review": {
+          "id": 2,
+          "body": "A deliberately plain fixture review with enough text to expose real wrapping and content hierarchy."
+        }
+      }
+    },
+    {
+      "type": "follow",
+      "activity_at": "2026-07-31T23:40:18.293029Z",
+      "actor": {
+        "id": 15,
+        "username": "design.fixture.actor",
+        "display_name": "A Deliberately Long Public Design Fixture Name",
+        "avatar": null
+      },
+      "target": {
+        "user": {
+          "id": 3,
+          "username": "review.public.test",
+          "display_name": "Review Public Test"
         }
       },
       "context": null

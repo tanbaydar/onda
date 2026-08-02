@@ -39,6 +39,8 @@ class HomeFeedContractTests(TestCase):
         EventArtist.objects.create(event=cls.hidden_event, artist=artist, position=1)
         cls.viewer = cls.user("home.viewer")
         cls.actor = cls.user("home.actor")
+        cls.actor.avatar = "https://images.example.test/home-actor.jpg"
+        cls.actor.save(update_fields=("avatar",))
         cls.actor_two = cls.user("home.actor.two")
         cls.target = cls.user("home.target")
         cls.private_author = cls.user("home.private", is_private=True)
@@ -76,6 +78,8 @@ class HomeFeedContractTests(TestCase):
     def test_six_type_identical_timestamp_order_and_source_key_tiebreak_are_fixed(self):
         self.approved(self.viewer, self.actor, at=NOW - timedelta(days=1))
         self.entry(self.actor, self.events[0], at=NOW)
+        self.events[0].cover_image_url = "https://images.example.test/home-event.jpg"
+        self.events[0].save(update_fields=("cover_image_url",))
         self.approved(self.actor, self.target, at=NOW)
         author_entry = self.entry(self.target, self.events[1], at=NOW - timedelta(days=2))
         review = Review.objects.create(
@@ -108,6 +112,13 @@ class HomeFeedContractTests(TestCase):
             favorite_event_ids,
             sorted((self.events[3].id, self.events[4].id), reverse=True),
         )
+        results = response.json()["results"]
+        self.assertTrue(all(item["actor"]["avatar"] == self.actor.avatar for item in results))
+        rated = next(item for item in results if item["type"] == "rated_been")
+        self.assertEqual(rated["target"]["event"]["cover_image_url"], self.events[0].cover_image_url)
+        self.assertEqual(rated["target"]["event"]["venue"], {"name": "Home Feed Venue", "city": {"name": "Boston"}})
+        favorite_without_cover = next(item for item in results if item["type"] == "favorite_event")
+        self.assertIsNone(favorite_without_cover["target"]["event"]["cover_image_url"])
         # Two fixed session/auth lookups, one bounded city-boundary lookup,
         # and exactly one six-branch feed UNION.
         self.assertEqual(len(queries), 4)
@@ -129,6 +140,15 @@ class HomeFeedContractTests(TestCase):
         second_ids = [item["target"]["event"]["id"] for item in second["results"]]
         self.assertFalse(set(first_ids) & set(second_ids))
         self.assertEqual(second_ids, [self.events[2].id])
+
+    def test_additive_identity_fields_preserve_null_fallbacks(self):
+        self.approved(self.viewer, self.actor_two)
+        self.entry(self.actor_two, self.events[0])
+        item = self.client_for(self.viewer).get("/api/me/home/").json()["results"][0]
+        self.assertIsNone(item["actor"]["avatar"])
+        self.assertIsNone(item["target"]["event"]["cover_image_url"])
+        self.assertEqual(item["target"]["event"]["venue"]["name"], "Home Feed Venue")
+        self.assertEqual(item["target"]["event"]["venue"]["city"]["name"], "Boston")
 
     def test_private_actor_activity_disappears_immediately_on_unfollow(self):
         self.actor.is_private = True
