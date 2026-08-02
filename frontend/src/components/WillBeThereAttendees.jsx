@@ -36,7 +36,7 @@ export default function WillBeThereAttendees({ eventId, scope, user, version }) 
     return () => controller.abort();
   }, [eventId, isCircle, page, retry, scope, user, version]);
 
-  const heading = isCircle ? "Your Circle — Will Be There" : "Public — Will Be There";
+  const heading = isCircle ? "Your Circle" : "Public";
   if (isCircle && !user) {
     return (
       <section>

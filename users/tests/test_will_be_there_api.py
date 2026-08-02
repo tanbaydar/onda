@@ -135,6 +135,7 @@ class WillBeThereApiContractTests(TestCase):
         self.assertNotIn("viewer_will_be_there", guest.json())
         self.assertFalse(expired.json()["viewer_will_be_there"]["is_marked"])
         self.assertFalse(expired.json()["viewer_will_be_there"]["can_mark"])
+        self.assertTrue(expired.json()["viewer_will_be_there"]["was_marked"])
 
     def test_tokyo_expiry_uses_venue_date_not_server_date(self):
         before_tokyo_midnight = datetime(2026, 8, 20, 14, 59, tzinfo=UTC)

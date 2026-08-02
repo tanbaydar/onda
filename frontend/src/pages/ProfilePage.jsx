@@ -8,6 +8,8 @@ import { formatTimestamp } from "../lib/formatTimestamp.js";
 import { pluralize } from "../lib/plural.js";
 import ConfirmDialog from "../components/ConfirmDialog.jsx";
 import ExpandableText from "../components/ExpandableText.jsx";
+import RatingHistogram from "../components/RatingHistogram.jsx";
+import { shouldRenderRatingHistogram } from "../ratingHistogram.js";
 
 
 function Pagination({ pagination, onPage }) {
@@ -220,12 +222,13 @@ function ProfileFavoritesAndStats({ username, owner }) {
   if (state.loading) return <section><h2>Favorites and statistics</h2><p>Loading favorites and statistics.</p></section>;
   if (state.error) return <section><h2>Favorites and statistics</h2><p>Favorites and statistics could not be loaded.</p><button type="button" onClick={() => setRetry((value) => value + 1)}>Retry</button></section>;
   const statistics = state.stats.statistics;
+  const ratingBuckets = state.stats.rating_distribution.state === "available" ? state.stats.rating_distribution.buckets : [];
+  const showRatingDistribution = shouldRenderRatingHistogram(ratingBuckets);
   return <>
     <section><h2>Favorite events</h2>{state.favorites.events.length ? <ol>{state.favorites.events.map(({ event }) => <li key={event.id}><Link to={`/events/${event.id}`}>{event.title}</Link></li>)}</ol> : <p>No favorite events.</p>}</section>
     <section><h2>Favorite artists</h2>{state.favorites.artists.length ? <ol>{state.favorites.artists.map(({ artist }) => <li key={artist.id}><Link to={`/artists/${artist.id}`}>{artist.name}</Link></li>)}</ol> : <p>No favorite artists.</p>}</section>
     {owner ? <section><h2>Favorite venues</h2>{state.venues.results.length ? <ol>{state.venues.results.map(({ venue }) => <li key={venue.id}><Link to={`/venues/${venue.id}`}>{venue.name}</Link></li>)}</ol> : <p>No favorite venues.</p>}</section> : null}
-    <section><h2>Statistics</h2><dl><dt>Events in Been</dt><dd>{statistics.events_in_been}</dd><dt>Written reviews</dt><dd>{statistics.written_reviews}</dd><dt>Venues visited</dt><dd>{statistics.venues_visited}</dd><dt>Cities visited</dt><dd>{statistics.cities_visited}</dd><dt>Average rating given</dt><dd>{statistics.average_rating_given.state === "available" ? statistics.average_rating_given.value.toFixed(1) : "No ratings"}</dd><dt>Followers</dt><dd>{statistics.followers}</dd><dt>Following</dt><dd>{statistics.following}</dd></dl></section>
-    <section><h2>Rating distribution</h2>{state.stats.rating_distribution.state === "empty" ? <p>No ratings.</p> : <ol>{state.stats.rating_distribution.buckets.map((bucket) => <li key={bucket.rating}><span>{pluralize(bucket.rating.toFixed(1), "star")} </span><meter min="0" max="1" value={bucket.relative_value}>{bucket.relative_value}</meter></li>)}</ol>}</section>
+    <section className="profile-statistics"><h2>Statistics</h2><dl><dt>Events in Been</dt><dd>{statistics.events_in_been}</dd><dt>Written reviews</dt><dd>{statistics.written_reviews}</dd><dt>Venues visited</dt><dd>{statistics.venues_visited}</dd><dt>Cities visited</dt><dd>{statistics.cities_visited}</dd><dt>Average rating given</dt><dd>{statistics.average_rating_given.state === "available" ? statistics.average_rating_given.value.toFixed(1) : "No ratings"}</dd><dt>Followers</dt><dd>{statistics.followers}</dd><dt>Following</dt><dd>{statistics.following}</dd></dl>{showRatingDistribution ? <div className="profile-rating-distribution"><h2>Rating distribution</h2><RatingHistogram buckets={ratingBuckets} /></div> : null}</section>
   </>;
 }
 

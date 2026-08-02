@@ -59,7 +59,7 @@ export default function PublicReviews({
 
   return (
     <section>
-      <h2>Public reviews</h2>
+      <h2>Public</h2>
       <p>
         <label htmlFor="review-sort">Sort reviews</label>{" "}
         <select

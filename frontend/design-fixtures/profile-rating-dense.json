@@ -1,0 +1,30 @@
+{
+  "profile": {
+    "username": "histogram.dense",
+    "display_name": "Histogram Dense Fixture"
+  },
+  "statistics": {
+    "events_in_been": 39,
+    "written_reviews": 9,
+    "venues_visited": 11,
+    "cities_visited": 4,
+    "average_rating_given": { "state": "available", "value": 3.6 },
+    "followers": 24,
+    "following": 17
+  },
+  "rating_distribution": {
+    "state": "available",
+    "buckets": [
+      { "rating": 0.5, "count": 1, "relative_value": 0.125 },
+      { "rating": 1.0, "count": 0, "relative_value": 0.0 },
+      { "rating": 1.5, "count": 2, "relative_value": 0.25 },
+      { "rating": 2.0, "count": 3, "relative_value": 0.375 },
+      { "rating": 2.5, "count": 4, "relative_value": 0.5 },
+      { "rating": 3.0, "count": 6, "relative_value": 0.75 },
+      { "rating": 3.5, "count": 8, "relative_value": 1.0 },
+      { "rating": 4.0, "count": 7, "relative_value": 0.875 },
+      { "rating": 4.5, "count": 5, "relative_value": 0.625 },
+      { "rating": 5.0, "count": 3, "relative_value": 0.375 }
+    ]
+  }
+}

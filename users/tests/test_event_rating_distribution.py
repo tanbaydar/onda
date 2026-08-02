@@ -81,6 +81,7 @@ class EventRatingDistributionTests(TestCase):
 
         self.assertEqual(distribution["state"], "available")
         self.assertEqual(len(distribution["buckets"]), 10)
+        self.assertEqual(sum(bucket["count"] for bucket in distribution["buckets"]), 3)
         self.assertEqual(
             [bucket["rating"] for bucket in distribution["buckets"]],
             [0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0],

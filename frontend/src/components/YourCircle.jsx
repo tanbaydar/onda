@@ -89,7 +89,7 @@ export default function YourCircle({
           {state.data.rating_summary.state === "available" ? (
             <p>
               {state.data.rating_summary.average.toFixed(1)} average from{" "}
-              {pluralize(state.data.rating_summary.count, "Circle rating")}, including yours.
+              {pluralize(state.data.rating_summary.count, "rating")} from Your Circle, including yours.
             </p>
           ) : (
             <p>No ratings from Your Circle yet.</p>

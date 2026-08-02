@@ -9,8 +9,9 @@ import { formatEventDateTime } from "../formatEventDateTime.js";
 import FavoriteControl from "../components/FavoriteControl.jsx";
 import { pluralize } from "../lib/plural.js";
 import ConfirmDialog from "../components/ConfirmDialog.jsx";
-
-const RATINGS = [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5];
+import RatingHistogram from "../components/RatingHistogram.jsx";
+import StarInput from "../components/StarInput.jsx";
+import { eventIsPast } from "../eventTime.js";
 
 
 export default function EventPage({ user, onAuthenticationRequired }) {
@@ -24,6 +25,7 @@ export default function EventPage({ user, onAuthenticationRequired }) {
   const [actionError, setActionError] = useState(null);
   const [willBeThereError, setWillBeThereError] = useState(null);
   const [confirmation, setConfirmation] = useState(null);
+  const [editingEntry, setEditingEntry] = useState(false);
   const [state, setState] = useState({
     loading: true,
     error: null,
@@ -83,12 +85,11 @@ export default function EventPage({ user, onAuthenticationRequired }) {
     }
   }
 
-  function saveRating(event) {
-    event.preventDefault();
+  function saveRating(nextRating = rating) {
     mutate(`/api/events/${eventId}/been/`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ rating: Number(rating) }),
+      body: JSON.stringify({ rating: Number(nextRating) }),
     });
   }
 
@@ -181,6 +182,8 @@ export default function EventPage({ user, onAuthenticationRequired }) {
   }
 
   const event = state.event;
+  const isPast = eventIsPast(event);
+  const viewerHasRating = event.viewer_entry?.rating !== null && event.viewer_entry?.rating !== undefined;
   const trimmedReviewLength = reviewBody.trim().length;
   return (
     <main className="event-page">
@@ -219,22 +222,17 @@ export default function EventPage({ user, onAuthenticationRequired }) {
             ))}
           </ol>
         </section>
-        <section><h2>Will Be There attendance</h2><p>{pluralize(event.will_be_there_summary.active_count, "active mark")}.</p></section>
-        {user ? <FavoriteControl path={`/api/events/${event.id}/favorite/`} state={event.viewer_favorite} onChanged={() => setRetry((value) => value + 1)} /> : null}
-        <section>
-          <h2>Rating</h2>
+        {!isPast ? <div className="wbt-count"><span>{event.will_be_there_summary.active_count}</span><p>{event.will_be_there_summary.active_count === 0 ? "No active marks yet." : pluralize(event.will_be_there_summary.active_count, "active mark")}</p></div> : null}
+        {isPast ? <div className="event-rating-block">
           {event.rating_summary.state === "available" ? (
-            <p className="rating-value">
-              {event.rating_summary.average.toFixed(1)} average from{" "}
-              {pluralize(event.rating_summary.count, "rating")}.
-            </p>
+            <><p className="rating-value">{event.rating_summary.average.toFixed(1)}</p><RatingHistogram buckets={event.rating_distribution.buckets} /><p>{`Average from ${pluralize(event.rating_summary.count, "rating")}.`}</p></>
           ) : (
             <p>Not enough ratings for an average yet.</p>
           )}
-        </section>
-        {user ? (
-          <section>
-            <h2>Will Be There</h2>
+        </div> : null}
+        {user ? <div className="event-owner-block">
+            {isPast && !viewerHasRating ? <StarInput value={rating} disabled={saving} onChange={(value) => setRating(String(value))} onCommit={saveRating} /> : null}
+            {!isPast ? <>
             {willBeThereError ? <p>{willBeThereError}</p> : null}
             {event.viewer_will_be_there.can_mark ? (
               <button className={event.viewer_will_be_there.is_marked ? "wbt-marked" : ""} type="button" disabled={saving} onClick={changeWillBeThere}>
@@ -242,111 +240,13 @@ export default function EventPage({ user, onAuthenticationRequired }) {
                   ? "Remove Will Be There"
                   : "Mark Will Be There"}
               </button>
-            ) : (
-              <p>{event.viewer_will_be_there.unavailable_reason}</p>
-            )}
-          </section>
-        ) : null}
-        {user ? (
-          <section>
-            <h2>Your Been entry</h2>
-            {actionError ? <p>{actionError}</p> : null}
-            {!event.viewer_entry && !event.been.loggable ? (
-              <p>{event.been.unavailable_reason}</p>
-            ) : (
-              <>
-                <form onSubmit={saveRating}>
-                  <label htmlFor="rating">Rating</label>{" "}
-                  <select
-                    id="rating"
-                    value={rating}
-                    onChange={(changeEvent) => setRating(changeEvent.target.value)}
-                    required
-                  >
-                    <option value="">Choose a rating</option>
-                    {RATINGS.map((value) => (
-                      <option key={value} value={value}>
-                        {pluralize(value.toFixed(1), "star")}
-                      </option>
-                    ))}
-                  </select>{" "}
-                  <button type="submit" disabled={saving}>
-                    {event.viewer_entry ? "Save rating" : "Add to Been"}
-                  </button>
-                </form>
-                {event.viewer_entry ? (
-                  <>
-                    {event.viewer_entry.rating !== null ? (
-                      <p>
-                        <button
-                          type="button"
-                          disabled={saving}
-                          onClick={removeRating}
-                        >
-                          Remove rating
-                        </button>
-                      </p>
-                    ) : null}
-                    <p>
-                      <button
-                        type="button"
-                        disabled={saving}
-                        onClick={removeEntry}
-                      >
-                        Remove from Been
-                      </button>
-                    </p>
-                    {event.viewer_entry.rating !== null ? (
-                      <form onSubmit={saveReview}>
-                        <p>
-                          <label htmlFor="review-body">Written review</label>
-                        </p>
-                        <textarea
-                          id="review-body"
-                          value={reviewBody}
-                          required
-                          rows={8}
-                          onChange={(changeEvent) =>
-                            setReviewBody(changeEvent.target.value)
-                          }
-                        />
-                        <p>
-                          {trimmedReviewLength} of 1,000 stored characters
-                        </p>
-                        <button
-                          type="submit"
-                          disabled={
-                            saving ||
-                            trimmedReviewLength < 1 ||
-                            trimmedReviewLength > 1000
-                          }
-                        >
-                          {event.viewer_entry.review
-                            ? "Save review changes"
-                            : "Publish review"}
-                        </button>
-                        {event.viewer_entry.review ? (
-                          <>
-                            {" "}
-                            <button
-                              type="button"
-                              disabled={saving}
-                              onClick={deleteReview}
-                            >
-                              Delete review
-                            </button>
-                          </>
-                        ) : null}
-                      </form>
-                    ) : null}
-                  </>
-                ) : null}
-              </>
-            )}
-          </section>
-        ) : null}
+            ) : null}</> : null}
+            <FavoriteControl compact path={`/api/events/${event.id}/favorite/`} state={event.viewer_favorite} onChanged={() => setRetry((value) => value + 1)} />
+            {isPast && event.viewer_will_be_there.was_marked ? <p className="dormant-wbt">Will Be There · marked</p> : null}
+            {actionError ? <p role="alert">{actionError}</p> : null}
+        </div> : null}
       </article>
-      <WillBeThereAttendees
+      {!isPast ? <><WillBeThereAttendees
         eventId={event.id}
         scope="circle"
         user={user}
@@ -357,21 +257,22 @@ export default function EventPage({ user, onAuthenticationRequired }) {
         scope="public"
         user={user}
         version={willBeThereVersion}
-      />
-      <YourCircle
+      /></> : null}
+      {isPast ? <YourCircle
         eventId={event.id}
         user={user}
         version={socialVersion}
         onSocialChanged={() => setSocialVersion((value) => value + 1)}
         onAuthenticationRequired={onAuthenticationRequired}
-      />
-      <PublicReviews
+      /> : null}
+      {user && isPast && viewerHasRating ? <section className="owner-entry"><article><p><strong>{user.display_name}</strong> · Yours</p><p className="stars">{pluralize(event.viewer_entry.rating.toFixed(1), "star")}</p>{event.viewer_entry.review ? <p className="review-body">{event.viewer_entry.review.body}</p> : null}<button className="quiet-action" type="button" onClick={() => setEditingEntry((value) => !value)}>Edit ▾</button>{editingEntry ? <div className="owner-entry-editor"><StarInput value={rating} disabled={saving} onChange={(value) => setRating(String(value))} onCommit={saveRating} /><form onSubmit={saveReview}><label htmlFor="review-body">Written review</label><textarea id="review-body" value={reviewBody} required rows={8} onChange={(changeEvent) => setReviewBody(changeEvent.target.value)} /><p>{trimmedReviewLength} of 1,000 stored characters</p><button type="submit" disabled={saving || trimmedReviewLength < 1 || trimmedReviewLength > 1000}>{event.viewer_entry.review ? "Save review changes" : "Publish review"}</button>{event.viewer_entry.review ? <button className="quiet-action" type="button" disabled={saving} onClick={deleteReview}>Delete review</button> : null}</form><button className="quiet-action" type="button" disabled={saving} onClick={removeRating}>Remove rating</button><button className="quiet-action" type="button" disabled={saving} onClick={removeEntry}>Remove from Been</button></div> : null}</article></section> : null}
+      {isPast ? <PublicReviews
         eventId={event.id}
         user={user}
         version={socialVersion}
         onSocialChanged={() => setSocialVersion((value) => value + 1)}
         onAuthenticationRequired={onAuthenticationRequired}
-      />
+      /> : null}
       <ConfirmDialog open={Boolean(confirmation)} title={confirmation?.title ?? ""} consequence={confirmation?.consequence ?? ""} confirmLabel={confirmation?.label ?? "Confirm"} onCancel={() => setConfirmation(null)} onConfirm={() => { const action = confirmation?.action; setConfirmation(null); action?.(); }} />
     </main>
   );

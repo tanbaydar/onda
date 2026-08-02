@@ -262,9 +262,11 @@ def serialize_will_be_there(entry):
 
 def viewer_will_be_there_state(*, user, event):
     active = will_be_there_is_active(event)
-    marked = active and WillBeThere.objects.filter(user=user, event=event).exists()
+    has_record = WillBeThere.objects.filter(user=user, event=event).exists()
+    marked = active and has_record
     return {
         "is_marked": marked,
+        "was_marked": has_record,
         "can_mark": active,
         "unavailable_reason": (
             None
@@ -371,7 +373,7 @@ def rating_distribution_payload(entries, *, minimum_count=0):
     return {
         "state": "available",
         "buckets": [
-            {"rating": rating, "relative_value": count / maximum}
+            {"rating": rating, "count": count, "relative_value": count / maximum}
             for rating, count in distribution.items()
         ],
     }

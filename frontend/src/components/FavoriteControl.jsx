@@ -4,7 +4,7 @@ import { fetchWithCsrf } from "../api.js";
 import { classifyFavoriteError } from "../favoriteError.js";
 
 
-export default function FavoriteControl({ path, state, onChanged }) {
+export default function FavoriteControl({ path, state, onChanged, compact = false }) {
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
 
@@ -25,5 +25,6 @@ export default function FavoriteControl({ path, state, onChanged }) {
     }
   }
 
-  return <section><h2>Favorite</h2><button type="button" disabled={saving} onClick={change}>{state.is_favorite ? "Remove favorite" : "Add favorite"}</button>{error ? <p role="alert">{error}</p> : null}</section>;
+  const contents = <><button className={compact ? "quiet-action" : undefined} type="button" disabled={saving} onClick={change}>{state.is_favorite ? "Remove favorite" : "Add favorite"}</button>{error ? <p role="alert">{error}</p> : null}</>;
+  return compact ? <div className="owner-favorite">{contents}</div> : <section><h2>Favorite</h2>{contents}</section>;
 }
