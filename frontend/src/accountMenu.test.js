@@ -25,4 +25,6 @@ test("logout uses the shipped endpoint, clears session, and lands on guest Disco
 test("guest header has no account menu", () => {
   assert.match(app, /session\.user \? \(\s*<AccountMenu/);
   assert.doesNotMatch(component, /Register|Log in/);
+  assert.match(app, /className="guest-register" to="\/register">Register<\/Link>/);
+  assert.match(app, /<Link to="\/login">Log in<\/Link>/);
 });

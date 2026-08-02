@@ -91,7 +91,7 @@ export default function App() {
           {session.user ? (
             <AccountMenu user={session.user} onLogout={handleLogout} />
           ) : (
-            <p><Link to="/register">Register</Link>{" · "}<Link to="/login">Log in</Link></p>
+            <p className="guest-auth-controls"><Link className="guest-register" to="/register">Register</Link><Link to="/login">Log in</Link></p>
           )}
         </section>
         {session.loading ? <p>Checking session.</p> : null}
