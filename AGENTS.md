@@ -25,3 +25,7 @@ Every completion report must clearly separate these three sections:
 ## Backend ruling provenance
 
 Never push a backend-behavior change unless an explicit operator ruling authorizes it and the commit message records that authority using: `per operator ruling: ...`.
+
+## Design handoffs
+
+Design handoffs: the .md in frontend/design-handoffs/ is sole authority. No spec HTML is kept in the repo; visual disputes are escalated to the operator.
