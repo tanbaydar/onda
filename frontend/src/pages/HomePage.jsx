@@ -3,65 +3,43 @@ import { Link, Navigate } from "react-router-dom";
 
 import { fetchJson } from "../api.js";
 import { formatEventDateTime } from "../formatEventDateTime.js";
+import ProfileAvatar from "../components/ProfileAvatar.jsx";
+import { compactRelativeTime, feedItemPath, HOME_EMPTY_COPY, HOME_FEED_VERBS } from "../homeFeedPresentation.js";
 import { homeAccessRedirect } from "../landing.js";
-import { profilePath } from "../profileRoutes.js";
-import { formatTimestamp } from "../lib/formatTimestamp.js";
-import { pluralize } from "../lib/plural.js";
-import ExpandableText from "../components/ExpandableText.jsx";
+import { ratingStars } from "../profilePresentation.js";
 
 
 function FeedItem({ item }) {
-  if (item.type === "follow") {
-    return (
-      <article>
-        <h2><Link to={profilePath(item.actor.username)}>{item.actor.display_name}</Link> followed <Link to={profilePath(item.target.user.username)}>{item.target.user.display_name}</Link></h2>
-        <p><Link to={profilePath(item.actor.username)}>@{item.actor.username}</Link> followed <Link to={profilePath(item.target.user.username)}>@{item.target.user.username}</Link>.</p>
-        <time dateTime={item.activity_at}>{formatTimestamp(item.activity_at)}</time>
-      </article>
-    );
-  }
-  if (item.type === "favorite_artist") {
-    return <article><h2><Link to={profilePath(item.actor.username)}>{item.actor.display_name}</Link> favorited <Link to={`/artists/${item.target.artist.id}`}>{item.target.artist.name}</Link></h2><time dateTime={item.activity_at}>{formatTimestamp(item.activity_at)}</time></article>;
-  }
   const event = item.target.event;
-  if (item.type === "will_be_there") {
-    return (
-      <article>
-        <h2>
-          <Link to={profilePath(item.actor.username)}>{item.actor.display_name}</Link> will be at{" "}
-          <Link to={`/events/${event.id}`}>{event.title}</Link>
-        </h2>
-        <p>{formatEventDateTime(event.event_date, event.start_time)}</p>
-        <time dateTime={item.activity_at}>{formatTimestamp(item.activity_at)}</time>
-      </article>
-    );
-  }
-  if (item.type === "favorite_event") {
-    return <article><h2><Link to={profilePath(item.actor.username)}>{item.actor.display_name}</Link> favorited <Link to={`/events/${event.id}`}>{event.title}</Link></h2><p>{formatEventDateTime(event.event_date, event.start_time)}</p><time dateTime={item.activity_at}>{formatTimestamp(item.activity_at)}</time></article>;
-  }
-  if (item.type === "review_like") {
-    return (
-      <article>
-        <h2>
-          <Link to={profilePath(item.actor.username)}>{item.actor.display_name}</Link> liked <Link to={profilePath(item.target.review.author.username)}>{item.target.review.author.display_name}</Link>&apos;s
-          review of <Link to={`/events/${event.id}`}>{event.title}</Link>
-        </h2>
-        <ExpandableText feed destination={`/events/${event.id}`}>{item.target.review.body}</ExpandableText>
-        <time dateTime={item.activity_at}>{formatTimestamp(item.activity_at)}</time>
-      </article>
-    );
-  }
+  const artist = item.target.artist;
+  const followed = item.target.user;
+  const isRated = item.type === "rated_been";
+  const objectName = event?.title ?? artist?.name ?? followed?.display_name;
   return (
-    <article>
-      <h2>
-        <Link to={profilePath(item.actor.username)}>{item.actor.display_name}</Link> rated{" "}
-        <Link to={`/events/${event.id}`}>{event.title}</Link>
-      </h2>
-      <p className="stars">{pluralize(item.context.rating.toFixed(1), "star")}</p>
-      <p>{formatEventDateTime(event.event_date, event.start_time)}</p>
-      {item.context.review ? <ExpandableText feed destination={`/events/${event.id}`}>{item.context.review.body}</ExpandableText> : null}
-      <time dateTime={item.activity_at}>{formatTimestamp(item.activity_at)}</time>
-    </article>
+    <Link className={`home-feed-item${event ? " home-feed-event" : ""}${isRated ? " home-feed-rich" : ""}`} to={feedItemPath(item)}>
+      {event ? (
+        <span className="home-feed-flier" aria-hidden="true">
+          {event.cover_image_url ? <img src={event.cover_image_url} alt="" /> : null}
+        </span>
+      ) : null}
+      <span className="home-feed-copy">
+        <span className="home-feed-actor-line">
+          <ProfileAvatar profile={item.actor} small />
+          <strong className="home-feed-actor-name">{item.actor.display_name}</strong>
+          <span className="home-feed-verb">{HOME_FEED_VERBS[item.type]}</span>
+          {followed ? <strong className="home-feed-followed-name">{objectName}</strong> : null}
+          <time dateTime={item.activity_at}>{compactRelativeTime(item.activity_at)}</time>
+        </span>
+        {event || artist ? <strong className="home-feed-object">{objectName}</strong> : null}
+        {isRated ? <span className="home-feed-stars" aria-label={`${item.context.rating} out of 5 stars`}>{ratingStars(item.context.rating)}</span> : null}
+        {item.type === "will_be_there" ? (
+          <span className="home-feed-meta">{formatEventDateTime(event.event_date, event.start_time)} · {event.venue.name}</span>
+        ) : null}
+        {isRated && item.context.review ? (
+          <span className="home-feed-review"><span>{item.context.review.body}</span><small>more</small></span>
+        ) : null}
+      </span>
+    </Link>
   );
 }
 
@@ -95,22 +73,21 @@ export default function HomePage({ session }) {
     }
   }
 
-  if (session.loading) return <main><h1>Home</h1><p>Checking session.</p></main>;
-  if (session.error) return <main><h1>Home</h1><p>Home could not be loaded.</p></main>;
+  if (session.loading) return <main><p>Checking session.</p></main>;
+  if (session.error) return <main><p>Home could not be loaded.</p></main>;
   const redirect = homeAccessRedirect(session.user);
   if (redirect) return <Navigate to={redirect} replace />;
   return (
     <main className="feed-page">
-      <h1>Home</h1>
-      {state.loading ? <p>Loading activity.</p> : null}
+      {state.loading ? <p className="home-feed-status">Loading activity.</p> : null}
       {state.error ? (
-        <><p>Home activity could not be loaded.</p><button type="button" onClick={() => setRetry((value) => value + 1)}>Retry</button></>
+        <div className="home-feed-status"><p>Home activity could not be loaded.</p><button className="quiet-control" type="button" onClick={() => setRetry((value) => value + 1)}>Retry</button></div>
       ) : null}
       {!state.loading && !state.error && state.results.length === 0 ? (
-        <p>No activity from people you follow yet. <Link to="/discover">Discover events</Link>.</p>
+        <div className="home-feed-empty"><p>{HOME_EMPTY_COPY}</p><Link to="/discover">Discover events</Link></div>
       ) : null}
-      {state.results.length > 0 ? <ol className="feed-list">{state.results.map((item) => <li key={`${item.type}-${item.activity_at}-${item.actor.id}-${item.target.event?.id ?? item.target.user?.id ?? item.target.artist?.id}`}><FeedItem item={item} /></li>)}</ol> : null}
-      {state.next && !state.error ? <button type="button" disabled={loadingMore} onClick={loadMore}>{loadingMore ? "Loading more." : "Load more"}</button> : null}
+      {state.results.length > 0 ? <ol className="home-feed-list">{state.results.map((item) => <li key={`${item.type}-${item.activity_at}-${item.actor.id}-${item.target.event?.id ?? item.target.user?.id ?? item.target.artist?.id}`}><FeedItem item={item} /></li>)}</ol> : null}
+      {state.next && !state.error ? <button className="home-feed-load-more" type="button" disabled={loadingMore} onClick={loadMore}>{loadingMore ? "Loading more." : "Load more"}</button> : null}
     </main>
   );
 }

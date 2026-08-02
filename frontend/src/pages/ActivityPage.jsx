@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { fetchJson, fetchWithCsrf } from "../api.js";
-import { formatTimestamp } from "../lib/formatTimestamp.js";
+import { compactRelativeTime } from "../homeFeedPresentation.js";
 
 
 function notificationText(notification) {
@@ -110,7 +110,7 @@ export default function ActivityPage({ session }) {
               <li key={notification.id}>
                 <button className={`activity-row ${notification.read_at ? "read" : "unread"}`} type="button" onClick={() => openNotification(notification)}>
                   <p><strong>{notificationText(notification)}</strong></p>
-                  <p>@{notification.actor.username} · <time dateTime={notification.created_at}>{formatTimestamp(notification.created_at)}</time></p>
+                  <p>@{notification.actor.username} · <time dateTime={notification.created_at}>{compactRelativeTime(notification.created_at)}</time></p>
                 </button>
               </li>
             ))}
