@@ -1,7 +1,7 @@
 import { profilePath } from "./profileRoutes.js";
 
 export function primaryNavigationItems(user) {
-  const search = { label: "Search", to: "/search", auxiliary: true };
+  const search = { label: "Search", to: "/search" };
   if (!user) return [
     { label: "Discover", to: "/discover" },
     search,

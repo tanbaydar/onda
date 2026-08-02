@@ -1,0 +1,51 @@
+import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+
+import { fetchJson } from "../api.js";
+import { recordRecentSearch } from "../recentSearches.js";
+import SearchResults from "./SearchResults.jsx";
+
+export default function DiscoverSearch({ cityId }) {
+  const navigate = useNavigate();
+  const rootRef = useRef(null);
+  const [query, setQuery] = useState("");
+  const [data, setData] = useState(null);
+  const trimmed = query.trim();
+
+  useEffect(() => {
+    if (!trimmed) { setData(null); return undefined; }
+    const controller = new AbortController();
+    const timer = setTimeout(() => {
+      const params = new URLSearchParams({ q: trimmed, scope: "events", city_id: cityId });
+      fetchJson(`/api/search/?${params}`, { signal: controller.signal }).then(setData).catch((error) => { if (error.name !== "AbortError") setData(null); });
+    }, 250);
+    return () => { clearTimeout(timer); controller.abort(); };
+  }, [cityId, trimmed]);
+
+  useEffect(() => {
+    function close(event) { if (!rootRef.current?.contains(event.target)) { setQuery(""); setData(null); } }
+    document.addEventListener("pointerdown", close);
+    return () => document.removeEventListener("pointerdown", close);
+  }, []);
+
+  function openSearch() {
+    if (!trimmed) return;
+    recordRecentSearch(query);
+    navigate(`/search?${new URLSearchParams({ q: trimmed, scope: "events" })}`);
+  }
+
+  return (
+    <div className="discover-search" ref={rootRef}>
+      <div className="discover-search-input-wrap">
+        <input type="text" value={query} aria-label="Search events in selected city" placeholder="Search events in this city" onChange={(event) => setQuery(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") openSearch(); if (event.key === "Escape") { setQuery(""); setData(null); } }} />
+        {query ? <button className="discover-search-clear" type="button" aria-label="Clear search" onClick={() => { setQuery(""); setData(null); }}>×</button> : null}
+      </div>
+      {trimmed && data ? (
+        <div className="search-panel">
+          {data.results.length ? <SearchResults compact data={data} scope="events" activeIndex={-1} onActiveIndex={() => {}} onResultOpen={() => recordRecentSearch(query)} onViewAll={openSearch} /> : <p className="search-empty">No results for &quot;{trimmed}&quot;.</p>}
+          {data.total < 3 ? <button className="search-all-cities" type="button" onClick={openSearch}>Search all cities →</button> : null}
+        </div>
+      ) : null}
+    </div>
+  );
+}

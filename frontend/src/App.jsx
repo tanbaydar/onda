@@ -16,8 +16,6 @@ import RegisterPage from "./pages/RegisterPage.jsx";
 import VenuePage from "./pages/VenuePage.jsx";
 import VerifyEmailPage from "./pages/VerifyEmailPage.jsx";
 import SearchPage from "./pages/SearchPage.jsx";
-import QuickSearch from "./components/QuickSearch.jsx";
-import { headerSearchMode, shouldExpandHeaderSearch } from "./headerSearchState.js";
 import { GUEST_DISCOVER, landingPath } from "./landing.js";
 import { primaryNavigationItems } from "./primaryNavigation.js";
 
@@ -37,25 +35,6 @@ function NotFoundPage() {
         <Link to="/discover">Return to Discover</Link>
       </p>
     </main>
-  );
-}
-
-function HeaderSearchNav({ pathname }) {
-  const [expanded, setExpanded] = useState(false);
-  const mode = headerSearchMode(pathname, expanded);
-
-  useEffect(() => { setExpanded(false); }, [pathname]);
-
-  return (
-    <li className="search-nav-link">
-      {mode === "text" ? <NavLink to="/search" onClick={(event) => {
-        if (shouldExpandHeaderSearch(pathname, window.matchMedia("(min-width: 768px)").matches)) {
-          event.preventDefault();
-          setExpanded(true);
-        }
-      }}>Search</NavLink> : null}
-      {mode === "input" ? <QuickSearch autoFocus onNavigate={() => setExpanded(false)} /> : null}
-    </li>
   );
 }
 
@@ -104,9 +83,7 @@ export default function App() {
         <p>Danced</p>
         <nav aria-label="Primary navigation">
           <ul>
-            {primaryNavigationItems(session.user).map((item) => item.auxiliary
-              ? <HeaderSearchNav key={item.label} pathname={location.pathname} />
-              : <li key={item.label}><NavLink to={item.to}>{item.label}</NavLink></li>)}
+            {primaryNavigationItems(session.user).map((item) => <li key={item.label}><NavLink to={item.to}>{item.label}</NavLink></li>)}
           </ul>
         </nav>
         <section aria-label="Account controls">

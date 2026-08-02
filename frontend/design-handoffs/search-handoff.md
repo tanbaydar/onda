@@ -1,6 +1,8 @@
 # SEARCH — incremental handoff (delta only; base system already integrated)
 Approved as rendered 2026-08-01. Consumes ONLY existing tokens from frontend/design-tokens.css — zero new tokens, zero changes to integrated components. Visual truth: spec/search-wireframes.html · semantics: spec/SEARCH.md.
 
+2026-08-01 operator delta: Search nav text routes directly to `/search` on every width. The desktop header quick-search auxiliary surface is withdrawn; Search page and Discover inline search are the only search surfaces. This supersedes the desktop-header clauses below.
+
 ## CHANGED (the only touches to existing chrome)
 - Mobile tab bar: 4 → 5 tabs, Search at position 3: Home · Discover · Search · Activity · Profile. Same register (fn 12, muted / active ink 600).
 - Desktop header nav: gains Search at position 3. Resting = quiet text like siblings; activating swaps it in place to an inline input (~320px, 1px `--border-strong`, pad 8 12, fn 14).

@@ -3,7 +3,7 @@ import { useSearchParams } from "react-router-dom";
 
 import { fetchJson } from "../api.js";
 import EventList from "../components/EventList.jsx";
-import QuickSearch from "../components/QuickSearch.jsx";
+import DiscoverSearch from "../components/DiscoverSearch.jsx";
 import CityDropdown from "../components/CityDropdown.jsx";
 
 export default function DiscoverPage() {
@@ -62,7 +62,7 @@ export default function DiscoverPage() {
         <>
           <CityDropdown cities={state.cities} selectedCity={selectedCity} onSelect={(cityId) => setSearchParams({ city_id: String(cityId) })} />
           <h2 className="discover-city">{selectedCity.name}</h2>
-          <QuickSearch cityId={String(selectedCity.id)} discover />
+          <DiscoverSearch cityId={String(selectedCity.id)} />
           <nav className="section-tabs" aria-label="Event timeframe">
             <button type="button" className={view === "upcoming" ? "active" : ""} aria-pressed={view === "upcoming"} onClick={() => setView("upcoming")}>Upcoming</button>
             <button type="button" className={view === "recent" ? "active" : ""} aria-pressed={view === "recent"} onClick={() => setView("recent")}>Recent</button>
