@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
-import { PROFILE_EMPTY_STATES, profileBioCount, profileInitials, profileTabPath } from "./profilePresentation.js";
+import { PROFILE_EMPTY_STATES, PROFILE_REVIEW_SORTS, profileBioCount, profileInitials, profileTabPath } from "./profilePresentation.js";
 
 test("initials avatar uses one or two display-name initials", () => {
   assert.equal(profileInitials("Cher"), "CH");
@@ -33,4 +33,11 @@ test("profile surfaces never render the old default-avatar words", () => {
   const profile = readFileSync(new URL("./pages/ProfilePage.jsx", import.meta.url), "utf8");
   const editor = readFileSync(new URL("./pages/EditProfilePage.jsx", import.meta.url), "utf8");
   assert.doesNotMatch(profile + editor, /Default avatar/);
+});
+
+test("profile reviews use the four ruled sort options without a native select", () => {
+  assert.deepEqual(PROFILE_REVIEW_SORTS.map(({ label }) => label), ["Newest", "Most liked", "Oldest", "Longest entry"]);
+  const profile = readFileSync(new URL("./pages/ProfilePage.jsx", import.meta.url), "utf8");
+  assert.doesNotMatch(profile, /<select/);
+  assert.doesNotMatch(profile, /Sort reviews<\/label>/);
 });

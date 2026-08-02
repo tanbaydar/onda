@@ -3,6 +3,13 @@ export const PROFILE_EMPTY_STATES = {
   reviews: "No reviews yet.",
 };
 
+export const PROFILE_REVIEW_SORTS = [
+  { value: "newest", label: "Newest" },
+  { value: "most_liked", label: "Most liked" },
+  { value: "oldest", label: "Oldest" },
+  { value: "longest", label: "Longest entry" },
+];
+
 export function profileInitials(displayName) {
   const words = String(displayName ?? "").trim().split(/\s+/).filter(Boolean);
   if (!words.length) return "?";

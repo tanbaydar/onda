@@ -5,7 +5,9 @@ import { fetchJson, fetchWithCsrf } from "../api.js";
 import FollowControl from "../components/FollowControl.jsx";
 import ProfileAvatar from "../components/ProfileAvatar.jsx";
 import ProfileDiaryRow from "../components/ProfileDiaryRow.jsx";
+import ProfileSortMenu from "../components/ProfileSortMenu.jsx";
 import RatingHistogram from "../components/RatingHistogram.jsx";
+import { formatEventDateTime } from "../formatEventDateTime.js";
 import { PROFILE_EMPTY_STATES, profileTabPath } from "../profilePresentation.js";
 import { profileNavigationVisible, profilePath } from "../profileRoutes.js";
 import { profileRatingBuckets } from "../ratingHistogram.js";
@@ -34,8 +36,7 @@ function BeenTab({ username }) {
   );
 }
 
-function ReviewsTab({ username }) {
-  const [sort, setSort] = useState("newest");
+function ReviewsTab({ username, sort }) {
   const [page, setPage] = useState(1);
   const [retry, setRetry] = useState(0);
   const [state, setState] = useState({ loading: true, error: null, data: null });
@@ -48,7 +49,6 @@ function ReviewsTab({ username }) {
   }, [page, retry, sort, username]);
   return (
     <section className="profile-tab-panel" aria-label="Reviews">
-      <label className="profile-review-sort" htmlFor="profile-review-sort">Sort reviews<select id="profile-review-sort" value={sort} onChange={(event) => { setSort(event.target.value); setPage(1); }}><option value="newest">Newest</option><option value="most_liked">Most liked</option><option value="oldest">Oldest</option><option value="longest">Longest entry</option></select></label>
       {state.loading ? <p>Loading reviews.</p> : null}
       {state.error ? <><p>Reviews could not be loaded.</p><button className="quiet-control" type="button" onClick={() => setRetry((value) => value + 1)}>Retry</button></> : null}
       {state.data?.results.length === 0 ? <p className="profile-tab-empty">{PROFILE_EMPTY_STATES.reviews}</p> : null}
@@ -87,16 +87,17 @@ function ProfileFavorites({ username, owner }) {
   if (state.loading) return <section className="profile-favorites"><h2>Favorites</h2><p>Loading favorites.</p></section>;
   if (state.error) return <section className="profile-favorites"><h2>Favorites</h2><p>Favorites could not be loaded.</p><button className="quiet-control" type="button" onClick={() => setRetry((value) => value + 1)}>Retry</button></section>;
   const items = [
-    ...state.favorites.events.map(({ event }) => <Link key={`event-${event.id}`} to={`/events/${event.id}`}>{event.title}</Link>),
-    ...state.favorites.artists.map(({ artist }) => <Link key={`artist-${artist.id}`} to={`/artists/${artist.id}`}>{artist.name}</Link>),
-    ...(owner ? state.venues.results.map(({ venue }) => <Link key={`venue-${venue.id}`} to={`/venues/${venue.id}`}>{venue.name}</Link>) : []),
+    ...state.favorites.events.map(({ event }) => ({ key: `event-${event.id}`, to: `/events/${event.id}`, name: event.title, meta: `${formatEventDateTime(event.event_date, event.start_time)} · ${event.venue.name}`, event: true })),
+    ...state.favorites.artists.map(({ artist }) => ({ key: `artist-${artist.id}`, to: `/artists/${artist.id}`, name: artist.name, meta: "Artist" })),
+    ...(owner ? state.venues.results.map(({ venue }) => ({ key: `venue-${venue.id}`, to: `/venues/${venue.id}`, name: venue.name, meta: venue.city.name })) : []),
   ];
-  return <section className="profile-favorites"><h2>Favorites</h2>{items.length ? <p>{items.map((item, index) => <span key={item.key}>{index ? " · " : null}{item}</span>)}</p> : <p>No favorites yet.</p>}</section>;
+  return <section className="profile-favorites"><h2>Favorites</h2>{items.length ? <ul className="profile-favorite-list">{items.map((item) => <li key={item.key}><Link to={item.to}><strong className={item.event ? "profile-favorite-event" : ""}>{item.name}</strong><small>{item.meta}</small></Link></li>)}</ul> : <p>No favorites yet.</p>}</section>;
 }
 
 export default function ProfilePage({ session, tab = "been" }) {
   const { username } = useParams();
   const [retry, setRetry] = useState(0);
+  const [reviewSort, setReviewSort] = useState("newest");
   const [state, setState] = useState({ loading: true, error: null, data: null });
   useEffect(() => {
     const controller = new AbortController();
@@ -135,8 +136,8 @@ export default function ProfilePage({ session, tab = "been" }) {
         </div>
       </header>
       {data.access !== "stub" ? <ProfileStatistics username={profile.username} /> : null}
-      {profileNavigationVisible(data.access) ? <nav className="profile-tabs" aria-label="Profile sections"><Link className={tab === "been" ? "active" : ""} aria-current={tab === "been" ? "page" : undefined} to={profileTabPath(profile.username, "been")}>Been</Link><Link className={tab === "reviews" ? "active" : ""} aria-current={tab === "reviews" ? "page" : undefined} to={profileTabPath(profile.username, "reviews")}>Reviews</Link></nav> : null}
-      {data.access === "stub" ? <p className="profile-private-stub">This account is private. Follow and receive approval to see its activity.</p> : tab === "reviews" ? <ReviewsTab username={profile.username} /> : <BeenTab username={profile.username} />}
+      {profileNavigationVisible(data.access) ? <nav className="profile-tabs" aria-label="Profile sections"><Link className={tab === "been" ? "active" : ""} aria-current={tab === "been" ? "page" : undefined} to={profileTabPath(profile.username, "been")}>Been</Link><Link className={tab === "reviews" ? "active" : ""} aria-current={tab === "reviews" ? "page" : undefined} to={profileTabPath(profile.username, "reviews")}>Reviews</Link>{tab === "reviews" ? <ProfileSortMenu value={reviewSort} onChange={setReviewSort} /> : null}</nav> : null}
+      {data.access === "stub" ? <p className="profile-private-stub">This account is private. Follow and receive approval to see its activity.</p> : tab === "reviews" ? <ReviewsTab key={reviewSort} username={profile.username} sort={reviewSort} /> : <BeenTab username={profile.username} />}
       {data.access !== "stub" ? <ProfileFavorites username={profile.username} owner={owner} /> : null}
     </main>
   );
