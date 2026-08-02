@@ -184,6 +184,15 @@ class AuthApiContractTests(TestCase):
                     field,
                 )
 
+    def test_registration_preserves_required_display_name_and_privacy_contract(self):
+        for field in ("display_name", "is_private"):
+            with self.subTest(field=field):
+                payload = dict(self.valid_registration)
+                payload.pop(field)
+                response = self._post("/api/auth/register/", payload)
+                self.assertEqual(response.status_code, 400)
+                self.assertEqual(list(response.json()["errors"]), [field])
+
     def test_login_rejects_wrong_password_without_email_enumeration(self):
         self.assertEqual(self._register().status_code, 201)
         self._post("/api/auth/logout/", {})
@@ -196,8 +205,39 @@ class AuthApiContractTests(TestCase):
         self.assertEqual(response.status_code, 401)
         self.assertEqual(
             response.json(),
-            {"errors": {"credentials": ["Invalid email or password."]}},
+            {"errors": {"credentials": ["That username or email and password don't match. Try again or reset your password."]}},
         )
+
+    def test_login_accepts_username_case_insensitively_without_changing_email_login(self):
+        self.assertEqual(self._register().status_code, 201)
+        self._post("/api/auth/logout/", {})
+        username_login = self._post(
+            "/api/auth/login/",
+            {"email": "LISTENER.ONE", "password": self.valid_registration["password"]},
+        )
+        self.assertEqual(username_login.status_code, 200)
+        self.assertEqual(username_login.json()["user"]["email"], "listener@example.com")
+        self._post("/api/auth/logout/", {})
+        email_login = self._post(
+            "/api/auth/login/",
+            {"email": "LISTENER@EXAMPLE.COM", "password": self.valid_registration["password"]},
+        )
+        self.assertEqual(email_login.status_code, 200)
+
+    def test_unknown_username_and_wrong_password_have_byte_identical_failures(self):
+        self.assertEqual(self._register().status_code, 201)
+        self._post("/api/auth/logout/", {})
+        unknown = self._post(
+            "/api/auth/login/",
+            {"email": "unknown.listener", "password": "wrong-password"},
+        )
+        wrong_password = self._post(
+            "/api/auth/login/",
+            {"email": "listener.one", "password": "wrong-password"},
+        )
+        self.assertEqual(unknown.status_code, 401)
+        self.assertEqual(wrong_password.status_code, 401)
+        self.assertEqual(unknown.content, wrong_password.content)
 
     def test_login_persists_session_across_requests(self):
         self.assertEqual(self._register().status_code, 201)

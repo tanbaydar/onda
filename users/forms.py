@@ -35,8 +35,8 @@ class RegistrationForm(forms.Form):
 
 
 class LoginForm(forms.Form):
-    email = forms.EmailField(max_length=254)
+    email = forms.CharField(max_length=254)
     password = forms.CharField(strip=False)
 
     def clean_email(self):
-        return self.cleaned_data["email"].lower()
+        return self.cleaned_data["email"].strip().lower()

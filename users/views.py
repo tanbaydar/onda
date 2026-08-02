@@ -345,12 +345,20 @@ def login_view(request):
         return JsonResponse({"errors": _form_errors(form)}, status=400)
     user = authenticate(
         request,
-        email=form.cleaned_data["email"],
+        email=(
+            User.objects.filter(
+                Q(email__iexact=form.cleaned_data["email"])
+                | Q(username__iexact=form.cleaned_data["email"])
+            )
+            .values_list("email", flat=True)
+            .first()
+            or form.cleaned_data["email"]
+        ),
         password=form.cleaned_data["password"],
     )
     if user is None:
         return JsonResponse(
-            {"errors": {"credentials": ["Invalid email or password."]}},
+            {"errors": {"credentials": ["That username or email and password don't match. Try again or reset your password."]}},
             status=401,
         )
     login(request, user)
