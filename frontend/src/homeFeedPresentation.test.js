@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
-import { compactRelativeTime, HOME_EMPTY_COPY, HOME_FEED_VERBS } from "./homeFeedPresentation.js";
+import { compactRelativeTime, groupFeedItems, HOME_EMPTY_COPY, HOME_FEED_VERBS } from "./homeFeedPresentation.js";
 
 const dense = JSON.parse(readFileSync(new URL("../design-fixtures/home-feed-dense.json", import.meta.url)));
 const empty = JSON.parse(readFileSync(new URL("../design-fixtures/home-feed-empty.json", import.meta.url)));
@@ -46,4 +46,13 @@ test("feed more is inline and only renders for measured truncation", () => {
   assert.match(excerptSource, /rendered\.truncated \? <>… <small>more<\/small><\/> : null/);
   assert.doesNotMatch(styles, /\.home-feed-review small\{[^}]*position:/);
   assert.match(styles, /\.home-feed-review small\{display:inline/);
+});
+
+test("grouping applies only to one-liners and never rated or WBT rows", () => {
+  const actor = { id: 1, username: "actor" };
+  const make = (type, id) => ({ type, actor, activity_at: `2026-08-02T12:00:0${id}Z`, target: { event: { id, title: `${type} ${id}` } } });
+  const results = groupFeedItems([make("favorite_event", 1), make("favorite_event", 2), make("rated_been", 3), make("rated_been", 4), make("will_be_there", 5), make("will_be_there", 6)]);
+  assert.equal(results[0].grouped.length, 2);
+  assert.equal(results.length, 5);
+  assert.equal(results.filter((item) => item.grouped).length, 1);
 });

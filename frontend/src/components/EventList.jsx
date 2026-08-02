@@ -6,6 +6,9 @@ import { formatEventDateTime } from "../formatEventDateTime.js";
 import { formatCompactEventDateTime } from "../formatEventDateTime.js";
 import { compactLineup } from "../discoverPresentation.js";
 import { artistPath, eventPath, venuePath } from "../entityRoutes.js";
+import ImageSlot from "./ImageSlot.jsx";
+import RatingStars from "./RatingStars.jsx";
+import { recentRatingVisible } from "../polishPresentation.js";
 
 export function EventItem({
   event,
@@ -25,12 +28,10 @@ export function EventItem({
     return (
       <li>
         <Link className="discover-event-row" to={eventPath(event)}>
-          <span className="discover-event-flier" aria-hidden="true">
-            {event.cover_image_url ? <img src={event.cover_image_url} alt="" referrerPolicy="no-referrer" /> : null}
-          </span>
+          <ImageSlot className="discover-event-flier" name={event.title} src={event.cover_image_url} referrerPolicy="no-referrer" />
           <span className="discover-event-copy">
             <strong className="discover-event-title">{event.title}</strong>
-            <span className="discover-event-meta"><time dateTime={event.start_time ? `${event.event_date}T${event.start_time}` : event.event_date}>{formatCompactEventDateTime(event.event_date, event.start_time)}</time><span aria-hidden="true"> · </span><span className={venueIsTba ? "discover-venue-tba" : ""}>{venueIsTba ? "venue TBA" : venueName}</span></span>
+            <span className="discover-event-meta"><time dateTime={event.start_time ? `${event.event_date}T${event.start_time}` : event.event_date}>{formatCompactEventDateTime(event.event_date, event.start_time)}</time><span aria-hidden="true"> · </span><span className={venueIsTba ? "discover-venue-tba" : ""}>{venueIsTba ? "venue TBA" : venueName}</span>{recentRatingVisible(event.rating_summary) ? <><span aria-hidden="true"> · </span><RatingStars className="discover-recent-stars" value={event.rating_summary.average} /></> : null}</span>
             {lineup ? <span className="discover-event-lineup">{lineup}</span> : null}
           </span>
         </Link>
@@ -44,9 +45,7 @@ export function EventItem({
         <h3>
           <Link to={eventPath(event)}>{event.title}</Link>
         </h3>
-        {event.cover_image_url ? (
-          <img src={event.cover_image_url} alt={event.title} referrerPolicy="no-referrer" />
-        ) : null}
+        <ImageSlot className="event-row-image" name={event.title} src={event.cover_image_url} alt={event.title} referrerPolicy="no-referrer" />
         <p>
           <time
             dateTime={

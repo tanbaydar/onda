@@ -6,9 +6,8 @@ export function classifyFavoriteError(error) {
     return { message: null, refetch: true, authenticationRequired: false };
   }
   if (error.status === 409) {
-    const messages = Object.values(error.data?.errors ?? {}).flat();
     return {
-      message: messages.join(" ") || "The favorite limit has been reached.",
+      message: "Favorites are limited to 3 per type.",
       refetch: false,
       authenticationRequired: false,
     };

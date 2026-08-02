@@ -6,11 +6,18 @@ import { formatEventDateTime } from "../formatEventDateTime.js";
 import FeedReviewExcerpt from "../components/FeedReviewExcerpt.jsx";
 import ProfileAvatar from "../components/ProfileAvatar.jsx";
 import RatingStars from "../components/RatingStars.jsx";
-import { compactRelativeTime, feedItemPath, HOME_EMPTY_COPY, HOME_FEED_VERBS } from "../homeFeedPresentation.js";
+import ImageSlot from "../components/ImageSlot.jsx";
+import { compactRelativeTime, feedItemPath, groupFeedItems, HOME_EMPTY_COPY, HOME_FEED_VERBS } from "../homeFeedPresentation.js";
 import { homeAccessRedirect } from "../landing.js";
 
 
 function FeedItem({ item }) {
+  if (item.grouped) {
+    const objects = item.grouped.map((entry) => entry.target.event?.title ?? entry.target.artist?.name ?? entry.target.user?.display_name);
+    const visible = objects.slice(0, 3);
+    const more = objects.length - visible.length;
+    return <Link className="home-feed-item home-feed-grouped" to={feedItemPath(item)}><span className="home-feed-actor-line"><ProfileAvatar profile={item.actor} small /><strong className="home-feed-actor-name">{item.actor.display_name}</strong><span className="home-feed-verb">{HOME_FEED_VERBS[item.type]}</span>{item.type === "follow" ? <span className="home-feed-follow-group">{visible.map((name, index) => <strong key={name}>{index ? (index === visible.length - 1 ? " and " : ", ") : ""}{name}</strong>)}{more ? ` and ${more} others` : null}</span> : null}<time dateTime={item.activity_at}>{compactRelativeTime(item.activity_at)}</time></span>{item.type !== "follow" ? <span className="home-feed-grouped-objects">{visible.map((name) => <strong key={name}>{name}</strong>)}{more ? <small>+{more} more</small> : null}</span> : null}</Link>;
+  }
   const event = item.target.event;
   const artist = item.target.artist;
   const followed = item.target.user;
@@ -19,9 +26,7 @@ function FeedItem({ item }) {
   return (
     <Link className={`home-feed-item${event ? " home-feed-event" : ""}${isRated ? " home-feed-rich" : ""}`} to={feedItemPath(item)}>
       {event ? (
-        <span className="home-feed-flier" aria-hidden="true">
-          {event.cover_image_url ? <img src={event.cover_image_url} alt="" /> : null}
-        </span>
+        <ImageSlot className="home-feed-flier" name={event.title} src={event.cover_image_url} />
       ) : null}
       <span className="home-feed-copy">
         <span className="home-feed-actor-line">
@@ -87,7 +92,7 @@ export default function HomePage({ session }) {
       {!state.loading && !state.error && state.results.length === 0 ? (
         <div className="home-feed-empty"><p>{HOME_EMPTY_COPY}</p><Link to="/discover">Discover events</Link></div>
       ) : null}
-      {state.results.length > 0 ? <ol className="home-feed-list">{state.results.map((item) => <li key={`${item.type}-${item.activity_at}-${item.actor.id}-${item.target.event?.id ?? item.target.user?.id ?? item.target.artist?.id}`}><FeedItem item={item} /></li>)}</ol> : null}
+      {state.results.length > 0 ? <ol className="home-feed-list">{groupFeedItems(state.results).map((item) => <li key={`${item.type}-${item.activity_at}-${item.actor.id}-${item.target.event?.id ?? item.target.user?.id ?? item.target.artist?.id}`}><FeedItem item={item} /></li>)}</ol> : null}
       {state.next && !state.error ? <button className="home-feed-load-more" type="button" disabled={loadingMore} onClick={loadMore}>{loadingMore ? "Loading more." : "Load more"}</button> : null}
     </main>
   );

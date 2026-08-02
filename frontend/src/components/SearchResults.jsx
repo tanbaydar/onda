@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { EventItem } from "./EventList.jsx";
 import { formatEventDateTime } from "../formatEventDateTime.js";
 import { entityResultPath } from "../entityRoutes.js";
+import ImageSlot from "./ImageSlot.jsx";
 
 const GROUPS = [
   ["events", "Events"],
@@ -20,7 +21,7 @@ function ResultRow({ type, item, onFocus }) {
   return (
     <li>
       <button className="search-result-row" type="button" onFocus={onFocus} onClick={() => navigate(resultPath(type, item))}>
-        {type === "events" && item.cover_image_url ? <img src={item.cover_image_url} alt="" referrerPolicy="no-referrer" /> : null}
+        {type === "events" ? <ImageSlot name={item.title} src={item.cover_image_url} referrerPolicy="no-referrer" /> : null}
         {type === "people" && item.avatar ? <img className="search-avatar" src={item.avatar} alt="" /> : null}
         <span className="search-result-copy">
           <strong>{type === "people" ? item.display_name : item.title ?? item.name}</strong>
@@ -36,9 +37,7 @@ function CompactEventResultRow({ item, onFocus }) {
   return (
     <li>
       <button className="compact-event-result-row" type="button" onFocus={onFocus} onClick={() => navigate(resultPath("events", item))}>
-        <span className="compact-event-thumb">
-          {item.cover_image_url ? <img src={item.cover_image_url} alt="" referrerPolicy="no-referrer" /> : null}
-        </span>
+        <ImageSlot className="compact-event-thumb" name={item.title} src={item.cover_image_url} referrerPolicy="no-referrer" />
         <span className="search-result-copy">
           <strong>{item.title}</strong>
           <small>{formatEventDateTime(item.event_date, item.start_time)} · {item.venue.name}</small>

@@ -7,6 +7,8 @@ import ProfileAvatar from "../components/ProfileAvatar.jsx";
 import ProfileDiaryRow from "../components/ProfileDiaryRow.jsx";
 import ProfileSortMenu from "../components/ProfileSortMenu.jsx";
 import RatingHistogram from "../components/RatingHistogram.jsx";
+import ImageSlot from "../components/ImageSlot.jsx";
+import FavoriteControl from "../components/FavoriteControl.jsx";
 import { formatEventDateTime } from "../formatEventDateTime.js";
 import { artistPath, eventPath, venuePath } from "../entityRoutes.js";
 import { PROFILE_EMPTY_STATES, profileTabPath } from "../profilePresentation.js";
@@ -76,23 +78,20 @@ function ProfileStatistics({ username }) {
 
 function ProfileFavorites({ username, owner }) {
   const [retry, setRetry] = useState(0);
-  const [state, setState] = useState({ loading: true, error: null, favorites: null, venues: null });
+  const [state, setState] = useState({ loading: true, error: null, favorites: null });
   useEffect(() => {
     const controller = new AbortController();
-    Promise.all([
-      fetchJson(`/api/users/${encodeURIComponent(username)}/favorites/`, { signal: controller.signal, cache: "no-store" }),
-      owner ? fetchJson("/api/me/favorite-venues/", { signal: controller.signal, cache: "no-store" }) : Promise.resolve(null),
-    ]).then(([favorites, venues]) => setState({ loading: false, error: null, favorites, venues })).catch((error) => { if (error.name !== "AbortError") setState({ loading: false, error, favorites: null, venues: null }); });
+    fetchJson(`/api/users/${encodeURIComponent(username)}/favorites/`, { signal: controller.signal, cache: "no-store" }).then((favorites) => setState({ loading: false, error: null, favorites })).catch((error) => { if (error.name !== "AbortError") setState({ loading: false, error, favorites: null }); });
     return () => controller.abort();
   }, [owner, retry, username]);
   if (state.loading) return <section className="profile-favorites"><h2>Favorites</h2><p>Loading favorites.</p></section>;
   if (state.error) return <section className="profile-favorites"><h2>Favorites</h2><p>Favorites could not be loaded.</p><button className="quiet-control" type="button" onClick={() => setRetry((value) => value + 1)}>Retry</button></section>;
   const items = [
-    ...state.favorites.events.map(({ event }) => ({ key: `event-${event.id}`, to: eventPath(event), name: event.title, meta: `${formatEventDateTime(event.event_date, event.start_time)} · ${event.venue.name}`, event: true })),
-    ...state.favorites.artists.map(({ artist }) => ({ key: `artist-${artist.id}`, to: artistPath(artist), name: artist.name, meta: "Artist" })),
-    ...(owner ? state.venues.results.map(({ venue }) => ({ key: `venue-${venue.id}`, to: venuePath(venue), name: venue.name, meta: venue.city.name })) : []),
+    ...state.favorites.events.map(({ event }) => ({ key: `event-${event.id}`, to: eventPath(event), name: event.title, meta: `${formatEventDateTime(event.event_date, event.start_time)} · ${event.venue.name}`, image: event.cover_image_url, favoritePath: `/api/events/${event.id}/favorite/` })),
+    ...state.favorites.artists.map(({ artist }) => ({ key: `artist-${artist.id}`, to: artistPath(artist), name: artist.name, favoritePath: `/api/artists/${artist.id}/favorite/` })),
+    ...state.favorites.venues.map(({ venue }) => ({ key: `venue-${venue.id}`, to: venuePath(venue), name: venue.name, meta: venue.city.name, favoritePath: `/api/venues/${venue.id}/favorite/` })),
   ];
-  return <section className="profile-favorites"><h2>Favorites</h2>{items.length ? <ul className="profile-favorite-list">{items.map((item) => <li key={item.key}><Link to={item.to}><strong className={item.event ? "profile-favorite-event" : ""}>{item.name}</strong><small>{item.meta}</small></Link></li>)}</ul> : <p>No favorites yet.</p>}</section>;
+  return <section className="profile-favorites"><h2>Favorites</h2>{items.length ? <ul className="profile-favorite-list">{items.map((item) => <li key={item.key}><ImageSlot className="profile-favorite-thumb" name={item.name} src={item.image} /><Link to={item.to}><strong>{item.name}</strong>{item.meta ? <small>{item.meta}</small> : null}</Link>{owner ? <FavoriteControl row path={item.favoritePath} state={{ is_favorite: true }} onChanged={() => setRetry((value) => value + 1)} /> : null}</li>)}</ul> : null}</section>;
 }
 
 export default function ProfilePage({ session, tab = "been" }) {

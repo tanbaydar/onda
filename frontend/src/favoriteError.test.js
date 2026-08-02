@@ -9,7 +9,7 @@ test("favorite limit conflicts preserve the field message without refetching", (
   assert.deepEqual(
     classifyFavoriteError({ status: 409, data: { errors: { favorite: ["You may favorite at most 3 items of this type."] } } }),
     {
-      message: "You may favorite at most 3 items of this type.",
+      message: "Favorites are limited to 3 per type.",
       refetch: false,
       authenticationRequired: false,
     },
@@ -24,8 +24,8 @@ test("missing favorite targets reconcile while other failures render honestly", 
 
 test("favorite rejection preserves its message and returns the control to resting", () => {
   assert.deepEqual(favoriteRequestStarted(), { pending: true, message: null });
-  assert.deepEqual(favoriteRequestRejected("You may favorite at most 3 items of this type."), {
+  assert.deepEqual(favoriteRequestRejected("Favorites are limited to 3 per type."), {
     pending: false,
-    message: "You may favorite at most 3 items of this type.",
+    message: "Favorites are limited to 3 per type.",
   });
 });

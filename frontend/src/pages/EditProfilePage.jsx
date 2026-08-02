@@ -44,6 +44,7 @@ export default function EditProfilePage({ session }) {
   const [errors, setErrors] = useState({});
   const [message, setMessage] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [avatarState, setAvatarState] = useState({ uploading: false, error: null });
 
   useEffect(() => {
     if (!session.user) return undefined;
@@ -77,6 +78,20 @@ export default function EditProfilePage({ session }) {
   }
 
   function fieldErrors(name) { return errors[name]?.map((error) => <li key={error}>{error}</li>); }
+  async function uploadAvatar(event) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setAvatarState({ uploading: true, error: null });
+    const body = new FormData(); body.append("avatar", file);
+    try { const data = await fetchWithCsrf("/api/me/profile/avatar/", { method: "POST", body }); setForm((current) => ({ ...current, avatar: data.profile.avatar ?? "" })); setAvatarState({ uploading: false, error: null }); }
+    catch (error) { setAvatarState({ uploading: false, error: error.data?.errors?.avatar?.[0] ?? "Photo could not be uploaded." }); }
+    event.target.value = "";
+  }
+  async function removeAvatar() {
+    setAvatarState({ uploading: true, error: null });
+    try { await fetchWithCsrf("/api/me/profile/avatar/", { method: "DELETE" }); setForm((current) => ({ ...current, avatar: "" })); setAvatarState({ uploading: false, error: null }); }
+    catch { setAvatarState({ uploading: false, error: "Photo could not be removed." }); }
+  }
   if (session.loading) return <main className="edit-profile-page"><p>Checking session.</p></main>;
   if (!session.user) return <Navigate to="/login" replace />;
   if (state.loading || !form) return <main className="edit-profile-page"><p>Loading profile settings.</p></main>;
@@ -87,12 +102,11 @@ export default function EditProfilePage({ session }) {
   return (
     <main className="edit-profile-page">
       <h1>Edit profile</h1>
-      <ProfileAvatar profile={preview} />
       {message ? <p role="alert">{message}</p> : null}
       {errors.request ? <ul role="alert">{fieldErrors("request")}</ul> : null}
       <form onSubmit={submit}>
+        <div className="edit-avatar-upload"><ProfileAvatar profile={preview} /><div><label className={`avatar-upload-control${avatarState.uploading ? " is-uploading" : ""}`}>{avatarState.uploading ? "Uploading…" : "Upload photo"}<input type="file" accept="image/jpeg,image/png,image/webp" disabled={avatarState.uploading} onChange={uploadAvatar} /></label>{form.avatar ? <button className="avatar-remove" type="button" disabled={avatarState.uploading} onClick={removeAvatar}>Remove</button> : null}{avatarState.error ? <p className="avatar-upload-error" role="alert">{avatarState.error}</p> : null}</div></div>
         <div className="edit-profile-field"><label htmlFor="profile-display-name">Display name</label><input id="profile-display-name" value={form.display_name} maxLength="50" onChange={(event) => setForm({ ...form, display_name: event.target.value })} />{errors.display_name ? <ul role="alert">{fieldErrors("display_name")}</ul> : null}</div>
-        <div className="edit-profile-field"><label htmlFor="profile-avatar">Avatar URL</label><input id="profile-avatar" type="url" value={form.avatar} maxLength="2048" onChange={(event) => setForm({ ...form, avatar: event.target.value })} />{errors.avatar ? <ul role="alert">{fieldErrors("avatar")}</ul> : null}</div>
         <div className="edit-profile-field edit-profile-bio"><label htmlFor="profile-bio">Bio</label><textarea id="profile-bio" rows="3" value={form.bio} maxLength="150" onChange={(event) => setForm({ ...form, bio: event.target.value })} /><output htmlFor="profile-bio">{profileBioCount(form.bio)}</output>{errors.bio ? <ul role="alert">{fieldErrors("bio")}</ul> : null}</div>
         <div className="edit-profile-field"><CityDropdown cities={cities} selectedCity={selectedCity} nullOptionLabel="No home city" label="Home city" getOptionLabel={(city) => `${city.name}, ${city.region_code}`} onSelect={(cityId) => setForm({ ...form, home_city_id: cityId === null ? "" : String(cityId) })} />{errors.home_city_id ? <ul role="alert">{fieldErrors("home_city_id")}</ul> : null}</div>
         <fieldset className="privacy-field"><legend>Account privacy</legend><label><input type="radio" name="profile-privacy" checked={!form.is_private} onChange={() => setForm({ ...form, is_private: false })} /> Public</label><label><input type="radio" name="profile-privacy" checked={form.is_private} onChange={() => setForm({ ...form, is_private: true })} /> Private</label><p>{privacyCopy}</p></fieldset>

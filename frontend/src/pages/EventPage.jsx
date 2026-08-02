@@ -11,6 +11,7 @@ import { pluralize } from "../lib/plural.js";
 import ConfirmDialog from "../components/ConfirmDialog.jsx";
 import RatingHistogram from "../components/RatingHistogram.jsx";
 import StarInput from "../components/StarInput.jsx";
+import ImageSlot from "../components/ImageSlot.jsx";
 import { eventIsPast } from "../eventTime.js";
 import { artistPath, eventPath, venuePath } from "../entityRoutes.js";
 import EventReviewRow from "../components/EventReviewRow.jsx";
@@ -198,9 +199,9 @@ export default function EventPage({ user, onAuthenticationRequired }) {
     <main className="event-page">
       <article className="identity">
         <h1>{event.title}</h1>
-        {event.cover_image_url ? (
-          <img src={event.cover_image_url} alt={event.title} referrerPolicy="no-referrer" />
-        ) : null}
+        {event.cover_image_url || isPast ? <ImageSlot name={event.title} src={event.cover_image_url} alt={event.title} referrerPolicy="no-referrer" /> : null}
+        <div className={`event-meta-stack ${isPast ? "event-meta-past" : "event-meta-upcoming"}`}>
+        {!isPast ? <p><Link to={venuePath(event.venue)}>{event.venue.name}</Link></p> : null}
         <p>
           <time
             dateTime={
@@ -212,17 +213,11 @@ export default function EventPage({ user, onAuthenticationRequired }) {
             {formatEventDateTime(event.event_date, event.start_time)}
           </time>
         </p>
-        <p>
-          Venue: <Link to={venuePath(event.venue)}>{event.venue.name}</Link>
-        </p>
-        <p>
-          City:{" "}
-          <Link to={`/discover?city_id=${event.venue.city.id}`}>
-            {event.venue.city.name}
-          </Link>
-        </p>
-        <section>
-          <h2>Artists</h2>
+        {isPast ? <p><Link to={venuePath(event.venue)}>{event.venue.name}</Link></p> : null}
+        <p><Link to={`/discover?city_id=${event.venue.city.id}`}>{event.venue.city.name}</Link></p>
+        </div>
+        <section className="event-lineup">
+          <h2>Lineup</h2>
           <ol>
             {event.artists.map((artist) => (
               <li key={artist.id}>

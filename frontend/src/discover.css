@@ -16,6 +16,7 @@
 .discover-event-title{display:-webkit-box;overflow:hidden;font-family:var(--font-display);font-size:18px;font-weight:400;line-height:1.25;-webkit-box-orient:vertical;-webkit-line-clamp:2}
 .discover-event-meta{color:var(--text-secondary);font-size:var(--text-micro)}
 .discover-event-meta time{color:inherit;font-size:inherit;font-weight:500}
+.discover-recent-stars{margin-left:var(--sp-2);font-size:var(--text-micro);vertical-align:middle}
 .discover-venue-tba,.discover-event-lineup{color:var(--text-muted)}
 .discover-event-lineup{overflow:hidden;font-size:var(--text-micro);text-overflow:ellipsis;white-space:nowrap}
 .discover-load-more{min-height:0;margin-top:var(--sp-16);padding:0;border:0;color:var(--text-secondary);font-size:var(--text-micro);text-decoration:underline}
