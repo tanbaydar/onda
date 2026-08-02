@@ -98,7 +98,6 @@ export default function VenuePage({ user }) {
         when="upcoming"
         emptyMessage="No upcoming events."
         showVenue={false}
-        showCity={false}
       />
       <EventList
         heading="Past"

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { fetchJson, fetchWithCsrf } from "../api.js";
 import EventReviewRow from "./EventReviewRow.jsx";
-import ProfileSortMenu from "./ProfileSortMenu.jsx";
+import SortMenu from "./SortMenu.jsx";
 
 const EVENT_REVIEW_SORTS = [
   { value: "most_liked", label: "Most liked" },
@@ -61,7 +61,7 @@ export default function PublicReviews({
   return (
     <section className="event-public-reviews">
       <h2>Public</h2>
-      <ProfileSortMenu value={sort} options={EVENT_REVIEW_SORTS} onChange={(value) => { setSort(value); setPage(1); }} />
+      <SortMenu value={sort} options={EVENT_REVIEW_SORTS} onChange={(value) => { setSort(value); setPage(1); }} />
       {actionError ? <p>{actionError}</p> : null}
       {state.loading ? <p>Loading public reviews.</p> : null}
       {state.error ? (

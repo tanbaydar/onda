@@ -5,7 +5,7 @@ import { fetchJson, fetchWithCsrf } from "../api.js";
 import FollowControl from "../components/FollowControl.jsx";
 import ProfileAvatar from "../components/ProfileAvatar.jsx";
 import ProfileDiaryRow from "../components/ProfileDiaryRow.jsx";
-import ProfileSortMenu from "../components/ProfileSortMenu.jsx";
+import SortMenu from "../components/SortMenu.jsx";
 import RatingHistogram from "../components/RatingHistogram.jsx";
 import ImageSlot from "../components/ImageSlot.jsx";
 import FavoriteControl from "../components/FavoriteControl.jsx";
@@ -136,7 +136,7 @@ export default function ProfilePage({ session, tab = "been" }) {
         </div>
       </header>
       {data.access !== "stub" ? <ProfileStatistics username={profile.username} /> : null}
-      {profileNavigationVisible(data.access) ? <nav className="profile-tabs" aria-label="Profile sections"><Link className={tab === "been" ? "active" : ""} aria-current={tab === "been" ? "page" : undefined} to={profileTabPath(profile.username, "been")}>Been</Link><Link className={tab === "reviews" ? "active" : ""} aria-current={tab === "reviews" ? "page" : undefined} to={profileTabPath(profile.username, "reviews")}>Reviews</Link>{tab === "reviews" ? <ProfileSortMenu value={reviewSort} onChange={setReviewSort} /> : null}</nav> : null}
+      {profileNavigationVisible(data.access) ? <nav className="profile-tabs" aria-label="Profile sections"><Link className={tab === "been" ? "active" : ""} aria-current={tab === "been" ? "page" : undefined} to={profileTabPath(profile.username, "been")}>Been</Link><Link className={tab === "reviews" ? "active" : ""} aria-current={tab === "reviews" ? "page" : undefined} to={profileTabPath(profile.username, "reviews")}>Reviews</Link>{tab === "reviews" ? <SortMenu value={reviewSort} onChange={setReviewSort} /> : null}</nav> : null}
       {data.access === "stub" ? <p className="profile-private-stub">This account is private. Follow and receive approval to see its activity.</p> : tab === "reviews" ? <ReviewsTab key={reviewSort} username={profile.username} sort={reviewSort} /> : <BeenTab username={profile.username} />}
       {data.access !== "stub" ? <ProfileFavorites username={profile.username} owner={owner} /> : null}
     </main>

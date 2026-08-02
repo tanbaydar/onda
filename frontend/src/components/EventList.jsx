@@ -1,93 +1,6 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-
 import { fetchJson } from "../api.js";
-import { formatEventDateTime } from "../formatEventDateTime.js";
-import { formatCompactEventDateTime } from "../formatEventDateTime.js";
-import { compactLineup } from "../discoverPresentation.js";
-import { artistPath, eventPath, venuePath } from "../entityRoutes.js";
-import ImageSlot from "./ImageSlot.jsx";
-import RatingStars from "./RatingStars.jsx";
-import { recentRatingVisible } from "../polishPresentation.js";
-
-export function EventItem({
-  event,
-  showVenue = true,
-  showCity = true,
-  omittedArtistId = null,
-  discover = false,
-}) {
-  const visibleArtists = event.artists.filter(
-    (artist) => String(artist.id) !== String(omittedArtistId),
-  );
-
-  if (discover) {
-    const lineup = compactLineup(event.artists, omittedArtistId);
-    const venueName = event.venue?.name?.trim();
-    const venueIsTba = !venueName || venueName.toUpperCase() === "TBA";
-    return (
-      <li>
-        <Link className="discover-event-row" to={eventPath(event)}>
-          <ImageSlot className="discover-event-flier" name={event.title} src={event.cover_image_url} referrerPolicy="no-referrer" />
-          <span className="discover-event-copy">
-            <strong className="discover-event-title">{event.title}</strong>
-            <span className="discover-event-meta"><time dateTime={event.start_time ? `${event.event_date}T${event.start_time}` : event.event_date}>{formatCompactEventDateTime(event.event_date, event.start_time)}</time><span aria-hidden="true"> · </span><span className={venueIsTba ? "discover-venue-tba" : ""}>{venueIsTba ? "venue TBA" : venueName}</span>{recentRatingVisible(event.rating_summary) ? <><span aria-hidden="true"> · </span><RatingStars className="discover-recent-stars" value={event.rating_summary.average} /></> : null}</span>
-            {lineup ? <span className="discover-event-lineup">{lineup}</span> : null}
-          </span>
-        </Link>
-      </li>
-    );
-  }
-
-  return (
-    <li>
-      <article className="event-row">
-        <h3>
-          <Link to={eventPath(event)}>{event.title}</Link>
-        </h3>
-        <ImageSlot className="event-row-image" name={event.title} src={event.cover_image_url} alt={event.title} referrerPolicy="no-referrer" />
-        <p>
-          <time
-            dateTime={
-              event.start_time
-                ? `${event.event_date}T${event.start_time}`
-                : event.event_date
-            }
-          >
-            {formatEventDateTime(event.event_date, event.start_time)}
-          </time>
-        </p>
-        {showVenue || showCity ? (
-          <p>
-            {showVenue ? (
-              <>
-                Venue:{" "}
-                <Link to={venuePath(event.venue)}>{event.venue.name}</Link>
-              </>
-            ) : null}
-            {showVenue && showCity ? " in " : null}
-            {showCity ? (
-              <Link to={`/discover?city_id=${event.venue.city.id}`}>
-                {event.venue.city.name}
-              </Link>
-            ) : null}
-          </p>
-        ) : null}
-        {visibleArtists.length > 0 ? (
-          <p>
-            Artists:{" "}
-            {visibleArtists.map((artist, index) => (
-              <span key={artist.id}>
-                {index > 0 ? ", " : null}
-                <Link to={artistPath(artist)}>{artist.name}</Link>
-              </span>
-            ))}
-          </p>
-        ) : null}
-      </article>
-    </li>
-  );
-}
+import DiscoverEventRow from "./DiscoverEventRow.jsx";
 
 export default function EventList({
   heading,
@@ -97,7 +10,6 @@ export default function EventList({
   emptyMessage,
   pageSize = 20,
   showVenue = true,
-  showCity = true,
   omittedArtistId = null,
   hidden = false,
   quietHeading = false,
@@ -151,15 +63,13 @@ export default function EventList({
       ) : null}
       {state.data && state.data.results.length > 0 ? (
         <>
-          <ul className={discover ? "discover-event-ledger" : "ledger"}>
+          <ul className="discover-event-ledger">
             {state.data.results.map((event) => (
-              <EventItem
+              <DiscoverEventRow
                 key={event.id}
                 event={event}
                 showVenue={showVenue}
-                showCity={showCity}
                 omittedArtistId={omittedArtistId}
-                discover={discover}
               />
             ))}
           </ul>

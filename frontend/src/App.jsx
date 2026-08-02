@@ -96,15 +96,13 @@ export default function App() {
           )}
         </section>
         {session.loading ? <p>Checking session.</p> : null}
-        {session.error ? (
-          <>
-            <p>Account status could not be loaded.</p>
-            <button type="button" onClick={() => setRetry((value) => value + 1)}>
-              Retry
-            </button>
-          </>
-        ) : null}
       </header>
+      {session.error ? (
+        <div className="session-error-slot" role="alert">
+          <span>Account status could not be loaded.</span>
+          <button type="button" onClick={() => setRetry((value) => value + 1)}>Retry</button>
+        </div>
+      ) : null}
       <Routes>
         <Route path="/" element={<LandingPage session={session} />} />
         <Route path="/discover" element={<DiscoverPage />} />
