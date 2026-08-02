@@ -4,6 +4,7 @@ import base64
 from decimal import Decimal
 
 from django.contrib.auth import authenticate, login, logout, password_validation
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.paginator import EmptyPage, Paginator
 from django.core.validators import URLValidator
@@ -92,13 +93,16 @@ from .services import (
 def _user_payload(user):
     # This serializer is for the authenticated user's own session only. Email
     # must never be copied into future other-user/profile serializers.
-    return {
+    payload = {
         "id": user.id,
         "email": user.email,
         "username": user.username,
         "display_name": user.display_name,
         "is_private": user.is_private,
     }
+    if settings.EMAIL_VERIFICATION_ENFORCED:
+        payload["email_verified"] = user.email_verified_at is not None
+    return payload
 
 
 def _profile_identity(user):

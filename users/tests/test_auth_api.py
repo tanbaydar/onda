@@ -1,7 +1,8 @@
 import json
+from datetime import UTC, datetime
 
 from django.contrib.auth import get_user_model
-from django.test import Client, TestCase
+from django.test import Client, TestCase, override_settings
 
 from catalog.models import City
 
@@ -217,6 +218,41 @@ class AuthApiContractTests(TestCase):
             session_response.json()["user"]["email"],
             "listener@example.com",
         )
+
+    @override_settings(EMAIL_VERIFICATION_ENFORCED=False)
+    def test_flag_off_self_payload_is_byte_identical_to_the_existing_contract(self):
+        registered = self._register()
+        expected_user = {
+            "id": registered.json()["user"]["id"],
+            "email": "listener@example.com",
+            "username": "listener.one",
+            "display_name": "Listener One",
+            "is_private": False,
+        }
+        self.assertEqual(registered.content, json.dumps({"user": expected_user}).encode())
+        session = self.client.get("/api/auth/session/")
+        self.assertEqual(
+            session.content,
+            json.dumps({"authenticated": True, "user": expected_user}).encode(),
+        )
+
+    @override_settings(EMAIL_VERIFICATION_ENFORCED=True)
+    def test_flag_on_self_payload_exposes_verification_state_only_to_self(self):
+        registered = self._register()
+        self.assertIs(registered.json()["user"]["email_verified"], False)
+        self.assertIs(
+            self.client.get("/api/auth/session/").json()["user"]["email_verified"],
+            False,
+        )
+        user = get_user_model().objects.get()
+        user.email_verified_at = datetime(2026, 8, 20, 16, tzinfo=UTC)
+        user.save(update_fields=("email_verified_at",))
+        self.assertIs(
+            self.client.get("/api/auth/session/").json()["user"]["email_verified"],
+            True,
+        )
+        public_profile = self.client.get(f"/api/users/{user.username}/").json()
+        self.assertNotIn("email_verified", public_profile["profile"])
 
     def test_logout_invalidates_session_and_is_idempotent(self):
         self.assertEqual(self._register().status_code, 201)
