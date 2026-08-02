@@ -187,7 +187,7 @@ export default function EventPage({ user, onAuthenticationRequired }) {
       <article className="identity">
         <h1>{event.title}</h1>
         {event.cover_image_url ? (
-          <img src={event.cover_image_url} alt={event.title} />
+          <img src={event.cover_image_url} alt={event.title} referrerPolicy="no-referrer" />
         ) : null}
         <p>
           <time

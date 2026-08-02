@@ -21,7 +21,7 @@ function EventItem({
           <Link to={`/events/${event.id}`}>{event.title}</Link>
         </h3>
         {event.cover_image_url ? (
-          <img src={event.cover_image_url} alt={event.title} />
+          <img src={event.cover_image_url} alt={event.title} referrerPolicy="no-referrer" />
         ) : null}
         <p>
           <time

@@ -1,8 +1,10 @@
 import copy
 import json
 from datetime import date, time
+from io import StringIO
 from pathlib import Path
 
+from django.core.management import call_command
 from django.test import TestCase
 from django.utils import timezone
 
@@ -28,6 +30,7 @@ from ingestion.models import (
     TrackedSourcePage,
 )
 from ingestion.transformer import transform
+from ingestion.artwork import event_cover_image_url
 
 
 FIXTURE_DIR = (
@@ -722,6 +725,83 @@ class TransformerFixtureContractTests(TransformerHarness):
 
 
 class TransformerCrossCuttingContractTests(TransformerHarness):
+    def test_artwork_mapping_prefers_flyer_front_over_images(self):
+        event = {
+            "flyerFront": "https://example.invalid/direct.jpg",
+            "images": [
+                {
+                    "type": "FLYERFRONT",
+                    "filename": "https://images.ra.co/fallback.jpg",
+                }
+            ],
+        }
+
+        self.assertEqual(
+            event_cover_image_url(event),
+            "https://example.invalid/direct.jpg",
+        )
+
+    def test_artwork_mapping_uses_only_valid_https_flyer_front_images(self):
+        event = {
+            "flyerFront": None,
+            "images": [
+                {"type": "FLYERBACK", "filename": "https://images.ra.co/back.jpg"},
+                {"type": "FLYERFRONT", "filename": "http://images.ra.co/http.jpg"},
+                {"type": "FLYERFRONT", "filename": "not-a-url"},
+                {"type": "FLYERFRONT", "filename": "https://images.ra.co/front.jpg"},
+            ],
+        }
+
+        self.assertEqual(
+            event_cover_image_url(event),
+            "https://images.ra.co/front.jpg",
+        )
+
+    def test_artwork_mapping_returns_null_without_a_valid_front(self):
+        self.assertIsNone(event_cover_image_url({"flyerFront": None, "images": None}))
+        self.assertIsNone(
+            event_cover_image_url(
+                {
+                    "flyerFront": None,
+                    "images": [
+                        {"type": "FLYERBACK", "filename": "https://images.ra.co/back.jpg"},
+                        {"type": "FLYERFRONT", "filename": "ftp://images.ra.co/front.jpg"},
+                    ],
+                }
+            )
+        )
+
+    def test_artwork_backfill_uses_latest_raw_observation_and_is_idempotent(self):
+        initial = copy.deepcopy(self.fixture_json("ra_listing_complete.synthetic.json"))
+        event_payload = initial["data"]["eventListings"]["data"][0]["event"]
+        event_payload["flyerFront"] = None
+        event_payload["images"] = [
+            {"type": "FLYERFRONT", "filename": "https://images.ra.co/old.jpg"}
+        ]
+        first_raw = self.make_raw("ra_listing_complete.synthetic.json", payload=initial)
+        transform(first_raw)
+
+        latest = copy.deepcopy(initial)
+        latest["data"]["eventListings"]["data"][0]["event"]["images"] = [
+            {"type": "FLYERFRONT", "filename": "https://images.ra.co/latest.jpg"}
+        ]
+        self.make_raw("ra_listing_complete.synthetic.json", payload=latest)
+        event = self.event_for_source_id("syn-event-complete-1")
+        event.cover_image_url = None
+        event.save(update_fields=["cover_image_url"])
+
+        first_output = StringIO()
+        call_command("backfill_event_artwork", stdout=first_output)
+        event.refresh_from_db()
+        self.assertEqual(event.cover_image_url, "https://images.ra.co/latest.jpg")
+        self.assertIn("1 changed", first_output.getvalue())
+
+        second_output = StringIO()
+        call_command("backfill_event_artwork", stdout=second_output)
+        event.refresh_from_db()
+        self.assertEqual(event.cover_image_url, "https://images.ra.co/latest.jpg")
+        self.assertIn("0 changed", second_output.getvalue())
+
     def test_changed_event_upsert_in_place(self):
         first_raw = self.make_raw("ra_listing_complete.synthetic.json")
         first_outcome = transform(first_raw)

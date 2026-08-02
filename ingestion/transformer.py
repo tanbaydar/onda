@@ -23,6 +23,7 @@ from ingestion.models import (
     RejectedIngest,
     RejectionReason,
 )
+from ingestion.artwork import event_cover_image_url
 
 
 @dataclass(frozen=True)
@@ -138,8 +139,9 @@ def _parse_event(listing: Any) -> EventDTO:
             "event.startTime is not a string or null",
         )
 
-    cover_image_url = event.get("flyerFront")
-    if cover_image_url is not None and not isinstance(cover_image_url, str):
+    cover_image_url = event_cover_image_url(event)
+    flyer_front = event.get("flyerFront")
+    if flyer_front is not None and not isinstance(flyer_front, str):
         raise EventRejection(
             RejectionReason.PARSE_FAILURE,
             "event.flyerFront is not a string or null",
