@@ -257,9 +257,11 @@ def venue_detail(request, venue_id):
         pk=venue_id,
     )
     payload = _serialize_venue(venue)
-    if request.user.is_authenticated:
+    from users.auth_services import effective_visibility_viewer
+    viewer = effective_visibility_viewer(request.user)
+    if viewer.is_authenticated:
         from users.models import FavoriteVenue
-        favorite = FavoriteVenue.objects.filter(user=request.user, venue=venue).first()
+        favorite = FavoriteVenue.objects.filter(user=viewer, venue=venue).first()
         payload["viewer_favorite"] = {"is_favorite": favorite is not None, "added_at": favorite.added_at.isoformat().replace("+00:00", "Z") if favorite else None}
     return JsonResponse(payload)
 
@@ -267,9 +269,11 @@ def venue_detail(request, venue_id):
 def artist_detail(request, artist_id):
     artist = get_object_or_404(Artist, pk=artist_id)
     payload = _serialize_artist(artist)
-    if request.user.is_authenticated:
+    from users.auth_services import effective_visibility_viewer
+    viewer = effective_visibility_viewer(request.user)
+    if viewer.is_authenticated:
         from users.models import FavoriteArtist
-        favorite = FavoriteArtist.objects.filter(user=request.user, artist=artist).first()
+        favorite = FavoriteArtist.objects.filter(user=viewer, artist=artist).first()
         payload["viewer_favorite"] = {"is_favorite": favorite is not None, "added_at": favorite.added_at.isoformat().replace("+00:00", "Z") if favorite else None}
     return JsonResponse(payload)
 
@@ -285,6 +289,7 @@ def event_detail(request, event_id):
         serialize_diary_entry,
         viewer_will_be_there_state,
     )
+    from users.auth_services import effective_visibility_viewer
 
     payload = _serialize_event(event)
     loggable = event_is_loggable(event)
@@ -300,20 +305,21 @@ def event_detail(request, event_id):
     payload["will_be_there_summary"] = {
         "active_count": WillBeThere.objects.active_at(timezone.now()).filter(event=event).count()
     }
-    if request.user.is_authenticated:
+    viewer = effective_visibility_viewer(request.user)
+    if viewer.is_authenticated:
         entry = (
-            DiaryEntry.objects.visible_to(request.user)
+            DiaryEntry.objects.visible_to(viewer)
             .select_related("review")
-            .filter(user=request.user, event=event)
+            .filter(user=viewer, event=event)
             .first()
         )
         payload["viewer_entry"] = (
             serialize_diary_entry(entry) if entry is not None else None
         )
         payload["viewer_will_be_there"] = viewer_will_be_there_state(
-            user=request.user,
+            user=viewer,
             event=event,
         )
-        favorite = FavoriteEvent.objects.filter(user=request.user, event=event).first()
+        favorite = FavoriteEvent.objects.filter(user=viewer, event=event).first()
         payload["viewer_favorite"] = {"is_favorite": favorite is not None, "added_at": favorite.added_at.isoformat().replace("+00:00", "Z") if favorite else None}
     return JsonResponse(payload)

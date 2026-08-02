@@ -3,6 +3,7 @@ from datetime import timedelta
 
 from django.conf import settings
 from django.contrib.auth import password_validation
+from django.contrib.auth.models import AnonymousUser
 from django.contrib.sessions.models import Session
 from django.core.mail import send_mail
 from django.core.signing import salted_hmac
@@ -47,6 +48,16 @@ def account_actions_allowed(user):
         not settings.EMAIL_VERIFICATION_ENFORCED
         or user.email_verified_at is not None
     )
+
+
+def effective_visibility_viewer(user):
+    if (
+        settings.EMAIL_VERIFICATION_ENFORCED
+        and user.is_authenticated
+        and user.email_verified_at is None
+    ):
+        return AnonymousUser()
+    return user
 
 
 def require_account_action(user):

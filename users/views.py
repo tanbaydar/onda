@@ -33,6 +33,7 @@ from .auth_services import (
     CodeInvalid,
     VERIFICATION_REQUIRED_MESSAGE,
     account_actions_allowed,
+    effective_visibility_viewer,
     issue_account_code,
     request_password_reset,
     reset_password,
@@ -140,6 +141,7 @@ def _profile_user(username):
 
 
 def _profile_access(viewer, profile):
+    viewer = effective_visibility_viewer(viewer)
     if viewer.is_authenticated and viewer.pk == profile.pk:
         return "owner"
     if User.objects.profile_content_visible_to(viewer).filter(pk=profile.pk).exists():
@@ -790,20 +792,21 @@ def privacy_detail(request):
 @require_GET
 def profile_detail(request, username):
     profile = _profile_user(username)
-    access = _profile_access(request.user, profile)
+    viewer = effective_visibility_viewer(request.user)
+    access = _profile_access(viewer, profile)
     payload = {"profile": _profile_identity(profile), "access": access}
     if access == "owner":
         payload["account"] = {"is_private": profile.is_private}
-    elif request.user.is_authenticated:
+    elif viewer.is_authenticated:
         outgoing = Follow.objects.filter(
-            follower=request.user,
+            follower=viewer,
             followee=profile,
         ).first()
         payload["relationship"] = {
             "outgoing_status": outgoing.status if outgoing is not None else None,
             "follows_you": Follow.objects.filter(
                 follower=profile,
-                followee=request.user,
+                followee=viewer,
                 status=FollowStatus.APPROVED,
             ).exists(),
             "can_follow": outgoing is None,
@@ -891,7 +894,8 @@ def profile_edit(request):
 
 def _profile_content_target(request, username):
     profile = _profile_user(username)
-    if not User.objects.profile_content_visible_to(request.user).filter(pk=profile.pk).exists():
+    viewer = effective_visibility_viewer(request.user)
+    if not User.objects.profile_content_visible_to(viewer).filter(pk=profile.pk).exists():
         return profile, _private_content_response()
     return profile, None
 
@@ -908,8 +912,9 @@ def profile_been(request, username):
         )
     page_number, page_size = pagination
     lineup = EventArtist.objects.select_related("artist").order_by("position")
+    viewer = effective_visibility_viewer(request.user)
     entries = (
-        DiaryEntry.objects.visible_to(request.user)
+        DiaryEntry.objects.visible_to(viewer)
         .filter(user=profile)
         .select_related("event__venue__city", "review")
         .prefetch_related(
@@ -961,8 +966,9 @@ def profile_reviews(request, username):
         )
     page_number, page_size = pagination
     lineup = EventArtist.objects.select_related("artist").order_by("position")
+    viewer = effective_visibility_viewer(request.user)
     reviews = (
-        Review.objects.visible_to(request.user)
+        Review.objects.visible_to(viewer)
         .filter(entry__user=profile)
         .select_related("entry__event__venue__city")
         .prefetch_related(
@@ -984,10 +990,10 @@ def profile_reviews(request, username):
             body_length=Length("body"),
         )
     )
-    if request.user.is_authenticated:
+    if viewer.is_authenticated:
         reviews = reviews.annotate(
             viewer_has_liked=Exists(
-                ReviewLike.objects.filter(user=request.user, review_id=OuterRef("pk"))
+                ReviewLike.objects.filter(user=viewer, review_id=OuterRef("pk"))
             )
         )
     ordering = {
@@ -1016,7 +1022,7 @@ def profile_reviews(request, username):
             "published_at": review.published_at.isoformat().replace("+00:00", "Z"),
             "like_count": review.like_count,
         }
-        if request.user.is_authenticated:
+        if viewer.is_authenticated:
             item["viewer_has_liked"] = review.viewer_has_liked
         results.append(item)
     return JsonResponse(
@@ -1112,14 +1118,15 @@ def profile_stats(request, username):
     profile, denied = _profile_content_target(request, username)
     if denied is not None:
         return denied
-    entries = DiaryEntry.objects.visible_to(request.user).filter(user=profile)
+    viewer = effective_visibility_viewer(request.user)
+    entries = DiaryEntry.objects.visible_to(viewer).filter(user=profile)
     rated = entries.filter(rating__isnull=False)
     average = rated.aggregate(value=Avg("rating"))["value"]
     rating_payload = rating_distribution_payload(entries)
     return JsonResponse({
         "statistics": {
             "events_in_been": entries.count(),
-            "written_reviews": Review.objects.visible_to(request.user).filter(entry__user=profile).count(),
+            "written_reviews": Review.objects.visible_to(viewer).filter(entry__user=profile).count(),
             "venues_visited": entries.values("event__venue_id").distinct().count(),
             "cities_visited": entries.values("event__venue__city_id").distinct().count(),
             "average_rating_given": ({"state": "empty"} if average is None else {"state": "available", "value": float(average)}),
@@ -1357,24 +1364,25 @@ def event_review_list(request, event_id):
             ),
         )
     )
-    if request.user.is_authenticated:
+    viewer = effective_visibility_viewer(request.user)
+    if viewer.is_authenticated:
         reviews = reviews.annotate(
             viewer_has_liked=Exists(
                 ReviewLike.objects.filter(
-                    user=request.user,
+                    user=viewer,
                     review_id=OuterRef("pk"),
                 )
             ),
             viewer_follows=Exists(
                 Follow.objects.filter(
-                    follower=request.user,
+                    follower=viewer,
                     followee_id=OuterRef("entry__user_id"),
                     status=FollowStatus.APPROVED,
                 )
             ),
             viewer_has_follow_row=Exists(
                 Follow.objects.filter(
-                    follower=request.user,
+                    follower=viewer,
                     followee_id=OuterRef("entry__user_id"),
                 )
             ),
@@ -1395,7 +1403,7 @@ def event_review_list(request, event_id):
                 serialize_review(
                     review,
                     include_author=True,
-                    viewer=request.user,
+                    viewer=viewer,
                 )
                 for review in page.object_list
             ],

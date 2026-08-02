@@ -251,3 +251,67 @@ class VerificationGateSweepTests(TestCase):
             with self.subTest(action=name):
                 response = self.request(method, path, payload)
                 self.assertEqual(response.status_code, expected_status)
+
+    @override_settings(EMAIL_VERIFICATION_ENFORCED=True)
+    def test_unverified_reads_are_byte_identical_to_guest_at_public_boundaries(self):
+        guest = Client()
+        paths = (
+            f"/api/events/{self.events[10].id}/",
+            f"/api/venues/{self.other_venue.id}/",
+            f"/api/artists/{self.other_artist.id}/",
+            f"/api/events/{self.events[7].id}/reviews/",
+            f"/api/users/{self.public_targets[0].username}/",
+        )
+        for path in paths:
+            with self.subTest(path=path):
+                unverified = self.client.get(path)
+                anonymous = guest.get(path)
+                self.assertEqual(unverified.status_code, anonymous.status_code)
+                self.assertEqual(unverified.content, anonymous.content)
+
+    @override_settings(EMAIL_VERIFICATION_ENFORCED=True)
+    def test_unverified_approved_follower_gets_guest_private_profile_visibility(self):
+        private = self.private_targets[0]
+        Follow.objects.create(
+            follower=self.user,
+            followee=private,
+            status=FollowStatus.APPROVED,
+            created_at=NOW,
+            approved_at=NOW,
+        )
+        entry = DiaryEntry.objects.create(
+            user=private,
+            event=self.events[0],
+            rating="4.0",
+            rated_at=NOW,
+        )
+        Review.objects.create(entry=entry, body="Private attributed review", published_at=NOW)
+        FavoriteEvent.objects.create(user=private, event=self.events[1], added_at=NOW)
+        guest = Client()
+        paths = (
+            f"/api/users/{private.username}/",
+            f"/api/users/{private.username}/been/",
+            f"/api/users/{private.username}/reviews/",
+            f"/api/users/{private.username}/favorites/",
+            f"/api/users/{private.username}/stats/",
+        )
+        for path in paths:
+            with self.subTest(path=path):
+                unverified = self.client.get(path)
+                anonymous = guest.get(path)
+                self.assertEqual(unverified.status_code, anonymous.status_code)
+                self.assertEqual(unverified.content, anonymous.content)
+
+    @override_settings(EMAIL_VERIFICATION_ENFORCED=False)
+    def test_flag_off_read_payloads_retain_authenticated_visibility(self):
+        event = self.client.get(f"/api/events/{self.events[10].id}/").json()
+        venue = self.client.get(f"/api/venues/{self.other_venue.id}/").json()
+        artist = self.client.get(f"/api/artists/{self.other_artist.id}/").json()
+        review = self.client.get(f"/api/events/{self.events[7].id}/reviews/").json()["results"][0]
+        profile = self.client.get(f"/api/users/{self.public_targets[0].username}/").json()
+
+        self.assertIn("viewer_favorite", event)
+        self.assertIn("viewer_favorite", venue)
+        self.assertIn("viewer_favorite", artist)
+        self.assertIn("viewer_has_liked", review)
+        self.assertIn("relationship", profile)
