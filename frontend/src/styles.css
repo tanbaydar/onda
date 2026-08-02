@@ -99,6 +99,13 @@ body>div>header nav ul{display:flex;justify-content:space-around;margin:0;paddin
 body>div>header nav a{color:var(--text-muted);font-size:var(--text-micro);text-decoration:none}
 body>div>header nav a[aria-current="page"]{color:var(--text);font-weight:600}
 body>div>header>section,body>div>header>p:not(:first-child),body>div>header>button{display:none}
+body>div>header>section:has(.account-menu){display:block}
+.account-menu{position:fixed;z-index:12;top:var(--sp-8);right:var(--gutter-mobile);font-size:var(--text-ui)}
+.account-menu-trigger{min-height:0;padding:var(--sp-4) 0;border:0;color:var(--text-secondary);font-size:var(--text-ui);font-weight:400}
+.account-menu-trigger:hover,.account-menu-trigger:focus{color:var(--text);outline:none}
+.account-menu-panel{position:absolute;top:100%;right:0;width:max-content;min-width:136px;border:var(--hairline) solid var(--border-strong);background:var(--bg);box-shadow:none}
+.account-menu-panel a,.account-menu-panel button{display:block;width:100%;min-height:0;padding:var(--sp-8) var(--sp-12);border:0;color:var(--text);font-size:var(--text-ui);font-weight:400;text-align:left;text-decoration:none;white-space:nowrap}
+.account-menu-panel a:hover,.account-menu-panel a:focus,.account-menu-panel button:hover,.account-menu-panel button:focus{background:var(--bg-subtle);outline:none}
 body>div>footer{padding:var(--sp-32) var(--gutter-mobile);color:var(--text-muted);font-size:var(--text-micro)}
 body>div>footer p{margin:0}
 main>form,main>h1+section[aria-label$="errors"]+form{max-width:var(--auth-col);margin-right:auto;margin-left:auto}
@@ -285,6 +292,8 @@ dialog .destructive{border-color:var(--action);background:var(--action);color:va
  body>div>header>section{display:block;font-size:var(--text-micro)}
  body>div>header>section p{margin:0}
  body>div>header>section button{display:none}
+ .account-menu{position:relative;z-index:auto;top:auto;right:auto}
+ body>div>header>section .account-menu-trigger,body>div>header>section .account-menu-panel button{display:block}
  main{padding:var(--sp-48) var(--gutter-desktop) var(--sp-96)}
  .feed-page{max-width:calc(var(--measure-rows) + 2 * var(--gutter-desktop));padding-top:var(--sp-32)}
  main>section,main>article+section,main>nav+section{margin-top:var(--sp-48)}

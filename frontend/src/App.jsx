@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, Navigate, NavLink, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 
 import { fetchJson, fetchWithCsrf } from "./api.js";
+import AccountMenu from "./components/AccountMenu.jsx";
 import ArtistPage from "./pages/ArtistPage.jsx";
 import ActivityPage from "./pages/ActivityPage.jsx";
 import DiscoverPage from "./pages/DiscoverPage.jsx";
@@ -40,7 +41,6 @@ function NotFoundPage() {
 }
 
 export default function App() {
-  const location = useLocation();
   const navigate = useNavigate();
   const [retry, setRetry] = useState(0);
   const [session, setSession] = useState({
@@ -72,7 +72,7 @@ export default function App() {
         headers: { "Content-Type": "application/json" },
       });
       setSession({ loading: false, error: null, user: null });
-      if (location.pathname === "/home") navigate(GUEST_DISCOVER, { replace: true });
+      navigate(GUEST_DISCOVER, { replace: true });
     } catch (error) {
       setSession((current) => ({ ...current, error }));
     }
@@ -89,10 +89,7 @@ export default function App() {
         </nav>
         <section aria-label="Account controls">
           {session.user ? (
-            <>
-              <p>Account: @{session.user.username}</p>
-              <button type="button" onClick={handleLogout}>Log out</button>
-            </>
+            <AccountMenu user={session.user} onLogout={handleLogout} />
           ) : (
             <p><Link to="/register">Register</Link>{" · "}<Link to="/login">Log in</Link></p>
           )}
