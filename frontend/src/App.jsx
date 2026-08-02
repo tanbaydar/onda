@@ -19,7 +19,7 @@ import SearchPage from "./pages/SearchPage.jsx";
 import QuickSearch from "./components/QuickSearch.jsx";
 import { headerSearchMode, shouldExpandHeaderSearch } from "./headerSearchState.js";
 import { GUEST_DISCOVER, landingPath } from "./landing.js";
-import { profilePath } from "./profileRoutes.js";
+import { primaryNavigationItems } from "./primaryNavigation.js";
 
 function LandingPage({ session }) {
   const location = useLocation();
@@ -104,19 +104,9 @@ export default function App() {
         <p>Danced</p>
         <nav aria-label="Primary navigation">
           <ul>
-            {session.user ? <li><NavLink to="/home">Home</NavLink></li> : null}
-            <li><NavLink to="/discover">Discover</NavLink></li>
-            <HeaderSearchNav pathname={location.pathname} />
-            {session.user ? (
-              <>
-                <li>
-                  <NavLink to="/activity">Activity</NavLink>
-                </li>
-                <li>
-                  <NavLink to={profilePath(session.user.username)}>Profile</NavLink>
-                </li>
-              </>
-            ) : null}
+            {primaryNavigationItems(session.user).map((item) => item.auxiliary
+              ? <HeaderSearchNav key={item.label} pathname={location.pathname} />
+              : <li key={item.label}><NavLink to={item.to}>{item.label}</NavLink></li>)}
           </ul>
         </nav>
         <section aria-label="Account controls">
