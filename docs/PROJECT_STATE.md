@@ -1,16 +1,16 @@
 # Danced — Project State and Conversation Handoff
 
-> Last verified: 2026-07-31 (America/New_York)
+> Last verified: 2026-08-02 (America/New_York)
 >
 > Repository: `/Users/ilkerbaydar/Desktop/danced_app`
 >
 > Branch: `main`
 >
-> Verified implementation state: Milestone 3 — the social layer — is complete,
-> verified, and pushed.
+> Verified implementation state: Milestone 4 is effectively complete; the M5
+> verification-enforcement prerequisites are code-complete behind the disabled flag.
 >
 > Verified Git state before this documentation commit: local `HEAD` and
-> `origin/main` both at `0e577d5a019217b713ed755f948a7588c666e98a`.
+> `origin/main` both at `f1d637055245202cb3763bb17b5f67f2ccea83d4`.
 >
 > Purpose: provide the single current, evidence-based handoff for ingestion,
 > catalog, product, social architecture, local operations, and the next phase.
@@ -28,6 +28,133 @@ tests, migrations, or `docs/NAVIGATION.md`. If a summary here conflicts with an
 authoritative artifact, investigate the discrepancy rather than choosing whichever
 text is convenient.
 
+## Current status — 2026-08-01/02 session
+
+### Headline status
+
+**Milestone 4 is effectively complete.** Every product surface is designed and
+implemented over the real semantic frontend: Discover, Search, Event, Profile,
+Edit Profile, Home, Activity (timestamps), and all four auth surfaces. The
+unstyled-semantic era is over. The M5 verification-enforcement slice is
+code-complete and armed behind its flag.
+
+### Decisions resolved this session
+
+- **Search: KEEP — built and shipped.** The five-position navigation skeleton is complete; Search occupies position 3 for guests and authenticated users. The desktop header quick-search was built and then removed by ruling; the Search page and DiscoverSearch are the only search surfaces.
+- **Deploy target: Render** (supersedes Railway). MySQL 8.x as a Render private service with persistent disk is the pending approach (unratified until deploy schedules). RENDER-DEPLOY-GATED order is fully drafted and shelved; blockers: operator's persona/bot-boundary ruling. Deploy inherits: server-level 301s via Django ownership of public entity paths (slug report note); backups; pinned MySQL + physical-constraint rerun; basic-auth gate; console email acceptable while verification stays dark.
+- **Slug strategy resolved**: /e|/v|/a/{slug}-{id}, ID-last, derived slugs, no storage, SPA canonicalization now, true 301s at deploy.
+- **Allocation rule color clause ratified permanent** (semantic green). See spec amendment block.
+- **Punch-list closures**: pluralization sweep (zero-form grammar, product-wide), feed activity timestamps (relative, Home + Activity), event-page hierarchy (owner block + state gating, verified both directions), WBT-count prominence (color slot on upcoming events).
+
+### Commit ledger (this session, chronological, all on origin/main)
+
+| Commit | What |
+|---|---|
+| f9a1b39 | Favicon |
+| 8c7e16b | Search integration (page, API, nav, scopes, recents, keyboard) |
+| 1dce6d5 | Recents: commit-signal recording, prefix dedupe |
+| a01deae | Search scope-switch fix (stale-payload crash) |
+| fa9ac00 | Discover dropdown + quick-search panel conform |
+| da750ec / d6f3b73 / b30cf49 / a670e9e / c135a58 | Handoffs tracked (search, histogram, event, stats, home, discover, auth) |
+| 34e21d9 | Markdown-only handoff policy; AGENTS.md rule |
+| d18c185 | Event page: StarInput, owner block, state gating; histogram integration |
+| 0dd16cf | Histogram render gate removed (always renders) |
+| fb23a31 / 879b1f3 | Navigation contract extraction; header quick-search removed |
+| 50caa91 | F/F counts public on private-outsider profiles |
+| 0d30a27 | Profile statistics surface (header F/F, five-item strip, FollowControl) |
+| 97b789f | Profile Reviews conform (custom sort menu, favorites rows) |
+| 2fb1f78 | Additive avatars: review authors + Circle (operator ruling) |
+| 8967d40 | Event review rows conform; favorite-rejection recovery |
+| 8e11385 | Event review sort → shared custom menu (last native select) |
+| bd7576b | Account-menu flat panel; "more" truncation-gated |
+| 6906e8a | Guest header: bordered Register + quiet Log in |
+| a137fe4 | Account menu + logout flow |
+| 7114de7 / e1c8bd9 | Home feed serializer amendment + implementation |
+| c147d74 / 42cc60b / a1b294f | Verification-enforcement prerequisites (all three) |
+| 88efdf1 | Canonical slug routes + centralized URL builder (+ event_title on notifications) |
+| 404db4d | Discover redesign implementation |
+| b9f92ff / da851a3 / c6e5f33 | Auth handoff amendment; username-or-email login; auth surfaces |
+| 53fa4c5 / f2c0dfe | StarInput interaction and shared half-star geometry; operator live-verified |
+| 3d2b68b / 70799b7 / 21567db | Imagery-polish handoff, backend amendments, and frontend integration |
+| 2c73b00 | Repository formalization and clean full-history secrets audit |
+| 00dd359 / 34ba1c0 | Frontend quality Fix A and honest source-assertion test labels |
+| f1d6370 | Personal and archived HTML artifacts removed |
+| pending | Tier B frontend refactor slice — audit report is the specification |
+| pending | Browser-DOM test infrastructure slice — coverage map recorded by audit |
+| pending | Design blessing for the A1 session-error slot placement |
+
+### Backend contract amendments
+
+The initial four additive amendments this session share one pattern (see spec block
+for detail):
+Home-feed presentation fields (7114de7); review/Circle avatars (2fb1f78);
+event_title on review-like notifications (88efdf1); username-or-email login
+(da851a3). All carry operator-ruling provenance in their commit messages; all
+assert existing behavior unchanged by test; flag-off auth behavior proven
+byte-identical. The later imagery/favorites boundary amendments are recorded in the
+second-wave spec addendum and commit ledger.
+
+### Verification-enforcement slice
+
+Code-complete on main. Unverified sessions get guest-equivalent reads at the
+sanctioned boundaries; session payloads expose self-only verification state
+(flag-on only; never on public payloads); flag-on auth routes to /verify-email.
+EMAIL_VERIFICATION_ENFORCED remains False. Remaining work is deployment-only:
+flag flip, email provider + sending domain, landing-flow swap. Provider
+shortlist when it matters: Resend or Postmark.
+
+### Design handoffs (authoritative set, markdown-only)
+
+frontend/design-handoffs/: search-handoff.md (dated deltas: recents rules,
+quick-search removal) · histogram-handoff.md (superseded ≥5 gate noted) ·
+event-handoff.md · stats-handoff.md (v3) · profile-handoff.md ·
+home-handoff.md · discover-handoff.md · auth-handoff.md (dated delta:
+five-field registration, username-or-email). All spec/*.html citations inside
+handoffs are historical dead references per the markdown-only policy.
+
+### Consolidated backlog (updated)
+
+#### Design (small batch for next Claude Design pass)
+- Bless the minimal **session-error slot placement** below the header band. Its
+  behavior and error register are shipped; only placement awaits design review.
+
+#### Product decisions (operator)
+- **Persona/bot boundary** for demo seed data: safe tier (profiles, follows, Been, favorites, WBT — no fabricated opinions) vs. labeled demo reviews vs. founder-written reviews. Blocks the gated deploy. Note: mass-seeded engagement is adjacent to the parked sockpuppet-defense risk; keep seed data out of anything trust- or popularity-consuming.
+- **Minimum-n score display**: reopened — the histogram's interim ≥5 gate partially answered it and was removed.
+- **Guest Follow → login/register** affordance: parks with the Q203 onboarding decision.
+
+#### Engineering
+- **Tier B frontend refactor slice**: the frontend quality-audit report is its
+  specification; no opportunistic adjacent cleanup.
+- **Browser-DOM test infrastructure**: frontend tests are source/CSS assertions plus live-browser QA; a rendered-component framework is a deliberate future slice (flagged honestly by the agent four times; barred as scope creep so far). Pairs naturally with the parked React Router v7 upgrade (dependency-touching).
+- **Sockpuppet defenses**: unchanged, parked until popularity/trust consumers exist.
+
+#### Milestone 5 / deployment (updated)
+- RENDER-DEPLOY-GATED: drafted, shelved, fire-on-command. Blockers: persona ruling only (prereqs and slugs landed this session).
+- Email provider + sending domain: deployment-motion decision.
+- RA contact: triggered by public availability; a basic-auth-gated private demo does not trigger it (operator's legal read to confirm before first external access).
+- Scheduler migration (LaunchAgent → Render cron), pinned MySQL + physical-constraint rerun, backups: all specified inside the shelved deploy order.
+
+### Conduct contract additions (AGENTS.md)
+
+- Design handoffs: markdown sole authority; no spec HTML in repo; visual disputes escalate to the operator. (Committed, 34e21d9.)
+- Every order gets a report, even "already shipped in X". (Recorded in this update.)
+- Approved orders push by default; hold only when ordered or when unrelated work would publish — then ask. (Recorded in this update.)
+
+### Session narrative (one paragraph, for the resume-project record)
+
+This session closed Milestone 4. Design moved from module-level handoffs to
+full-page composition across every surface, held together by a small set of
+ratified patterns (allocation rule as settled law, tab register, panel
+register, row anatomies, verb-survival, contextual titles). The workflow's
+best moments were contract stops: the agent halted on the feed serializer's
+missing presentation fields, the SPA's inability to emit real 301s, and two
+auth-handoff/contract conflicts — each resolved by explicit operator ruling
+with additive, test-asserted amendments rather than silent drift. The
+verification slice went from deferred debt to armed; slugs made URLs
+canonical; the product is one persona ruling and one deploy order away from a
+gated demo.
+
 ## Read this first
 
 Danced is a Letterboxd-style social diary for live music. It now has three complete
@@ -35,7 +162,8 @@ working foundations:
 
 1. A conservative, replayable Resident Advisor ingestion pipeline over live New
    York City and Boston catalog data.
-2. A public catalog API and semantic, deliberately unstyled React browsing shell.
+2. A public catalog API and fully integrated React product surface under the locked
+   Milestone 4 design system.
 3. A session-authenticated social layer: identity, privacy, Been, ratings, reviews,
    likes, follows, requests, notifications, Circle, Home, Will Be There, profiles,
    favorites, and profile statistics.
@@ -151,32 +279,24 @@ security flow, concurrency contracts, and physical foreign-key behavior verified
 
 ### Milestone 4 — Design
 
-Next phase. Begin with a direction session; do not style ad hoc.
-
-The planned sequence is:
-
-1. settle design direction against the actual finished semantic product;
-2. use Claude Design against the real frontend rather than a parallel mock product;
-3. integrate the approved design over the frozen semantic markup;
-4. preserve plain JavaScript/JSX, no TypeScript, and no component library unless a
-   deliberate design-time decision explicitly reverses those constraints;
-5. run the pre-design punch list below before or as part of integration where it
-   affects content hierarchy rather than decoration.
+**Effectively complete.** The locked design system is integrated across Discover,
+Search, Event, Profile, Edit Profile, Home, Activity timestamps, and all four auth
+surfaces. The unstyled-semantic era is over. Remaining frontend work is the explicit
+audit backlog, not unfinished M4 surface integration.
 
 ### Milestone 5 — Deployment
 
-Planned after design:
+Planned after design. The verification-enforcement prerequisites are already
+code-complete and armed behind `EMAIL_VERIFICATION_ENFORCED=False`; deployment must
+still configure delivery, flip the flag, and replace the immediate-use landing flow.
 
-- execute the named **verification-enforcement slice** before flipping
-  `EMAIL_VERIFICATION_ENFORCED`: make unverified sessions guest-equivalent for
-  attributed/private reads, expose self-only verification state in the session
-  payload, and route registration/login through `/verify-email` until verified;
-- only after that slice is green, enable the already-built-dark mandatory email-
-  verification gate and replace registration's immediate-use flow;
+- enable the already-built-dark mandatory email-verification gate only during the
+  ruled deployment motion;
 - activate the already-built password-reset screens and choose production email
   delivery; both flows share the six-digit-code foundation;
 - choose and integrate an email provider;
-- move local MySQL to a deliberately pinned supported MySQL 8.x service;
+- deploy to Render, with a deliberately pinned supported MySQL 8.x private service
+  and persistent disk as the pending approach;
 - migrate the local LaunchAgent schedule to hosted scheduling;
 - establish backups, monitoring, environment/secrets handling, and recovery drills;
 - complete the deployment security checklist: secure session and CSRF cookies,
@@ -225,7 +345,7 @@ Read current artifacts in this order:
 - no TypeScript
 - no global state-management library
 - no component library
-- no CSS files, inline styles, `className`, or CSS framework
+- scoped plain CSS and `className`; no CSS framework
 
 ### Django apps
 
@@ -377,7 +497,7 @@ the count or merge per-source results in Python.
 
 1. Home — implemented at `/home`, signed-in only.
 2. Discover — implemented at `/discover`, guest and signed-in.
-3. Search — not implemented; no empty stub.
+3. Search — implemented at `/search` for guests and signed-in users.
 4. Activity — implemented at `/activity`, signed-in only.
 5. Profile — implemented at `/u/{username}`; guests receive Register/Login account
    access at this position.
@@ -555,29 +675,15 @@ system.
 
 ## Consolidated backlog and triggers
 
-This is the single current backlog. Do not duplicate these items in competing state
-sections.
-
-### Milestone 4 / pre-design
-
-- **Event-page hierarchy:** reorder sections so WBT placement and upcoming-versus-
-  past emphasis reflect the event's state. Trigger: design direction/integration.
-- **Feed activity timestamps:** use a shared formatted timestamp or deliberately
-  chosen relative-time presentation. Trigger: design typography/content pass.
-- **Pluralization sweep:** fix phrases such as “1 active marks.” Trigger: pre-design
-  content polish; apply consistently rather than patching one string.
-- **WBT-count prominence:** make the anonymous active count appropriately prominent
-  on upcoming events without overemphasizing it on past events. Trigger: event-page
-  design hierarchy.
+The current backlog is recorded in the 2026-08-01/02 status section above. The M4
+pre-design punch list—event hierarchy, relative feed timestamps, pluralization, and
+WBT-count prominence—is closed.
 
 ### Product surfaces and decisions
 
 - **Owner-only WBT list on own Profile:** schedule after M4. It requires an explicit
   product amendment because Profile tabs are contractually enumerated; do not add a
   silent third tab.
-- **Search destination:** explicit keep/cut decision pending. Q142–150 fully specify
-  it, and it is the last unbuilt navigation/spec surface. If kept, it occupies the
-  existing Search position; if cut, amend the navigation/product contract.
 - **Favorite-venue notifications:** deferred during Slice 6B preflight. Trigger: a
   future notification/discovery product decision; do not infer one from storage.
 - **Expired WBT retention policy:** dormant rows are currently retained for
@@ -585,19 +691,18 @@ sections.
 
 ### Milestone 5 / deployment
 
-- **Verification-enforcement slice:** the code lifecycle, capability gate, JSON API,
-  and unstyled screen are built dark behind `EMAIL_VERIFICATION_ENFORCED=False`.
-  Before enabling it, make unverified sessions guest-equivalent at sanctioned read
-  boundaries, add self-only verification state to the session payload, and route
-  registration/login to `/verify-email`; then replace the immediate-use landing.
+- **Verification activation:** enforcement prerequisites are complete behind
+  `EMAIL_VERIFICATION_ENFORCED=False`. Deployment still owns email delivery, the flag
+  flip, and the landing-flow change.
 - **Password reset:** the non-enumerating six-digit-code API and unstyled screens are
   built dark. Production activation needs only the deployment email backend; the
   product amendment is recorded in `PRODUCT_QA_SPEC.md`.
-- **Cloud MySQL:** pin a supported MySQL 8.x version and rerun physical constraints.
+- **Render MySQL:** provision the ruled Render private-service approach, pin a
+  supported MySQL 8.x version, and rerun physical constraints.
 - **Scheduler migration:** replace the local LaunchAgent with hosted scheduling.
 - **Email provider:** choose alongside verification/reset delivery.
-- **Slug strategy:** decide stable event/venue/artist public URLs during deployment-
-  era routing work; current numeric URLs remain canonical until then.
+- **Canonical-route ownership:** slug-first, ID-last URLs are shipped in the SPA;
+  deployment must give Django ownership so legacy/stale routes emit true HTTP 301s.
 - **Gated posture:** link access plus basic authentication before broader exposure.
 - **RA contact:** email Resident Advisor at or before public availability.
 - **Seed script and smoke crawl:** post-deployment, by founder decision; include
@@ -634,16 +739,12 @@ ratings, and approved followers can already see the corresponding private diary.
 
 ### Email verification
 
-Q125–126 require verification before account actions. The approved freeze-break is
-temporary and remains the default: accounts are created active and signed in
-immediately, and `EMAIL_VERIFICATION_ENFORCED` defaults false. The additive code
-table, 15-minute/six-digit lifecycle, service-owned capability gate, console-email
-delivery, JSON endpoints, and unstyled verification/reset screens are built dark.
-Milestone 5 must first complete the named verification-enforcement slice: an
-unverified session receives guest-equivalent attributed/private read visibility,
-the self-session payload exposes verification state, and registration/login route
-through `/verify-email`. Only then may it enable enforcement, change the landing
-flow, and configure a production email backend before public deployment.
+Q125–126 require verification before account actions. The approved freeze-break
+remains the default because `EMAIL_VERIFICATION_ENFORCED` is false. The complete
+dark-built path includes the 15-minute/six-digit lifecycle, service-owned capability
+gate, guest-equivalent reads for unverified sessions, self-only session verification
+state, and flag-on routing through `/verify-email`. Deployment owns only the email
+provider, flag flip, and landing-flow change.
 
 ### Onboarding
 
@@ -653,14 +754,14 @@ and registration correctly land on Home.
 
 ### Search
 
-Search is fully specified but unbuilt pending the explicit keep/cut decision. It is
-absent, not an empty destination.
+Search is kept, built, and shipped at navigation position 3. `/search` and the
+city-scoped `DiscoverSearch` are the only search surfaces; desktop header
+quick-search is intentionally removed.
 
 ### Styling
 
-The semantic frontend is intentionally unstyled until Milestone 4. Do not add
-speculative wrappers merely for CSS. Design integrates over the markup that survived
-the complete social implementation.
+The Milestone 4 design system is integrated over the semantic frontend. Future
+visual changes remain governed by the Markdown handoffs and operator rulings.
 
 ### Deployment and source dependency
 
@@ -766,11 +867,9 @@ process/service state before treating it as downtime or restarting it.
 
 ## Next product work
 
-Start Milestone 4 with a design-direction session, then execute the pre-design punch
-list and integrate Claude Design over the real semantic frontend. Do not begin new
-feature work merely because Milestone 3 is closed. Search needs an explicit keep/cut
-decision; owner WBT Profile history needs a spec amendment; deployment repayment
-belongs to Milestone 5.
+Execute only the consolidated backlog in the 2026-08-01/02 status section. The next
+major motion is the gated Render deployment after the operator resolves the persona
+boundary; owner WBT Profile history still requires an explicit product amendment.
 
 ## Resume-project narrative
 
@@ -796,5 +895,5 @@ private Profile chrome leaked inaccessible affordances; and a business-rule 409 
 refetched out of visibility. Each correction narrowed ownership and made the contract
 more truthful.
 
-Milestone 3 is complete. The next question is design direction, not another social
-feature slice.
+Milestone 4 is effectively complete. The next major question is gated deployment,
+not another social feature slice.

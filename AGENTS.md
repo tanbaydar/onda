@@ -22,6 +22,8 @@ Every completion report must clearly separate these three sections:
 2. **WHAT I DID BEYOND IT** — this should be empty
 3. **WHAT I FOUND BUT DID NOT TOUCH**
 
+Every order gets a report, even if the answer is "already shipped in X."
+
 ## Backend ruling provenance
 
 Never push a backend-behavior change unless an explicit operator ruling authorizes it and the commit message records that authority using: `per operator ruling: ...`.
@@ -33,3 +35,5 @@ Design handoffs: the .md in frontend/design-handoffs/ is sole authority. No spec
 ## Push policy
 
 Approved orders push by default. Hold a push only when the order explicitly says so or when it would publish unrelated work; in the latter case, ask the operator first.
+
+Approved orders push by default; hold a push only when the order says so or unrelated work would publish — then ask.

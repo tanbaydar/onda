@@ -1676,3 +1676,118 @@ verification gates nothing. When deployment enables the flag, an unverified acco
 retains its own session and guest-equivalent public browsing but cannot perform account
 actions until verification. Enabling the flag and changing registration's destination
 remain explicit Milestone 5 deployment actions, not behavior of the dark build.
+
+## Amendments — 2026-08-01/02 session
+
+Each entry is an operator ruling made during the M4 polish/integration session.
+Where an entry supersedes a numbered question, the original answer remains in
+place as historical record; this block governs.
+
+### Search (Q142–Q150, Q127)
+
+- **Q143 superseded.** Search result groups render **Events → Artists → Venues → People**.
+- **Q142 display label.** The Users group displays as **"People."** The object type remains User.
+- **Added: scope row.** All · Events · Artists · Venues · People under the search bar. All = grouped results capped at 5 rows per group with "View all (N)" switching scope in place; single scopes render one cursor-paginated list.
+- **Added: Discover city-scoped search** (component: DiscoverSearch). Events-only inline search on Discover scoped to the selected city; thin results (<3) append a "Search all cities →" tail routing to /search with the query.
+- **Removed: desktop header quick-search.** Built, then cut by ruling (commit 879b1f3) after repeated interaction failures. The Search nav entry routes directly to /search on all widths. The Search page and DiscoverSearch are the only search surfaces. Recorded as a dated delta in search-handoff.md.
+- **Q145 upheld.** Live search fires at 1 typed character (~250ms debounce).
+- **Q146–148 upheld.** Pre-query state shows up to 10 recent searches, newest first, per-row remove, Clear all.
+- **Added: recents recording rule.** A recent search is recorded only on commit signals — opening a result, pressing Enter, or activating a scope/"View all" with an active query. Live-search fires never record. Recording dedupes case-insensitively and removes existing prefixes of the new query. Client-side storage (localStorage).
+- **Search is chrome.** Zero judgment color anywhere in search UI.
+
+### Profile statistics and identity (Q140, Q141)
+
+- **Q140 amended.** Followers and Following are **not statistics**. They are social-identity data rendered in the profile header beside the name/@handle, and they are **publicly visible on every profile, including private profiles viewed by outsiders** (counts only — follower/following lists and all other private-profile visibility rules unchanged; backend commit 50caa91). The STATISTICS module holds five items: Events in Been, Written reviews, Venues visited, Cities visited, Average rating given.
+- **Statistics presentation.** Horizontal strip, numeral-above-label, one shared label baseline. Events in Been leads (largest numeral, first). Average rating given is the only judgment stat (numeral in judgment color) and forms one visual unit with the rating-distribution histogram. Desktop fits a profile-specific 988px measure with zero scroll (documented exception to the 800px ledger); mobile is a three-row restructure with zero horizontal scroll.
+- **Q141 amended.** Rating distribution is a compact vertical ten-bar histogram (½★→5★), all bars in judgment color, counts on hover/tap only. **It always renders** — the interim ≥5-ratings gate was removed by ruling; zero-count buckets render as baseline stubs. Sizing is placement-driven: ~104×30 inside the statistics strip (data register — top of tallest bar aligns with the average numeral), 160×100 standalone. The minimum-n display question from the patch-1 backlog is reopened (unanswered) by the gate's removal.
+
+### Sorting controls (Q137, Q138)
+
+- Review sorting uses the custom sort menu component (no native selects): quiet right-aligned "Newest ▾" on the tab-row baseline, panel-register menu, keyboard/Esc/outside-click, selected = ink 600, focus/hover = subtle wash. Profile Reviews tab carries Q138's four options; the event page carries its two (Newest default, Most liked). No caps overline labels a sort control. Native form selects survive only as intentional form inputs on the Edit surface.
+
+### Event page
+
+- **Rating input.** Native select replaced by StarInput: ten-step (0.5–5.0), half-star hit zones, drag scrub, keyboard ←/→ 0.5 steps, slider a11y; selected fill in judgment color; committed numeral beside. Interaction conform (hover preview, frictionless re-adjustment) ordered this session (STARINPUT-INTERACTION-CONFORM).
+- **Owner block.** The five per-item caps sections collapsed into one hairline-topped headerless block; contents gate on event state from venue-local time. Upcoming: Mark Will Be There + Add favorite, WBT count takes the color slot, zero rating/review chrome (verified live both directions). Past, unrated: StarInput + quiet Add favorite. Past, rated: entry lives in the review column as "Yours" + "Edit ▾".
+- **Plural grammar (product-wide).** Zero-form sentences ("No active marks yet."), correct singular/plural elsewhere ("1 active mark" / "N active marks"). Closes the pluralization backlog item.
+- **Review rows.** Feed grammar adapted in place: avatar 26 (image or initials) + reviewer name fn 600 (no underline; the profile-header display-face override does not apply) + @handle micro muted; rating as judgment-color star glyphs, never text; body in quiet prose with line clamp and inline "more" expanding in place; like count micro + quiet Like/Unlike; shared anatomy across Circle, owner entry, and Public reviews. Circle aggregate remains a sentence (stars-for-numeral unruled).
+- **Favorite cap rejection.** The rejection message persists (invariant 26) and the control returns to a usable resting state; retry re-issues the request.
+- **Error register.** 12px wine text + tinted field border — first ruled use on the favorite-cap rejection; now the product-wide error treatment (also used across auth).
+
+### Profile surface
+
+- Page composition: identity header (72px avatar; display name in display face — see design-system override below; @handle · City metadata line with silent absence; F/F counts; bio quiet prose or silently absent; owner sees quiet "Edit profile" link) → statistics strip → Been | Reviews tabs → rows. Empty states are single quiet lines; no orphaned overlines; no "No bio." placeholders.
+- **Tab register (product pattern).** Text tabs fn 14, active ink 600 with a 2px action-color indicator flush on the full-width hairline, resting muted, never underlined. Only content below the hairline swaps.
+- **Been/Reviews rows.** EventListRow anatomy: flier thumb, display-face event name, meta line, judgment element as small stars (never "2.0 stars" text), "Written review" marker, "Unrated attendance" preserved; whole row navigates.
+- **Avatar mechanic (v1).** Initials-avatar is the real default (1–2 initials on the avatar-gray circle); "Avatar URL" is an advanced text field on the Edit surface. The words "Default avatar" never render.
+- **Edit Profile** lives at /settings/profile in the auth-column register (360px centered; caps micro labels; bordered-ink primary "Save changes" — no filled buttons; live "0 / 150" bio counter; custom city dropdown styled to the input register; privacy radio pair with consequence copy; follow-requests section). No edit-form content on the profile page.
+- **FollowControl.** One fixed box across all states (Follow / Unfollow / Request to follow / Requested): 32px high, min-width 150, centered text, zero layout shift on toggle.
+- **Favorites** render as hairline-separated rows (name in row-title register + micro meta), never inline link prose.
+
+### Home feed
+
+- **One feed-item anatomy across all six Q153 activity types.** Actor line: avatar 26 + name fn 600 + quiet action phrase; object names in display face; event-bearing items carry the flier thumb; ratings as judgment-color star glyphs; review excerpts clamp at four lines with an inline "more" routing to the event ("more" renders only when actually truncated).
+- **Verb-survival rule.** Actor/object names may truncate; the action phrase is always visible at every width. A feed item never loses its verb.
+- **Timestamps (product-wide feed rule).** Compact relative timestamps ("18h", "2d"), right-aligned, applied on Home and Activity. Closes the feed-timestamp backlog item.
+- **Layout.** 800px ledger centered; no page title — the feed begins directly. Empty state: one line ("No activity from people you follow yet.") + a single bordered "Discover events" affordance.
+- Presentation-field serializer amendment: see Backend contract amendments.
+
+### Discover
+
+- **City is the page title** (display face); the "Discover" H1 is removed — nav already names the destination. City dropdown + DiscoverSearch render as one matched control pair (header-band pattern): right of the title on desktop, stacked on mobile.
+- **No "Venue:" / "Artists:" labels anywhere.** Metadata self-identifies in quiet meta lines (compact date · venue).
+- **Lineups collapse on rows**: 2–3 names in listing order + "+N". The full lineup in listing order belongs to the event page only.
+- Rows: flier thumb, display-face title clamped at 2 lines (never underlined or free-wrapping), compact date grammar, "venue TBA" quiet in-register, whole row navigates via canonical slug routes. Upcoming/Recent in the tab register with independent pagination.
+- **Flag (undesigned):** Recent-tab rows are past events and may warrant a compact judgment element; anatomy currently assumed identical to Upcoming.
+
+### Authentication
+
+- **Login accepts username or email** (backend amendment da851a3, case-insensitive). Non-enumerating: unknown-identifier and wrong-password produce byte-identical error responses; one error message covers both, with an inline "reset your password" link.
+- **Registration contract defended**: username, email, password, display name, and explicit Public/Private selection — all five, in the auth-column register. The handoff's three-field reduction was rejected and recorded as a dated delta.
+- **Password reset** keys on email only; three steps; the request confirmation uses non-enumerating copy verbatim ("If an account exists for …"). Code-entry screens (reset and verification) display "Codes expire after 15 minutes."
+- **Verification screen** renders wordmark-only chrome and stands alone as the future post-registration landing. Resend confirmation ("Code sent.") is quiet ink — success states are chrome, never judgment color.
+- All auth surfaces: auth-column register, wine error register, no judgment color, no filled buttons.
+
+### Session / navigation
+
+- **Logout affordance.** The header account element (@handle, quiet) opens a flat panel menu: "Edit profile" → /settings/profile, "Log out" → POST /api/auth/logout, clears session, routes to Discover. Guests render Register (bordered-ink acquisition affordance) · Log in (quiet text) in the same position; no account element.
+- **Public URLs are slug-first, ID-last**: /e/{slug}-{id}, /v/{slug}-{id}, /a/{slug}-{id}. The trailing numeric ID is the sole lookup key; slugs are derived on render (no storage, no uniqueness constraints). Bare-ID, stale-slug, and legacy numeric paths self-heal to the canonical URL via client-side replace; production adds true HTTP 301s by giving Django ownership of the public entity paths (deploy line-item). /u/{username} unchanged.
+
+### Backend contract amendments (all additive, all with operator-ruling provenance)
+
+1. **7114de7** — Home feed payload: actor avatar (nullable), event cover_image_url (nullable), venue name, city. Union membership, ordering, cursors, visibility, deletion asserted unchanged.
+2. **2fb1f78** — Public-review authors and Circle users: nullable avatar, same field name and null semantics as (1) — one avatar-delivery pattern across attributed payloads.
+3. **88efdf1** (within slug work) — additive event_title on review-like notifications so Activity emits canonical links.
+4. **da851a3** — username-or-email authentication (see Authentication).
+
+Ruling standard applied to all four: presentation/identity data on rows the viewer is already entitled to see, through the sanctioned named boundary; invariants 19–22 asserted by test; counts-vs-lists distinction preserved (aggregate counts are not list access).
+
+### Verification-enforcement slice — status change
+
+All three M5 prerequisites are **complete and on main** (c147d74, 42cc60b, a1b294f): guest-equivalent reads for unverified sessions, self-only verification state in session payloads, flag-on routing to /verify-email. Flag-off behavior proven byte-identical to the legacy contract. The slice is code-complete and armed; remaining work is deployment-only (flag flip, email provider, landing flow).
+
+### Design-system rulings
+
+- **Allocation rule ratified as settled law (color clause).** Judgment color means *someone judged something* — stars, likes, averages, distributions, WBT counts on upcoming events — and nothing else. Chrome, nav, wordmark, buttons, statistics: ink. Challenged twice in session (all-stats-green; brand-green including nav/wordmark; Register-in-green), upheld each time, and confirmed by operator ruling after evaluating flier-dense pages ("semantic green, done"). Warmth is carried by imagery per the brief. Legitimate extensions: marked/favorited control states may carry judgment color; the judgment-unit pattern (average numeral + histogram as one object).
+- **Display-face override (scoped).** User display names render in the display face on **profile headers only** (20/24px); names in rows, reviews, feeds, and search remain functional 600.
+- **Page-title convention is contextual**: the city name titles Discover; Home has no title (the feed begins); "Discover"/"Home" H1s are dead.
+- **New composed patterns blessed via approved renders**: header band (title + matched control pair), tab register, sort menu, account menu, FollowControl fixed box. Account menu and sort menu are flagged for a formal Claude Design blessing pass (composed from existing registers; low risk).
+- **Panel register enforced**: flat — bg + 1px strong border, no shadow, no filter — across search panels, sort menus, the account menu, and the city dropdown menu. Focus/hover rows use the subtle background wash everywhere.
+- **988px profile statistics measure** is a documented exception to the 800px ledger, scoped to the statistics strip only.
+
+### Process rulings
+
+- **Markdown-only handoff authority** (34e21d9; AGENTS.md): the .md in frontend/design-handoffs/ is sole authority; no spec HTML lives in the repo; visual disputes escalate to the operator. Handoff citations of spec/*.html files are historical dead references.
+- **Every order gets a report**, even "already shipped in X" — two completions shipped unreported this session and had to be reconstructed from git.
+- **Approved orders push by default**; a push is held only when the order says so or unrelated work would publish (then ask).
+- **Design-by-exception provenance**: the statistics strip was designed by Codex under a fully-constrained prompt and ratified from the render — recorded as exception, not precedent.
+
+### Dated addendum — 2026-08-02, second wave
+
+- **StarInput and shared stars.** Half-star geometry is fixed and all star rendering converges on shared `RatingStars` (`53fa4c5`, `f2c0dfe`); operator live-verified.
+- **Imagery-polish wave** (`3d2b68b`, `70799b7`, `21567db`). Product-wide initial-on-tone placeholders replace empty image slots, with the full-bleed hero excluded. Favorites use full-row anatomy with three types in one list. Avatar upload replaces the URL field using local media, a 2MB cap, and a server-side 512px square center-crop. Event pages use label-free metadata and a quiet “Lineup” header with a display-face headliner. Discover Recent rows show average stars at three or more ratings and remain silent below that surface-scoped minimum-n threshold. Grouped feed items apply only to one-line types; rated and WBT items never group. Account and sort menus are blessed. Failed image URLs fall through the shared placeholder.
+- **Favorite heart control.** The `♡`/`♥` judgment grammar covers all six states, including cap-rejection composition. The first motion ruling is a 120ms ease-out scale on judgment commit only.
+- **Favorites boundary and cap** (`70799b7`). The uniform cap is three per type, including venues. Grandfathered over-cap collections remain intact and removable, while additions are blocked until the collection is below the cap. Venue favorites are public under the standard account-privacy regime.
+- **Repository formalization** (`2c73b00`). `.gitignore` is hardened, the README is recruiter-facing, and the full-history secrets audit was clean with zero rotations required. Design handoffs remain tracked under `frontend/design-handoffs/`.
+- **Frontend quality audit and Fix A** (`00dd359`, `34ba1c0`). The read-only audit completed; Tier A plus B12 and B3 shipped: visible session failure with Retry, centralized null/failed avatar fallbacks, single-dispatch `ConfirmDialog`, bordered-ink as the global button default with zero exceptions, dead `ExpandableText` removal, the `DiscoverEventRow` split with Artist/Venue pages adopting its anatomy and the last labeled prose removed, neutral `SortMenu`, and honestly relabeled source-assertion tests. The Tier B refactor slice and browser-DOM test slice enter the backlog with the audit report and coverage map as their specification. The A1 error-slot placement awaits design blessing.
+- **Repository artifact cleanup** (`f1d6370`). Personal notes and the archived app-screen HTML were removed.
