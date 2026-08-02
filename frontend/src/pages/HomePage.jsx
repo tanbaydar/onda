@@ -3,6 +3,7 @@ import { Link, Navigate } from "react-router-dom";
 
 import { fetchJson } from "../api.js";
 import { formatEventDateTime } from "../formatEventDateTime.js";
+import FeedReviewExcerpt from "../components/FeedReviewExcerpt.jsx";
 import ProfileAvatar from "../components/ProfileAvatar.jsx";
 import { compactRelativeTime, feedItemPath, HOME_EMPTY_COPY, HOME_FEED_VERBS } from "../homeFeedPresentation.js";
 import { homeAccessRedirect } from "../landing.js";
@@ -36,7 +37,7 @@ function FeedItem({ item }) {
           <span className="home-feed-meta">{formatEventDateTime(event.event_date, event.start_time)} · {event.venue.name}</span>
         ) : null}
         {isRated && item.context.review ? (
-          <span className="home-feed-review"><span>{item.context.review.body}</span><small>more</small></span>
+          <FeedReviewExcerpt>{item.context.review.body}</FeedReviewExcerpt>
         ) : null}
       </span>
     </Link>
