@@ -9,6 +9,7 @@ import { pluralize } from "../lib/plural.js";
 import ConfirmDialog from "../components/ConfirmDialog.jsx";
 import ExpandableText from "../components/ExpandableText.jsx";
 import RatingHistogram from "../components/RatingHistogram.jsx";
+import CityDropdown from "../components/CityDropdown.jsx";
 import { profileRatingBuckets } from "../ratingHistogram.js";
 
 
@@ -162,7 +163,7 @@ function ProfileEditor({ profile, onSaved }) {
         <p><label htmlFor="profile-display-name">Display name</label><br /><input id="profile-display-name" value={form.display_name} maxLength="50" onChange={(event) => setForm({ ...form, display_name: event.target.value })} /></p>{errors.display_name ? <ul>{fieldErrors("display_name")}</ul> : null}
         <p><label htmlFor="profile-avatar">Avatar URL</label><br /><input id="profile-avatar" type="url" value={form.avatar} maxLength="2048" onChange={(event) => setForm({ ...form, avatar: event.target.value })} /></p>{errors.avatar ? <ul>{fieldErrors("avatar")}</ul> : null}
         <p><label htmlFor="profile-bio">Bio</label><br /><textarea id="profile-bio" value={form.bio} maxLength="150" onChange={(event) => setForm({ ...form, bio: event.target.value })} /></p><p>{pluralize(form.bio.length, "character")} of 150</p>{errors.bio ? <ul>{fieldErrors("bio")}</ul> : null}
-        <p><label htmlFor="profile-city">Home city</label><br /><select id="profile-city" value={form.home_city_id} onChange={(event) => setForm({ ...form, home_city_id: event.target.value })}><option value="">No home city</option>{cities.map((city) => <option key={city.id} value={city.id}>{city.name}, {city.region_code}</option>)}</select></p>{errors.home_city_id ? <ul>{fieldErrors("home_city_id")}</ul> : null}
+        <CityDropdown cities={cities} selectedCity={cities.find((city) => String(city.id) === String(form.home_city_id)) ?? null} nullOptionLabel="No home city" label="Home city" getOptionLabel={(city) => `${city.name}, ${city.region_code}`} onSelect={(cityId) => setForm({ ...form, home_city_id: cityId === null ? "" : String(cityId) })} />{errors.home_city_id ? <ul>{fieldErrors("home_city_id")}</ul> : null}
         <button type="submit">Save profile</button>
       </form>
     </section>

@@ -1,76 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 
 import { fetchJson } from "../api.js";
 import EventList from "../components/EventList.jsx";
 import QuickSearch from "../components/QuickSearch.jsx";
-
-function CityDropdown({ cities, selectedCity, onSelect }) {
-  const [open, setOpen] = useState(false);
-  const rootRef = useRef(null);
-  const optionRefs = useRef([]);
-  const selectedIndex = cities.findIndex((city) => city.id === selectedCity.id);
-
-  useEffect(() => {
-    if (!open) return undefined;
-    optionRefs.current[selectedIndex]?.focus();
-    function closeOnOutsideClick(event) {
-      if (!rootRef.current?.contains(event.target)) setOpen(false);
-    }
-    document.addEventListener("pointerdown", closeOnOutsideClick);
-    return () => document.removeEventListener("pointerdown", closeOnOutsideClick);
-  }, [open, selectedIndex]);
-
-  function moveFocus(index) {
-    const next = (index + cities.length) % cities.length;
-    optionRefs.current[next]?.focus();
-  }
-
-  function handleTriggerKeyDown(event) {
-    if (["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) {
-      event.preventDefault();
-      setOpen(true);
-    }
-  }
-
-  function handleOptionKeyDown(event, index) {
-    if (event.key === "ArrowDown") {
-      event.preventDefault();
-      moveFocus(index + 1);
-    } else if (event.key === "ArrowUp") {
-      event.preventDefault();
-      moveFocus(index - 1);
-    } else if (event.key === "Home") {
-      event.preventDefault();
-      moveFocus(0);
-    } else if (event.key === "End") {
-      event.preventDefault();
-      moveFocus(cities.length - 1);
-    } else if (event.key === "Escape") {
-      event.preventDefault();
-      setOpen(false);
-      rootRef.current?.querySelector(".city-dropdown-trigger")?.focus();
-    }
-  }
-
-  return (
-    <div className="city-dropdown" ref={rootRef}>
-      <span className="city-dropdown-label" id="city-dropdown-label">Browse city</span>
-      <button className="city-dropdown-trigger" type="button" aria-labelledby="city-dropdown-label city-dropdown-value" aria-haspopup="listbox" aria-expanded={open} onClick={() => setOpen((value) => !value)} onKeyDown={handleTriggerKeyDown}>
-        <span id="city-dropdown-value">{selectedCity.name}</span><span aria-hidden="true">{open ? "↑" : "↓"}</span>
-      </button>
-      {open ? (
-        <div className="city-dropdown-options" role="listbox" aria-labelledby="city-dropdown-label">
-          {cities.map((city, index) => (
-            <button key={city.id} ref={(element) => { optionRefs.current[index] = element; }} type="button" role="option" aria-selected={city.id === selectedCity.id} onKeyDown={(event) => handleOptionKeyDown(event, index)} onClick={() => { onSelect(city.id); setOpen(false); }}>
-              {city.name}
-            </button>
-          ))}
-        </div>
-      ) : null}
-    </div>
-  );
-}
+import CityDropdown from "../components/CityDropdown.jsx";
 
 export default function DiscoverPage() {
   const [view, setView] = useState("upcoming");
