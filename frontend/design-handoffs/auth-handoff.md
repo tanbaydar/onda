@@ -37,3 +37,9 @@ Built field set only: username, email, password. Primary "Register" · "Already 
 - FLAG (code input): single 6-char field chosen over six cells — one border, paste-native, fits the hairline register; six-cell is more glanceable but adds 6 bordered boxes of chrome. Reverse with one word.
 - FLAG (copy): all error/confirmation strings above are proposed copy — ratify or amend; the non-enumerating string especially is product-security copy.
 - FLAG: unverified-banner slot styling on signed-in screens (Phase 2 slot) still unruled — not an auth screen, not designed here.
+
+## Dated delta — 2026-08-02 registration and login contract
+- **Login:** the identifier field accepts username or email; failures use one non-enumerating message for unknown identifiers and wrong passwords.
+- **Registration:** the three-field mock is superseded. Preserve all five shipped fields: username, email, password, display name, and Public/Private selection. Privacy uses the Edit-surface radio-pair grammar and existing consequence copy.
+- **Password reset:** remains email-only.
+- **Code entry:** verification and reset display the quiet notice “Codes expire after 15 minutes.”
