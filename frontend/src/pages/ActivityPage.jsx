@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 
 import { fetchJson, fetchWithCsrf } from "../api.js";
 import { compactRelativeTime } from "../homeFeedPresentation.js";
+import { eventPath } from "../entityRoutes.js";
 
 
 function notificationText(notification) {
@@ -77,7 +78,7 @@ export default function ActivityPage({ session }) {
   }
 
   function openNotification(notification) {
-    navigate(notification.review ? `/events/${notification.review.event_id}` : `/u/${notification.actor.username}`);
+    navigate(notification.review ? eventPath({ id: notification.review.event_id, title: notification.review.event_title }) : `/u/${notification.actor.username}`);
   }
 
   if (session.loading) {

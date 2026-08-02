@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { EventItem } from "./EventList.jsx";
 import { formatEventDateTime } from "../formatEventDateTime.js";
+import { entityResultPath } from "../entityRoutes.js";
 
 const GROUPS = [
   ["events", "Events"],
@@ -11,10 +12,7 @@ const GROUPS = [
 ];
 
 export function resultPath(type, item) {
-  if (type === "events") return `/events/${item.id}`;
-  if (type === "artists") return `/artists/${item.id}`;
-  if (type === "venues") return `/venues/${item.id}`;
-  return `/u/${item.username}`;
+  return entityResultPath(type, item);
 }
 
 function ResultRow({ type, item, onFocus }) {

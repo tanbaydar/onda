@@ -269,6 +269,7 @@ def _notification_payload(notification):
             {
                 "id": notification.review_id,
                 "event_id": notification.review.entry.event_id,
+                "event_title": notification.review.entry.event.title,
             }
             if notification.review_id is not None
             else None
@@ -1164,7 +1165,7 @@ def notification_list(request):
             | Q(created_at=created_at, id__lt=identifier)
         )
     rows = list(
-        notifications.select_related("actor", "review__entry")
+        notifications.select_related("actor", "review__entry__event")
         .order_by("-created_at", "-id")[: page_size + 1]
     )
     has_more = len(rows) > page_size

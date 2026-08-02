@@ -4,9 +4,11 @@ import { Link, useParams } from "react-router-dom";
 import { ApiError, fetchJson } from "../api.js";
 import EventList from "../components/EventList.jsx";
 import FavoriteControl from "../components/FavoriteControl.jsx";
+import { artistPath } from "../entityRoutes.js";
+import useCanonicalEntityRoute from "../useCanonicalEntityRoute.js";
 
 export default function ArtistPage({ user }) {
-  const { artistId } = useParams();
+  const { artistKey } = useParams();
   const [retry, setRetry] = useState(0);
   const [state, setState] = useState({
     loading: true,
@@ -14,10 +16,15 @@ export default function ArtistPage({ user }) {
     artist: null,
     notFound: false,
   });
+  const artistId = useCanonicalEntityRoute(artistKey, state.artist, artistPath);
 
   useEffect(() => {
     const controller = new AbortController();
     setState({ loading: true, error: null, artist: null, notFound: false });
+    if (artistId === null) {
+      setState({ loading: false, error: null, artist: null, notFound: true });
+      return () => controller.abort();
+    }
     fetchJson(`/api/artists/${artistId}/`, { signal: controller.signal })
       .then((artist) => {
         setState({ loading: false, error: null, artist, notFound: false });

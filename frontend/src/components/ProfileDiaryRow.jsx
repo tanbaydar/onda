@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 
 import { ratingStars } from "../profilePresentation.js";
+import { eventPath } from "../entityRoutes.js";
 
 function diaryDate(event) {
   const date = new Date(`${event.event_date}T${event.start_time ?? "00:00:00"}`);
@@ -13,7 +14,7 @@ function diaryDate(event) {
 export default function ProfileDiaryRow({ event, rating, hasReview = false }) {
   return (
     <li>
-      <Link className="profile-diary-row" to={`/events/${event.id}`}>
+      <Link className="profile-diary-row" to={eventPath(event)}>
         <span className="profile-diary-thumb">{event.cover_image_url ? <img src={event.cover_image_url} alt="" referrerPolicy="no-referrer" /> : null}</span>
         <strong className="profile-diary-title">{event.title}</strong>
         <span className="profile-diary-meta"><time dateTime={event.start_time ? `${event.event_date}T${event.start_time}` : event.event_date}>{diaryDate(event)}</time><span className="profile-diary-separator"> · </span><span className="profile-diary-venue">{event.venue.name}, {event.venue.city.name}</span></span>

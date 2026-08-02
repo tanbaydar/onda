@@ -133,7 +133,7 @@ export default function App() {
         <Route path="/reset-password" element={<PasswordResetRequestPage />} />
         <Route path="/reset-password/confirm" element={<PasswordResetFormPage />} />
         <Route
-          path="/events/:eventId"
+          path="/e/:eventKey"
           element={
             <EventPage
               user={session.user}
@@ -143,13 +143,16 @@ export default function App() {
             />
           }
         />
+        <Route path="/events/:eventKey" element={<EventPage user={session.user} onAuthenticationRequired={() => setSession({ loading: false, error: null, user: null })} />} />
         <Route path="/been" element={<LegacyBeenPage session={session} />} />
         <Route path="/u/:username" element={<ProfilePage session={session} tab="been" />} />
         <Route path="/u/:username/reviews" element={<ProfilePage session={session} tab="reviews" />} />
         <Route path="/settings/profile" element={<EditProfilePage session={session} />} />
         <Route path="/activity" element={<ActivityPage session={session} />} />
-        <Route path="/venues/:venueId" element={<VenuePage user={session.user} />} />
-        <Route path="/artists/:artistId" element={<ArtistPage user={session.user} />} />
+        <Route path="/v/:venueKey" element={<VenuePage user={session.user} />} />
+        <Route path="/venues/:venueKey" element={<VenuePage user={session.user} />} />
+        <Route path="/a/:artistKey" element={<ArtistPage user={session.user} />} />
+        <Route path="/artists/:artistKey" element={<ArtistPage user={session.user} />} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
       <footer>

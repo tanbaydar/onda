@@ -4,9 +4,11 @@ import { Link, useParams } from "react-router-dom";
 import { ApiError, fetchJson } from "../api.js";
 import EventList from "../components/EventList.jsx";
 import FavoriteControl from "../components/FavoriteControl.jsx";
+import { venuePath } from "../entityRoutes.js";
+import useCanonicalEntityRoute from "../useCanonicalEntityRoute.js";
 
 export default function VenuePage({ user }) {
-  const { venueId } = useParams();
+  const { venueKey } = useParams();
   const [retry, setRetry] = useState(0);
   const [state, setState] = useState({
     loading: true,
@@ -14,10 +16,15 @@ export default function VenuePage({ user }) {
     venue: null,
     notFound: false,
   });
+  const venueId = useCanonicalEntityRoute(venueKey, state.venue, venuePath);
 
   useEffect(() => {
     const controller = new AbortController();
     setState({ loading: true, error: null, venue: null, notFound: false });
+    if (venueId === null) {
+      setState({ loading: false, error: null, venue: null, notFound: true });
+      return () => controller.abort();
+    }
     fetchJson(`/api/venues/${venueId}/`, { signal: controller.signal })
       .then((venue) => {
         setState({ loading: false, error: null, venue, notFound: false });

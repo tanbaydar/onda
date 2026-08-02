@@ -390,6 +390,9 @@ class SocialApiContractTests(TestCase):
             Notification.objects.filter(type="review_like", review=review).count(),
             1,
         )
+        payload = self.auth_client(self.public_user).get("/api/me/notifications/").json()["results"][0]
+        self.assertEqual(payload["review"]["event_id"], self.event.id)
+        self.assertEqual(payload["review"]["event_title"], self.event.title)
 
     def test_review_deletion_cascades_like_notification(self):
         review = self.review(self.public_user, "Delete notification")

@@ -1,3 +1,5 @@
+import { artistPath, eventPath } from "./entityRoutes.js";
+
 export const HOME_EMPTY_COPY = "No activity from people you follow yet.";
 
 export const HOME_FEED_VERBS = {
@@ -21,7 +23,7 @@ export function compactRelativeTime(value, now = new Date()) {
 }
 
 export function feedItemPath(item) {
-  if (item.target.event) return `/events/${item.target.event.id}`;
-  if (item.target.artist) return `/artists/${item.target.artist.id}`;
+  if (item.target.event) return eventPath(item.target.event);
+  if (item.target.artist) return artistPath(item.target.artist);
   return `/u/${item.target.user.username}`;
 }

@@ -12,12 +12,14 @@ import ConfirmDialog from "../components/ConfirmDialog.jsx";
 import RatingHistogram from "../components/RatingHistogram.jsx";
 import StarInput from "../components/StarInput.jsx";
 import { eventIsPast } from "../eventTime.js";
+import { artistPath, eventPath, venuePath } from "../entityRoutes.js";
 import EventReviewRow from "../components/EventReviewRow.jsx";
+import useCanonicalEntityRoute from "../useCanonicalEntityRoute.js";
 import "../eventReviews.css";
 
 
 export default function EventPage({ user, onAuthenticationRequired }) {
-  const { eventId } = useParams();
+  const { eventKey } = useParams();
   const [retry, setRetry] = useState(0);
   const [rating, setRating] = useState("");
   const [reviewBody, setReviewBody] = useState("");
@@ -34,10 +36,15 @@ export default function EventPage({ user, onAuthenticationRequired }) {
     event: null,
     notFound: false,
   });
+  const eventId = useCanonicalEntityRoute(eventKey, state.event, eventPath);
 
   useEffect(() => {
     const controller = new AbortController();
     setState({ loading: true, error: null, event: null, notFound: false });
+    if (eventId === null) {
+      setState({ loading: false, error: null, event: null, notFound: true });
+      return () => controller.abort();
+    }
     fetchJson(`/api/events/${eventId}/`, { signal: controller.signal })
       .then((event) => {
         setState({ loading: false, error: null, event, notFound: false });
@@ -206,7 +213,7 @@ export default function EventPage({ user, onAuthenticationRequired }) {
           </time>
         </p>
         <p>
-          Venue: <Link to={`/venues/${event.venue.id}`}>{event.venue.name}</Link>
+          Venue: <Link to={venuePath(event.venue)}>{event.venue.name}</Link>
         </p>
         <p>
           City:{" "}
@@ -219,7 +226,7 @@ export default function EventPage({ user, onAuthenticationRequired }) {
           <ol>
             {event.artists.map((artist) => (
               <li key={artist.id}>
-                <Link to={`/artists/${artist.id}`}>{artist.name}</Link>
+                <Link to={artistPath(artist)}>{artist.name}</Link>
               </li>
             ))}
           </ol>

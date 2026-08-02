@@ -8,6 +8,7 @@ import ProfileDiaryRow from "../components/ProfileDiaryRow.jsx";
 import ProfileSortMenu from "../components/ProfileSortMenu.jsx";
 import RatingHistogram from "../components/RatingHistogram.jsx";
 import { formatEventDateTime } from "../formatEventDateTime.js";
+import { artistPath, eventPath, venuePath } from "../entityRoutes.js";
 import { PROFILE_EMPTY_STATES, profileTabPath } from "../profilePresentation.js";
 import { profileNavigationVisible, profilePath } from "../profileRoutes.js";
 import { profileRatingBuckets } from "../ratingHistogram.js";
@@ -87,9 +88,9 @@ function ProfileFavorites({ username, owner }) {
   if (state.loading) return <section className="profile-favorites"><h2>Favorites</h2><p>Loading favorites.</p></section>;
   if (state.error) return <section className="profile-favorites"><h2>Favorites</h2><p>Favorites could not be loaded.</p><button className="quiet-control" type="button" onClick={() => setRetry((value) => value + 1)}>Retry</button></section>;
   const items = [
-    ...state.favorites.events.map(({ event }) => ({ key: `event-${event.id}`, to: `/events/${event.id}`, name: event.title, meta: `${formatEventDateTime(event.event_date, event.start_time)} · ${event.venue.name}`, event: true })),
-    ...state.favorites.artists.map(({ artist }) => ({ key: `artist-${artist.id}`, to: `/artists/${artist.id}`, name: artist.name, meta: "Artist" })),
-    ...(owner ? state.venues.results.map(({ venue }) => ({ key: `venue-${venue.id}`, to: `/venues/${venue.id}`, name: venue.name, meta: venue.city.name })) : []),
+    ...state.favorites.events.map(({ event }) => ({ key: `event-${event.id}`, to: eventPath(event), name: event.title, meta: `${formatEventDateTime(event.event_date, event.start_time)} · ${event.venue.name}`, event: true })),
+    ...state.favorites.artists.map(({ artist }) => ({ key: `artist-${artist.id}`, to: artistPath(artist), name: artist.name, meta: "Artist" })),
+    ...(owner ? state.venues.results.map(({ venue }) => ({ key: `venue-${venue.id}`, to: venuePath(venue), name: venue.name, meta: venue.city.name })) : []),
   ];
   return <section className="profile-favorites"><h2>Favorites</h2>{items.length ? <ul className="profile-favorite-list">{items.map((item) => <li key={item.key}><Link to={item.to}><strong className={item.event ? "profile-favorite-event" : ""}>{item.name}</strong><small>{item.meta}</small></Link></li>)}</ul> : <p>No favorites yet.</p>}</section>;
 }

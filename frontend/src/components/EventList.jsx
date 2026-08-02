@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 
 import { fetchJson } from "../api.js";
 import { formatEventDateTime } from "../formatEventDateTime.js";
+import { artistPath, eventPath, venuePath } from "../entityRoutes.js";
 
 export function EventItem({
   event,
@@ -18,7 +19,7 @@ export function EventItem({
     <li>
       <article className="event-row">
         <h3>
-          <Link to={`/events/${event.id}`}>{event.title}</Link>
+          <Link to={eventPath(event)}>{event.title}</Link>
         </h3>
         {event.cover_image_url ? (
           <img src={event.cover_image_url} alt={event.title} referrerPolicy="no-referrer" />
@@ -39,7 +40,7 @@ export function EventItem({
             {showVenue ? (
               <>
                 Venue:{" "}
-                <Link to={`/venues/${event.venue.id}`}>{event.venue.name}</Link>
+                <Link to={venuePath(event.venue)}>{event.venue.name}</Link>
               </>
             ) : null}
             {showVenue && showCity ? " in " : null}
@@ -56,7 +57,7 @@ export function EventItem({
             {visibleArtists.map((artist, index) => (
               <span key={artist.id}>
                 {index > 0 ? ", " : null}
-                <Link to={`/artists/${artist.id}`}>{artist.name}</Link>
+                <Link to={artistPath(artist)}>{artist.name}</Link>
               </span>
             ))}
           </p>
