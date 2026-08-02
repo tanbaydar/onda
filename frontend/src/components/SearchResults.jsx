@@ -32,21 +32,21 @@ function ResultRow({ type, item, onFocus }) {
   );
 }
 
-export default function SearchResults({ data, scope = "all", activeIndex, onActiveIndex, onViewAll }) {
+export default function SearchResults({ data, scope = "all", activeIndex, onActiveIndex, onViewAll, onResultOpen = () => {} }) {
   const rootRef = useRef(null);
   useEffect(() => {
     if (activeIndex >= 0) rootRef.current?.querySelectorAll(".event-row h3 a,.search-result-row")[activeIndex]?.focus();
   }, [activeIndex]);
   let rowIndex = -1;
   if (scope !== "all") {
-    return <ul ref={rootRef} className={`search-results ${scope === "events" ? "ledger" : ""}`}>{data.results.map((item) => { rowIndex += 1; const index = rowIndex; return scope === "events" ? <EventItem key={item.id} event={item} /> : <ResultRow key={item.id} type={scope} item={item} onFocus={() => onActiveIndex(index)} />; })}</ul>;
+    return <ul ref={rootRef} className={`search-results ${scope === "events" ? "ledger" : ""}`} onClickCapture={onResultOpen}>{data.results.map((item) => { rowIndex += 1; const index = rowIndex; return scope === "events" ? <EventItem key={item.id} event={item} /> : <ResultRow key={item.id} type={scope} item={item} onFocus={() => onActiveIndex(index)} />; })}</ul>;
   }
   return (
     <div className="search-groups" ref={rootRef}>
       {GROUPS.map(([type, label]) => {
         const group = data.groups[type];
         if (!group?.results.length) return null;
-        return <section key={type}><h2>{label}</h2><ul className={`search-results ${type === "events" ? "ledger" : ""}`}>{group.results.map((item) => { rowIndex += 1; const index = rowIndex; return type === "events" ? <EventItem key={item.id} event={item} /> : <ResultRow key={item.id} type={type} item={item} onFocus={() => onActiveIndex(index)} />; })}</ul>{group.total > 5 ? <button className="quiet-action" type="button" onClick={() => onViewAll(type)}>View all ({group.total})</button> : null}</section>;
+        return <section key={type}><h2>{label}</h2><ul className={`search-results ${type === "events" ? "ledger" : ""}`} onClickCapture={onResultOpen}>{group.results.map((item) => { rowIndex += 1; const index = rowIndex; return type === "events" ? <EventItem key={item.id} event={item} /> : <ResultRow key={item.id} type={type} item={item} onFocus={() => onActiveIndex(index)} />; })}</ul>{group.total > 5 ? <button className="quiet-action" type="button" onClick={() => onViewAll(type)}>View all ({group.total})</button> : null}</section>;
       })}
     </div>
   );
