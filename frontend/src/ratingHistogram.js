@@ -6,6 +6,11 @@ export function ratingTooltip(bucket) {
   return `${bucket.count} · ${bucket.rating.toFixed(1)}★`;
 }
 
-export function shouldRenderRatingHistogram(buckets) {
-  return buckets.reduce((total, bucket) => total + (Number(bucket.count) || 0), 0) >= 5;
+export function profileRatingBuckets(distribution) {
+  if (distribution.state === "available") return distribution.buckets;
+  return Array.from({ length: 10 }, (_, index) => ({
+    rating: (index + 1) / 2,
+    count: 0,
+    relative_value: 0,
+  }));
 }

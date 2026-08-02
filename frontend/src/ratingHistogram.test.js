@@ -1,31 +1,35 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import {
   histogramBarHeight,
-  ratingTooltip,
-  shouldRenderRatingHistogram,
+  profileRatingBuckets,
 } from "./ratingHistogram.js";
 
-const fixture = JSON.parse(
-  readFileSync(new URL("../design-fixtures/profile-rating-dense.json", import.meta.url)),
-);
-const buckets = fixture.rating_distribution.buckets;
-
-test("dense profile fixture exercises the locked histogram anatomy", () => {
+test("zero ratings render ten baseline stubs", () => {
+  const buckets = profileRatingBuckets({ state: "empty" });
   assert.equal(buckets.length, 10);
-  assert.equal(shouldRenderRatingHistogram(buckets), true);
-  assert.ok(buckets.reduce((total, bucket) => total + bucket.count, 0) >= 5);
-  assert.ok(buckets.some((bucket) => bucket.relative_value === 0));
-  assert.equal(histogramBarHeight(0), "var(--sp-2)");
-  assert.equal(histogramBarHeight(0.375), "37.5%");
-  assert.equal(ratingTooltip(buckets[0]), "1 · 0.5★");
+  assert.deepEqual(
+    buckets.map((bucket) => histogramBarHeight(bucket.relative_value)),
+    Array(10).fill("var(--sp-2)"),
+  );
 });
 
-test("profiles below five ratings omit the histogram", () => {
-  assert.equal(
-    shouldRenderRatingHistogram([{ rating: 5, count: 1, relative_value: 1 }]),
-    false,
+test("one rating renders one full bar and nine baseline stubs", () => {
+  const buckets = profileRatingBuckets({
+    state: "available",
+    buckets: Array.from({ length: 10 }, (_, index) => ({
+      rating: (index + 1) / 2,
+      count: index === 7 ? 1 : 0,
+      relative_value: index === 7 ? 1 : 0,
+    })),
+  });
+  assert.deepEqual(
+    buckets.map((bucket) => histogramBarHeight(bucket.relative_value)),
+    [
+      ...Array(7).fill("var(--sp-2)"),
+      "100%",
+      ...Array(2).fill("var(--sp-2)"),
+    ],
   );
 });
