@@ -78,6 +78,7 @@ def serialize_public_user(user):
         "id": user.id,
         "username": user.username,
         "display_name": user.display_name,
+        "avatar": user.avatar,
     }
 
 
@@ -288,11 +289,7 @@ def serialize_review(review, *, include_author=False, viewer=None):
     }
     if include_author:
         payload["rating"] = float(review.entry.rating)
-        payload["author"] = {
-            "id": review.entry.user.id,
-            "username": review.entry.user.username,
-            "display_name": review.entry.user.display_name,
-        }
+        payload["author"] = serialize_public_user(review.entry.user)
         if viewer is not None and viewer.is_authenticated:
             payload["viewer_has_liked"] = getattr(
                 review,

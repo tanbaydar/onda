@@ -295,6 +295,22 @@ class ReviewApiContractTests(TestCase):
         self.assertNotIn("likers", payload)
         self.assertNotIn("viewer_has_liked", payload)
 
+    def test_public_review_author_avatar_is_additive_and_nullable(self):
+        Review = apps.get_model("users", "Review")
+        self.public_owner.avatar = "https://images.example.test/reviewer.jpg"
+        self.public_owner.save(update_fields=("avatar",))
+        Review.objects.create(entry=self.make_entry(self.public_owner), body="Attributed review", published_at=NOW)
+        attributed = self.public_reviews().json()["results"][0]
+
+        Review.objects.create(entry=self.make_entry(self.other), body="Null avatar review", published_at=NOW)
+        results = self.public_reviews().json()["results"]
+        null_attributed = next(item for item in results if item["author"]["id"] == self.other.id)
+
+        self.assertEqual(attributed["author"]["avatar"], self.public_owner.avatar)
+        self.assertIsNone(null_attributed["author"]["avatar"])
+        self.assertNotIn("viewer_has_liked", attributed)
+        self.assertNotIn("likers", attributed)
+
     def test_guest_like_requires_authentication_and_diary_reports_review_presence(self):
         self.make_entry(self.public_owner)
         review = self.put_review(self.public_owner, "Diary marker").json()["review"]

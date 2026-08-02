@@ -34,7 +34,7 @@
           "relative_value": 0.5
         },
         {
-          "rating": 1.0,
+          "rating": 1,
           "relative_value": 0.5
         },
         {
@@ -42,15 +42,15 @@
           "relative_value": 0.5
         },
         {
-          "rating": 2.0,
+          "rating": 2,
           "relative_value": 0.5
         },
         {
           "rating": 2.5,
-          "relative_value": 1.0
+          "relative_value": 1
         },
         {
-          "rating": 3.0,
+          "rating": 3,
           "relative_value": 0.5
         },
         {
@@ -58,15 +58,15 @@
           "relative_value": 0.5
         },
         {
-          "rating": 4.0,
+          "rating": 4,
           "relative_value": 0.5
         },
         {
           "rating": 4.5,
-          "relative_value": 1.0
+          "relative_value": 1
         },
         {
-          "rating": 5.0,
+          "rating": 5,
           "relative_value": 0.5
         }
       ]
@@ -80,7 +80,7 @@
     },
     "viewer_entry": {
       "id": 2,
-      "rating": 4.0,
+      "rating": 4,
       "rated_at": "2026-07-31T17:27:16.563637Z",
       "created_at": "2026-07-31T17:27:16.563828Z",
       "review": {
@@ -111,7 +111,8 @@
         "author": {
           "id": 51,
           "username": "security.fixture.07",
-          "display_name": "Security Fixture Account 07"
+          "display_name": "Security Fixture Account 07",
+          "avatar": "https://images.ra.co/5ffdadcc47b2da94f0397d36980df12751a417c9.jpg"
         },
         "viewer_has_liked": false,
         "viewer_follows": true,
@@ -127,7 +128,8 @@
         "author": {
           "id": 50,
           "username": "security.fixture.06",
-          "display_name": "Security Fixture Account 06"
+          "display_name": "Security Fixture Account 06",
+          "avatar": null
         },
         "viewer_has_liked": false,
         "viewer_follows": true,
@@ -139,11 +141,12 @@
         "body": "Dense review 5. Measured detail and dancefloor context. Measured detail and dancefloor context. Measured detail and dancefloor context. Measured detail and dancefloor context. Measured detail and dancefloor context.",
         "published_at": "2026-08-01T18:48:21.013931Z",
         "like_count": 3,
-        "rating": 3.0,
+        "rating": 3,
         "author": {
           "id": 49,
           "username": "security.fixture.05",
-          "display_name": "Security Fixture Account 05"
+          "display_name": "Security Fixture Account 05",
+          "avatar": null
         },
         "viewer_has_liked": false,
         "viewer_follows": true,
@@ -159,7 +162,8 @@
         "author": {
           "id": 48,
           "username": "security.fixture.04",
-          "display_name": "Security Fixture Account 04"
+          "display_name": "Security Fixture Account 04",
+          "avatar": null
         },
         "viewer_has_liked": false,
         "viewer_follows": true,
@@ -175,7 +179,8 @@
         "author": {
           "id": 47,
           "username": "security.fixture.03",
-          "display_name": "Security Fixture Account 03"
+          "display_name": "Security Fixture Account 03",
+          "avatar": null
         },
         "viewer_has_liked": false,
         "viewer_follows": true,
@@ -187,11 +192,12 @@
         "body": "Short review.",
         "published_at": "2026-08-01T18:48:20.701475Z",
         "like_count": 3,
-        "rating": 1.0,
+        "rating": 1,
         "author": {
           "id": 46,
           "username": "security.fixture.02",
-          "display_name": "Security Fixture Account 02"
+          "display_name": "Security Fixture Account 02",
+          "avatar": null
         },
         "viewer_has_liked": false,
         "viewer_follows": true,
@@ -207,7 +213,8 @@
         "author": {
           "id": 45,
           "username": "security.fixture.01",
-          "display_name": "Security Fixture Account 01"
+          "display_name": "Security Fixture Account 01",
+          "avatar": null
         },
         "viewer_has_liked": false,
         "viewer_follows": true,
@@ -219,11 +226,12 @@
         "body": "Standing public review for browser verification.",
         "published_at": "2026-07-31T17:27:17.579973Z",
         "like_count": 1,
-        "rating": 4.0,
+        "rating": 4,
         "author": {
           "id": 3,
           "username": "review.public.test",
-          "display_name": "Review Public Test"
+          "display_name": "Review Public Test",
+          "avatar": null
         },
         "viewer_has_liked": false,
         "viewer_follows": false,
@@ -252,7 +260,8 @@
         "user": {
           "id": 54,
           "username": "security.fixture.10",
-          "display_name": "Security Fixture Account 10"
+          "display_name": "Security Fixture Account 10",
+          "avatar": null
         },
         "rating": 4.5,
         "rated_at": "2026-08-01T18:48:21.527235Z",
@@ -263,7 +272,8 @@
         "user": {
           "id": 53,
           "username": "security.fixture.09",
-          "display_name": "Security Fixture Account 09"
+          "display_name": "Security Fixture Account 09",
+          "avatar": null
         },
         "rating": 2.5,
         "rated_at": "2026-08-01T18:48:21.424958Z",
@@ -274,9 +284,10 @@
         "user": {
           "id": 52,
           "username": "security.fixture.08",
-          "display_name": "Security Fixture Account 08"
+          "display_name": "Security Fixture Account 08",
+          "avatar": null
         },
-        "rating": 5.0,
+        "rating": 5,
         "rated_at": "2026-08-01T18:48:21.325836Z",
         "review": null
       },
@@ -285,7 +296,8 @@
         "user": {
           "id": 51,
           "username": "security.fixture.07",
-          "display_name": "Security Fixture Account 07"
+          "display_name": "Security Fixture Account 07",
+          "avatar": null
         },
         "rating": 4.5,
         "rated_at": "2026-08-01T18:48:21.217622Z",
@@ -302,7 +314,8 @@
         "user": {
           "id": 50,
           "username": "security.fixture.06",
-          "display_name": "Security Fixture Account 06"
+          "display_name": "Security Fixture Account 06",
+          "avatar": null
         },
         "rating": 3.5,
         "rated_at": "2026-08-01T18:48:21.112946Z",
@@ -319,9 +332,10 @@
         "user": {
           "id": 49,
           "username": "security.fixture.05",
-          "display_name": "Security Fixture Account 05"
+          "display_name": "Security Fixture Account 05",
+          "avatar": null
         },
-        "rating": 3.0,
+        "rating": 3,
         "rated_at": "2026-08-01T18:48:21.009928Z",
         "review": {
           "id": 24,
@@ -336,7 +350,8 @@
         "user": {
           "id": 48,
           "username": "security.fixture.04",
-          "display_name": "Security Fixture Account 04"
+          "display_name": "Security Fixture Account 04",
+          "avatar": null
         },
         "rating": 2.5,
         "rated_at": "2026-08-01T18:48:20.906939Z",
@@ -353,7 +368,8 @@
         "user": {
           "id": 47,
           "username": "security.fixture.03",
-          "display_name": "Security Fixture Account 03"
+          "display_name": "Security Fixture Account 03",
+          "avatar": null
         },
         "rating": 1.5,
         "rated_at": "2026-08-01T18:48:20.802708Z",
@@ -370,9 +386,10 @@
         "user": {
           "id": 46,
           "username": "security.fixture.02",
-          "display_name": "Security Fixture Account 02"
+          "display_name": "Security Fixture Account 02",
+          "avatar": null
         },
-        "rating": 1.0,
+        "rating": 1,
         "rated_at": "2026-08-01T18:48:20.697432Z",
         "review": {
           "id": 21,
@@ -387,7 +404,8 @@
         "user": {
           "id": 45,
           "username": "security.fixture.01",
-          "display_name": "Security Fixture Account 01"
+          "display_name": "Security Fixture Account 01",
+          "avatar": null
         },
         "rating": 0.5,
         "rated_at": "2026-08-01T18:48:20.584937Z",

@@ -307,6 +307,21 @@ class SocialApiContractTests(TestCase):
         self.assertEqual([item["id"] for item in payload["results"]], [followed.id])
         self.assertIsNone(payload["results"][0]["review"])
 
+    def test_circle_user_avatar_is_additive_without_changing_membership_or_summary(self):
+        self.public_user.avatar = "https://images.example.test/circle-user.jpg"
+        self.public_user.save(update_fields=("avatar",))
+        public_entry = self.entry(self.public_user, rating="3.0")
+        private_entry = self.entry(self.private_user, rating="4.0")
+        self.follow(self.viewer, self.public_user)
+        payload = self.auth_client(self.viewer).get(
+            f"/api/events/{self.event.id}/circle/"
+        ).json()
+
+        self.assertEqual(payload["rating_summary"]["count"], 1)
+        self.assertEqual([item["id"] for item in payload["results"]], [public_entry.id])
+        self.assertEqual(payload["results"][0]["user"]["avatar"], self.public_user.avatar)
+        self.assertNotIn(private_entry.id, [item["id"] for item in payload["results"]])
+
     def test_circle_orders_by_rating_time_not_review_publication(self):
         older = self.entry(
             self.public_user,
