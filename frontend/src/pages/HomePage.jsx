@@ -5,9 +5,9 @@ import { fetchJson } from "../api.js";
 import { formatEventDateTime } from "../formatEventDateTime.js";
 import FeedReviewExcerpt from "../components/FeedReviewExcerpt.jsx";
 import ProfileAvatar from "../components/ProfileAvatar.jsx";
+import RatingStars from "../components/RatingStars.jsx";
 import { compactRelativeTime, feedItemPath, HOME_EMPTY_COPY, HOME_FEED_VERBS } from "../homeFeedPresentation.js";
 import { homeAccessRedirect } from "../landing.js";
-import { ratingStars } from "../profilePresentation.js";
 
 
 function FeedItem({ item }) {
@@ -32,7 +32,7 @@ function FeedItem({ item }) {
           <time dateTime={item.activity_at}>{compactRelativeTime(item.activity_at)}</time>
         </span>
         {event || artist ? <strong className="home-feed-object">{objectName}</strong> : null}
-        {isRated ? <span className="home-feed-stars" aria-label={`${item.context.rating} out of 5 stars`}>{ratingStars(item.context.rating)}</span> : null}
+        {isRated ? <RatingStars className="home-feed-stars" value={item.context.rating} /> : null}
         {item.type === "will_be_there" ? (
           <span className="home-feed-meta">{formatEventDateTime(event.event_date, event.start_time)} · {event.venue.name}</span>
         ) : null}

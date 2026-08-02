@@ -3,8 +3,8 @@ import { Link } from "react-router-dom";
 import { formatTimestamp } from "../lib/formatTimestamp.js";
 import { pluralize } from "../lib/plural.js";
 import { profilePath } from "../profileRoutes.js";
-import { ratingStars } from "../profilePresentation.js";
 import ProfileAvatar from "./ProfileAvatar.jsx";
+import RatingStars from "./RatingStars.jsx";
 import ReviewExcerpt from "./ReviewExcerpt.jsx";
 
 export default function EventReviewRow({ person, rating, review = null, ratedAt = null, onLike = null, yours = false, onEdit = null, children = null }) {
@@ -18,7 +18,7 @@ export default function EventReviewRow({ person, rating, review = null, ratedAt 
         {yours ? <span className="event-review-yours">Yours</span> : null}
         {onEdit ? <button className="quiet-action event-review-edit" type="button" onClick={onEdit}>Edit ▾</button> : null}
       </div>
-      <p className="event-review-stars" aria-label={`${rating} out of 5 stars`}>{ratingStars(rating)}</p>
+      <RatingStars className="event-review-stars" value={rating} />
       {review?.body ? <ReviewExcerpt>{review.body}</ReviewExcerpt> : <p className="event-review-no-body">No written review.</p>}
       <div className="event-review-meta">
         {timestamp ? <time dateTime={timestamp}>{formatTimestamp(timestamp)}</time> : null}

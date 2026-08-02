@@ -18,7 +18,7 @@ test("event review surfaces share the attributed row anatomy", () => {
 });
 
 test("event review ratings render glyphs rather than rating prose", () => {
-  assert.match(row, /ratingStars\(rating\)/);
+  assert.match(row, /<RatingStars className="event-review-stars" value=\{rating\}/);
   assert.doesNotMatch(row + circle + publicReviews, /Rating:\s*\{/);
   assert.match(row, /event-review-stars/);
 });

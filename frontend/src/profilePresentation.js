@@ -20,12 +20,6 @@ export function profileBioCount(value) {
   return `${String(value ?? "").length} / 150`;
 }
 
-export function ratingStars(value) {
-  if (value === null || value === undefined) return "Unrated attendance";
-  const numeric = Number(value);
-  return `${"★".repeat(Math.floor(numeric))}${numeric % 1 ? "½" : ""}`;
-}
-
 export function profileTabPath(username, tab) {
   const root = `/u/${String(username).toLowerCase()}`;
   return tab === "reviews" ? `${root}/reviews` : root;

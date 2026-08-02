@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { keyboardStep, valueAtClientX } from "../starInputInteraction.js";
+import { RatingStarGlyph } from "./RatingStars.jsx";
 
 export default function StarInput({ value, disabled = false, onChange, onCommit }) {
   const rootRef = useRef(null);
@@ -69,7 +70,7 @@ export default function StarInput({ value, disabled = false, onChange, onCommit 
       >
         {[1, 2, 3, 4, 5].map((star) => {
           const fill = Math.min(1, Math.max(0, displayValue - (star - 1)));
-          return <span className="star-input-glyph" key={star}><span aria-hidden="true">☆</span><span className="star-input-fill" aria-hidden="true" style={{ width: `${fill * 100}%` }}>★</span></span>;
+          return <span className="star-input-glyph" key={star}><RatingStarGlyph fill={fill} /></span>;
         })}
       </div>
       {displayValue ? <output>{displayValue.toFixed(1)}</output> : null}
