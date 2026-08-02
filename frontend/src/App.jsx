@@ -42,6 +42,7 @@ function NotFoundPage() {
 
 export default function App() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [retry, setRetry] = useState(0);
   const [session, setSession] = useState({
     loading: true,
@@ -80,7 +81,7 @@ export default function App() {
 
   return (
     <>
-      <header>
+      <header className={location.pathname === "/verify-email" ? "auth-chrome auth-chrome-wordmark-only" : location.pathname === "/login" || location.pathname === "/register" || location.pathname.startsWith("/reset-password") ? "auth-chrome" : undefined}>
         <p>Danced</p>
         <nav aria-label="Primary navigation">
           <ul>
@@ -129,7 +130,7 @@ export default function App() {
             />
           }
         />
-        <Route path="/verify-email" element={<VerifyEmailPage />} />
+        <Route path="/verify-email" element={<VerifyEmailPage email={session.user?.email} />} />
         <Route path="/reset-password" element={<PasswordResetRequestPage />} />
         <Route path="/reset-password/confirm" element={<PasswordResetFormPage />} />
         <Route

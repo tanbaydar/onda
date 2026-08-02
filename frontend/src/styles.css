@@ -277,6 +277,38 @@ meter{accent-color:var(--chart);width:120px}
 .identity>h1{margin-bottom:var(--sp-12)}
 .identity>img{width:var(--flier-sm);height:var(--flier-sm-h)}
 .auth-page>h1,.auth-page>p,.auth-page>section{max-width:var(--auth-col);margin-right:auto;margin-left:auto}
+.auth-page{max-width:calc(var(--auth-col) + 2 * var(--gutter-mobile));padding-top:var(--sp-48)}
+.auth-page>h1{margin-bottom:var(--sp-24);font-family:var(--font-fn);font-size:20px;font-weight:600;letter-spacing:0;line-height:1.2}
+.auth-page>form{max-width:var(--auth-col);margin:0 auto}
+.auth-field{margin-bottom:var(--sp-24)}
+.auth-field label,.auth-privacy legend{margin-bottom:var(--sp-6);font-size:11px;font-weight:500;letter-spacing:.05em}
+.auth-field input{padding:var(--sp-12);border:var(--hairline) solid var(--border-strong);font-size:var(--text-body);outline:none}
+.auth-field input:focus{border-color:var(--action)}
+.auth-field input[aria-invalid="true"]{border-color:var(--danger)}
+.auth-error{margin:var(--sp-6) 0 0;color:var(--danger-text);font-size:var(--text-micro);line-height:1.4}
+.auth-error a{font-weight:500}
+.auth-page .auth-primary{width:100%;margin-top:var(--sp-8);padding:var(--sp-12);border:1.5px solid var(--action);background:var(--bg);color:var(--text);font-size:var(--text-ui);font-weight:500}
+.auth-page .auth-primary:disabled{background:var(--bg);color:var(--text-muted)}
+.auth-page .auth-standalone-primary{display:block;max-width:var(--auth-col);margin:var(--sp-32) auto 0}
+.auth-links{max-width:var(--auth-col);margin:var(--sp-24) auto 0;color:var(--text-muted);font-size:var(--text-micro);text-align:center}
+.auth-links p{margin-bottom:var(--sp-8)}
+.auth-links a,.auth-link-button{padding:0;border:0;color:var(--text-secondary);font-size:var(--text-micro);font-weight:500;text-decoration:none}
+.auth-link-button{min-height:0;background:transparent}
+.auth-intro,.auth-expiry{color:var(--text-secondary);font-size:var(--text-ui)}
+.auth-intro{margin-bottom:var(--sp-16)}
+.auth-expiry{margin-bottom:var(--sp-24)}
+.auth-code-input{font-size:24px!important;letter-spacing:.5em;text-align:center}
+.auth-privacy{margin-bottom:var(--sp-24);padding:0;border:0}
+.auth-privacy>div{display:flex;gap:var(--sp-16)}
+.auth-privacy label{display:inline-flex;gap:var(--sp-6);align-items:center;margin:0;color:var(--text);font-size:var(--text-ui);font-weight:400;letter-spacing:0;text-transform:none}
+.auth-privacy input{width:auto;accent-color:var(--action)}
+.auth-privacy>p{margin:var(--sp-8) 0 0;color:var(--text-secondary);font-size:var(--text-micro)}
+.auth-privacy>p.auth-error{color:var(--danger-text)}
+body>div>header.auth-chrome{top:0;bottom:auto;justify-content:center;border-top:0;border-bottom:var(--hairline) solid var(--border)}
+body>div>header.auth-chrome>p:first-child{display:block;margin:0;font-size:16px}
+body>div>header.auth-chrome nav,body>div>header.auth-chrome>section{display:none}
+body:has(header.auth-chrome)>div{padding-top:64px;padding-bottom:0}
+body:has(header.auth-chrome)>div>footer{display:none}
 .unverified-banner{padding:var(--sp-12) var(--gutter-mobile);background:var(--bg-subtle);font-size:var(--text-ui)}
 dialog{width:min(calc(100% - 48px),480px);padding:var(--sp-24);border:var(--hairline) solid var(--border-strong);background:var(--bg);color:var(--text)}
 dialog::backdrop{background:var(--backdrop)}
@@ -298,6 +330,10 @@ dialog .destructive{border-color:var(--action);background:var(--action);color:va
  .account-menu{position:relative;z-index:auto;top:auto;right:auto}
  .guest-auth-controls{position:relative;z-index:auto;top:auto;right:auto}
  body>div>header>section .account-menu-trigger,body>div>header>section .account-menu-panel button{display:block}
+ body>div>header.auth-chrome{justify-content:flex-start}
+ body>div>header.auth-chrome>section{display:block;margin-left:auto}
+ body>div>header.auth-chrome.auth-chrome-wordmark-only>section{display:none}
+ .auth-page{max-width:calc(var(--auth-col) + 2 * var(--gutter-desktop));padding-top:calc(var(--sp-64) + var(--sp-8))}
  main{padding:var(--sp-48) var(--gutter-desktop) var(--sp-96)}
  .feed-page{max-width:calc(var(--measure-rows) + 2 * var(--gutter-desktop));padding-top:var(--sp-32)}
  main>section,main>article+section,main>nav+section{margin-top:var(--sp-48)}

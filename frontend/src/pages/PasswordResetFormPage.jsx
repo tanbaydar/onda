@@ -1,56 +1,35 @@
 import { useState } from "react";
-import { useLocation } from "react-router-dom";
-
+import { Link, useLocation } from "react-router-dom";
 import { ApiError, fetchWithCsrf } from "../api.js";
-
+import { CODE_EXPIRY_NOTICE, codeError } from "../authPresentation.js";
 
 export default function PasswordResetFormPage() {
   const location = useLocation();
+  const email = location.state?.email ?? "";
+  const [step, setStep] = useState("code");
+  const [code, setCode] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmation, setConfirmation] = useState("");
+  const [error, setError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
-  const [errors, setErrors] = useState([]);
-  const [complete, setComplete] = useState(false);
 
-  async function submit(event) {
+  function acceptCode(event) { event.preventDefault(); setError(null); if (/^\d{6}$/.test(code)) setStep("password"); else setError("That code isn't right. Check the email or resend."); }
+  async function reset(event) {
     event.preventDefault();
-    const form = new FormData(event.currentTarget);
-    setSubmitting(true);
-    setErrors([]);
+    if (password.length < 8) { setError("At least 8 characters."); return; }
+    if (password !== confirmation) { setError("Passwords must match."); return; }
+    setSubmitting(true); setError(null);
     try {
-      await fetchWithCsrf("/api/auth/password-reset/confirm/", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: form.get("email"),
-          code: form.get("code"),
-          password: form.get("password"),
-        }),
-      });
-      setComplete(true);
-    } catch (error) {
-      setErrors(
-        error instanceof ApiError && error.data?.errors
-          ? Object.values(error.data.errors).flat()
-          : ["The password could not be reset. Try again."],
-      );
-    } finally {
-      setSubmitting(false);
-    }
+      await fetchWithCsrf("/api/auth/password-reset/confirm/", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, code, password }) });
+      setStep("complete");
+    } catch (requestError) {
+      const errors = requestError instanceof ApiError ? requestError.data?.errors ?? {} : {};
+      if (errors.code) { if (errors.code.join(" ").toLowerCase().includes("expired")) await fetchWithCsrf("/api/auth/password-reset/request/", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email }) }).catch(() => {}); setStep("code"); setError(codeError(errors.code)); }
+      else setError(errors.password ? "At least 8 characters." : "The password could not be reset. Try again.");
+    } finally { setSubmitting(false); }
   }
 
-  return (
-    <main>
-      <h1>Enter your reset code</h1>
-      <p>Reset codes expire after 15 minutes.</p>
-      {complete ? <p role="status">Your password has been reset. You can log in with the new password.</p> : null}
-      {errors.length ? <ul role="alert">{errors.map((error) => <li key={error}>{error}</li>)}</ul> : null}
-      {!complete ? (
-        <form onSubmit={submit}>
-          <p><label htmlFor="reset-confirm-email">Email</label>{" "}<input id="reset-confirm-email" name="email" type="email" autoComplete="email" defaultValue={location.state?.email ?? ""} required /></p>
-          <p><label htmlFor="reset-code">Reset code</label>{" "}<input id="reset-code" name="code" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength="6" required /></p>
-          <p><label htmlFor="reset-new-password">New password</label>{" "}<input id="reset-new-password" name="password" type="password" autoComplete="new-password" required /></p>
-          <p><button type="submit" disabled={submitting}>{submitting ? "Resetting password." : "Reset password"}</button></p>
-        </form>
-      ) : null}
-    </main>
-  );
+  if (step === "complete") return <main className="auth-page"><h1>Password changed</h1><p className="auth-intro">Your password has been reset.</p><div className="auth-links"><p><Link to="/login">Log in</Link></p></div></main>;
+  if (step === "code") return <main className="auth-page auth-code-page"><h1>Enter your code</h1><p className="auth-expiry">{CODE_EXPIRY_NOTICE}</p><form onSubmit={acceptCode} noValidate><div className="auth-field"><label htmlFor="reset-code">Reset code</label><input className="auth-code-input" id="reset-code" inputMode="numeric" autoComplete="one-time-code" maxLength="6" value={code} onChange={(event) => setCode(event.target.value.replace(/\D/g, ""))} aria-invalid={error ? "true" : undefined} />{error ? <p className="auth-error" role="alert">{error}</p> : null}</div><button className="auth-primary" type="submit">Continue</button></form><div className="auth-links"><Link to="/reset-password">Use a different email</Link></div></main>;
+  return <main className="auth-page"><h1>Set a new password</h1><form onSubmit={reset} noValidate><div className="auth-field"><label htmlFor="reset-password">New password</label><input id="reset-password" type="password" autoComplete="new-password" value={password} onChange={(event) => setPassword(event.target.value)} aria-invalid={error ? "true" : undefined} />{error ? <p className="auth-error" role="alert">{error}</p> : null}</div><div className="auth-field"><label htmlFor="reset-confirm-password">Confirm new password</label><input id="reset-confirm-password" type="password" autoComplete="new-password" value={confirmation} onChange={(event) => setConfirmation(event.target.value)} /></div><button className="auth-primary" type="submit" disabled={submitting}>Set password</button></form></main>;
 }

@@ -3,35 +3,24 @@ import { Link, useNavigate } from "react-router-dom";
 
 import { fetchWithCsrf } from "../api.js";
 import { postAuthDestination } from "../landing.js";
-
+import { INVALID_LOGIN_MESSAGE } from "../authPresentation.js";
 
 export default function LoginPage({ onAuthenticated }) {
   const navigate = useNavigate();
   const [submitting, setSubmitting] = useState(false);
-  const [errors, setErrors] = useState(null);
+  const [error, setError] = useState(null);
 
   async function handleSubmit(event) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     setSubmitting(true);
-    setErrors(null);
+    setError(null);
     try {
-      const data = await fetchWithCsrf("/api/auth/login/", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: form.get("email"),
-          password: form.get("password"),
-        }),
-      });
+      const data = await fetchWithCsrf("/api/auth/login/", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: form.get("identifier"), password: form.get("password") }) });
       onAuthenticated(data.user);
       navigate(postAuthDestination(data.user));
-    } catch (error) {
-      setErrors(
-        error.data?.errors ?? {
-          request: ["Login could not be completed."],
-        },
-      );
+    } catch (requestError) {
+      setError(requestError.data?.errors?.credentials?.[0] ?? INVALID_LOGIN_MESSAGE);
     } finally {
       setSubmitting(false);
     }
@@ -40,46 +29,22 @@ export default function LoginPage({ onAuthenticated }) {
   return (
     <main className="auth-page">
       <h1>Log in</h1>
-      {errors ? (
-        <section aria-label="Login errors">
-          <h2>Login could not be completed</h2>
-          <ul>
-            {Object.entries(errors).flatMap(([field, messages]) =>
-              messages.map((message) => (
-                <li key={`${field}-${message}`}>{message}</li>
-              )),
-            )}
-          </ul>
-        </section>
-      ) : null}
-      <form onSubmit={handleSubmit}>
-        <p>
-          <label htmlFor="login-email">Email</label>{" "}
-          <input
-            id="login-email"
-            name="email"
-            type="email"
-            autoComplete="email"
-            required
-          />
-        </p>
-        <p>
-          <label htmlFor="login-password">Password</label>{" "}
-          <input
-            id="login-password"
-            name="password"
-            type="password"
-            autoComplete="current-password"
-            required
-          />
-        </p>
-        <p>
-          <button type="submit" disabled={submitting}>
-            {submitting ? "Logging in." : "Log in"}
-          </button>
-        </p>
+      <form onSubmit={handleSubmit} noValidate>
+        <div className="auth-field">
+          <label htmlFor="login-identifier">Username or email</label>
+          <input id="login-identifier" name="identifier" autoComplete="username" required />
+        </div>
+        <div className="auth-field">
+          <label htmlFor="login-password">Password</label>
+          <input id="login-password" name="password" type="password" autoComplete="current-password" required aria-invalid={error ? "true" : undefined} aria-describedby={error ? "login-error" : undefined} />
+          {error ? <p id="login-error" className="auth-error" role="alert">That username or email and password don&apos;t match. Try again or <Link to="/reset-password">reset your password</Link>.</p> : null}
+        </div>
+        <button className="auth-primary" type="submit" disabled={submitting}>{submitting ? "Logging in…" : "Log in"}</button>
       </form>
-      <p><Link to="/reset-password">Forgot password?</Link></p>
+      <div className="auth-links">
+        <p>Forgot your password? <Link to="/reset-password">Reset it</Link></p>
+        <p>New here? <Link to="/register">Register</Link></p>
+      </div>
     </main>
   );
 }
