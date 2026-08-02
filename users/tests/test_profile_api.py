@@ -1,9 +1,13 @@
 import json
+import io
+import tempfile
 from datetime import UTC, datetime, timedelta
 
 from django.db import IntegrityError, connection, transaction
 from django.db.models.deletion import RestrictedError
-from django.test import Client, TestCase
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import Client, TestCase, override_settings
+from PIL import Image
 
 from catalog.models import Artist, City, Event, EventArtist, EventStatus, Venue
 from users.models import DiaryEntry, Follow, FollowStatus, Review, ReviewLike, User
@@ -354,6 +358,37 @@ class ProfileApiContractTests(TestCase):
         ):
             self.assertEqual(response.status_code, 400)
             self.assertIn(field, response.json()["errors"])
+
+    def test_avatar_upload_validates_crops_and_removes(self):
+        client = self.auth_client(self.public_user)
+        token = client.cookies["csrftoken"].value
+        image = Image.new("RGB", (900, 600), "red")
+        source = io.BytesIO()
+        image.save(source, "PNG")
+        with tempfile.TemporaryDirectory() as media_root, override_settings(MEDIA_ROOT=media_root):
+            uploaded = client.post(
+                "/api/me/profile/avatar/",
+                {"avatar": SimpleUploadedFile("photo.png", source.getvalue(), content_type="image/png")},
+                HTTP_X_CSRFTOKEN=token,
+            )
+            self.assertEqual(uploaded.status_code, 200)
+            self.public_user.refresh_from_db()
+            stored_path = self.public_user.avatar.split("/media/", 1)[1]
+            with Image.open(f"{media_root}/{stored_path}") as stored:
+                self.assertEqual((stored.format, stored.size), ("JPEG", (512, 512)))
+            removed = client.delete("/api/me/profile/avatar/", HTTP_X_CSRFTOKEN=token)
+            self.assertEqual(removed.status_code, 200)
+            self.public_user.refresh_from_db()
+            self.assertIsNone(self.public_user.avatar)
+
+    def test_avatar_upload_rejects_invalid_type_and_oversize(self):
+        client = self.auth_client(self.public_user)
+        token = client.cookies["csrftoken"].value
+        invalid = client.post("/api/me/profile/avatar/", {"avatar": SimpleUploadedFile("bad.gif", b"GIF89a", content_type="image/gif")}, HTTP_X_CSRFTOKEN=token)
+        oversize = client.post("/api/me/profile/avatar/", {"avatar": SimpleUploadedFile("large.png", b"x" * (2 * 1024 * 1024 + 1), content_type="image/png")}, HTTP_X_CSRFTOKEN=token)
+        self.assertEqual((invalid.status_code, oversize.status_code), (400, 400))
+        self.assertIn("avatar", invalid.json()["errors"])
+        self.assertIn("avatar", oversize.json()["errors"])
 
     def test_home_city_delete_is_restricted_at_orm_and_database_layers(self):
         city = City.objects.create(

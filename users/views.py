@@ -1,12 +1,16 @@
 import json
 import math
 import base64
+import io
+import uuid
 from decimal import Decimal
 
 from django.contrib.auth import authenticate, login, logout, password_validation
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.paginator import EmptyPage, Paginator
+from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
 from django.core.validators import URLValidator
 from django.db import transaction
 from django.db.models import Avg, Count, Exists, OuterRef, Prefetch, Q
@@ -20,6 +24,7 @@ from django.views.decorators.http import (
     require_POST,
 )
 from django.utils.dateparse import parse_datetime
+from PIL import Image, ImageOps, UnidentifiedImageError
 
 from catalog.models import Artist, City, EventArtist, Venue
 from catalog.views import _event_queryset, _serialize_artist, _serialize_event, _serialize_venue
@@ -905,6 +910,42 @@ def profile_edit(request):
     return JsonResponse({"profile": _profile_identity(request.user)})
 
 
+@require_http_methods(["POST", "DELETE"])
+def profile_avatar(request):
+    auth_error = _authentication_required(request)
+    if auth_error is not None:
+        return auth_error
+    previous = request.user.avatar
+    if request.method == "DELETE":
+        request.user.avatar = None
+        request.user.save(update_fields=("avatar",))
+        if previous and settings.MEDIA_URL in previous:
+            default_storage.delete(previous.split(settings.MEDIA_URL, 1)[1])
+        return JsonResponse({"profile": _profile_identity(request.user)})
+    upload = request.FILES.get("avatar")
+    if upload is None:
+        return JsonResponse({"errors": {"avatar": ["Choose a JPEG, PNG, or WebP image."]}}, status=400)
+    if upload.size > 2 * 1024 * 1024:
+        return JsonResponse({"errors": {"avatar": ["Photo must be 2MB or smaller."]}}, status=400)
+    try:
+        image = Image.open(upload)
+        if image.format not in {"JPEG", "PNG", "WEBP"}:
+            raise UnidentifiedImageError
+        image = ImageOps.exif_transpose(image).convert("RGB")
+        image = ImageOps.fit(image, (512, 512), method=Image.Resampling.LANCZOS, centering=(0.5, 0.5))
+        output = io.BytesIO()
+        image.save(output, format="JPEG", quality=88, optimize=True)
+    except (UnidentifiedImageError, OSError, ValueError):
+        return JsonResponse({"errors": {"avatar": ["Choose a valid JPEG, PNG, or WebP image."]}}, status=400)
+    name = f"avatars/{request.user.id}/{uuid.uuid4().hex}.jpg"
+    stored = default_storage.save(name, ContentFile(output.getvalue()))
+    request.user.avatar = request.build_absolute_uri(f"{settings.MEDIA_URL}{stored}")
+    request.user.save(update_fields=("avatar",))
+    if previous and settings.MEDIA_URL in previous:
+        default_storage.delete(previous.split(settings.MEDIA_URL, 1)[1])
+    return JsonResponse({"profile": _profile_identity(request.user)})
+
+
 def _profile_content_target(request, username):
     profile = _profile_user(username)
     viewer = effective_visibility_viewer(request.user)
@@ -1084,7 +1125,7 @@ def artist_favorite(request, artist_id):
 
 @require_http_methods(["PUT", "DELETE"])
 def venue_favorite(request, venue_id):
-    return _favorite_resource(request, target=get_object_or_404(Venue, pk=venue_id), model=FavoriteVenue, target_field="venue", limit=None)
+    return _favorite_resource(request, target=get_object_or_404(Venue, pk=venue_id), model=FavoriteVenue, target_field="venue", limit=3)
 
 
 @require_GET
@@ -1099,9 +1140,11 @@ def profile_favorites(request, username):
         Prefetch("event__event_artists", queryset=lineup, to_attr="_ordered_event_artists")
     ).order_by("added_at", "event_id")
     artists = FavoriteArtist.objects.filter(user=profile).select_related("artist").order_by("added_at", "artist_id")
+    venues = FavoriteVenue.objects.filter(user=profile).select_related("venue__city").order_by("added_at", "venue_id")
     return JsonResponse({
         "events": [{"event": _serialize_event(row.event), "added_at": row.added_at.isoformat().replace("+00:00", "Z")} for row in events],
         "artists": [{"artist": _serialize_artist(row.artist), "added_at": row.added_at.isoformat().replace("+00:00", "Z")} for row in artists],
+        "venues": [{"venue": _serialize_venue(row.venue), "added_at": row.added_at.isoformat().replace("+00:00", "Z")} for row in venues],
     })
 
 

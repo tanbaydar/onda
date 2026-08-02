@@ -19,6 +19,7 @@ from .views import (
     profile_been,
     profile_detail,
     profile_edit,
+    profile_avatar,
     profile_reviews,
     review_like,
     will_be_there_resource,
@@ -35,6 +36,7 @@ from .views import (
 
 urlpatterns = [
     path("me/profile/", profile_edit, name="profile-edit"),
+    path("me/profile/avatar/", profile_avatar, name="profile-avatar"),
     path("me/home/", home_feed, name="home-feed"),
     path("me/favorite-venues/", favorite_venues, name="favorite-venues"),
     path("me/been/", diary_list, name="diary-list"),

@@ -11,6 +11,7 @@ from catalog.models import (
     EventStatus,
     Venue,
 )
+from users.models import DiaryEntry, User
 
 
 FIXED_NOW = datetime(2026, 8, 14, 16, 0, tzinfo=UTC)
@@ -340,6 +341,15 @@ class CatalogApiTests(TestCase):
             ],
         )
         self.assertNotIn(self.today_first.id, ids)
+
+    def test_recent_rating_summary_is_available_at_three_and_silent_below_gate(self):
+        users = [User.objects.create_user(email=f"recent{i}@test.example", password="A-real-password-123!", username=f"recent{i}", display_name=f"Recent {i}", is_private=False) for i in range(3)]
+        for index, user in enumerate(users):
+            DiaryEntry.objects.create(user=user, event=self.yesterday, rating=3 + index * 0.5, rated_at=FIXED_NOW)
+        response = self.request_events({"city_id": self.boston.id, "when": "past", "page_size": 100})
+        rows = {row["id"]: row for row in response.json()["results"]}
+        self.assertEqual(rows[self.yesterday.id]["rating_summary"], {"state": "available", "count": 3, "average": 3.5})
+        self.assertEqual(rows[self.older_first.id]["rating_summary"], {"state": "not_enough_ratings", "count": 0})
 
     def test_venue_scope_reuses_upcoming_and_past_boundaries(self):
         upcoming = self.request_events(

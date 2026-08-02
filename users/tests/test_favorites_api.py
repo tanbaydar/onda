@@ -71,7 +71,7 @@ class FavoritesContractTests(TestCase):
         self.assertEqual((favorite.status_code, stats.status_code), (403, 403))
         self.assertNotIn("statistics", stats.json())
 
-    def test_favorite_venues_have_only_an_owner_endpoint_and_ascending_order(self):
+    def test_favorite_venues_are_public_through_profile_visibility_boundary(self):
         FavoriteVenue = getattr(models, "FavoriteVenue")
         other = Venue.objects.create(name="Other Favorite Venue", city=self.city)
         FavoriteVenue.objects.create(user=self.owner, venue=other, added_at=NOW)
@@ -79,7 +79,19 @@ class FavoritesContractTests(TestCase):
         own = self.client_for(self.owner).get("/api/me/favorite-venues/")
         self.assertEqual([row["venue"]["id"] for row in own.json()["results"]], [self.venue.id, other.id])
         self.assertEqual(self.client_for(self.viewer).get("/api/me/favorite-venues/").json()["results"], [])
-        self.assertEqual(self.client_for().get(f"/api/users/{self.owner.username}/favorite-venues/").status_code, 404)
+        public = self.client_for().get(f"/api/users/{self.owner.username}/favorites/")
+        self.assertEqual([row["venue"]["id"] for row in public.json()["venues"]], [self.venue.id, other.id])
+
+    def test_grandfathered_venue_favorites_render_in_full_block_adds_and_allow_removal(self):
+        venues = [Venue.objects.create(name=f"Grandfathered Venue {index}", city=self.city) for index in range(5)]
+        for venue in venues[:4]:
+            models.FavoriteVenue.objects.create(user=self.owner, venue=venue, added_at=NOW)
+        client = self.client_for(self.owner)
+        payload = client.get(f"/api/users/{self.owner.username}/favorites/").json()
+        self.assertEqual(len(payload["venues"]), 4)
+        self.assertEqual(client.put(f"/api/venues/{venues[4].id}/favorite/").status_code, 409)
+        self.assertEqual(client.delete(f"/api/venues/{venues[0].id}/favorite/").status_code, 204)
+        self.assertEqual(models.FavoriteVenue.objects.filter(user=self.owner).count(), 3)
 
     def test_stats_include_unrated_been_but_distribution_does_not(self):
         models.DiaryEntry.objects.create(user=self.owner, event=self.events[0])

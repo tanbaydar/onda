@@ -1,7 +1,7 @@
 from zoneinfo import ZoneInfo
 
 from django.core.paginator import EmptyPage, Paginator
-from django.db.models import Prefetch, Q
+from django.db.models import Avg, Count, Prefetch, Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -47,7 +47,7 @@ def _positive_integer(request, name, *, default=None, maximum=None):
 
 
 def _serialize_event(event):
-    return {
+    payload = {
         "id": event.id,
         "title": event.title,
         "event_date": event.event_date.isoformat(),
@@ -75,6 +75,13 @@ def _serialize_event(event):
             for event_artist in event._ordered_event_artists
         ],
     }
+    if hasattr(event, "recent_rating_count"):
+        payload["rating_summary"] = (
+            {"state": "available", "count": event.recent_rating_count, "average": float(event.recent_rating_average)}
+            if event.recent_rating_count >= 3
+            else {"state": "not_enough_ratings", "count": event.recent_rating_count}
+        )
+    return payload
 
 
 def _serialize_venue(venue):
@@ -212,6 +219,11 @@ def event_list(request):
         )
         .order_by(*order_by)
     )
+    if when == "past":
+        events = events.annotate(
+            recent_rating_count=Count("diary_entries", filter=Q(diary_entries__rating__isnull=False)),
+            recent_rating_average=Avg("diary_entries__rating", filter=Q(diary_entries__rating__isnull=False)),
+        )
     paginator = Paginator(events, page_size)
     try:
         page = paginator.page(page_number)
