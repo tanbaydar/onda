@@ -29,3 +29,7 @@ Never push a backend-behavior change unless an explicit operator ruling authoriz
 ## Design handoffs
 
 Design handoffs: the .md in frontend/design-handoffs/ is sole authority. No spec HTML is kept in the repo; visual disputes are escalated to the operator.
+
+## Push policy
+
+Approved orders push by default. Hold a push only when the order explicitly says so or when it would publish unrelated work; in the latter case, ask the operator first.
