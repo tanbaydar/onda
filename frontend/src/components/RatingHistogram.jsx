@@ -2,17 +2,17 @@ import { useState } from "react";
 
 import { histogramBarHeight, ratingTooltip } from "../ratingHistogram.js";
 
-export default function RatingHistogram({ buckets }) {
+export default function RatingHistogram({ buckets, className = "" }) {
   const [pinned, setPinned] = useState(null);
   return (
-    <div className="rating-histogram">
+    <div className={`rating-histogram ${className}`.trim()}>
       <div className="hist-bars" aria-label="Rating distribution">
         {buckets.map((bucket) => {
           const label = ratingTooltip(bucket);
           return (
             <button
               key={bucket.rating}
-              className="hist-bar"
+              className={`hist-bar ${bucket.relative_value === 0 ? "is-zero" : ""}`.trim()}
               type="button"
               aria-label={label}
               aria-pressed={pinned === bucket.rating}

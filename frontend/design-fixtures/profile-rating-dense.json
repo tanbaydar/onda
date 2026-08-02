@@ -1,13 +1,15 @@
 {
   "profile": {
     "username": "histogram.dense",
-    "display_name": "Histogram Dense Fixture"
+    "display_name": "Histogram Dense Fixture",
+    "follower_count": 1204,
+    "following_count": 1048
   },
   "statistics": {
-    "events_in_been": 39,
-    "written_reviews": 9,
-    "venues_visited": 11,
-    "cities_visited": 4,
+    "events_in_been": 1204,
+    "written_reviews": 1048,
+    "venues_visited": 1204,
+    "cities_visited": 1048,
     "average_rating_given": { "state": "available", "value": 3.6 },
     "followers": 24,
     "following": 17
