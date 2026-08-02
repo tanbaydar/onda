@@ -102,9 +102,10 @@ export default function ProfilePage({ session, tab = "been" }) {
   useEffect(() => {
     const controller = new AbortController();
     setState({ loading: true, error: null, data: null });
+    if (session.loading) return () => controller.abort();
     fetchJson(`/api/users/${encodeURIComponent(username)}/`, { signal: controller.signal, cache: "no-store" }).then((data) => setState({ loading: false, error: null, data })).catch((error) => { if (error.name !== "AbortError") setState({ loading: false, error, data: null }); });
     return () => controller.abort();
-  }, [retry, session.user?.id, username]);
+  }, [retry, session.loading, session.user?.id, username]);
 
   async function changeFollow() {
     const relationship = state.data.relationship;

@@ -7,8 +7,44 @@ import DiscoverSearch from "../components/DiscoverSearch.jsx";
 import CityDropdown from "../components/CityDropdown.jsx";
 import "../discover.css";
 
-export default function DiscoverPage() {
+function emptyLedger() {
+  return { page: 1, retry: 0, requestKey: null, state: { loading: true, error: null, data: null } };
+}
+
+function DiscoverLedgers({ city }) {
   const [view, setView] = useState("upcoming");
+  const [ledgers, setLedgers] = useState({ upcoming: emptyLedger(), recent: emptyLedger() });
+  return <>
+    <nav className="section-tabs" aria-label="Event timeframe">
+      <button type="button" className={view === "upcoming" ? "active" : ""} aria-pressed={view === "upcoming"} onClick={() => setView("upcoming")}>Upcoming</button>
+      <button type="button" className={view === "recent" ? "active" : ""} aria-pressed={view === "recent"} onClick={() => setView("recent")}>Recent</button>
+    </nav>
+    {view === "upcoming" ? <EventList
+      heading={`Upcoming events in ${city.name}`}
+      scopeName="city_id"
+      scopeId={city.id}
+      when="upcoming"
+      emptyMessage={`No upcoming events in ${city.name}.`}
+      quietHeading
+      discover
+      ledger={ledgers.upcoming}
+      onLedgerChange={(update) => setLedgers((current) => ({ ...current, upcoming: update(current.upcoming) }))}
+    /> : <EventList
+      heading={`Recent events in ${city.name}`}
+      scopeName="city_id"
+      scopeId={city.id}
+      when="past"
+      pageSize={10}
+      emptyMessage={`No recent events in ${city.name}.`}
+      quietHeading
+      discover
+      ledger={ledgers.recent}
+      onLedgerChange={(update) => setLedgers((current) => ({ ...current, recent: update(current.recent) }))}
+    />}
+  </>;
+}
+
+export default function DiscoverPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [retry, setRetry] = useState(0);
   const [state, setState] = useState({
@@ -67,35 +103,7 @@ export default function DiscoverPage() {
               <DiscoverSearch cityId={String(selectedCity.id)} cityName={selectedCity.name} />
             </div>
           </div>
-          <nav className="section-tabs" aria-label="Event timeframe">
-            <button type="button" className={view === "upcoming" ? "active" : ""} aria-pressed={view === "upcoming"} onClick={() => setView("upcoming")}>Upcoming</button>
-            <button type="button" className={view === "recent" ? "active" : ""} aria-pressed={view === "recent"} onClick={() => setView("recent")}>Recent</button>
-          </nav>
-          <EventList
-            key={selectedCity.id}
-            heading={`Upcoming events in ${selectedCity.name}`}
-            scopeName="city_id"
-            scopeId={selectedCity.id}
-            when="upcoming"
-            emptyMessage={`No upcoming events in ${selectedCity.name}.`}
-            showCity={false}
-            hidden={view !== "upcoming"}
-            quietHeading
-            discover
-          />
-          <EventList
-            key={`recent-${selectedCity.id}`}
-            heading={`Recent events in ${selectedCity.name}`}
-            scopeName="city_id"
-            scopeId={selectedCity.id}
-            when="past"
-            pageSize={10}
-            emptyMessage={`No recent events in ${selectedCity.name}.`}
-            showCity={false}
-            hidden={view !== "recent"}
-            quietHeading
-            discover
-          />
+          <DiscoverLedgers key={selectedCity.id} city={selectedCity} />
         </>
       ) : null}
     </main>

@@ -7,7 +7,7 @@ import FavoriteControl from "../components/FavoriteControl.jsx";
 import { artistPath } from "../entityRoutes.js";
 import useCanonicalEntityRoute from "../useCanonicalEntityRoute.js";
 
-export default function ArtistPage({ user }) {
+export default function ArtistPage({ user, sessionReady }) {
   const { artistKey } = useParams();
   const [retry, setRetry] = useState(0);
   const [state, setState] = useState({
@@ -21,6 +21,7 @@ export default function ArtistPage({ user }) {
   useEffect(() => {
     const controller = new AbortController();
     setState({ loading: true, error: null, artist: null, notFound: false });
+    if (!sessionReady) return () => controller.abort();
     if (artistId === null) {
       setState({ loading: false, error: null, artist: null, notFound: true });
       return () => controller.abort();
@@ -41,7 +42,7 @@ export default function ArtistPage({ user }) {
         });
       });
     return () => controller.abort();
-  }, [artistId, retry, user?.id]);
+  }, [artistId, retry, sessionReady, user?.id]);
 
   if (state.loading) {
     return (
@@ -78,7 +79,7 @@ export default function ArtistPage({ user }) {
       <article className="identity">
         <h1>{artist.name}</h1>
         {artist.image_url ? (
-          <img src={artist.image_url} alt={artist.name} />
+          <img src={artist.image_url} alt={artist.name} loading="eager" />
         ) : null}
       </article>
       {user ? <FavoriteControl path={`/api/artists/${artist.id}/favorite/`} state={artist.viewer_favorite} onChanged={() => setRetry((value) => value + 1)} /> : null}

@@ -19,7 +19,7 @@ import useCanonicalEntityRoute from "../useCanonicalEntityRoute.js";
 import "../eventReviews.css";
 
 
-export default function EventPage({ user, onAuthenticationRequired }) {
+export default function EventPage({ user, sessionReady, onAuthenticationRequired }) {
   const { eventKey } = useParams();
   const [retry, setRetry] = useState(0);
   const [rating, setRating] = useState("");
@@ -42,6 +42,7 @@ export default function EventPage({ user, onAuthenticationRequired }) {
   useEffect(() => {
     const controller = new AbortController();
     setState({ loading: true, error: null, event: null, notFound: false });
+    if (!sessionReady) return () => controller.abort();
     if (eventId === null) {
       setState({ loading: false, error: null, event: null, notFound: true });
       return () => controller.abort();
@@ -69,7 +70,7 @@ export default function EventPage({ user, onAuthenticationRequired }) {
         });
       });
     return () => controller.abort();
-  }, [eventId, retry, user?.id]);
+  }, [eventId, retry, sessionReady, user?.id]);
 
   async function mutate(path, options, { reviewsChanged = false } = {}) {
     setSaving(true);
@@ -199,7 +200,7 @@ export default function EventPage({ user, onAuthenticationRequired }) {
     <main className="event-page">
       <article className="identity">
         <h1>{event.title}</h1>
-        {event.cover_image_url || isPast ? <ImageSlot name={event.title} src={event.cover_image_url} alt={event.title} referrerPolicy="no-referrer" /> : null}
+        {event.cover_image_url || isPast ? <ImageSlot name={event.title} src={event.cover_image_url} alt={event.title} loading="eager" referrerPolicy="no-referrer" /> : null}
         <div className={`event-meta-stack ${isPast ? "event-meta-past" : "event-meta-upcoming"}`}>
         {!isPast ? <p><Link to={venuePath(event.venue)}>{event.venue.name}</Link></p> : null}
         <p>

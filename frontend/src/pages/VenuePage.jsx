@@ -7,7 +7,7 @@ import FavoriteControl from "../components/FavoriteControl.jsx";
 import { venuePath } from "../entityRoutes.js";
 import useCanonicalEntityRoute from "../useCanonicalEntityRoute.js";
 
-export default function VenuePage({ user }) {
+export default function VenuePage({ user, sessionReady }) {
   const { venueKey } = useParams();
   const [retry, setRetry] = useState(0);
   const [state, setState] = useState({
@@ -21,6 +21,7 @@ export default function VenuePage({ user }) {
   useEffect(() => {
     const controller = new AbortController();
     setState({ loading: true, error: null, venue: null, notFound: false });
+    if (!sessionReady) return () => controller.abort();
     if (venueId === null) {
       setState({ loading: false, error: null, venue: null, notFound: true });
       return () => controller.abort();
@@ -41,7 +42,7 @@ export default function VenuePage({ user }) {
         });
       });
     return () => controller.abort();
-  }, [retry, user?.id, venueId]);
+  }, [retry, sessionReady, user?.id, venueId]);
 
   if (state.loading) {
     return (

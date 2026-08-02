@@ -11,20 +11,35 @@ export default function EventList({
   pageSize = 20,
   showVenue = true,
   omittedArtistId = null,
-  hidden = false,
   quietHeading = false,
   discover = false,
+  ledger = null,
+  onLedgerChange = null,
 }) {
-  const [page, setPage] = useState(1);
-  const [retry, setRetry] = useState(0);
-  const [state, setState] = useState({
+  const [localPage, setLocalPage] = useState(1);
+  const [localRetry, setLocalRetry] = useState(0);
+  const [localState, setLocalState] = useState({
     loading: true,
     error: null,
     data: null,
   });
+  const page = ledger?.page ?? localPage;
+  const retry = ledger?.retry ?? localRetry;
+  const state = ledger?.state ?? localState;
+  const setPage = (nextPage) => ledger
+    ? onLedgerChange((current) => ({ ...current, page: nextPage }))
+    : setLocalPage(nextPage);
+  const setRetry = (update) => ledger
+    ? onLedgerChange((current) => ({ ...current, retry: update(current.retry) }))
+    : setLocalRetry(update);
+  const setState = (update) => ledger
+    ? onLedgerChange((current) => ({ ...current, state: typeof update === "function" ? update(current.state) : update }))
+    : setLocalState(update);
 
   useEffect(() => {
     const controller = new AbortController();
+    const requestKey = `${when}:${scopeName}:${scopeId}:${page}:${pageSize}:${retry}`;
+    if (ledger?.requestKey === requestKey && ledger.state.data && !ledger.state.error) return () => controller.abort();
     const query = new URLSearchParams({
       when,
       [scopeName]: String(scopeId),
@@ -32,6 +47,7 @@ export default function EventList({
       page_size: String(pageSize),
     });
 
+    if (ledger) onLedgerChange((current) => ({ ...current, requestKey }));
     setState((current) => ({ loading: true, error: null, data: discover && page > 1 ? current.data : null }));
     fetchJson(`/api/events/?${query}`, { signal: controller.signal })
       .then((data) => {
@@ -47,7 +63,7 @@ export default function EventList({
   }, [discover, page, pageSize, retry, scopeId, scopeName, when]);
 
   return (
-    <section className="event-list" hidden={hidden}>
+    <section className="event-list">
       <h2 className={quietHeading ? "sr-only" : undefined}>{heading}</h2>
       {state.loading ? <p>Loading events.</p> : null}
       {state.error ? (
