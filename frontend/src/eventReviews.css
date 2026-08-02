@@ -1,0 +1,21 @@
+.event-page>section>ol,.owner-entry{max-width:var(--measure-rows)}
+.event-page .identity a{text-decoration:none}
+.event-page>section>ol>li,.owner-entry{padding:0}
+.event-review-row{padding:var(--sp-16) 0}
+.event-review-person{display:flex;min-width:0;align-items:center;gap:var(--sp-6)}
+.event-review-person .profile-avatar{flex:0 0 26px}
+.event-review-name{min-width:0;overflow:hidden;font-family:var(--font-fn);font-size:var(--text-ui);font-weight:600;text-decoration:none;text-overflow:ellipsis;white-space:nowrap}
+.event-review-handle{overflow:hidden;color:var(--text-muted);font-size:var(--text-micro);text-decoration:none;text-overflow:ellipsis;white-space:nowrap}
+.event-review-yours{margin-left:auto;color:var(--text-muted);font-size:var(--text-micro)}
+.event-review-edit{flex:none}
+.event-review-stars{margin:var(--sp-8) 0 var(--sp-6);color:var(--judgment);font-family:var(--font-fn);font-size:var(--text-ui);line-height:1}
+.event-review-excerpt{position:relative;max-width:var(--measure-prose);font-family:var(--font-prose);font-size:var(--text-body);line-height:1.6}
+.event-review-excerpt p{display:-webkit-box;overflow:hidden;margin-bottom:0;-webkit-box-orient:vertical;-webkit-line-clamp:9}
+.event-review-excerpt.expanded p{display:block;overflow:visible}
+.event-review-more{position:absolute;right:0;bottom:0;min-height:0;padding:0 0 0 var(--sp-8);border:0;background:var(--bg);color:var(--text-secondary);font-family:var(--font-fn);font-size:var(--text-micro);font-weight:400}
+.event-review-excerpt.expanded .event-review-more{position:static;margin-top:var(--sp-4);padding:0}
+.event-review-no-body{margin:var(--sp-6) 0;color:var(--text-muted);font-size:var(--text-micro)}
+.event-review-meta{display:flex;align-items:center;gap:var(--sp-8);margin-top:var(--sp-8);color:var(--text-muted);font-size:var(--text-micro)}
+.event-review-like-count{color:var(--judgment-text)}
+.event-review-meta .like-action{font-size:var(--text-micro)}
+.favorite-notice{width:100%;margin:var(--sp-6) 0 0;color:var(--danger-text);font-size:var(--text-micro)}

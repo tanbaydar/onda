@@ -1,10 +1,7 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-
 import { fetchJson, fetchWithCsrf } from "../api.js";
-import { profilePath } from "../profileRoutes.js";
 import { pluralize } from "../lib/plural.js";
-import ExpandableText from "./ExpandableText.jsx";
+import EventReviewRow from "./EventReviewRow.jsx";
 
 
 export default function YourCircle({
@@ -100,22 +97,7 @@ export default function YourCircle({
             <ol>
               {state.data.results.map((entry) => (
                 <li key={entry.id}>
-                  <article>
-                    <h3><Link to={profilePath(entry.user.username)}>{entry.user.display_name}</Link></h3>
-                    <p><Link to={profilePath(entry.user.username)}>@{entry.user.username}</Link></p>
-                    <p className="stars">Rating: {pluralize(entry.rating.toFixed(1), "star")}</p>
-                    {entry.review ? (
-                      <>
-                        <ExpandableText>{entry.review.body}</ExpandableText>
-                        <p>{pluralize(entry.review.like_count, "like")}</p>
-                        <button className="like-action" type="button" onClick={() => changeLike(entry.review)}>
-                          {entry.review.viewer_has_liked ? "Unlike" : "Like"}
-                        </button>
-                      </>
-                    ) : (
-                      <p>No written review.</p>
-                    )}
-                  </article>
+                  <EventReviewRow person={entry.user} rating={entry.rating} review={entry.review} ratedAt={entry.rated_at} onLike={entry.review ? () => changeLike(entry.review) : null} />
                 </li>
               ))}
             </ol>

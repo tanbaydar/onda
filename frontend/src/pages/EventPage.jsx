@@ -12,6 +12,8 @@ import ConfirmDialog from "../components/ConfirmDialog.jsx";
 import RatingHistogram from "../components/RatingHistogram.jsx";
 import StarInput from "../components/StarInput.jsx";
 import { eventIsPast } from "../eventTime.js";
+import EventReviewRow from "../components/EventReviewRow.jsx";
+import "../eventReviews.css";
 
 
 export default function EventPage({ user, onAuthenticationRequired }) {
@@ -265,7 +267,7 @@ export default function EventPage({ user, onAuthenticationRequired }) {
         onSocialChanged={() => setSocialVersion((value) => value + 1)}
         onAuthenticationRequired={onAuthenticationRequired}
       /> : null}
-      {user && isPast && viewerHasRating ? <section className="owner-entry"><article><p><strong>{user.display_name}</strong> · Yours</p><p className="stars">{pluralize(event.viewer_entry.rating.toFixed(1), "star")}</p>{event.viewer_entry.review ? <p className="review-body">{event.viewer_entry.review.body}</p> : null}<button className="quiet-action" type="button" onClick={() => setEditingEntry((value) => !value)}>Edit ▾</button>{editingEntry ? <div className="owner-entry-editor"><StarInput value={rating} disabled={saving} onChange={(value) => setRating(String(value))} onCommit={saveRating} /><form onSubmit={saveReview}><label htmlFor="review-body">Written review</label><textarea id="review-body" value={reviewBody} required rows={8} onChange={(changeEvent) => setReviewBody(changeEvent.target.value)} /><p>{trimmedReviewLength} of 1,000 stored characters</p><button type="submit" disabled={saving || trimmedReviewLength < 1 || trimmedReviewLength > 1000}>{event.viewer_entry.review ? "Save review changes" : "Publish review"}</button>{event.viewer_entry.review ? <button className="quiet-action" type="button" disabled={saving} onClick={deleteReview}>Delete review</button> : null}</form><button className="quiet-action" type="button" disabled={saving} onClick={removeRating}>Remove rating</button><button className="quiet-action" type="button" disabled={saving} onClick={removeEntry}>Remove from Been</button></div> : null}</article></section> : null}
+      {user && isPast && viewerHasRating ? <section className="owner-entry"><EventReviewRow person={user} rating={event.viewer_entry.rating} review={event.viewer_entry.review} ratedAt={event.viewer_entry.rated_at} yours onEdit={() => setEditingEntry((value) => !value)}>{editingEntry ? <div className="owner-entry-editor"><StarInput value={rating} disabled={saving} onChange={(value) => setRating(String(value))} onCommit={saveRating} /><form onSubmit={saveReview}><label htmlFor="review-body">Written review</label><textarea id="review-body" value={reviewBody} required rows={8} onChange={(changeEvent) => setReviewBody(changeEvent.target.value)} /><p>{trimmedReviewLength} of 1,000 stored characters</p><button type="submit" disabled={saving || trimmedReviewLength < 1 || trimmedReviewLength > 1000}>{event.viewer_entry.review ? "Save review changes" : "Publish review"}</button>{event.viewer_entry.review ? <button className="quiet-action" type="button" disabled={saving} onClick={deleteReview}>Delete review</button> : null}</form><button className="quiet-action" type="button" disabled={saving} onClick={removeRating}>Remove rating</button><button className="quiet-action" type="button" disabled={saving} onClick={removeEntry}>Remove from Been</button></div> : null}</EventReviewRow></section> : null}
       {isPast ? <PublicReviews
         eventId={event.id}
         user={user}
