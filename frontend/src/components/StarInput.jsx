@@ -1,27 +1,30 @@
 import { useRef, useState } from "react";
-
-function valueAtPointer(event, root) {
-  const rect = root.getBoundingClientRect();
-  const raw = ((event.clientX - rect.left) / rect.width) * 5;
-  return Math.min(5, Math.max(0.5, Math.ceil(raw * 2) / 2));
-}
+import { keyboardStep, valueAtClientX } from "../starInputInteraction.js";
 
 export default function StarInput({ value, disabled = false, onChange, onCommit }) {
   const rootRef = useRef(null);
+  const dragRef = useRef(false);
   const [dragging, setDragging] = useState(false);
+  const [preview, setPreview] = useState(null);
   const numericValue = value === "" ? 0 : Number(value);
+  const displayValue = preview ?? numericValue;
 
-  function updateFromPointer(event) {
-    const next = valueAtPointer(event, rootRef.current);
-    onChange(next);
-    return next;
+  function pointerValue(event) {
+    const starRects = Array.from(rootRef.current.children, (star) => star.getBoundingClientRect());
+    return valueAtClientX(event.clientX, starRects);
+  }
+
+  function stopDragging() {
+    dragRef.current = false;
+    setDragging(false);
+    setPreview(null);
   }
 
   return (
     <div className="star-input-wrap">
       <div
         ref={rootRef}
-        className="star-input"
+        className={`star-input${preview !== null && !dragging ? " is-previewing" : ""}`}
         role="slider"
         tabIndex={disabled ? -1 : 0}
         aria-label="Your rating"
@@ -34,7 +37,7 @@ export default function StarInput({ value, disabled = false, onChange, onCommit 
           if (disabled) return;
           if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
             event.preventDefault();
-            onChange(Math.min(5, Math.max(0.5, (numericValue || 0.5) + (event.key === "ArrowRight" ? 0.5 : -0.5))));
+            onChange(keyboardStep(numericValue, event.key));
           } else if (event.key === "Enter" && numericValue) {
             event.preventDefault();
             onCommit(numericValue);
@@ -42,25 +45,34 @@ export default function StarInput({ value, disabled = false, onChange, onCommit 
         }}
         onPointerDown={(event) => {
           if (disabled) return;
+          event.preventDefault();
+          event.currentTarget.focus();
           event.currentTarget.setPointerCapture(event.pointerId);
+          dragRef.current = true;
           setDragging(true);
-          updateFromPointer(event);
+          setPreview(pointerValue(event));
         }}
-        onPointerMove={(event) => { if (dragging && !disabled) updateFromPointer(event); }}
+        onPointerMove={(event) => {
+          if (disabled) return;
+          if (dragRef.current || event.pointerType === "mouse") setPreview(pointerValue(event));
+        }}
+        onPointerLeave={() => { if (!dragRef.current) setPreview(null); }}
         onPointerUp={(event) => {
-          if (!dragging || disabled) return;
-          const next = updateFromPointer(event);
-          setDragging(false);
+          if (!dragRef.current || disabled) return;
+          const next = pointerValue(event);
+          onChange(next);
           onCommit(next);
+          stopDragging();
         }}
-        onPointerCancel={() => setDragging(false)}
+        onPointerCancel={stopDragging}
+        onLostPointerCapture={() => { if (dragRef.current) stopDragging(); }}
       >
         {[1, 2, 3, 4, 5].map((star) => {
-          const fill = Math.min(1, Math.max(0, numericValue - (star - 1)));
+          const fill = Math.min(1, Math.max(0, displayValue - (star - 1)));
           return <span className="star-input-glyph" key={star}><span aria-hidden="true">☆</span><span className="star-input-fill" aria-hidden="true" style={{ width: `${fill * 100}%` }}>★</span></span>;
         })}
       </div>
-      {numericValue ? <output>{numericValue.toFixed(1)}</output> : null}
+      {displayValue ? <output>{displayValue.toFixed(1)}</output> : null}
     </div>
   );
 }

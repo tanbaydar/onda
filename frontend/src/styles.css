@@ -160,6 +160,7 @@ meter{accent-color:var(--chart);width:120px}
 .star-input:focus{outline:1px solid var(--border-strong);outline-offset:var(--sp-4)}
 .star-input-glyph{position:relative;display:inline-block;width:44px;height:44px;padding:var(--sp-6);color:var(--text-muted);font-size:32px;line-height:1}
 .star-input-fill{position:absolute;top:var(--sp-6);left:var(--sp-6);overflow:hidden;color:var(--judgment);white-space:nowrap}
+.star-input.is-previewing .star-input-fill{opacity:.65}
 .star-input-wrap output{color:var(--judgment);font-family:var(--font-display);font-size:var(--text-numeral-sm)}
 .owner-entry{max-width:var(--measure-prose)}
 .owner-entry article>p:first-child{font-size:var(--text-ui)}
