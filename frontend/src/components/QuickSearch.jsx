@@ -34,10 +34,13 @@ export default function QuickSearch({ cityId = null, discover = false }) {
 
   return (
     <div className={`quick-search ${discover ? "discover-search" : "header-search"}`} ref={rootRef}>
-      <input type="search" value={query} aria-label={discover ? "Search events in selected city" : "Quick search"} placeholder={discover ? "Search events in this city" : "Search"} onChange={(event) => setQuery(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") openSearch(discover ? "events" : "all"); if (event.key === "Escape") { setQuery(""); setData(null); } }} />
+      <div className="quick-search-input-wrap">
+        <input type="text" value={query} aria-label={discover ? "Search events in selected city" : "Quick search"} placeholder={discover ? "Search events in this city" : "Search"} onChange={(event) => setQuery(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") openSearch(discover ? "events" : "all"); if (event.key === "Escape") { setQuery(""); setData(null); } }} />
+        {query ? <button className="quick-search-clear" type="button" aria-label="Clear search" onClick={() => { setQuery(""); setData(null); }}>×</button> : null}
+      </div>
       {trimmed && data ? (
         <div className="search-panel">
-          {count ? <SearchResults data={data} scope={discover ? "events" : "all"} activeIndex={-1} onActiveIndex={() => {}} onResultOpen={() => recordRecentSearch(query)} onViewAll={openSearch} /> : <p className="search-empty">No results for &quot;{trimmed}&quot;.</p>}
+          {count ? <SearchResults compact data={data} scope={discover ? "events" : "all"} activeIndex={-1} onActiveIndex={() => {}} onResultOpen={() => recordRecentSearch(query)} onViewAll={openSearch} /> : <p className="search-empty">No results for &quot;{trimmed}&quot;.</p>}
           {discover && data.total < 3 ? <button className="search-all-cities" type="button" onClick={() => openSearch("events")}>Search all cities →</button> : null}
         </div>
       ) : null}

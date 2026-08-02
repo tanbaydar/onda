@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { EventItem } from "./EventList.jsx";
+import { formatEventDateTime } from "../formatEventDateTime.js";
 
 const GROUPS = [
   ["events", "Events"],
@@ -32,21 +33,38 @@ function ResultRow({ type, item, onFocus }) {
   );
 }
 
-export default function SearchResults({ data, scope = "all", activeIndex, onActiveIndex, onViewAll, onResultOpen = () => {} }) {
+function CompactEventResultRow({ item, onFocus }) {
+  const navigate = useNavigate();
+  return (
+    <li>
+      <button className="compact-event-result-row" type="button" onFocus={onFocus} onClick={() => navigate(resultPath("events", item))}>
+        <span className="compact-event-thumb">
+          {item.cover_image_url ? <img src={item.cover_image_url} alt="" referrerPolicy="no-referrer" /> : null}
+        </span>
+        <span className="search-result-copy">
+          <strong>{item.title}</strong>
+          <small>{formatEventDateTime(item.event_date, item.start_time)} · {item.venue.name}</small>
+        </span>
+      </button>
+    </li>
+  );
+}
+
+export default function SearchResults({ data, scope = "all", activeIndex, onActiveIndex, onViewAll, onResultOpen = () => {}, compact = false }) {
   const rootRef = useRef(null);
   useEffect(() => {
-    if (activeIndex >= 0) rootRef.current?.querySelectorAll(".event-row h3 a,.search-result-row")[activeIndex]?.focus();
+    if (activeIndex >= 0) rootRef.current?.querySelectorAll(".event-row h3 a,.search-result-row,.compact-event-result-row")[activeIndex]?.focus();
   }, [activeIndex]);
   let rowIndex = -1;
   if (scope !== "all") {
-    return <ul ref={rootRef} className={`search-results ${scope === "events" ? "ledger" : ""}`} onClickCapture={onResultOpen}>{data.results.map((item) => { rowIndex += 1; const index = rowIndex; return scope === "events" ? <EventItem key={item.id} event={item} /> : <ResultRow key={item.id} type={scope} item={item} onFocus={() => onActiveIndex(index)} />; })}</ul>;
+    return <ul ref={rootRef} className={`search-results ${scope === "events" && !compact ? "ledger" : ""}`} onClickCapture={onResultOpen}>{data.results.map((item) => { rowIndex += 1; const index = rowIndex; return scope === "events" ? (compact ? <CompactEventResultRow key={item.id} item={item} onFocus={() => onActiveIndex(index)} /> : <EventItem key={item.id} event={item} />) : <ResultRow key={item.id} type={scope} item={item} onFocus={() => onActiveIndex(index)} />; })}</ul>;
   }
   return (
     <div className="search-groups" ref={rootRef}>
       {GROUPS.map(([type, label]) => {
         const group = data.groups[type];
         if (!group?.results.length) return null;
-        return <section key={type}><h2>{label}</h2><ul className={`search-results ${type === "events" ? "ledger" : ""}`} onClickCapture={onResultOpen}>{group.results.map((item) => { rowIndex += 1; const index = rowIndex; return type === "events" ? <EventItem key={item.id} event={item} /> : <ResultRow key={item.id} type={type} item={item} onFocus={() => onActiveIndex(index)} />; })}</ul>{group.total > 5 ? <button className="quiet-action" type="button" onClick={() => onViewAll(type)}>View all ({group.total})</button> : null}</section>;
+        return <section key={type}><h2>{label}</h2><ul className={`search-results ${type === "events" && !compact ? "ledger" : ""}`} onClickCapture={onResultOpen}>{group.results.map((item) => { rowIndex += 1; const index = rowIndex; return type === "events" ? (compact ? <CompactEventResultRow key={item.id} item={item} onFocus={() => onActiveIndex(index)} /> : <EventItem key={item.id} event={item} />) : <ResultRow key={item.id} type={type} item={item} onFocus={() => onActiveIndex(index)} />; })}</ul>{group.total > 5 ? <button className="quiet-action" type="button" onClick={() => onViewAll(type)}>View all ({group.total})</button> : null}</section>;
       })}
     </div>
   );
