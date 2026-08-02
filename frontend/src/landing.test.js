@@ -6,6 +6,7 @@ import {
   GUEST_DISCOVER,
   homeAccessRedirect,
   landingPath,
+  postAuthDestination,
 } from "./landing.js";
 
 
@@ -18,6 +19,12 @@ test("auth success targets Home and direct guest Home access targets Discover", 
   assert.equal(AUTHENTICATED_LANDING, "/home");
   assert.equal(homeAccessRedirect(null), GUEST_DISCOVER);
   assert.equal(homeAccessRedirect({ id: 1 }), null);
+});
+
+test("auth routing sends only flag-on unverified payloads to email verification", () => {
+  assert.equal(postAuthDestination({ id: 1 }), "/home");
+  assert.equal(postAuthDestination({ id: 1, email_verified: true }), "/home");
+  assert.equal(postAuthDestination({ id: 1, email_verified: false }), "/verify-email");
 });
 
 test("legacy city links take precedence and preserve the city for every viewer", () => {

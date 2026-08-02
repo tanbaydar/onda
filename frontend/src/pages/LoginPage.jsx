@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 import { fetchWithCsrf } from "../api.js";
-import { AUTHENTICATED_LANDING } from "../landing.js";
+import { postAuthDestination } from "../landing.js";
 
 
 export default function LoginPage({ onAuthenticated }) {
@@ -25,7 +25,7 @@ export default function LoginPage({ onAuthenticated }) {
         }),
       });
       onAuthenticated(data.user);
-      navigate(AUTHENTICATED_LANDING);
+      navigate(postAuthDestination(data.user));
     } catch (error) {
       setErrors(
         error.data?.errors ?? {

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { ApiError, fetchWithCsrf } from "../api.js";
-import { AUTHENTICATED_LANDING } from "../landing.js";
+import { postAuthDestination } from "../landing.js";
 
 
 export default function RegisterPage({ onAuthenticated }) {
@@ -30,7 +30,7 @@ export default function RegisterPage({ onAuthenticated }) {
         }),
       });
       onAuthenticated(data.user);
-      navigate(AUTHENTICATED_LANDING);
+      navigate(postAuthDestination(data.user));
     } catch (error) {
       if (
         error instanceof ApiError &&

@@ -1,5 +1,10 @@
 export const AUTHENTICATED_LANDING = "/home";
 export const GUEST_DISCOVER = "/discover";
+export const VERIFY_EMAIL = "/verify-email";
+
+export function postAuthDestination(user) {
+  return user?.email_verified === false ? VERIFY_EMAIL : AUTHENTICATED_LANDING;
+}
 
 export function landingPath(user, search = "") {
   const params = new URLSearchParams(search);
