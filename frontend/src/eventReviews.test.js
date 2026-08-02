@@ -28,3 +28,10 @@ test("event review fixtures cover image and initials avatar paths", () => {
   assert.ok(avatars.some((avatar) => typeof avatar === "string"));
   assert.ok(avatars.some((avatar) => avatar === null));
 });
+
+test("event review sort reuses the custom menu with its existing two-option contract", () => {
+  assert.match(publicReviews, /<ProfileSortMenu/);
+  assert.match(publicReviews, /value: "most_liked", label: "Most liked"/);
+  assert.match(publicReviews, /value: "newest", label: "Newest"/);
+  assert.doesNotMatch(page + circle + publicReviews, /<select/);
+});
