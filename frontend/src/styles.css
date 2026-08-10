@@ -289,6 +289,7 @@ meter{accent-color:var(--chart);width:120px}
 .identity>img,.identity>.image-slot{width:var(--flier-sm);height:var(--flier-sm-h)}
 .event-meta-stack{display:flex;flex-direction:column;gap:var(--sp-4)}
 .event-meta-stack p{margin:0}.event-meta-stack a{text-decoration:none}
+.event-ticket-link{display:inline-block;margin-top:var(--sp-16);padding:var(--sp-8) var(--sp-16);border:1.5px solid var(--action);font-size:var(--text-ui);font-weight:500;text-decoration:none}
 .event-meta-past p:first-child{font-weight:500}.event-meta-past p:nth-child(2){color:var(--text-secondary)}.event-meta-past p:nth-child(3){color:var(--text-muted)}
 .event-meta-upcoming p:first-child{font-size:var(--text-body);font-weight:500}.event-meta-upcoming p:nth-child(2){color:var(--text-secondary)}.event-meta-upcoming p:nth-child(3){color:var(--text-muted)}
 .event-lineup{margin-top:var(--sp-32)}.event-lineup h2{margin-top:0}.event-lineup ol{margin:0}.event-lineup li{padding:var(--sp-8) 0;border:0}

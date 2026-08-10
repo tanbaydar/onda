@@ -217,6 +217,9 @@ export default function EventPage({ user, sessionReady, onAuthenticationRequired
         {isPast ? <p><Link to={venuePath(event.venue)}>{event.venue.name}</Link></p> : null}
         <p><Link to={`/discover?city_id=${event.venue.city.id}`}>{event.venue.city.name}</Link></p>
         </div>
+        {event.is_ticketed === true && event.ticket_url ? (
+          <a className="event-ticket-link" href={event.ticket_url} target="_blank" rel="noopener noreferrer">Get tickets</a>
+        ) : null}
         <section className="event-lineup">
           <h2>Lineup</h2>
           <ol>
