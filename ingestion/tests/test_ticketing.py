@@ -12,6 +12,8 @@ from catalog.models import City, CityIdentity, EventIdentity
 from ingestion.models import (
     RawIngest,
     RawProcessingStatus,
+    RejectedIngest,
+    RejectionReason,
     SyncRun,
     SyncRunStatus,
     SyncRunType,
@@ -120,7 +122,7 @@ class TicketingIngestionTests(TestCase):
         unmatched["event"]["id"] = "syn-event-ticket-unmatched"
         unmatched["event"]["isTicketed"] = False
         archived_events.append(unmatched)
-        self.make_raw(archived)
+        archived_raw = self.make_raw(archived)
 
         output = StringIO()
         call_command("backfill_is_ticketed", stdout=output)
@@ -140,4 +142,33 @@ class TicketingIngestionTests(TestCase):
         self.assertEqual(
             second_output.getvalue().strip(),
             "updated=0 unknown=2 unmatched=1",
+        )
+
+        RejectedIngest.objects.create(
+            raw_ingest=archived_raw,
+            entity_index=99,
+            entity_ref="syn-event-ticket-unmatched",
+            reason=RejectionReason.NO_ARTIST,
+            rejected_at=timezone.now(),
+        )
+        no_trace_payload = self.ticketing_payload()
+        no_trace_event = no_trace_payload["data"]["eventListings"]["data"][0]
+        no_trace_event["event"]["id"] = "syn-event-ticket-no-trace"
+        no_trace_payload["data"]["eventListings"]["data"] = [no_trace_event]
+        self.make_raw(no_trace_payload)
+
+        diagnostic_output = StringIO()
+        call_command(
+            "backfill_is_ticketed",
+            show_unmatched=True,
+            stdout=diagnostic_output,
+        )
+        self.assertEqual(
+            diagnostic_output.getvalue().strip().splitlines(),
+            [
+                "updated=0 unknown=2 unmatched=2",
+                "unmatched_bucket_counts quarantine=1 hidden=0 no_trace=1",
+                "unmatched syn-event-ticket-unmatched quarantine",
+                "unmatched syn-event-ticket-no-trace no_trace",
+            ],
         )

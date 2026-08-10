@@ -1,14 +1,21 @@
 import json
 
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 
 from catalog.models import Event, EventIdentity
 from config.sources import Source
-from ingestion.models import RawIngest
+from ingestion.models import RawIngest, RejectedIngest
 
 
 class Command(BaseCommand):
     help = "Backfill Event.is_ticketed from archived RA listing responses."
+
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "--show-unmatched",
+            action="store_true",
+            help="Classify and print unmatched RA event IDs.",
+        )
 
     def handle(self, *args, **options):
         latest = {}
@@ -43,6 +50,7 @@ class Command(BaseCommand):
         changed = []
         unknown = 0
         unmatched = 0
+        unmatched_source_ids = set()
         for source_id, value in latest.items():
             if value is None:
                 unknown += 1
@@ -50,6 +58,7 @@ class Command(BaseCommand):
             identity = identities.get(source_id)
             if identity is None:
                 unmatched += 1
+                unmatched_source_ids.add(source_id)
                 continue
             if identity.event.is_ticketed != value:
                 identity.event.is_ticketed = value
@@ -59,3 +68,50 @@ class Command(BaseCommand):
         self.stdout.write(
             f"updated={len(changed)} unknown={unknown} unmatched={unmatched}"
         )
+        if options["show_unmatched"]:
+            self._print_unmatched(unmatched_source_ids)
+
+    def _print_unmatched(self, source_ids):
+        quarantined_ids = set(
+            RejectedIngest.objects.filter(entity_ref__in=source_ids)
+            .exclude(entity_ref__isnull=True)
+            .values_list("entity_ref", flat=True)
+        )
+        traced = {
+            identity.source_id: identity
+            for identity in EventIdentity.objects.select_related("event").filter(
+                source=Source.RA,
+                source_id__in=source_ids,
+            )
+        }
+        live_ids = sorted(
+            source_id
+            for source_id, identity in traced.items()
+            if identity.event.status != "hidden"
+        )
+        if live_ids:
+            raise CommandError(
+                "unmatched RA IDs map to live catalog events: "
+                + ", ".join(live_ids)
+            )
+
+        buckets = {"quarantine": [], "hidden": [], "no_trace": []}
+        for source_id in sorted(source_ids):
+            if source_id in quarantined_ids:
+                bucket = "quarantine"
+            elif source_id in traced:
+                bucket = "hidden"
+            else:
+                bucket = "no_trace"
+            buckets[bucket].append(source_id)
+
+        self.stdout.write(
+            "unmatched_bucket_counts "
+            + " ".join(
+                f"{bucket}={len(source_ids)}"
+                for bucket, source_ids in buckets.items()
+            )
+        )
+        for bucket, bucket_source_ids in buckets.items():
+            for source_id in bucket_source_ids:
+                self.stdout.write(f"unmatched {source_id} {bucket}")
