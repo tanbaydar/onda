@@ -1,0 +1,84 @@
+benchmark:
+  measured_at: "2026-08-17"
+  repository_commit: "c8e81fc"
+  endpoint: "/api/me/home/"
+  transport: "Django HTTP test client through the configured production middleware stack"
+  authentication: "session-authenticated via Client.login"
+  page_size: 20
+  request_order: "sequential"
+  requests_per_page_total: 220
+  warmup_requests_discarded: 20
+  measured_requests_per_page: 200
+  cursor_method: "walked the endpoint from page 1 through page 49; the returned page-49 cursor was used for page 50"
+  deepest_page_confirmed: 50
+
+query_count_assertion:
+  file: "users/tests/test_home_api.py"
+  test: "HomeFeedContractTests.test_six_type_identical_timestamp_order_and_source_key_tiebreak_are_fixed"
+  asserted_queries: 4
+  citation: "users/tests/test_home_api.py:78,122-127"
+  asserted_shape: "two session/auth lookups, one bounded city-boundary lookup, and one six-branch UNION ALL"
+
+seed:
+  database: "danced_feed_benchmark"
+  script_created:
+    users: 501
+    viewer_follows: 50
+    cities: 1
+    venues: 1
+    events: 500
+    artists: 300
+    reviews: 20000
+    activity_rows:
+      follow: 20000
+      rated_been: 20000
+      will_be_there: 15000
+      favorite_event: 20000
+      favorite_artist: 15000
+      review_like: 10000
+      total: 100000
+  final_database_counts:
+    users: 501
+    viewer_follows: 50
+    cities: 3
+    venues: 1
+    events: 500
+    artists: 300
+    reviews: 20000
+    activity_rows: 100000
+  migration_seeded_reference_rows:
+    cities: 2
+
+results:
+  page_1:
+    p95_ms: 45.908
+    response_items: 20
+  page_50:
+    p95_ms: 31.618
+    response_items: 20
+
+environment:
+  hardware:
+    cpu: "Apple M4 Pro"
+    memory_bytes: 25769803776
+  operating_system: "macOS-26.5.2-arm64-arm-64bit-Mach-O"
+  mysql_version: "9.6.0"
+  python_version: "3.14.6"
+  django_version: "6.0.7"
+  django_settings_module: "config.settings_production"
+  debug: false
+  production_settings_deviations:
+    - "DANCED_DB_NAME=danced_feed_benchmark"
+    - "DANCED_DB_HOST=127.0.0.1 and local root credentials"
+    - "DANCED_DOMAIN=localhost"
+    - "Requests used Django's in-process HTTP test client rather than a deployed WSGI server; configured middleware and secure-request handling remained active."
+  database_isolation: "Dedicated local database; neither the development database nor a production database was used."
+  schema_or_index_modified: false
+  schema_note: "Only committed Django migrations were applied to create the dedicated database; no custom DDL, schema edit, or index edit was made."
+
+decisions:
+  - "Used 500 actors with the viewer following 50, so the 100K global activity distribution produces a selective but comfortably deeper-than-50-page feed."
+  - "Distributed exactly 100K activity rows across all six shipped feed branches, with larger shares for follows, ratings, and event favorites and smaller shares for likes and artist favorites."
+  - "Used production settings with DEBUG forced off and secure HTTP requests to preserve production middleware behavior locally."
+  - "Used nearest-rank p95: sorted_samples[ceil(0.95 * n) - 1]."
+  - "Stopped the cursor-depth validation after page 50 because the requested depth was reached; no seed inflation was needed."
