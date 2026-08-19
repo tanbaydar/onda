@@ -1,5 +1,42 @@
 # Danced ingestion operations
 
+## Production health check
+
+Run the repository smoke check after deployments and from a recurring host
+scheduler:
+
+```sh
+cd /home/ubuntu/danced
+./production-healthcheck.sh
+```
+
+It fails unless `db`, `web`, and `caddy` are running, the public cities API returns
+success over HTTPS, and the response retains the deployment's `X-Robots-Tag:
+noindex` gate. `DANCED_HEALTHCHECK_URL` can override the base URL for a supervised
+test; the default is `https://$DANCED_DOMAIN` from `.env`.
+
+This is an on-host smoke check, not an external uptime monitor. An external monitor
+is still required to detect instance, network, DNS, and regional failures.
+
+## Backup restore drill
+
+`backup.sh` validates the gzip stream while creating each dump. Periodically prove
+that a dump is actually restorable with:
+
+```sh
+cd /home/ubuntu/danced
+./verify-backup.sh backups/danced-YYYYMMDDTHHMMSSZ.sql.gz
+```
+
+With no argument, the script selects the newest local `danced-*.sql.gz` dump. It
+starts a disposable MySQL 8.4 container with no published ports, restores the dump there,
+requires at least one restored table, runs `mysqlcheck`, and removes the container.
+It never connects to or changes the live database. Set `RESTORE_MYSQL_IMAGE` only
+when deliberately testing another compatible MySQL image.
+
+Run a restore drill after first deployment, after database-version changes, and at
+least monthly. Keep its stdout/stderr with the other operations logs.
+
 ## Nightly synchronization
 
 Run the production nightly planner with no window arguments:
