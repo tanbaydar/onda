@@ -82,7 +82,9 @@ export default function App() {
   return (
     <>
       <header className={location.pathname === "/verify-email" ? "auth-chrome auth-chrome-wordmark-only" : location.pathname === "/login" || location.pathname === "/register" || location.pathname.startsWith("/reset-password") ? "auth-chrome" : undefined}>
-        <Link className="site-wordmark" to="/">Danced</Link>
+        <Link className="site-wordmark" to="/" aria-label="Onda home">
+          <img src="/logo.png" alt="Onda" />
+        </Link>
         <nav aria-label="Primary navigation">
           <ul>
             {primaryNavigationItems(session.user).map((item) => <li key={item.label}><NavLink to={item.to}>{item.label}</NavLink></li>)}

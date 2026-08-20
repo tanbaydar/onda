@@ -98,7 +98,8 @@ main nav button+span,main nav span+button{margin-left:var(--sp-8)}
 .ledger-pagination .quiet-control{min-height:0;padding:var(--sp-4) var(--sp-8);border-color:var(--border-strong);color:var(--text-secondary);font-size:var(--text-micro)}
 .ledger-pagination .quiet-control:disabled{border-color:var(--border);color:var(--text-muted);opacity:1}
 body>div>header{position:fixed;z-index:10;right:0;bottom:0;left:0;display:flex;align-items:center;height:64px;padding:var(--sp-8) var(--gutter-mobile);border-top:var(--hairline) solid var(--border);background:var(--bg)}
-body>div>header>.site-wordmark{display:none;font-family:var(--font-display);text-decoration:none}
+body>div>header>.site-wordmark{display:none;text-decoration:none}
+body>div>header>.site-wordmark img{display:block;width:80px;height:auto}
 body>div>header nav{width:100%}
 body>div>header nav ul{display:flex;justify-content:space-around;margin:0;padding:0;list-style:none}
 body>div>header nav a{color:var(--text-muted);font-size:var(--text-micro);text-decoration:none}

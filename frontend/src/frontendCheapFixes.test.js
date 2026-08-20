@@ -5,7 +5,8 @@ import test from "node:test";
 const read = (path) => readFileSync(new URL(path, import.meta.url), "utf8");
 
 test("the header wordmark is a router home link", () => {
-  assert.match(read("./App.jsx"), /<Link className="site-wordmark" to="\/">Danced<\/Link>/);
+  assert.match(read("./App.jsx"), /<Link className="site-wordmark" to="\/" aria-label="Onda home">/);
+  assert.match(read("./App.jsx"), /<img src="\/logo.png" alt="Onda" \/>/);
 });
 
 test("entity search rows use browser-native router links", () => {
