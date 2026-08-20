@@ -10,6 +10,9 @@ rename_migration = import_module(
 
 
 class OndaUserTableMigrationTests(TransactionTestCase):
+    def test_table_rename_migration_is_non_atomic_for_mysql(self):
+        self.assertFalse(rename_migration.Migration.atomic)
+
     def table_names(self):
         return set(connection.introspection.table_names())
 
