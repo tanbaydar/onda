@@ -33,9 +33,7 @@ from ingestion.transformer import transform
 from ingestion.artwork import event_cover_image_url
 
 
-FIXTURE_DIR = (
-    Path(__file__).resolve().parents[3] / "docs" / "recon" / "fixtures"
-)
+FIXTURE_DIR = Path(__file__).resolve().parent / "fixtures"
 DEFAULT_WINDOW_START = date(2026, 8, 1)
 DEFAULT_WINDOW_END = date(2026, 8, 31)
 

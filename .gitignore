@@ -1,7 +1,13 @@
 # Local secrets and environment files
-.env
-.env.*
-!.env.example
+.env*
+
+# Private working material
+AGENTS.md
+.private/
+notes/
+docs/private/
+frontend/DESIGN_BRIEF.md
+frontend/design-handoffs/
 
 # User uploads and local databases
 media/

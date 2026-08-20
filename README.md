@@ -180,7 +180,7 @@ The current engineering demo runs on one AWS EC2 `t4g.small` using Docker Compos
 
 This is operational evidence, not an internet-scale claim. The health probe writes to host logs; it is not an external uptime-alerting service.
 
-[Read deployment and operations documentation →](docs/DEPLOYMENT.md)
+[Inspect the deployment implementation →](infrastructure/)
 
 ## Evidence and limits
 
@@ -188,11 +188,11 @@ The current verification baseline is reproducible from the repository:
 
 - **239 Django tests** pass against MySQL.
 - **98 frontend tests** pass with Node's test runner, followed by a production Vite build and dependency audit.
-- **13 captured ingestion fixtures** pass their contract audit.
+- **13 synthetic ingestion fixtures** exercise successful, malformed, duplicate, paginated, and lifecycle-sensitive observations.
 - GitHub Actions runs the backend and frontend suites on every change to `main`.
 - The shipped domain schema contains **24 Onda-owned tables** across ingestion evidence, canonical identity, and application/social data.
 
-[See the latest CI run →](https://github.com/tanbaydar/onda/actions) · [Inspect the database diagrams →](docs/DATABASE.md) · [Trace claims to code and tests →](docs/DATA_FLOW.md)
+[See the latest CI run →](https://github.com/tanbaydar/onda/actions) · [Inspect the database diagrams →](docs/DATABASE.md) · [Browse the ingestion tests →](backend/ingestion/tests/)
 
 The boundaries are equally important:
 
@@ -208,7 +208,7 @@ The boundaries are equally important:
 |---|---|
 | [Demo](DEMO.md) | The product walkthrough and, when ready, its video commentary |
 | **How it works** | A concise explanation of the system and its engineering decisions |
-| [Documentation](docs/README.md) | Detailed ingestion, application-data, API, database, deployment, and evidence references |
+| [Documentation](docs/README.md) | Product, ingestion, application-data, API, and database references |
 
 **Stack:** Python 3.12 · Django 6 · MySQL 8.4 · React 19 · Vite 8 · Docker Compose · Caddy · GitHub Actions
 

@@ -2,8 +2,6 @@
 
 This is the part of Onda where uncertainty is handled. It explains the implemented path from a provider response to a canonical event, including the conditions under which Onda refuses to change existing truth.
 
-For a line-by-line map to enforcing code and tests, see [DATA_FLOW.md](DATA_FLOW.md).
-
 ## Why this pipeline exists
 
 Onda borrows the useful shape of social diaries such as Beli and Letterboxd: the object being discussed needs a stable catalog identity before users can rate it, review it, or share it. The live-music domain has a different data constraint. [Letterboxd documents that TMDB supplies its film metadata](https://letterboxd.com/about/film-data/); I did not find an equivalent source that was simultaneously centralized, authoritative, complete, and suitable for Onda's event needs.
@@ -302,8 +300,8 @@ The React application, user tables, and most catalog endpoints should not need p
 
 As verified on **August 20, 2026**:
 
-- the ingestion fixture audit passed for 13 captured JSON contracts;
-- the full 238-test Django suite passed against MySQL;
+- 13 synthetic JSON contracts exercise the ingestion boundary;
+- the full 239-test Django suite passed against MySQL;
 - production scheduled the sync once per night under a host-level `flock`, in addition to the MySQL advisory lock;
 - the most recent completed run inspected was a two-city backfill with 2/2 seeds successful, 1,919 observations admitted, 1,128 quarantined, and 0 dropped;
 - New York City and Boston both had successful source timestamps that day.
@@ -330,5 +328,4 @@ Those counts are an operational sample, not a quality percentage or permanent th
 | Presence/absence lifecycle | `backend/ingestion/reconciler.py` |
 | Raw evidence and telemetry models | `backend/ingestion/models.py` |
 | Canonical and identity models | `backend/catalog/models.py` |
-| Captured contract fixtures | `docs/recon/fixtures/` |
-| Evidence-linked behavior trace | [`DATA_FLOW.md`](DATA_FLOW.md) |
+| Synthetic contract fixtures | `backend/ingestion/tests/fixtures/` |
