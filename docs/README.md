@@ -1,19 +1,41 @@
-# Danced documentation
+# Onda engineering documentation
 
-## Authoritative product and architecture documents
+This directory has two layers:
 
-- `PRODUCT_QA_SPEC.md` — frozen product behavior
-- `danced-data-architecture.md` — ingestion and data architecture
-- `danced.dbml` — frozen authoritative ERD
-- `ERD_REVIEW.md` — ERD review record and documented implementation deltas
-- `erd/` — generated crow's-foot SVGs and their reproducible DBML-to-Graphviz toolchain
-- `RA_SOURCE_RECON.md` — observed Resident Advisor source behavior
-- `recon/fixtures/` — captured request and response evidence
+1. A short review path that explains the shipped system.
+2. Evidence and design records that preserve the detailed reasoning behind it.
 
-The other top-level documents in this directory preserve supporting discovery,
-engineering notes, and the ERD construction record.
+## Start here
 
-## Archive
+| Document | Scope |
+|---|---|
+| [Product guide](PRODUCT_GUIDE.md) | User-visible purpose, features, flows, and current demo boundaries |
+| [Event ingestion](INGESTION.md) | Source acquisition, raw evidence, validation, idempotency, quarantine, and reconciliation |
+| [Application data](APPLICATION_DATA.md) | Canonical reads, social writes, privacy, lifecycle behavior, feed assembly, and time semantics |
+| [API](API.md) | First-party JSON API, sessions, CSRF, route inventory, errors, and pagination |
+| [Database](DATABASE.md) | Crow's-foot diagrams of the 24 shipped product tables and their invariants |
 
-`archive/` contains superseded pre-restart diagrams, specifications, and UI sketches.
-They are retained as project history and are not implementation contracts.
+The root [README](../README.md) is the one-page entry point.
+
+## Evidence and implementation records
+
+These documents go deeper than the public narrative. They are useful when reviewing a specific invariant or locating its enforcing code and tests.
+
+| Document | Role |
+|---|---|
+| [DATA_FLOW.md](DATA_FLOW.md) | Evidence-linked trace from provider response through the product API |
+| [danced-data-architecture.md](danced-data-architecture.md) | Original high-level ingestion architecture |
+| [PRODUCT_QA_SPEC.md](PRODUCT_QA_SPEC.md) | Frozen shipped product behavior |
+| [OPERATIONS.md](OPERATIONS.md) | Sync, failure, recovery, backup, and operational procedures |
+| [RA_SOURCE_RECON.md](RA_SOURCE_RECON.md) | Captured observations about the v1 source contract |
+| [recon/fixtures](recon/fixtures) | Sanitized request/response fixtures used by ingestion contract tests |
+| [ERD_REVIEW.md](ERD_REVIEW.md) | Review record for the original database blueprint and implementation deltas |
+| [erd](erd) | Reproducible Graphviz exports of that blueprint |
+
+## Design records and history
+
+`danced.dbml` and its generated files are the frozen design blueprint used to reason about the database. They include planned tables that are not shipped. [DATABASE.md](DATABASE.md) is the implementation-level source for the current 24-table product schema.
+
+`PROJECT_STATE.md`, discovery notes, maintainability/security reviews, and `archive/` preserve dated project history. They are not claims about the current production deployment unless a current document explicitly references them.
+
+The repository still contains **Danced** in stable internal names and older document titles because Danced was Onda's development codename. See the [repository-name note](../README.md#repository-name).
