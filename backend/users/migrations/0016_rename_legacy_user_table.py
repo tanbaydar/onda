@@ -45,6 +45,10 @@ def restore_legacy_table(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
+    # MySQL cannot roll back RENAME TABLE, so Django must not wrap this
+    # operation in the migration executor's transaction.
+    atomic = False
+
     dependencies = [("users", "0015_enforce_account_code_user_cascade")]
 
     operations = [
