@@ -20,6 +20,10 @@ Upcoming/Recent in the ruled tab register: active ink 600 + 2px ink indicator ov
 - Desktop measure: centered 800 ledger (per Home centering ruling).
 - Pagination: existing "Load more" grammar.
 
+## Dated delta — 2026-08-20 discover continuation
+- The visible "Load more" control is withdrawn. Reaching the end of the loaded ledger requests the next page automatically through an observed sentinel, preserving the current Upcoming/Recent ledger and scroll position.
+- Continuation loading uses one quiet micro status line in the existing ledger slot. A failed continuation keeps every loaded row in place and offers Retry; it never clears the ledger.
+
 ## States
 - Guest = signed-in composition, only the header chrome differs (auth cluster per auth-header-handoff.md; mobile guest has no tab bar).
 - Judgment color: nowhere on Discover (no judgment data renders here).

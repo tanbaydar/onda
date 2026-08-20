@@ -31,3 +31,8 @@ Events only, scoped to the selected city. Panel overlays the city ledger (same p
 ## FLAGS for integration (unruled — do not invent)
 1. Keyboard-focus row treatment: wireframes show a `--bg-subtle` wash; alternative is a 2px ink inset. Needs an operator ruling — pick neither silently.
 2. Search corpus fixture: none exists in frontend/design-fixtures/ — add one before wiring live search; wireframe result rows beyond fixtures are flagged stand-ins.
+
+## Dated delta — 2026-08-20 focus and artist results
+- The primary search field keeps one rectangular border when focused. Focus thickens inward; no offset outer outline or second rectangle is rendered.
+- Native browser search decorations are suppressed so the field never introduces an unallocated colored clear glyph.
+- Artist results carry the shared circular artist portrait/fallback from the polish delta rather than a text-only row.

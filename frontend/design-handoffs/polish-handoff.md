@@ -64,3 +64,7 @@ Replaces the "Add favorite" quiet micro link everywhere favoriting exists (event
 4. §8 favorited-hover word "Remove" + cap-rejection copy — ratify.
 5. §8 optional 120ms fill micro-transition — accept or hold to instant-swap (no motion grammar exists yet).
 6. §8 word-vs-wordless at detail scale — recommendation is word + heart; veto for heart-only.
+
+## Dated delta — 2026-08-20 artist portrait fallback
+- Artist identity imagery is now portrait grammar: a circular, center-cropped photo when present and a neutral circular head-and-shoulders silhouette when absent or failed, matching the familiar social-profile fallback idiom.
+- The same fallback appears at identity scale on Artist pages and row scale in Search and Favorites. This scoped ruling supersedes the earlier “artists are never circles” clause for portrait surfaces only; event fliers and venue/event list slots remain rectangular.

@@ -6,6 +6,7 @@ import EventList from "../components/EventList.jsx";
 import FavoriteControl from "../components/FavoriteControl.jsx";
 import { venuePath } from "../entityRoutes.js";
 import useCanonicalEntityRoute from "../useCanonicalEntityRoute.js";
+import { formatVenueLocation } from "../venuePresentation.js";
 
 export default function VenuePage({ user, sessionReady }) {
   const { venueKey } = useParams();
@@ -74,24 +75,18 @@ export default function VenuePage({ user, sessionReady }) {
   }
 
   const venue = state.venue;
+  const location = formatVenueLocation(venue.city);
   return (
-    <main className="detail-page">
-      <article className="identity">
+    <main className="detail-page venue-page">
+      <article className="venue-identity">
         <h1>{venue.name}</h1>
-        <p>
-          City:{" "}
-          <Link to={`/discover?city_id=${venue.city.id}`}>{venue.city.name}</Link>
-        </p>
-        <dl>
-          <dt>Region</dt>
-          <dd>{venue.city.region_name ?? venue.city.region_code ?? "Not provided"}</dd>
-          <dt>Country</dt>
-          <dd>{venue.city.country_code}</dd>
-          <dt>Timezone</dt>
-          <dd>{venue.city.timezone}</dd>
-        </dl>
+        {location ? (
+          <p className="venue-location">
+            <Link to={`/discover?city_id=${venue.city.id}`}>{location}</Link>
+          </p>
+        ) : null}
+        {user ? <FavoriteControl compact path={`/api/venues/${venue.id}/favorite/`} state={venue.viewer_favorite} onChanged={() => setRetry((value) => value + 1)} /> : null}
       </article>
-      {user ? <FavoriteControl path={`/api/venues/${venue.id}/favorite/`} state={venue.viewer_favorite} onChanged={() => setRetry((value) => value + 1)} /> : null}
       <EventList
         heading="Upcoming"
         scopeName="venue_id"

@@ -42,7 +42,6 @@ function NotFoundPage() {
 
 export default function App() {
   const navigate = useNavigate();
-  const location = useLocation();
   const [retry, setRetry] = useState(0);
   const [session, setSession] = useState({
     loading: true,
@@ -81,7 +80,7 @@ export default function App() {
 
   return (
     <>
-      <header className={location.pathname === "/verify-email" ? "auth-chrome auth-chrome-wordmark-only" : location.pathname === "/login" || location.pathname === "/register" || location.pathname.startsWith("/reset-password") ? "auth-chrome" : undefined}>
+      <header className="site-header">
         <Link className="site-wordmark" to="/" aria-label="Onda home">
           <img src="/logo.png" alt="Onda" />
         </Link>

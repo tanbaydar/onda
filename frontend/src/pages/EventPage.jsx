@@ -198,7 +198,7 @@ export default function EventPage({ user, sessionReady, onAuthenticationRequired
   const trimmedReviewLength = reviewBody.trim().length;
   return (
     <main className="event-page">
-      <article className="identity">
+      <article className={`identity event-identity ${isPast ? "event-identity-past" : "event-identity-upcoming"}`}>
         <h1>{event.title}</h1>
         {event.cover_image_url || isPast ? <ImageSlot name={event.title} src={event.cover_image_url} alt={event.title} loading="eager" referrerPolicy="no-referrer" /> : null}
         <div className={`event-meta-stack ${isPast ? "event-meta-past" : "event-meta-upcoming"}`}>

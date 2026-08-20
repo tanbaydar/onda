@@ -84,7 +84,7 @@ export default function PublicReviews({
               </li>
             ))}
           </ol>
-          <nav aria-label="Public reviews pagination">
+          {state.data.pagination.total_pages > 1 ? <nav aria-label="Public reviews pagination">
             <button
               type="button"
               disabled={state.data.pagination.previous_page === null}
@@ -104,7 +104,7 @@ export default function PublicReviews({
             >
               Next
             </button>
-          </nav>
+          </nav> : null}
         </>
       ) : null}
     </section>
