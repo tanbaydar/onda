@@ -7,7 +7,7 @@ from django.test import SimpleTestCase, override_settings
 
 POSTMARK_SETTINGS = {
     "EMAIL_BACKEND": "django.core.mail.backends.smtp.EmailBackend",
-    "DEFAULT_FROM_EMAIL": "Onda <noreply@onda-platform.dev>",
+    "DEFAULT_FROM_EMAIL": "Onda App <noreply@onda-platform.dev>",
     "EMAIL_HOST": "smtp.postmarkapp.com",
     "EMAIL_PORT": 587,
     "EMAIL_HOST_USER": "postmark-user",

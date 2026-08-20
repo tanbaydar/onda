@@ -23,7 +23,9 @@ export default function WillBeThereAttendees({ eventId, scope, user, version, ac
     }
     const controller = new AbortController();
     const query = new URLSearchParams({ page: String(page), page_size: "20" });
-    setState({ loading: true, error: null, data: null });
+    setState((current) => current.data
+      ? { ...current, loading: false, error: null }
+      : { loading: true, error: null, data: null });
     fetchJson(`/api/events/${eventId}/will-be-there/${scope}/?${query}`, {
       cache: "no-store",
       signal: controller.signal,
@@ -31,7 +33,9 @@ export default function WillBeThereAttendees({ eventId, scope, user, version, ac
       .then((data) => setState({ loading: false, error: null, data }))
       .catch((error) => {
         if (error.name !== "AbortError") {
-          setState({ loading: false, error, data: null });
+          setState((current) => current.data
+            ? { ...current, loading: false, error }
+            : { loading: false, error, data: null });
         }
       });
     return () => controller.abort();

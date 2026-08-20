@@ -21,7 +21,9 @@ export default function VenuePage({ user, sessionReady }) {
 
   useEffect(() => {
     const controller = new AbortController();
-    setState({ loading: true, error: null, venue: null, notFound: false });
+    setState((current) => current.venue?.id === venueId
+      ? { ...current, loading: false, error: null, notFound: false }
+      : { loading: true, error: null, venue: null, notFound: false });
     if (!sessionReady) return () => controller.abort();
     if (venueId === null) {
       setState({ loading: false, error: null, venue: null, notFound: true });
@@ -35,15 +37,28 @@ export default function VenuePage({ user, sessionReady }) {
         if (error.name === "AbortError") {
           return;
         }
-        setState({
-          loading: false,
-          error: error.status === 404 ? null : error,
-          venue: null,
-          notFound: error instanceof ApiError && error.status === 404,
-        });
+        setState((current) => current.venue?.id === venueId && error.status !== 404
+          ? { ...current, loading: false, error: null, notFound: false }
+          : {
+              loading: false,
+              error: error.status === 404 ? null : error,
+              venue: null,
+              notFound: error instanceof ApiError && error.status === 404,
+            });
       });
     return () => controller.abort();
   }, [retry, sessionReady, user?.id, venueId]);
+
+  function changeFavorite(nextFavorite) {
+    if (!nextFavorite) {
+      setRetry((value) => value + 1);
+      return;
+    }
+    setState((current) => current.venue ? {
+      ...current,
+      venue: { ...current.venue, viewer_favorite: nextFavorite },
+    } : current);
+  }
 
   if (state.loading) {
     return (
@@ -85,7 +100,7 @@ export default function VenuePage({ user, sessionReady }) {
             <Link to={`/discover?city_id=${venue.city.id}`}>{location}</Link>
           </p>
         ) : null}
-        {user ? <FavoriteControl compact path={`/api/venues/${venue.id}/favorite/`} state={venue.viewer_favorite} onChanged={() => setRetry((value) => value + 1)} /> : null}
+        {user ? <FavoriteControl compact path={`/api/venues/${venue.id}/favorite/`} state={venue.viewer_favorite} onChanged={changeFavorite} /> : null}
       </article>
       <EventList
         heading="Upcoming"

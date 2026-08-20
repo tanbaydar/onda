@@ -7,7 +7,7 @@ import ProfileAvatar from "./ProfileAvatar.jsx";
 import RatingStars from "./RatingStars.jsx";
 import ReviewExcerpt from "./ReviewExcerpt.jsx";
 
-export default function EventReviewRow({ person, rating, review = null, ratedAt = null, onLike = null, yours = false, onEdit = null, children = null }) {
+export default function EventReviewRow({ person, rating, review = null, ratedAt = null, onLike = null, likePending = false, yours = false, onEdit = null, children = null }) {
   const timestamp = review?.published_at ?? ratedAt;
   return (
     <article className="event-review-row">
@@ -22,7 +22,7 @@ export default function EventReviewRow({ person, rating, review = null, ratedAt 
       {review?.body ? <ReviewExcerpt>{review.body}</ReviewExcerpt> : <p className="event-review-no-body">No written review.</p>}
       <div className="event-review-meta">
         {timestamp ? <time dateTime={timestamp}>{formatTimestamp(timestamp)}</time> : null}
-        {review ? <><span className="event-review-like-count">{pluralize(review.like_count, "like")}</span>{onLike ? <button className="like-action" type="button" onClick={onLike}>{review.viewer_has_liked ? "Unlike" : "Like"}</button> : null}</> : null}
+        {review ? <><span className="event-review-like-count">{pluralize(review.like_count, "like")}</span>{onLike ? <button className="like-action" type="button" disabled={likePending} aria-busy={likePending} onClick={onLike}>{review.viewer_has_liked ? "Unlike" : "Like"}</button> : null}</> : null}
       </div>
       {children}
     </article>

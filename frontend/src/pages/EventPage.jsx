@@ -41,7 +41,9 @@ export default function EventPage({ user, sessionReady, onAuthenticationRequired
 
   useEffect(() => {
     const controller = new AbortController();
-    setState({ loading: true, error: null, event: null, notFound: false });
+    setState((current) => current.event?.id === eventId
+      ? { ...current, loading: false, error: null, notFound: false }
+      : { loading: true, error: null, event: null, notFound: false });
     if (!sessionReady) return () => controller.abort();
     if (eventId === null) {
       setState({ loading: false, error: null, event: null, notFound: true });
@@ -62,15 +64,28 @@ export default function EventPage({ user, sessionReady, onAuthenticationRequired
         if (error.name === "AbortError") {
           return;
         }
-        setState({
-          loading: false,
-          error: error.status === 404 ? null : error,
-          event: null,
-          notFound: error instanceof ApiError && error.status === 404,
-        });
+        setState((current) => current.event?.id === eventId && error.status !== 404
+          ? { ...current, loading: false, error: null, notFound: false }
+          : {
+              loading: false,
+              error: error.status === 404 ? null : error,
+              event: null,
+              notFound: error instanceof ApiError && error.status === 404,
+            });
       });
     return () => controller.abort();
   }, [eventId, retry, sessionReady, user?.id]);
+
+  function changeFavorite(nextFavorite) {
+    if (!nextFavorite) {
+      setRetry((value) => value + 1);
+      return;
+    }
+    setState((current) => current.event ? {
+      ...current,
+      event: { ...current.event, viewer_favorite: nextFavorite },
+    } : current);
+  }
 
   async function mutate(path, options, { reviewsChanged = false } = {}) {
     setSaving(true);
@@ -143,10 +158,25 @@ export default function EventPage({ user, sessionReady, onAuthenticationRequired
     setSaving(true);
     setWillBeThereError(null);
     try {
+      const marking = !state.event.viewer_will_be_there.is_marked;
       await fetchWithCsrf(`/api/events/${eventId}/will-be-there/`, {
-        method: state.event.viewer_will_be_there.is_marked ? "DELETE" : "PUT",
+        method: marking ? "PUT" : "DELETE",
       });
-      setRetry((value) => value + 1);
+      setState((current) => current.event ? {
+        ...current,
+        event: {
+          ...current.event,
+          viewer_will_be_there: {
+            ...current.event.viewer_will_be_there,
+            is_marked: marking,
+            was_marked: marking,
+          },
+          will_be_there_summary: {
+            ...current.event.will_be_there_summary,
+            active_count: Math.max(0, current.event.will_be_there_summary.active_count + (marking ? 1 : -1)),
+          },
+        },
+      } : current);
       setWillBeThereVersion((value) => value + 1);
     } catch (error) {
       if (error.status === 401 || error.status === 403) {
@@ -248,7 +278,7 @@ export default function EventPage({ user, sessionReady, onAuthenticationRequired
                   : "Mark Will Be There"}
               </button>
             ) : null}</> : null}
-            <FavoriteControl compact path={`/api/events/${event.id}/favorite/`} state={event.viewer_favorite} onChanged={() => setRetry((value) => value + 1)} />
+            <FavoriteControl compact path={`/api/events/${event.id}/favorite/`} state={event.viewer_favorite} onChanged={changeFavorite} />
             {isPast && event.viewer_will_be_there.was_marked ? <p className="dormant-wbt">Will Be There · marked</p> : null}
             {actionError ? <p role="alert">{actionError}</p> : null}
         </div> : null}

@@ -52,6 +52,8 @@ class AccountCodeApiTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), {"sent": True, "cooldown_seconds": 60})
         self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].subject, "Your Onda App verification code")
+        self.assertIn("Your Onda App email verification code is", mail.outbox[0].body)
         code = self.sent_code()
         record = AccountCode.objects.get(
             user=self.user, purpose=AccountCodePurpose.EMAIL_VERIFICATION
@@ -293,6 +295,8 @@ class PasswordResetApiTests(TestCase):
         self.assertEqual(existing.json(), {"accepted": True})
         self.assertEqual(missing.json(), existing.json())
         self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].subject, "Your Onda App password reset code")
+        self.assertIn("Your Onda App password reset code is", mail.outbox[0].body)
 
     def test_reset_code_expiry_attempt_limit_and_cooldown_match_verification(self):
         client = Client(enforce_csrf_checks=True)

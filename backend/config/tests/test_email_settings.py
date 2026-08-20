@@ -10,13 +10,33 @@ BASE_DIR = Path(__file__).resolve().parents[2]
 
 
 class EmailSettingsTests(TestCase):
+    def test_default_sender_uses_onda_app_display_name(self):
+        env = os.environ.copy()
+        env.pop("DJANGO_DEFAULT_FROM_EMAIL", None)
+        env["DJANGO_SECRET_KEY"] = "email-settings-test-key"
+
+        result = subprocess.run(
+            [
+                sys.executable,
+                "-c",
+                "from config import settings; print(settings.DEFAULT_FROM_EMAIL)",
+            ],
+            cwd=BASE_DIR,
+            env=env,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+
+        self.assertEqual(result.stdout.strip(), "Onda App <noreply@onda.local>")
+
     def test_smtp_environment_is_mapped_to_django_settings(self):
         env = os.environ.copy()
         env.update(
             {
                 "DJANGO_SECRET_KEY": "email-settings-test-key",
                 "DJANGO_EMAIL_BACKEND": "django.core.mail.backends.smtp.EmailBackend",
-                "DJANGO_DEFAULT_FROM_EMAIL": "Onda <noreply@example.com>",
+                "DJANGO_DEFAULT_FROM_EMAIL": "Onda App <noreply@example.com>",
                 "DJANGO_EMAIL_HOST": "smtp.example.com",
                 "DJANGO_EMAIL_PORT": "587",
                 "DJANGO_EMAIL_HOST_USER": "smtp-user",
@@ -55,7 +75,7 @@ print(json.dumps({
             json.loads(result.stdout),
             {
                 "backend": "django.core.mail.backends.smtp.EmailBackend",
-                "from_email": "Onda <noreply@example.com>",
+                "from_email": "Onda App <noreply@example.com>",
                 "host": "smtp.example.com",
                 "port": 587,
                 "user": "smtp-user",

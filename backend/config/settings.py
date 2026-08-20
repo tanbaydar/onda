@@ -156,7 +156,10 @@ EMAIL_BACKEND = os.environ.get(
     "DJANGO_EMAIL_BACKEND",
     "django.core.mail.backends.console.EmailBackend",
 )
-DEFAULT_FROM_EMAIL = os.environ.get("DJANGO_DEFAULT_FROM_EMAIL", "noreply@onda.local")
+DEFAULT_FROM_EMAIL = os.environ.get(
+    "DJANGO_DEFAULT_FROM_EMAIL",
+    "Onda App <noreply@onda.local>",
+)
 EMAIL_HOST = os.environ.get("DJANGO_EMAIL_HOST", "localhost")
 EMAIL_PORT = int(os.environ.get("DJANGO_EMAIL_PORT", "25"))
 EMAIL_HOST_USER = os.environ.get("DJANGO_EMAIL_HOST_USER", "")

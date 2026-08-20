@@ -234,6 +234,7 @@ meter{accent-color:var(--chart);width:120px}
 .profile-social-counts strong{font-size:var(--text-ui);font-weight:600}
 .profile-social-counts small{color:var(--text-muted);font-size:11px;font-weight:500;letter-spacing:.05em;text-transform:uppercase}
 .profile-follow-control{width:auto;min-width:150px;height:32px;min-height:32px;margin-top:var(--sp-12);padding:var(--sp-8) var(--sp-16);border:var(--hairline) solid var(--border-strong);color:var(--text-secondary);font-size:var(--text-ui);font-weight:500;line-height:1;text-align:center}
+.profile-follow-error{max-width:320px;margin-top:var(--sp-8);color:var(--danger-text);font-size:var(--text-micro)}
 .profile-edit-link{display:inline-block;margin-top:var(--sp-12);color:var(--text-secondary);font-size:var(--text-micro)}
 .profile-bio{max-width:640px;margin:var(--sp-12) 0 0;color:var(--text-secondary);font-family:var(--font-prose);font-size:var(--text-body);line-height:1.6}
 .profile-tabs{display:flex;gap:var(--sp-24);align-items:flex-end;margin-top:var(--sp-48);border-bottom:var(--hairline) solid var(--border);font-size:var(--text-ui)}
@@ -264,11 +265,15 @@ meter{accent-color:var(--chart);width:120px}
 .profile-favorites{max-width:var(--measure-rows)}
 .profile-favorites p{color:var(--text-secondary);font-size:var(--text-ui)}
 .profile-favorite-list{margin:0}
-.profile-favorite-list>li{display:grid;grid-template-columns:var(--thumb) minmax(0,1fr) 44px;gap:var(--sp-16);align-items:center;padding:var(--sp-12) 0}
-.profile-favorite-thumb{width:var(--thumb);height:var(--thumb-h)}
-.profile-favorite-list a{display:flex;min-width:0;flex-direction:column;gap:var(--sp-4);text-decoration:none}
+.profile-favorite-list>li{display:grid;grid-template-columns:minmax(0,1fr);gap:var(--sp-16);align-items:center;padding:var(--sp-12) 0}
+.profile-favorite-list>li.is-owner{grid-template-columns:minmax(0,1fr) 44px}
+.profile-favorite-link{display:grid;min-width:0;min-height:var(--thumb-h);grid-template-columns:var(--thumb) minmax(0,1fr);gap:var(--sp-16);align-items:center;text-decoration:none}
+.profile-favorite-thumb{display:block;width:var(--thumb);height:var(--thumb-h)}
+.profile-favorite-list .artist-avatar{width:var(--thumb);height:var(--thumb)}
+.profile-favorite-copy{display:flex;min-width:0;flex-direction:column;gap:var(--sp-4)}
 .profile-favorite-list strong{overflow:hidden;font-family:var(--font-display);font-size:var(--text-row-title);font-weight:400;line-height:1.2;text-overflow:ellipsis;white-space:nowrap}
 .profile-favorite-list small{color:var(--text-muted);font-size:var(--text-micro)}
+.profile-favorite-control{display:flex;align-items:center;justify-content:center}
 .edit-profile-page{max-width:calc(var(--auth-col) + 2 * var(--gutter-mobile))}
 .edit-profile-page>h1{font-family:var(--font-fn);font-size:20px;font-weight:600}
 .edit-profile-page>.profile-avatar{margin-bottom:var(--sp-24)}

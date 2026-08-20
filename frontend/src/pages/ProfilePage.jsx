@@ -83,40 +83,64 @@ function ProfileFavorites({ username, owner }) {
   const [state, setState] = useState({ loading: true, error: null, favorites: null });
   useEffect(() => {
     const controller = new AbortController();
-    fetchJson(`/api/users/${encodeURIComponent(username)}/favorites/`, { signal: controller.signal, cache: "no-store" }).then((favorites) => setState({ loading: false, error: null, favorites })).catch((error) => { if (error.name !== "AbortError") setState({ loading: false, error, favorites: null }); });
+    fetchJson(`/api/users/${encodeURIComponent(username)}/favorites/`, { signal: controller.signal, cache: "no-store" }).then((favorites) => setState({ loading: false, error: null, favorites })).catch((error) => { if (error.name !== "AbortError") setState((current) => current.favorites ? { ...current, loading: false, error } : { loading: false, error, favorites: null }); });
     return () => controller.abort();
   }, [owner, retry, username]);
   if (state.loading) return <section className="profile-favorites"><h2>Favorites</h2><p>Loading favorites.</p></section>;
-  if (state.error) return <section className="profile-favorites"><h2>Favorites</h2><p>Favorites could not be loaded.</p><button className="quiet-control" type="button" onClick={() => setRetry((value) => value + 1)}>Retry</button></section>;
+  if (state.error && !state.favorites) return <section className="profile-favorites"><h2>Favorites</h2><p>Favorites could not be loaded.</p><button className="quiet-control" type="button" onClick={() => setRetry((value) => value + 1)}>Retry</button></section>;
   const items = [
-    ...state.favorites.events.map(({ event }) => ({ key: `event-${event.id}`, to: eventPath(event), name: event.title, meta: `${formatEventDateTime(event.event_date, event.start_time)} · ${event.venue.name}`, image: event.cover_image_url, favoritePath: `/api/events/${event.id}/favorite/` })),
-    ...state.favorites.artists.map(({ artist }) => ({ key: `artist-${artist.id}`, to: artistPath(artist), name: artist.name, artist, favoritePath: `/api/artists/${artist.id}/favorite/` })),
-    ...state.favorites.venues.map(({ venue }) => ({ key: `venue-${venue.id}`, to: venuePath(venue), name: venue.name, meta: venue.city.name, favoritePath: `/api/venues/${venue.id}/favorite/` })),
+    ...state.favorites.events.map(({ event }) => ({ key: `event-${event.id}`, collection: "events", id: event.id, to: eventPath(event), name: event.title, meta: `${formatEventDateTime(event.event_date, event.start_time)} · ${event.venue.name}`, image: event.cover_image_url, favoritePath: `/api/events/${event.id}/favorite/` })),
+    ...state.favorites.artists.map(({ artist }) => ({ key: `artist-${artist.id}`, collection: "artists", id: artist.id, to: artistPath(artist), name: artist.name, artist, favoritePath: `/api/artists/${artist.id}/favorite/` })),
+    ...state.favorites.venues.map(({ venue }) => ({ key: `venue-${venue.id}`, collection: "venues", id: venue.id, to: venuePath(venue), name: venue.name, meta: venue.city.name, favoritePath: `/api/venues/${venue.id}/favorite/` })),
   ];
-  return <section className="profile-favorites"><h2>Favorites</h2>{items.length ? <ul className="profile-favorite-list">{items.map((item) => <li key={item.key}>{item.artist ? <ArtistAvatar artist={item.artist} small className="profile-favorite-thumb" /> : <ImageSlot className="profile-favorite-thumb" name={item.name} src={item.image} />}<Link to={item.to}><strong>{item.name}</strong>{item.meta ? <small>{item.meta}</small> : null}</Link>{owner ? <FavoriteControl row path={item.favoritePath} state={{ is_favorite: true }} onChanged={() => setRetry((value) => value + 1)} /> : null}</li>)}</ul> : null}</section>;
+  function removeFavorite(item) {
+    const entityKey = item.collection.slice(0, -1);
+    setState((current) => current.favorites ? {
+      ...current,
+      favorites: {
+        ...current.favorites,
+        [item.collection]: current.favorites[item.collection].filter((favorite) => favorite[entityKey].id !== item.id),
+      },
+    } : current);
+  }
+  return <section className="profile-favorites"><h2>Favorites</h2>{state.error ? <p role="alert">Favorites could not be refreshed.</p> : null}{items.length ? <ul className="profile-favorite-list">{items.map((item) => <li className={`profile-favorite-item${owner ? " is-owner" : ""}`} key={item.key}><Link className="profile-favorite-link" to={item.to}>{item.artist ? <ArtistAvatar artist={item.artist} small className="profile-favorite-thumb" /> : <ImageSlot className="profile-favorite-thumb" name={item.name} src={item.image} />}<span className="profile-favorite-copy"><strong>{item.name}</strong>{item.meta ? <small>{item.meta}</small> : null}</span></Link>{owner ? <FavoriteControl row path={item.favoritePath} state={{ is_favorite: true }} onChanged={(nextFavorite) => nextFavorite ? removeFavorite(item) : setRetry((value) => value + 1)} /> : null}</li>)}</ul> : null}</section>;
 }
 
 export default function ProfilePage({ session, tab = "been" }) {
   const { username } = useParams();
   const [retry, setRetry] = useState(0);
   const [reviewSort, setReviewSort] = useState("newest");
+  const [followPending, setFollowPending] = useState(false);
+  const [followError, setFollowError] = useState(null);
   const [state, setState] = useState({ loading: true, error: null, data: null });
   useEffect(() => {
     const controller = new AbortController();
-    setState({ loading: true, error: null, data: null });
+    setState((current) => current.data?.profile.username === username
+      ? { ...current, loading: false, error: null }
+      : { loading: true, error: null, data: null });
     if (session.loading) return () => controller.abort();
-    fetchJson(`/api/users/${encodeURIComponent(username)}/`, { signal: controller.signal, cache: "no-store" }).then((data) => setState({ loading: false, error: null, data })).catch((error) => { if (error.name !== "AbortError") setState({ loading: false, error, data: null }); });
+    fetchJson(`/api/users/${encodeURIComponent(username)}/`, { signal: controller.signal, cache: "no-store" }).then((data) => { setState({ loading: false, error: null, data }); setFollowPending(false); setFollowError(null); }).catch((error) => {
+      if (error.name === "AbortError") return;
+      setFollowPending(false);
+      setState((current) => current.data?.profile.username === username && error.status !== 404
+        ? { ...current, loading: false, error: null }
+        : { loading: false, error, data: null });
+      if (retry > 0 && error.status !== 404) setFollowError("The latest follow state could not be confirmed.");
+    });
     return () => controller.abort();
   }, [retry, session.loading, session.user?.id, username]);
 
   async function changeFollow() {
+    if (followPending) return;
     const relationship = state.data.relationship;
+    setFollowPending(true);
+    setFollowError(null);
     try {
       await fetchWithCsrf(`/api/users/${state.data.profile.id}/follow/`, { method: relationship.can_follow ? "POST" : "DELETE" });
       setRetry((value) => value + 1);
     } catch (error) {
       if (error.status === 404 || error.status === 409) setRetry((value) => value + 1);
-      else setState((current) => ({ ...current, error }));
+      else { setFollowPending(false); setFollowError("The follow could not be changed."); }
     }
   }
 
@@ -134,7 +158,7 @@ export default function ProfilePage({ session, tab = "been" }) {
           <h1>{profile.display_name}</h1>
           <p className="profile-handle-line">@{profile.username}{profile.home_city ? ` · ${profile.home_city.name}` : ""}{data.relationship?.follows_you ? " · Follows you" : ""}{data.relationship?.outgoing_status === "approved" ? " · Following" : ""}</p>
           <div className="profile-social-counts"><span><strong>{profile.follower_count}</strong><small>Followers</small></span><span><strong>{profile.following_count}</strong><small>Following</small></span></div>
-          {owner ? <Link className="profile-edit-link" to="/settings/profile">Edit profile</Link> : <FollowControl relationship={data.relationship} onChange={changeFollow} />}
+          {owner ? <Link className="profile-edit-link" to="/settings/profile">Edit profile</Link> : <><FollowControl relationship={data.relationship} pending={followPending} onChange={changeFollow} />{followError ? <p className="profile-follow-error" role="alert">{followError}</p> : null}</>}
           {profile.bio ? <p className="profile-bio">{profile.bio}</p> : null}
         </div>
       </header>

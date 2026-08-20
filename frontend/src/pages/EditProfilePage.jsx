@@ -14,24 +14,49 @@ function Pagination({ pagination, onPage }) {
 function FollowRequests() {
   const [page, setPage] = useState(1);
   const [retry, setRetry] = useState(0);
+  const [pendingUserId, setPendingUserId] = useState(null);
   const [state, setState] = useState({ loading: true, error: null, data: null });
   useEffect(() => {
     const controller = new AbortController();
-    setState({ loading: true, error: null, data: null });
-    fetchJson(`/api/me/follow-requests/?page=${page}`, { signal: controller.signal, cache: "no-store" }).then((data) => setState({ loading: false, error: null, data })).catch((error) => { if (error.name !== "AbortError") setState({ loading: false, error, data: null }); });
+    setState((current) => current.data
+      ? { ...current, loading: false, error: null }
+      : { loading: true, error: null, data: null });
+    fetchJson(`/api/me/follow-requests/?page=${page}`, { signal: controller.signal, cache: "no-store" }).then((data) => setState({ loading: false, error: null, data })).catch((error) => { if (error.name !== "AbortError") setState((current) => current.data ? { ...current, loading: false, error } : { loading: false, error, data: null }); });
     return () => controller.abort();
   }, [page, retry]);
   async function decide(userId, action) {
-    try { await fetchWithCsrf(`/api/me/follow-requests/${userId}/${action}/`, { method: "POST" }); setRetry((value) => value + 1); }
-    catch { setState((current) => ({ ...current, error: new Error("request") })); }
+    setPendingUserId(userId);
+    setState((current) => ({ ...current, error: null }));
+    try {
+      await fetchWithCsrf(`/api/me/follow-requests/${userId}/${action}/`, { method: "POST" });
+      setState((current) => {
+        if (!current.data) return current;
+        const results = current.data.results.filter((request) => request.user.id !== userId);
+        const totalResults = Math.max(0, current.data.pagination.total_results - 1);
+        return {
+          ...current,
+          data: {
+            ...current.data,
+            results,
+            pagination: {
+              ...current.data.pagination,
+              total_results: totalResults,
+              total_pages: Math.max(1, Math.ceil(totalResults / current.data.pagination.page_size)),
+            },
+          },
+        };
+      });
+      if (state.data?.results.length === 1 && page > 1) setPage(page - 1);
+    } catch { setState((current) => ({ ...current, error: new Error("request") })); }
+    finally { setPendingUserId(null); }
   }
   return (
     <section className="edit-follow-requests">
       <h2>Follow requests</h2>
       {state.loading ? <p>Loading follow requests.</p> : null}
       {state.error ? <><p>Follow requests could not be changed or loaded.</p><button className="quiet-control" type="button" onClick={() => setRetry((value) => value + 1)}>Retry</button></> : null}
-      {state.data?.results.length === 0 ? <p className="edit-profile-empty">No pending follow requests.</p> : null}
-      {state.data?.results.length ? <><ul>{state.data.results.map((request) => <li key={request.user.id}><ProfileAvatar profile={request.user} small /><Link to={profilePath(request.user.username)}>{request.user.display_name}</Link><span className="follow-request-actions"><button className="quiet-control" type="button" onClick={() => decide(request.user.id, "accept")}>Approve</button><button className="quiet-control" type="button" onClick={() => decide(request.user.id, "decline")}>Decline</button></span></li>)}</ul><Pagination pagination={state.data.pagination} onPage={setPage} /></> : null}
+      {state.data?.pagination.total_results === 0 ? <p className="edit-profile-empty">No pending follow requests.</p> : null}
+      {state.data?.results.length ? <><ul>{state.data.results.map((request) => <li key={request.user.id}><ProfileAvatar profile={request.user} small /><Link to={profilePath(request.user.username)}>{request.user.display_name}</Link><span className="follow-request-actions"><button className="quiet-control" type="button" disabled={pendingUserId !== null} aria-busy={pendingUserId === request.user.id} onClick={() => decide(request.user.id, "accept")}>Approve</button><button className="quiet-control" type="button" disabled={pendingUserId !== null} aria-busy={pendingUserId === request.user.id} onClick={() => decide(request.user.id, "decline")}>Decline</button></span></li>)}</ul><Pagination pagination={state.data.pagination} onPage={setPage} /></> : null}
     </section>
   );
 }
