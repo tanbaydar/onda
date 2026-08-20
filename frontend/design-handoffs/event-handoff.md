@@ -26,3 +26,9 @@ Kill the per-item overlines (WBT ATTENDANCE / FAVORITE / RATING AVERAGE / WILL B
 
 ## Flags
 - Dormant WBT record line copy on past events ("Will Be There · marked") is unrendered in fixtures (viewer never marked) — confirm copy at integration, keep it one quiet ink line.
+
+## Dated delta — 2026-08-20 responsive identity alignment
+- Mobile event identity is title-led, followed by an 80×100 artwork/meta pair; lineup, rating/WBT state, and owner actions return to the full content measure below it. The fixed top chrome must never cover the title.
+- Desktop identity uses the existing 160×200 artwork and one continuous content column for title, venue/date/city, lineup, rating/WBT state, and owner actions. Community/review sections align to that content column so the page does not jump between unrelated left edges.
+- Event meta inherits the 16px stack register, including the semantic `time` element; the global micro timestamp rule must not shrink event identity dates.
+- Attendee collections use the shared people-row identity grammar (26px avatar, functional name, muted handle). Pagination chrome is absent when a detail collection has only one page.

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { fetchJson } from "../api.js";
 import DiscoverEventRow from "./DiscoverEventRow.jsx";
 
@@ -16,6 +16,7 @@ export default function EventList({
   ledger = null,
   onLedgerChange = null,
 }) {
+  const loadMoreRef = useRef(null);
   const [localPage, setLocalPage] = useState(1);
   const [localRetry, setLocalRetry] = useState(0);
   const [localState, setLocalState] = useState({
@@ -55,25 +56,46 @@ export default function EventList({
       })
       .catch((error) => {
         if (error.name !== "AbortError") {
-          setState({ loading: false, error, data: null });
+          setState((current) => ({
+            loading: false,
+            error,
+            data: discover && page > 1 ? current.data : null,
+          }));
         }
       });
 
     return () => controller.abort();
   }, [discover, page, pageSize, retry, scopeId, scopeName, when]);
 
+  const nextPage = discover ? state.data?.pagination.next_page : null;
+  useEffect(() => {
+    const target = loadMoreRef.current;
+    if (!target || !nextPage || state.loading || state.error) return undefined;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) setPage(nextPage);
+      },
+      { rootMargin: "320px 0px" },
+    );
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [nextPage, state.error, state.loading]);
+
+  const errorState = state.error ? (
+    <div className="event-list-error" role="alert">
+      <p>{state.data ? "More events could not be loaded." : "Events could not be loaded."}</p>
+      <button type="button" onClick={() => setRetry((value) => value + 1)}>
+        Retry
+      </button>
+    </div>
+  ) : null;
+
   return (
-    <section className="event-list">
+    <section className={`event-list ${discover ? "discover-event-list" : "detail-event-list"}`} aria-busy={state.loading}>
       <h2 className={quietHeading ? "sr-only" : undefined}>{heading}</h2>
-      {state.loading ? <p>Loading events.</p> : null}
-      {state.error ? (
-        <>
-          <p>Events could not be loaded.</p>
-          <button type="button" onClick={() => setRetry((value) => value + 1)}>
-            Retry
-          </button>
-        </>
-      ) : null}
+      {state.loading && !state.data ? <p className="event-list-status" role="status">Loading events…</p> : null}
+      {state.error && !state.data ? errorState : null}
       {state.data && state.data.results.length === 0 ? (
         <p>{emptyMessage}</p>
       ) : null}
@@ -86,10 +108,12 @@ export default function EventList({
                 event={event}
                 showVenue={showVenue}
                 omittedArtistId={omittedArtistId}
+                compact={!discover}
               />
             ))}
           </ul>
-          {discover ? (state.data.pagination.next_page ? <button className="discover-load-more" type="button" disabled={state.loading} onClick={() => setPage(state.data.pagination.next_page)}>{state.loading ? "Loading…" : "Load more"}</button> : null) : <nav className="ledger-pagination" aria-label={`${heading} pagination`}>
+          {state.error ? errorState : null}
+          {discover ? (state.data.pagination.next_page ? <div className="discover-scroll-sentinel" ref={loadMoreRef} role="status" aria-live="polite">{state.loading ? "Loading more events…" : ""}</div> : null) : state.data.pagination.total_pages > 1 ? <nav className="ledger-pagination" aria-label={`${heading} pagination`}>
             <button
               className="quiet-control"
               type="button"
@@ -111,7 +135,7 @@ export default function EventList({
             >
               Next
             </button>
-          </nav>}
+          </nav> : null}
         </>
       ) : null}
     </section>

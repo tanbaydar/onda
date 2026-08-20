@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 
 import { fetchJson } from "../api.js";
 import { profilePath } from "../profileRoutes.js";
+import ProfileAvatar from "./ProfileAvatar.jsx";
 
 
 export default function WillBeThereAttendees({ eventId, scope, user, version }) {
@@ -62,14 +63,17 @@ export default function WillBeThereAttendees({ eventId, scope, user, version }) 
       ) : null}
       {state.data && state.data.results.length > 0 ? (
         <>
-          <ol>
+          <ol className="event-attendee-list">
             {state.data.results.map((attendee) => (
               <li key={attendee.user.id}>
-                <Link to={profilePath(attendee.user.username)}>{attendee.user.display_name} (@{attendee.user.username})</Link>
+                <Link className="event-attendee-row" to={profilePath(attendee.user.username)}>
+                  <ProfileAvatar profile={attendee.user} small />
+                  <span><strong>{attendee.user.display_name}</strong><small>@{attendee.user.username}</small></span>
+                </Link>
               </li>
             ))}
           </ol>
-          <nav aria-label={`${heading} pagination`}>
+          {state.data.pagination.total_pages > 1 ? <nav aria-label={`${heading} pagination`}>
             <button
               type="button"
               disabled={state.data.pagination.previous_page === null}
@@ -87,7 +91,7 @@ export default function WillBeThereAttendees({ eventId, scope, user, version }) 
             >
               Next
             </button>
-          </nav>
+          </nav> : null}
         </>
       ) : null}
     </section>

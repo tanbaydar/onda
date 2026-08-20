@@ -43,3 +43,7 @@ Built field set only: username, email, password. Primary "Register" · "Already 
 - **Registration:** the three-field mock is superseded. Preserve all five shipped fields: username, email, password, display name, and Public/Private selection. Privacy uses the Edit-surface radio-pair grammar and existing consequence copy.
 - **Password reset:** remains email-only.
 - **Code entry:** verification and reset display the quiet notice “Codes expire after 15 minutes.”
+
+## Dated delta — 2026-08-20 persistent product chrome
+- The auth-only chrome exception is withdrawn. Primary navigation and the current session's account controls coexist on every route: guests keep Discover/Search with Register/Log in, while signed-in viewers keep their signed-in navigation with the account menu.
+- Mobile keeps the wordmark and account actions in the fixed top bar and the public navigation in the fixed bottom bar. Page content reserves both bars directly; no selector-dependent spacing is allowed.

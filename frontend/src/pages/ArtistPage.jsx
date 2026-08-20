@@ -4,6 +4,7 @@ import { Link, useParams } from "react-router-dom";
 import { ApiError, fetchJson } from "../api.js";
 import EventList from "../components/EventList.jsx";
 import FavoriteControl from "../components/FavoriteControl.jsx";
+import ArtistAvatar from "../components/ArtistAvatar.jsx";
 import { artistPath } from "../entityRoutes.js";
 import useCanonicalEntityRoute from "../useCanonicalEntityRoute.js";
 
@@ -75,14 +76,14 @@ export default function ArtistPage({ user, sessionReady }) {
 
   const artist = state.artist;
   return (
-    <main className="detail-page">
-      <article className="identity">
-        <h1>{artist.name}</h1>
-        {artist.image_url ? (
-          <img src={artist.image_url} alt={artist.name} loading="eager" />
-        ) : null}
+    <main className="detail-page artist-page">
+      <article className="catalog-identity artist-identity">
+        <ArtistAvatar artist={artist} loading="eager" />
+        <div className="catalog-identity-copy">
+          <h1>{artist.name}</h1>
+          {user ? <FavoriteControl compact path={`/api/artists/${artist.id}/favorite/`} state={artist.viewer_favorite} onChanged={() => setRetry((value) => value + 1)} /> : null}
+        </div>
       </article>
-      {user ? <FavoriteControl path={`/api/artists/${artist.id}/favorite/`} state={artist.viewer_favorite} onChanged={() => setRetry((value) => value + 1)} /> : null}
       <EventList
         heading="Upcoming"
         scopeName="artist_id"

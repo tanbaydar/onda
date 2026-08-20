@@ -9,6 +9,7 @@ import SortMenu from "../components/SortMenu.jsx";
 import RatingHistogram from "../components/RatingHistogram.jsx";
 import ImageSlot from "../components/ImageSlot.jsx";
 import FavoriteControl from "../components/FavoriteControl.jsx";
+import ArtistAvatar from "../components/ArtistAvatar.jsx";
 import { formatEventDateTime } from "../formatEventDateTime.js";
 import { artistPath, eventPath, venuePath } from "../entityRoutes.js";
 import { PROFILE_EMPTY_STATES, profileTabPath } from "../profilePresentation.js";
@@ -16,6 +17,7 @@ import { profileNavigationVisible, profilePath } from "../profileRoutes.js";
 import { profileRatingBuckets } from "../ratingHistogram.js";
 
 function Pagination({ pagination, onPage }) {
+  if (pagination.total_pages <= 1) return null;
   return <nav className="profile-pagination" aria-label="Profile content pagination"><button className="quiet-control" type="button" disabled={pagination.previous_page === null} onClick={() => onPage(pagination.previous_page)}>Previous</button><span>Page {pagination.page} of {pagination.total_pages}</span><button className="quiet-control" type="button" disabled={pagination.next_page === null} onClick={() => onPage(pagination.next_page)}>Next</button></nav>;
 }
 
@@ -88,10 +90,10 @@ function ProfileFavorites({ username, owner }) {
   if (state.error) return <section className="profile-favorites"><h2>Favorites</h2><p>Favorites could not be loaded.</p><button className="quiet-control" type="button" onClick={() => setRetry((value) => value + 1)}>Retry</button></section>;
   const items = [
     ...state.favorites.events.map(({ event }) => ({ key: `event-${event.id}`, to: eventPath(event), name: event.title, meta: `${formatEventDateTime(event.event_date, event.start_time)} · ${event.venue.name}`, image: event.cover_image_url, favoritePath: `/api/events/${event.id}/favorite/` })),
-    ...state.favorites.artists.map(({ artist }) => ({ key: `artist-${artist.id}`, to: artistPath(artist), name: artist.name, favoritePath: `/api/artists/${artist.id}/favorite/` })),
+    ...state.favorites.artists.map(({ artist }) => ({ key: `artist-${artist.id}`, to: artistPath(artist), name: artist.name, artist, favoritePath: `/api/artists/${artist.id}/favorite/` })),
     ...state.favorites.venues.map(({ venue }) => ({ key: `venue-${venue.id}`, to: venuePath(venue), name: venue.name, meta: venue.city.name, favoritePath: `/api/venues/${venue.id}/favorite/` })),
   ];
-  return <section className="profile-favorites"><h2>Favorites</h2>{items.length ? <ul className="profile-favorite-list">{items.map((item) => <li key={item.key}><ImageSlot className="profile-favorite-thumb" name={item.name} src={item.image} /><Link to={item.to}><strong>{item.name}</strong>{item.meta ? <small>{item.meta}</small> : null}</Link>{owner ? <FavoriteControl row path={item.favoritePath} state={{ is_favorite: true }} onChanged={() => setRetry((value) => value + 1)} /> : null}</li>)}</ul> : null}</section>;
+  return <section className="profile-favorites"><h2>Favorites</h2>{items.length ? <ul className="profile-favorite-list">{items.map((item) => <li key={item.key}>{item.artist ? <ArtistAvatar artist={item.artist} small className="profile-favorite-thumb" /> : <ImageSlot className="profile-favorite-thumb" name={item.name} src={item.image} />}<Link to={item.to}><strong>{item.name}</strong>{item.meta ? <small>{item.meta}</small> : null}</Link>{owner ? <FavoriteControl row path={item.favoritePath} state={{ is_favorite: true }} onChanged={() => setRetry((value) => value + 1)} /> : null}</li>)}</ul> : null}</section>;
 }
 
 export default function ProfilePage({ session, tab = "been" }) {
