@@ -105,16 +105,17 @@ body>div>header nav ul{display:flex;justify-content:space-around;margin:0;paddin
 body>div>header nav a{color:var(--text-muted);font-size:var(--text-micro);text-decoration:none}
 body>div>header nav a[aria-current="page"]{color:var(--text);font-weight:600}
 body>div>header>section,body>div>header>p:not(:first-child),body>div>header>button{display:none}
-body>div>header>section:has(.account-menu),body>div>header>section:has(.guest-auth-controls){display:block}
+body>div>header>section:has(.account-menu),body>div>header>section:has(.guest-auth-controls){position:fixed;z-index:11;top:0;right:0;left:0;display:flex;height:64px;align-items:center;justify-content:flex-end;padding:0 var(--gutter-mobile);border-bottom:var(--hairline) solid var(--border);background:var(--bg)}
+body>div:has(>header:not(.auth-chrome)>section:has(.account-menu)),body>div:has(>header:not(.auth-chrome)>section:has(.guest-auth-controls)){padding-top:64px}
 .session-error-slot{display:flex;max-width:var(--measure-rows);align-items:center;justify-content:space-between;gap:var(--sp-16);margin:0 auto;padding:var(--sp-12) var(--gutter-mobile);border-bottom:var(--hairline) solid var(--danger);color:var(--danger-text);font-size:var(--text-micro)}
 .session-error-slot button{min-height:0;padding:var(--sp-4) var(--sp-8);border-color:var(--danger);color:var(--danger-text);font-size:var(--text-micro)}
-.account-menu{position:fixed;z-index:12;top:var(--sp-8);right:var(--gutter-mobile);font-size:var(--text-ui)}
+.account-menu{position:relative;z-index:12;font-size:var(--text-ui)}
 .account-menu-trigger{min-height:0;padding:var(--sp-4) 0;border:0;color:var(--text-secondary);font-size:var(--text-ui);font-weight:400}
 .account-menu-trigger:hover,.account-menu-trigger:focus{color:var(--text);outline:none}
 .account-menu-panel{position:absolute;top:100%;right:0;width:max-content;min-width:136px;border:var(--hairline) solid var(--border-strong);background:var(--bg);box-shadow:none;filter:none}
 .account-menu-panel a,.account-menu-panel button{display:block;width:100%;min-height:0;padding:var(--sp-8) var(--sp-12);border:0;color:var(--text);font-size:var(--text-ui);font-weight:400;text-align:left;text-decoration:none;white-space:nowrap}
 .account-menu-panel a:hover,.account-menu-panel a:focus,.account-menu-panel button:hover,.account-menu-panel button:focus{background:var(--bg-subtle);outline:none}
-.guest-auth-controls{position:fixed;z-index:12;top:var(--sp-8);right:var(--gutter-mobile);display:flex;gap:var(--sp-16);align-items:center;font-size:var(--text-ui)}
+.guest-auth-controls{display:flex;gap:var(--sp-16);align-items:center;margin:0;font-size:var(--text-ui)}
 .guest-auth-controls a{color:var(--text-muted);font-size:var(--text-ui);text-decoration:none}
 .guest-auth-controls a:hover,.guest-auth-controls a:focus{color:var(--text);outline:none}
 .guest-auth-controls .guest-register{padding:var(--sp-4) var(--sp-8);border:var(--hairline) solid var(--action);color:var(--text);font-weight:500}
@@ -353,6 +354,7 @@ dialog .destructive{border-color:var(--action);background:var(--bg);color:var(--
  body>div>header nav li{display:flex;align-items:center}
  .discover-search{max-width:320px}
  body>div>header>section{display:block;font-size:var(--text-micro)}
+ body>div>header>section:has(.account-menu),body>div>header>section:has(.guest-auth-controls){position:static;z-index:auto;height:auto;padding:0;border:0;background:transparent}
  body>div>header>section p{margin:0}
  body>div>header>section button{display:none}
  .account-menu{position:relative;z-index:auto;top:auto;right:auto}

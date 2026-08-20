@@ -9,6 +9,13 @@ test("the header wordmark is a router home link", () => {
   assert.match(read("./App.jsx"), /<img src="\/logo.png" alt="Onda" \/>/);
 });
 
+test("mobile account controls reserve a guarded top bar outside page content", () => {
+  const css = read("./styles.css");
+  assert.match(css, /header>section:has\(\.guest-auth-controls\).*position:fixed/);
+  assert.match(css, /header:not\(\.auth-chrome\)>section:has\(\.guest-auth-controls\)\)\{padding-top:64px\}/);
+  assert.match(css, /@media \(min-width:768px\)[\s\S]*header>section:has\(\.guest-auth-controls\).*position:static/);
+});
+
 test("entity search rows use browser-native router links", () => {
   const results = read("./components/SearchResults.jsx");
   assert.match(results, /<Link className="search-result-row" to=\{resultPath\(type, item\)\}/);
