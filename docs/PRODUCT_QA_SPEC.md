@@ -56,7 +56,7 @@ No single return loop is currently designated as dominant.
 
 **Question:** How should a multi-day music festival be represented?
 
-**Answer:** Follow the external catalog source's event boundaries. One source event record becomes one Danced event. If the source provides separate daily events, Danced shows separate event pages. If the source provides one multi-day event, Danced shows one event page. Danced does not independently split or merge festival records.
+**Answer:** Follow the external catalog source's event boundaries. One source event record becomes one Onda event. If the source provides separate daily events, Onda shows separate event pages. If the source provides one multi-day event, Onda shows one event page. Onda does not independently split or merge festival records.
 
 ## Question 9
 
@@ -87,7 +87,7 @@ No single return loop is currently designated as dominant.
 **Question:** Can users add events they attended before joining the app, including events from many years ago?
 
 **Answer:** The product supports retroactive logging for any past event present in
-Danced's canonical catalog. For v1, the target catalog window is approximately two
+Onda's canonical catalog. For v1, the target catalog window is approximately two
 months around launch—recent plus upcoming events—in the seeded launch cities, loaded
 through a one-time Resident Advisor backfill, plus all events acquired going forward.
 Retroactive logging is limited accordingly. This is a deliberate resume-project scope
@@ -1447,13 +1447,13 @@ Every step is skippable.
 
 **Question:** What name should the product specification use for the app?
 
-**Answer:** Danced.
+**Answer:** Onda.
 
 ## Question 208
 
 **Question:** How should a multi-day festival be represented?
 
-**Answer:** Follow the external catalog source's event boundaries. One source event record becomes one Danced event. Danced does not independently split or merge festival records.
+**Answer:** Follow the external catalog source's event boundaries. One source event record becomes one Onda event. Onda does not independently split or merge festival records.
 
 ## Question 209
 
@@ -1472,8 +1472,8 @@ Every step is skippable.
 Question 75's requirement for a specific venue means that published events cannot
 be venue-less. A venue record legitimately named **TBA**, unknown, undisclosed, or
 similar by the external source is still an ordinary venue and is accepted as source
-truth. Danced does not filter venues by name or parse event titles to override the
-source. This follows Question 8's principle that Danced preserves the external
+truth. Onda does not filter venues by name or parse event titles to override the
+source. This follows Question 8's principle that Onda preserves the external
 catalog source's event boundaries rather than independently reinterpreting them.
 
 ## Temporary amendment to Questions 125–126
@@ -1533,7 +1533,7 @@ ranking.
 
 Question 158's cancellation-hiding rule applies only when cancellation is conveyed
 by a trustworthy structured source signal. Cancellation prose in an event title does
-not hide the event: Danced preserves the title and keeps the event visible under its
+not hide the event: Onda preserves the title and keeps the event visible under its
 ordinary derived lifecycle. The live Boston catalog example `[CANCELLED] Nocturnal
 District presents: Rooftop Sessions 02` demonstrates why this distinction is
 user-visible.
@@ -1661,7 +1661,7 @@ marks do not contribute.
 
 ## Amendment: password reset and dark verification machinery
 
-Password reset was not addressed by the original 210 questions. Danced supports a
+Password reset was not addressed by the original 210 questions. Onda supports a
 non-enumerating email reset request followed by a six-digit code and a new password.
 The request response never reveals whether an account exists. Codes expire after 15
 minutes, permit at most five failed entry attempts, and may be resent after a 60-second

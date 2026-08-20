@@ -1,4 +1,4 @@
-export const RECENT_SEARCHES_KEY = "danced.recentSearches";
+export const RECENT_SEARCHES_KEY = "onda.recentSearches";
 
 export function readRecentSearches(storage = localStorage) {
   try {
@@ -22,7 +22,7 @@ export function recordRecentSearch(query, storage = localStorage) {
   ].slice(0, 10);
   storage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(next));
   if (storage === globalThis.localStorage) {
-    globalThis.dispatchEvent(new CustomEvent("danced:recent-searches", { detail: next }));
+    globalThis.dispatchEvent(new CustomEvent("onda:recent-searches", { detail: next }));
   }
   return next;
 }

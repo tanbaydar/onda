@@ -154,7 +154,7 @@ Synthetic event carrying ticket inventory fields and an explicit sold-out tag.
   `event_date = 2026-08-19`, `start_time = 21:00`, `cover_image_url = NULL`, and
   `status = active`. The entire `tickets` and `ticketing` subtree—including
   `ticketing.tags[].type = SOLD_OUT`—is unread by the Transformer. It is not read and
-  mapped to active. Danced models attendance and memory, not ticket inventory, and the
+  mapped to active. Onda models attendance and memory, not ticket inventory, and the
   frozen schema has no sold-out state.
 
 ## `ra_listing_cancelled_title.synthetic.json`
@@ -162,7 +162,7 @@ Synthetic event carrying ticket inventory fields and an explicit sold-out tag.
 Synthetic event whose title contains cancellation prose. Its marker styling
 deliberately differs from the captured evidence (`[CANCELLED]` bracketed): no styling
 is recognized, so the difference is immaterial by design. Promoters write
-cancellation into titles in arbitrary formats, and Danced preserves all of them
+cancellation into titles in arbitrary formats, and Onda preserves all of them
 verbatim.
 
 ### Expected outcomes

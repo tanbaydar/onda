@@ -1,4 +1,4 @@
-# Danced ingestion operations
+# Onda ingestion operations
 
 ## Production health check
 
@@ -6,14 +6,14 @@ Run the repository smoke check after deployments and from a recurring host
 scheduler:
 
 ```sh
-cd /home/ubuntu/danced
-./production-healthcheck.sh
+cd /home/ubuntu/onda
+./infrastructure/scripts/production-healthcheck.sh
 ```
 
 It fails unless `db`, `web`, and `caddy` are running, the public cities API returns
 success over HTTPS, and the response retains the deployment's `X-Robots-Tag:
-noindex` gate. `DANCED_HEALTHCHECK_URL` can override the base URL for a supervised
-test; the default is `https://$DANCED_DOMAIN` from `.env`.
+noindex` gate. `ONDA_HEALTHCHECK_URL` can override the base URL for a supervised
+test; the default is `https://$ONDA_DOMAIN` from `.env`.
 
 This is an on-host smoke check, not an external uptime monitor. An external monitor
 is still required to detect instance, network, DNS, and regional failures.
@@ -22,8 +22,8 @@ Install the recurring five-minute check, monthly restore drill, and host-log
 rotation idempotently with:
 
 ```sh
-cd /home/ubuntu/danced
-./install-operations.sh
+cd /home/ubuntu/onda
+./infrastructure/scripts/install-operations.sh
 ```
 
 The installer preserves unrelated cron entries. Container JSON logs are capped
@@ -36,11 +36,11 @@ rotations.
 that a dump is actually restorable with:
 
 ```sh
-cd /home/ubuntu/danced
-./verify-backup.sh backups/danced-YYYYMMDDTHHMMSSZ.sql.gz
+cd /home/ubuntu/onda
+./infrastructure/scripts/verify-backup.sh backups/onda-YYYYMMDDTHHMMSSZ.sql.gz
 ```
 
-With no argument, the script selects the newest local `danced-*.sql.gz` dump. It
+With no argument, the script selects the newest local `onda-*.sql.gz` dump. It
 starts a disposable MySQL 8.4 container with no published ports, restores the dump there,
 requires at least one restored table, runs `mysqlcheck`, and removes the container.
 It never connects to or changes the live database. Set `RESTORE_MYSQL_IMAGE` only
@@ -54,8 +54,8 @@ least monthly. Keep its stdout/stderr with the other operations logs.
 Run the production nightly planner with no window arguments:
 
 ```sh
-cd /path/to/danced_app
-.venv/bin/python manage.py sync_ra
+cd /path/to/onda
+.venv/bin/python backend/manage.py sync_ra
 ```
 
 The bare command fetches both active seeds from the current date through 30 days
@@ -85,7 +85,7 @@ Tan installs the schedule manually. This example runs every day at 03:15 in the
 machine's local timezone:
 
 ```cron
-15 3 * * * cd /path/to/danced_app && .venv/bin/python manage.py sync_ra
+15 3 * * * cd /path/to/onda && .venv/bin/python backend/manage.py sync_ra
 ```
 
 Do not redirect stderr to `/dev/null`; doing so discards the operator alarm. Cron mail
@@ -95,7 +95,7 @@ host after installation.
 ## macOS launchd example
 
 Save the following as
-`~/Library/LaunchAgents/com.danced.sync-ra.plist`, replacing every `/path/to` value
+`~/Library/LaunchAgents/com.onda.sync-ra.plist`, replacing every `/path/to` value
 with an absolute local path. Create the log directory before loading the job.
 
 ```xml
@@ -105,17 +105,17 @@ with an absolute local path. Create the log directory before loading the job.
 <plist version="1.0">
 <dict>
   <key>Label</key>
-  <string>com.danced.sync-ra</string>
+  <string>com.onda.sync-ra</string>
 
   <key>ProgramArguments</key>
   <array>
-    <string>/path/to/danced_app/.venv/bin/python</string>
-    <string>/path/to/danced_app/manage.py</string>
+    <string>/path/to/onda/.venv/bin/python</string>
+    <string>/path/to/onda/backend/manage.py</string>
     <string>sync_ra</string>
   </array>
 
   <key>WorkingDirectory</key>
-  <string>/path/to/danced_app</string>
+  <string>/path/to/onda</string>
 
   <key>StartCalendarInterval</key>
   <dict>
@@ -126,9 +126,9 @@ with an absolute local path. Create the log directory before loading the job.
   </dict>
 
   <key>StandardOutPath</key>
-  <string>/path/to/danced_app/logs/sync-ra.out.log</string>
+  <string>/path/to/onda/logs/sync-ra.out.log</string>
   <key>StandardErrorPath</key>
-  <string>/path/to/danced_app/logs/sync-ra.err.log</string>
+  <string>/path/to/onda/logs/sync-ra.err.log</string>
 </dict>
 </plist>
 ```
@@ -136,7 +136,7 @@ with an absolute local path. Create the log directory before loading the job.
 Load or reload it manually after reviewing the resolved paths:
 
 ```sh
-launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.danced.sync-ra.plist
+launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.onda.sync-ra.plist
 ```
 
 ## Manual bounded sync
@@ -144,7 +144,7 @@ launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.danced.sync-ra.plist
 Use explicit dates for supervised investigation:
 
 ```sh
-.venv/bin/python manage.py sync_ra \
+.venv/bin/python backend/manage.py sync_ra \
   --window-start 2026-07-31 \
   --window-end 2026-08-07 \
   --page-size 20
@@ -153,7 +153,7 @@ Use explicit dates for supervised investigation:
 Use `--backfill` only for a deliberately approved historical window:
 
 ```sh
-.venv/bin/python manage.py sync_ra --backfill \
+.venv/bin/python backend/manage.py sync_ra --backfill \
   --window-start YYYY-MM-DD \
   --window-end YYYY-MM-DD \
   --page-size 20
@@ -167,14 +167,14 @@ Run the backend and frontend in two terminals from the repository.
 Terminal 1:
 
 ```sh
-cd /path/to/danced_app
-.venv/bin/python manage.py runserver
+cd /path/to/onda
+.venv/bin/python backend/manage.py runserver
 ```
 
 Terminal 2:
 
 ```sh
-cd /path/to/danced_app/frontend
+cd /path/to/onda/frontend
 npm install
 npm run dev
 ```
@@ -195,7 +195,7 @@ validation and can pass while every real browser request receives a 403.
 Create a production frontend bundle with:
 
 ```sh
-cd /path/to/danced_app/frontend
+cd /path/to/onda/frontend
 npm run build
 ```
 

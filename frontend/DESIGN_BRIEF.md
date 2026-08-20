@@ -1,6 +1,6 @@
-# DESIGN_BRIEF.md — Danced, Milestone 4
+# DESIGN_BRIEF.md — Onda, Milestone 4
 
-## What Danced is
+## What Onda is
 A social diary for dance-music events. Log nights, rate them, review
 them, follow people. Letterboxd for the dancefloor — an event diary,
 not ticketing, not a promoter site, not a listings guide.

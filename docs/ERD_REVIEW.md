@@ -1,6 +1,6 @@
-# Danced ERD — Assembly Review
+# Onda ERD — Assembly Review
 
-**Artifact reviewed:** `docs/danced.dbml`
+**Artifact reviewed:** `docs/onda.dbml`
 **Target:** MySQL 8.0.16+
 **Result:** Frozen. DBML parses successfully and generates MySQL SQL. The schema
 decisions pass the seam, scenario, and red-team reviews. One historical documentation
@@ -31,7 +31,7 @@ The construction guide says “five tables” but lists only these four. No fift
 
 ### App — 14 tables
 
-1. `DANCED_USER`
+1. `ONDA_USER`
 2. `USERNAME_HOLD`
 3. `ACCOUNT_CODE`
 4. `FOLLOW`
@@ -68,7 +68,7 @@ No foreign keys cross this boundary. The Transformer is the only bridge.
 
 Only the approved read-side references exist:
 
-- `DANCED_USER → CITY`
+- `ONDA_USER → CITY`
 - `DIARY_ENTRY → EVENT`
 - `WILL_BE_THERE → EVENT`
 - `FAVORITE_EVENT → EVENT`
@@ -144,7 +144,7 @@ approved-without-an-approval-time invalid states.
 
 - Django will extend `AbstractUser`, so implementation migrations will contain framework administration and permission columns not shown in the product ERD.
 - Those framework fields have no product semantics and product code must not depend on them.
-- The implemented `DANCED_USER` therefore also stores `first_name`, `last_name`,
+- The implemented `ONDA_USER` therefore also stores `first_name`, `last_name`,
   `is_staff`, `is_active`, `is_superuser`, `last_login`, `date_joined`, and Django's
   group/permission relationships. They exist only for framework authentication and
   administration. Product lifecycle, identity, and presentation behavior must use the
@@ -176,7 +176,7 @@ approved-without-an-approval-time invalid states.
 
 ## Corrected implementation deviation: user home-city deletion
 
-The slice-1 Django model and migration transcribed `DANCED_USER.home_city_id` as
+The slice-1 Django model and migration transcribed `ONDA_USER.home_city_id` as
 `SET_NULL`, while the frozen DBML specifies a restrictive city foreign key. The
 deviation was neither approved nor recorded and remained dormant until Profile began
 writing the optional home-city field. Profile preflight corrected the ORM field to

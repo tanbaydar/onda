@@ -179,7 +179,8 @@ At Onda's current scale, it offers useful consistency properties:
 
 The tradeoff is read complexity. A committed regression benchmark therefore covers all six branches with 100,000 total activity rows. Through Django's in-process HTTP client and production middleware, page 1 measured 45.908 ms p95 and page 50 measured 31.618 ms p95 over 200 measured requests after 20 warm-ups. A contract test asserts four queries. The machine was an Apple M4 Pro with a dedicated local MySQL database; the result excludes deployed network and Gunicorn latency and is not a load-capacity claim.
 
-The complete methodology and seed distribution are in [`contracts/cv-mining/feed-benchmark.yaml`](../contracts/cv-mining/feed-benchmark.yaml).
+The complete methodology and seed distribution are in
+[`benchmarks/home-feed/results.yaml`](../benchmarks/home-feed/results.yaml).
 
 ## Time belongs to the venue
 
@@ -241,11 +242,11 @@ The distinction prevents duplicated state where the source data already provides
 
 | Concern | Primary implementation |
 |---|---|
-| Canonical models and event query base | `catalog/models.py`, `catalog/views.py` |
-| Search | `catalog/search.py` |
-| User/social models and visibility querysets | `users/models.py` |
-| Transactional domain operations | `users/services.py` |
-| First-party JSON views | `users/views.py` |
-| Home query construction | `users/home_feed.py` |
+| Canonical models and event query base | `backend/catalog/models.py`, `backend/catalog/views.py` |
+| Search | `backend/catalog/search.py` |
+| User/social models and visibility querysets | `backend/users/models.py` |
+| Transactional domain operations | `backend/users/services.py` |
+| First-party JSON views | `backend/users/views.py` |
+| Home query construction | `backend/users/home_feed.py` |
 | Frontend API boundary | `frontend/src/api.js` |
 | Detailed code-and-test evidence | [`DATA_FLOW.md`](DATA_FLOW.md) |

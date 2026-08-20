@@ -1,11 +1,11 @@
 # Generated ERD diagrams
 
-These diagrams are generated from the authoritative `docs/danced.dbml` source.
+These diagrams are generated from the authoritative `docs/onda.dbml` source.
 
-- `danced-erd-ingestion.svg` / `.png` — full columns for the ingestion zone.
-- `danced-erd-canonical-identity.svg` / `.png` — full columns for the canonical and identity zone, plus PK-only App boundary stubs.
-- `danced-erd-app.svg` / `.png` — full columns for the app zone, plus PK-only canonical boundary stubs.
-- `danced-erd-overview.svg` / `.png` — all relationships, with columns collapsed to PK/FK fields for full-diagram readability.
+- `onda-erd-ingestion.svg` / `.png` — full columns for the ingestion zone.
+- `onda-erd-canonical-identity.svg` / `.png` — full columns for the canonical and identity zone, plus PK-only App boundary stubs.
+- `onda-erd-app.svg` / `.png` — full columns for the app zone, plus PK-only canonical boundary stubs.
+- `onda-erd-overview.svg` / `.png` — all relationships, with columns collapsed to PK/FK fields for full-diagram readability.
 
 The Graphviz renderer uses orthogonal routing, zone clusters, dedicated edge gutters,
 PK/FK column markers, and cardinality markers at both ends of every relationship.

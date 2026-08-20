@@ -218,15 +218,15 @@ Deletion intent differs by relationship:
 
 ```mermaid
 erDiagram
-    CITY o|--o{ DANCED_USER : "is optional home city for"
-    DANCED_USER ||--o{ ACCOUNT_CODE : "owns"
-    DANCED_USER ||--o{ FOLLOW : "acts as follower"
-    DANCED_USER ||--o{ FOLLOW : "acts as followee"
+    CITY o|--o{ ONDA_USER : "is optional home city for"
+    ONDA_USER ||--o{ ACCOUNT_CODE : "owns"
+    ONDA_USER ||--o{ FOLLOW : "acts as follower"
+    ONDA_USER ||--o{ FOLLOW : "acts as followee"
 
-    DANCED_USER ||--o{ DIARY_ENTRY : "logs"
+    ONDA_USER ||--o{ DIARY_ENTRY : "logs"
     EVENT ||--o{ DIARY_ENTRY : "is logged in"
     DIARY_ENTRY ||--o| REVIEW : "may publish"
-    DANCED_USER ||--o{ REVIEW_LIKE : "creates"
+    ONDA_USER ||--o{ REVIEW_LIKE : "creates"
     REVIEW ||--o{ REVIEW_LIKE : "receives"
 
     CITY {
@@ -237,7 +237,7 @@ erDiagram
         bigint id PK
     }
 
-    DANCED_USER {
+    ONDA_USER {
         bigint id PK
         varchar email UK
         varchar username UK
@@ -298,17 +298,17 @@ erDiagram
 
 ```mermaid
 erDiagram
-    DANCED_USER ||--o{ WILL_BE_THERE : "plans"
+    ONDA_USER ||--o{ WILL_BE_THERE : "plans"
     EVENT ||--o{ WILL_BE_THERE : "is planned"
 
-    DANCED_USER ||--o{ FAVORITE_EVENT : "chooses"
+    ONDA_USER ||--o{ FAVORITE_EVENT : "chooses"
     EVENT ||--o{ FAVORITE_EVENT : "is selected"
-    DANCED_USER ||--o{ FAVORITE_ARTIST : "chooses"
+    ONDA_USER ||--o{ FAVORITE_ARTIST : "chooses"
     ARTIST ||--o{ FAVORITE_ARTIST : "is selected"
-    DANCED_USER ||--o{ FAVORITE_VENUE : "chooses"
+    ONDA_USER ||--o{ FAVORITE_VENUE : "chooses"
     VENUE ||--o{ FAVORITE_VENUE : "is selected"
 
-    DANCED_USER {
+    ONDA_USER {
         bigint id PK
     }
 
@@ -353,11 +353,11 @@ erDiagram
 
 ```mermaid
 erDiagram
-    DANCED_USER ||--o{ NOTIFICATION : "receives"
-    DANCED_USER ||--o{ NOTIFICATION : "acts in"
+    ONDA_USER ||--o{ NOTIFICATION : "receives"
+    ONDA_USER ||--o{ NOTIFICATION : "acts in"
     REVIEW o|--o{ NOTIFICATION : "optionally concerns"
 
-    DANCED_USER {
+    ONDA_USER {
         bigint id PK
     }
 
@@ -376,7 +376,9 @@ erDiagram
     }
 ```
 
-`DANCED_USER` is the intentional stable internal table name from Onda's original development codename. It is the custom Django user table and also contains framework account fields such as the password hash and staff/activity flags, omitted above so the domain relationships remain readable.
+`ONDA_USER` is the custom Django user table. It also contains framework account
+fields such as the password hash and staff/activity flags, omitted above so the
+domain relationships remain readable.
 
 ### Composite identities and caps
 
@@ -412,7 +414,7 @@ User-owned data uses physical MySQL cascades:
 
 ```mermaid
 flowchart LR
-    User[DANCED_USER deleted] --> Owned[Codes, follows, diary, likes,<br/>plans, favorites, notifications deleted]
+    User[ONDA_USER deleted] --> Owned[Codes, follows, diary, likes,<br/>plans, favorites, notifications deleted]
     Diary[DIARY_ENTRY deleted] --> Review[REVIEW deleted]
     Review --> Likes[REVIEW_LIKE deleted]
     Review --> ReviewNotif[Review-linked notifications deleted]
@@ -442,7 +444,7 @@ Composite primary/unique keys also provide useful access paths for relationship 
 
 ## Blueprint versus shipped schema
 
-The repository's `danced.dbml` and generated files under `docs/erd/` are an earlier, frozen **design blueprint**. They remain valuable because they preserve design history and can be regenerated, but they contain three planned tables that are not implemented:
+The repository's `onda.dbml` and generated files under `docs/erd/` are an earlier, frozen **design blueprint**. They remain valuable because they preserve design history and can be regenerated, but they contain three planned tables that are not implemented:
 
 | Blueprint table | Shipped behavior instead |
 |---|---|
@@ -462,8 +464,8 @@ This document is the implementation ERD for the shipped system. The original blu
 
 | Schema area | Models | Migration history |
 |---|---|---|
-| Ingestion evidence | `ingestion/models.py` | `ingestion/migrations/` |
-| Canonical and identity | `catalog/models.py` | `catalog/migrations/` |
-| Accounts and social | `users/models.py` | `users/migrations/` |
+| Ingestion evidence | `backend/ingestion/models.py` | `backend/ingestion/migrations/` |
+| Canonical and identity | `backend/catalog/models.py` | `backend/catalog/migrations/` |
+| Accounts and social | `backend/users/models.py` | `backend/users/migrations/` |
 
-Run `.venv/bin/python manage.py makemigrations --check --dry-run` to detect model/migration drift and `.venv/bin/python manage.py test` to exercise schema and behavioral constraints against MySQL.
+Run `.venv/bin/python backend/manage.py makemigrations --check --dry-run` to detect model/migration drift and `.venv/bin/python backend/manage.py test` to exercise schema and behavioral constraints against MySQL.

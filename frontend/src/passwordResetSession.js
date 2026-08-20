@@ -1,4 +1,4 @@
-const PASSWORD_RESET_EMAIL_KEY = "danced.passwordResetEmail";
+const PASSWORD_RESET_EMAIL_KEY = "onda.passwordResetEmail";
 
 function sessionStorageOrNull() {
   try {

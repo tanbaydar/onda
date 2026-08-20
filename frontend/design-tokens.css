@@ -1,5 +1,5 @@
 /* ============================================================
-   DANCED — DESIGN TOKENS + INTEGRATION NOTES · Phase 3 LOCKED 2026-08-01
+   ONDA — DESIGN TOKENS + INTEGRATION NOTES · Phase 3 LOCKED 2026-08-01
    One-file handoff. Records: spec/PHASE3_MATERIAL.md · spec/phase3-scales.md
    Applied reference render: spec/color-pass.html (all screens, both widths)
    Rules of the system: white surface · hairline separation · no cards, no
@@ -76,7 +76,7 @@
    PER-COMPONENT NOTES (locked anatomy per spec/wireframes.html v1.5;
    registers per spec/color-pass.html — the render is the visual truth)
    ------------------------------------------------------------
-   GLOBAL CHROME — wordmark "Danced": display 16px. Mobile bottom tabs:
+   GLOBAL CHROME — wordmark "Onda": display 16px. Mobile bottom tabs:
    fn 12px, inactive text-muted, active text + 600. Desktop header: wordmark
    left, nav right fn 14px (active 600), hairline --border below. No left rail.
 

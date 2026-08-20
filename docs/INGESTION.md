@@ -125,7 +125,7 @@ sequenceDiagram
 
 | Control | Implemented behavior | Why it exists |
 |---|---|---|
-| Mutual exclusion | Non-blocking MySQL advisory lock `danced_sync_ra` | Two schedulers cannot race canonical updates or absence counters. |
+| Mutual exclusion | Non-blocking MySQL advisory lock `onda_sync_ra` | Two schedulers cannot race canonical updates or absence counters. |
 | Scope | Each active tracked page must map to a canonical city before any request | Unknown provider areas cannot silently create cities. |
 | Window | Nightly default runs from the runner's current date through 30 days ahead | Work and reconciliation scope are explicit. |
 | Pagination | Page size 20; pages fetched sequentially | Avoids burst concurrency and makes coverage accounting deterministic. |
@@ -323,12 +323,12 @@ Those counts are an operational sample, not a quality percentage or permanent th
 
 | Concern | Primary implementation |
 |---|---|
-| Command and operator exit contract | `ingestion/management/commands/sync_ra.py` |
-| Run orchestration, budget, completeness | `ingestion/runner.py` |
-| HTTP policy and pacing | `ingestion/client.py` |
-| Provider transformation and atomic admission | `ingestion/transformer.py` |
-| Presence/absence lifecycle | `ingestion/reconciler.py` |
-| Raw evidence and telemetry models | `ingestion/models.py` |
-| Canonical and identity models | `catalog/models.py` |
+| Command and operator exit contract | `backend/ingestion/management/commands/sync_ra.py` |
+| Run orchestration, budget, completeness | `backend/ingestion/runner.py` |
+| HTTP policy and pacing | `backend/ingestion/client.py` |
+| Provider transformation and atomic admission | `backend/ingestion/transformer.py` |
+| Presence/absence lifecycle | `backend/ingestion/reconciler.py` |
+| Raw evidence and telemetry models | `backend/ingestion/models.py` |
+| Canonical and identity models | `backend/catalog/models.py` |
 | Captured contract fixtures | `docs/recon/fixtures/` |
 | Evidence-linked behavior trace | [`DATA_FLOW.md`](DATA_FLOW.md) |

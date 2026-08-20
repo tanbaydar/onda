@@ -1,0 +1,31 @@
+{
+	email {$CADDY_ACME_EMAIL}
+}
+
+www.{$ONDA_DOMAIN} {
+	redir https://{$ONDA_DOMAIN}{uri} permanent
+}
+
+{$ONDA_DOMAIN} {
+	header X-Robots-Tag "noindex"
+
+	handle /api/* {
+		reverse_proxy web:8000
+	}
+
+	handle_path /static/* {
+		root * /srv/django-static
+		file_server
+	}
+
+	handle_path /media/* {
+		root * /srv/media
+		file_server
+	}
+
+	handle {
+		root * /srv/frontend
+		try_files {path} /index.html
+		file_server
+	}
+}

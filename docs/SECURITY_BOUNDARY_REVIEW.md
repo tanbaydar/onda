@@ -1,4 +1,4 @@
-# Danced Security-Boundary Review
+# Onda Security-Boundary Review
 
 Audited read-only at commit `2692918` ahead of Milestone 5 deployment.
 
@@ -16,7 +16,7 @@ Three issues should block the M5 flag flip or deployment:
 
 ### 1. A lone private rating is exposed through the public event distribution
 
-- **Location:** `catalog/views.py:291–294`, `users/services.py:343–375`, `users/models.py:279–283`
+- **Location:** `backend/catalog/views.py:291–294`, `backend/users/services.py:343–375`, `backend/users/models.py:279–283`
 - **Concern:** `GET /api/events/{id}/` uses `DiaryEntry.objects.for_aggregation()` for the public ten-bucket distribution, and the distribution becomes available with one rating. If that rating belongs to a private user, its exact half-star value is identifiable from the sole nonzero bucket.
 - **Severity:** High
 - **Gated posture:** Medium. Basic-auth access narrows the audience, but every admitted visitor can infer the private rating.
@@ -28,7 +28,7 @@ At one contributor, “anonymous contribution” is individually recoverable.
 
 ### 2. The verification flag does not produce guest-equivalent read visibility
 
-- **Location:** `users/models.py:49–63`, `users/models.py:245–256`, `users/models.py:335–350`, `users/models.py:419–430`; consumers at `users/views.py:884–1122`
+- **Location:** `backend/users/models.py:49–63`, `backend/users/models.py:245–256`, `backend/users/models.py:335–350`, `backend/users/models.py:419–430`; consumers at `backend/users/views.py:884–1122`
 - **Concern:** Visibility boundaries treat every authenticated session as an authenticated viewer without considering `email_verified_at`. After the flag flips, an unverified approved follower can still retrieve a private profile's Been, Reviews, favorites, statistics, and rating distribution.
 - **Severity:** High
 - **Gated posture:** Medium. Exploitation requires a site-level basic-auth credential, an unverified account, and a previously approved relationship.
@@ -44,7 +44,7 @@ Some personalized reads use `_authentication_required()` and reject unverified u
 
 ### 3. Flag-on navigation strands newly registered unverified users
 
-- **Location:** `users/views.py:175–186`, `users/views.py:295–318`, `frontend/src/App.jsx:50–145`, `frontend/src/pages/RegisterPage.jsx:21–34`, `frontend/src/pages/LoginPage.jsx:19–29`
+- **Location:** `backend/users/views.py:175–186`, `backend/users/views.py:295–318`, `frontend/src/App.jsx:50–145`, `frontend/src/pages/RegisterPage.jsx:21–34`, `frontend/src/pages/LoginPage.jsx:19–29`
 - **Concern:** Registration signs the user in and routes directly to `/home`, but the session payload does not expose verification state and `/api/me/home/` returns a verification 403. There is no automatic redirect or visible navigation to `/verify-email`.
 - **Severity:** High
 - **Gated posture:** High operational impact. Every newly registered user hits a broken first-run flow after enforcement is enabled.
@@ -56,7 +56,7 @@ The backend verification endpoints work, but the flag is not operationally ready
 
 ### 4. Verification enforcement is split between service and view boundaries
 
-- **Location:** `users/auth_services.py:45–61`, `users/views.py:175–186`; direct mutations at `users/views.py:812–881`, `users/views.py:1196–1237`
+- **Location:** `backend/users/auth_services.py:45–61`, `backend/users/views.py:175–186`; direct mutations at `backend/users/views.py:812–881`, `backend/users/views.py:1196–1237`
 - **Concern:** Most social services call `require_account_action`, but profile editing and notification read-state mutations occur directly in views and rely only on `_authentication_required()`. The “one service boundary” claim is therefore not literally true.
 - **Severity:** Medium
 - **Gated posture:** Low. Current HTTP routes are protected and the 27-mutation sweep pins them.
@@ -68,7 +68,7 @@ No current HTTP bypass was found; this is boundary fragility.
 
 ### 5. Secure production cookie and HTTPS proxy settings are absent
 
-- **Location:** `config/settings.py:20–42`, `config/settings.py:83–91`
+- **Location:** `backend/config/settings.py:20–42`, `backend/config/settings.py:83–91`
 - **Concern:** No deployment settings enable `SESSION_COOKIE_SECURE`, `CSRF_COOKIE_SECURE`, HSTS/SSL redirect, or reverse-proxy HTTPS recognition. Django's secure-cookie defaults are false.
 - **Severity:** High
 - **Gated posture:** High if deployed without correct TLS proxy configuration. Basic authentication does not protect session cookies from transport mistakes.
@@ -85,7 +85,7 @@ Positive findings:
 
 ### 6. Password-reset responses are shape-safe but timing-enumerable
 
-- **Location:** `users/auth_services.py:165–174`, `users/views.py:397–453`
+- **Location:** `backend/users/auth_services.py:165–174`, `backend/users/views.py:397–453`
 - **Concern:** Missing and existing accounts receive equivalent JSON, but their execution paths differ materially. Existing-account requests lock/write and send email while missing accounts return immediately; confirmation for existing accounts performs code lookup and HMAC comparison while missing accounts return after only the user lookup.
 - **Severity:** Medium
 - **Gated posture:** Low-to-medium. Basic auth limits probing, but an admitted user can still measure it.
@@ -97,7 +97,7 @@ Password validation correctly happens before account lookup, preventing user-spe
 
 ### 7. Registration explicitly enumerates registered email addresses
 
-- **Location:** `users/forms.py:15–19`, `users/views.py:295–318`
+- **Location:** `backend/users/forms.py:15–19`, `backend/users/views.py:295–318`
 - **Concern:** Registration returns “An account with this email already exists,” revealing account existence.
 - **Severity:** Medium
 - **Gated posture:** Low because only basic-auth-admitted visitors can query it.
@@ -109,7 +109,7 @@ Login itself does not enumerate: unknown email and wrong password return the sam
 
 ### 8. User-controlled avatar URLs create a client-side tracking surface
 
-- **Location:** `users/views.py:838–850`, `users/models.py:82`, `frontend/src/pages/ProfilePage.jsx:261`
+- **Location:** `backend/users/views.py:838–850`, `backend/users/models.py:82`, `frontend/src/pages/ProfilePage.jsx:261`
 - **Concern:** A user can set any syntactically valid HTTP/HTTPS avatar URL, and each visitor's browser loads it directly, exposing visitor IP, user agent, timing, and referrer behavior to the avatar host.
 - **Severity:** Medium
 - **Gated posture:** Low. Exposure is limited to admitted visitors.
@@ -121,7 +121,7 @@ Login itself does not enumerate: unknown email and wrong password return the sam
 
 ### 9. Account-code rate limits are per account with no caller/IP throttle
 
-- **Location:** `users/auth_services.py:15–17`, `users/auth_services.py:84–174`
+- **Location:** `backend/users/auth_services.py:15–17`, `backend/users/auth_services.py:84–174`
 - **Concern:** Codes have a five-attempt limit and 60-second per-user/purpose resend cooldown, but no IP or caller-wide throttle. Resending replaces the code and resets failed attempts.
 - **Severity:** Medium
 - **Gated posture:** Low.
@@ -142,7 +142,7 @@ The implemented code lifecycle itself is sound:
 
 ### 10. Custom account lifecycle status is not an authentication control
 
-- **Location:** `users/models.py:49–55`, `users/models.py:65–123`
+- **Location:** `backend/users/models.py:49–55`, `backend/users/models.py:65–123`
 - **Concern:** `User.status` can be `deactivated` or `pending_deletion`, but authentication still depends on inherited `is_active`. Changing only the custom status does not invalidate a session or necessarily prevent login.
 - **Severity:** Medium
 - **Gated posture:** Low because no user-facing deactivation flow currently exists.

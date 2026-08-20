@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Convert Danced DBML into deterministic Graphviz ER diagrams."""
+"""Convert Onda DBML into deterministic Graphviz ER diagrams."""
 
 from __future__ import annotations
 
@@ -109,8 +109,8 @@ def displayed_columns(table: Table, mode: str) -> list[Column]:
 
 def label(table: Table, mode: str, *, stub: bool = False) -> str:
     join = sum(c.pk for c in table.columns) > 1
-    header = "#17242a" if table.name == "DANCED_USER" else "#78909c" if stub or join else "#263238"
-    size = ' POINT-SIZE="12"' if table.name == "DANCED_USER" else ""
+    header = "#17242a" if table.name == "ONDA_USER" else "#78909c" if stub or join else "#263238"
+    size = ' POINT-SIZE="12"' if table.name == "ONDA_USER" else ""
     rows = [f'<TR><TD BGCOLOR="{header}" COLSPAN="5"><FONT COLOR="white"{size}><B>{table.name}</B></FONT></TD></TR>']
     columns = displayed_columns(table, mode)
     for c in columns:
@@ -152,19 +152,19 @@ def write_dot(path: Path, tables: dict[str, Table], refs: list[Ref], groups: dic
             columns = [
                 ["REVIEW_LIKE", "NOTIFICATION", "REPORT"],
                 ["REVIEW", "DIARY_ENTRY", "FOLLOW"],
-                ["USERNAME_HOLD", "RECENT_SEARCH", "DANCED_USER", "ACCOUNT_CODE"],
+                ["USERNAME_HOLD", "RECENT_SEARCH", "ONDA_USER", "ACCOUNT_CODE"],
                 ["WILL_BE_THERE", "FAVORITE_EVENT", "FAVORITE_ARTIST", "FAVORITE_VENUE"],
             ]
             for column in columns:
                 lines.append("    { rank=same; " + "; ".join(column) + "; }")
                 lines.append("    " + " -> ".join(column) + ' [style=invis, weight=20];')
-            lines.append('    REVIEW_LIKE -> REVIEW -> DANCED_USER -> WILL_BE_THERE [style=invis, weight=80, minlen=1];')
+            lines.append('    REVIEW_LIKE -> REVIEW -> ONDA_USER -> WILL_BE_THERE [style=invis, weight=80, minlen=1];')
         lines.append("  }")
     if boundary:
         for name in sorted(boundary):
             lines.append(f"  {name} [label={label(tables[name], 'pk', stub=True)}];")
         if zones == ["CANONICAL_IDENTITY"]:
-            lines.append('  FAVORITE_ARTIST -> FAVORITE_VENUE -> DANCED_USER [style=invis, weight=12];')
+            lines.append('  FAVORITE_ARTIST -> FAVORITE_VENUE -> ONDA_USER [style=invis, weight=12];')
             lines.append('  FAVORITE_EVENT -> WILL_BE_THERE -> DIARY_ENTRY [style=invis, weight=12];')
     for ref in refs:
         if ref.child_table not in selected or ref.parent_table not in selected:
@@ -210,16 +210,16 @@ def main() -> None:
     app_boundary = {r.parent_table for r in refs if r.child_table in app and r.parent_table in canonical}
     canonical_boundary = {r.child_table for r in refs if r.child_table in app and r.parent_table in canonical}
     specs = [
-        ("danced-erd-ingestion", ["INGESTION"], "full", set()),
-        ("danced-erd-canonical-identity", ["CANONICAL_IDENTITY"], "full", canonical_boundary),
-        ("danced-erd-app", ["APP"], "full", app_boundary),
-        ("danced-erd-overview", ["INGESTION", "CANONICAL_IDENTITY", "APP"], "pkfk", set()),
+        ("onda-erd-ingestion", ["INGESTION"], "full", set()),
+        ("onda-erd-canonical-identity", ["CANONICAL_IDENTITY"], "full", canonical_boundary),
+        ("onda-erd-app", ["APP"], "full", app_boundary),
+        ("onda-erd-overview", ["INGESTION", "CANONICAL_IDENTITY", "APP"], "pkfk", set()),
     ]
     for name, zones, mode, boundary in specs:
         source, target = args.output / f"{name}.dot", args.output / f"{name}.svg"
         write_dot(source, tables, refs, groups, zones, mode, boundary)
         subprocess.run(["dot", "-Tsvg", str(source), "-o", str(target)], check=True)
-        width = "2000" if name == "danced-erd-overview" else "1200"
+        width = "2000" if name == "onda-erd-overview" else "1200"
         subprocess.run(["rsvg-convert", "-w", width, str(target), "-o", str(args.output / f"{name}.png")], check=True)
         selected = {table for zone in zones for table in groups[zone]} | boundary
         expected_edges = sum(

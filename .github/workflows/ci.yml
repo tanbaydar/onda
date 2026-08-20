@@ -11,11 +11,14 @@ permissions:
 jobs:
   backend:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
     services:
       mysql:
         image: mysql:8.4
         env:
-          MYSQL_DATABASE: danced
+          MYSQL_DATABASE: onda
           MYSQL_ROOT_PASSWORD: root
         ports:
           - 3306:3306
@@ -26,22 +29,23 @@ jobs:
           --health-retries=12
     env:
       DJANGO_SECRET_KEY: ci-only-secret-key-with-more-than-fifty-random-like-characters-2026
-      DANCED_DB_HOST: 127.0.0.1
-      DANCED_DB_PORT: 3306
-      DANCED_DB_NAME: danced
-      DANCED_DB_USER: root
-      DANCED_DB_PASSWORD: root
+      ONDA_DB_HOST: 127.0.0.1
+      ONDA_DB_PORT: 3306
+      ONDA_DB_NAME: onda
+      ONDA_DB_USER: root
+      ONDA_DB_PASSWORD: root
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
           cache: pip
+          cache-dependency-path: backend/requirements.txt
       - run: pip install -r requirements.txt
       - run: python manage.py test
       - run: >-
           DJANGO_SETTINGS_MODULE=config.settings_production
-          DANCED_DOMAIN=example.com
+          ONDA_DOMAIN=example.com
           DJANGO_SECURE_HSTS_INCLUDE_SUBDOMAINS=true
           DJANGO_SECURE_HSTS_PRELOAD=true
           python manage.py check --deploy --fail-level WARNING

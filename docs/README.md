@@ -24,9 +24,10 @@ These documents go deeper than the public narrative. They are useful when review
 | Document | Role |
 |---|---|
 | [DATA_FLOW.md](DATA_FLOW.md) | Evidence-linked trace from provider response through the product API |
-| [danced-data-architecture.md](danced-data-architecture.md) | Original high-level ingestion architecture |
+| [onda-data-architecture.md](onda-data-architecture.md) | Original high-level ingestion architecture |
 | [PRODUCT_QA_SPEC.md](PRODUCT_QA_SPEC.md) | Frozen shipped product behavior |
 | [OPERATIONS.md](OPERATIONS.md) | Sync, failure, recovery, backup, and operational procedures |
+| [DEPLOYMENT.md](DEPLOYMENT.md) | Fresh AWS deployment and routine release procedure |
 | [RA_SOURCE_RECON.md](RA_SOURCE_RECON.md) | Captured observations about the v1 source contract |
 | [recon/fixtures](recon/fixtures) | Sanitized request/response fixtures used by ingestion contract tests |
 | [ERD_REVIEW.md](ERD_REVIEW.md) | Review record for the original database blueprint and implementation deltas |
@@ -34,8 +35,10 @@ These documents go deeper than the public narrative. They are useful when review
 
 ## Design records and history
 
-`danced.dbml` and its generated files are the frozen design blueprint used to reason about the database. They include planned tables that are not shipped. [DATABASE.md](DATABASE.md) is the implementation-level source for the current 24-table product schema.
+`onda.dbml` and its generated files are the frozen design blueprint used to reason about the database. They include planned tables that are not shipped. [DATABASE.md](DATABASE.md) is the implementation-level source for the current 24-table product schema.
 
 `PROJECT_STATE.md`, discovery notes, maintainability/security reviews, and `archive/` preserve dated project history. They are not claims about the current production deployment unless a current document explicitly references them.
 
-The repository still contains **Danced** in stable internal names and older document titles because Danced was Onda's development codename. See the [repository-name note](../README.md#repository-name).
+The only pre-Onda implementation name retained outside the root README is in the
+forward database migration that must identify and rename an existing legacy user
+table. Current code, schema state, configuration, and generated artifacts use Onda.

@@ -17,7 +17,9 @@ Resident Advisor's public browser client uses:
 - Full GraphQL query documents rather than persisted hashes (`usePersistedQueries` was disabled in the observed client)
 - No account, cookie, authorization token, or API key for the public listing operation
 
-The exact `GET_EVENT_LISTINGS` operation has been captured in `docs/recon/fixtures/ra_event_listings_request.json` and replayed directly outside the browser with HTTP 200.
+The exact `GET_EVENT_LISTINGS` operation is stored as the runtime contract in
+`backend/ingestion/contracts/ra_event_listings.json` and was replayed directly
+outside the browser with HTTP 200.
 
 **A2 historical backfill gate passes.** Boston returned records at the former
 trailing-24-month probe boundary, including 2024-07-30 and 2024-08-01. This evidence
@@ -90,7 +92,7 @@ Cancellation is visibly expressed in rendered data. For cancelled event `1644565
 - cancellation prose in `content`
 - no explicit cancellation status among the detail fields requested by the public client
 
-A title prefix alone is not sufficiently trustworthy to authorize Danced's destructive future-event cascade.
+A title prefix alone is not sufficiently trustworthy to authorize Onda's destructive future-event cascade.
 
 ### Direct access behavior
 

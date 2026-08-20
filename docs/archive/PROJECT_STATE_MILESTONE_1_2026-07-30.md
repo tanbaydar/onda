@@ -1,8 +1,8 @@
-# Danced — Project State and Conversation Handoff
+# Onda — Project State and Conversation Handoff
 
 > Last verified: 2026-07-30 (America/New_York)
 >
-> Repository: `/Users/ilkerbaydar/Desktop/danced_app`
+> Repository: `/path/to/onda`
 >
 > Git branch and HEAD: `main` at `0cb3600`
 >
@@ -12,7 +12,7 @@
 
 ## Read this first
 
-Danced is a resume project: a Letterboxd-style social diary for live music and
+Onda is a resume project: a Letterboxd-style social diary for live music and
 dance-music events. The finished product is intended to let users discover events,
 mark attendance intentions, log and rate attended events, write reviews, follow
 other users, and browse social activity.
@@ -24,7 +24,7 @@ The project is currently between two milestones:
 - **Milestone 2 has not started:** there is not yet a catalog API, usable website,
   React application, authentication flow, diary UI, or social layer.
 
-Do not mistake the large product schema in `docs/danced.dbml` for fully implemented
+Do not mistake the large product schema in `docs/onda.dbml` for fully implemented
 Django models. Only the ingestion and catalog zones have been transcribed into
 Django. The 15 user-facing/application tables remain design only.
 
@@ -90,13 +90,13 @@ Use these documents in this order:
 
 1. `docs/PRODUCT_QA_SPEC.md`
    - Detailed product behavior decisions and numbered questions.
-2. `docs/danced.dbml`
+2. `docs/onda.dbml`
    - Frozen full product database blueprint: 28 tables total after
      `CITY_IDENTITY` was added.
 3. `docs/ERD_REVIEW.md`
    - Architecture review record, rulings, intentional ORM deltas, and
      freeze-break changelog.
-4. `docs/danced-data-architecture.md`
+4. `docs/onda-data-architecture.md`
    - Runtime ingestion contract, lifecycle behavior, and design assumptions.
 5. `docs/recon/fixtures/README.md`
    - Frozen Transformer fixture contract and cross-cutting ingestion rules.
@@ -107,7 +107,7 @@ Use these documents in this order:
 8. `docs/NAVIGATION.md`
    - Binding five-destination navigation skeleton, landing rules, and interim
      absorption register.
-9. `docs/danced-erd-guide.md`
+9. `docs/onda-erd-guide.md`
    - Design/review method and rationale. It is a decision record, not scripture;
      later reviewed artifacts win if prose conflicts.
 10. `docs/archive/`
@@ -131,7 +131,7 @@ collision.
 
 ### Django settings
 
-`config/settings.py`:
+`backend/config/settings.py`:
 
 - `TIME_ZONE = "UTC"`
 - `USE_TZ = True`
@@ -140,16 +140,16 @@ collision.
 - Never introduce naive datetimes.
 - Default database:
   - engine: MySQL
-  - name: `danced`
+  - name: `onda`
   - user: `root`
   - host: `127.0.0.1`
   - port: `3306`
 - Environment overrides:
-  - `DANCED_DB_NAME`
-  - `DANCED_DB_USER`
-  - `DANCED_DB_PASSWORD`
-  - `DANCED_DB_HOST`
-  - `DANCED_DB_PORT`
+  - `ONDA_DB_NAME`
+  - `ONDA_DB_USER`
+  - `ONDA_DB_PASSWORD`
+  - `ONDA_DB_HOST`
+  - `ONDA_DB_PORT`
 - `DJANGO_SECRET_KEY` is required from the environment/ignored `.env`.
 - `.env` and `.venv/` are ignored and must never be committed.
 
@@ -208,9 +208,9 @@ At the time this handoff was written:
 
 ```text
  M .gitignore
- M ingestion/management/commands/sync_ra.py
+ M backend/ingestion/management/commands/sync_ra.py
 ?? docs/OPERATIONS.md
-?? ingestion/tests/test_sync_command_alarm.py
+?? backend/ingestion/tests/test_sync_command_alarm.py
 ```
 
 These changes implement and document operator alarms:
@@ -228,8 +228,8 @@ overwrite them. Before large new work, review and commit them together:
 
 ```sh
 git add .gitignore \
-  ingestion/management/commands/sync_ra.py \
-  ingestion/tests/test_sync_command_alarm.py \
+  backend/ingestion/management/commands/sync_ra.py \
+  backend/ingestion/tests/test_sync_command_alarm.py \
   docs/OPERATIONS.md
 git commit -m "ops: alarm on unhealthy nightly syncs and document scheduling"
 ```
@@ -383,7 +383,7 @@ Observation state does not belong on canonical `EVENT`.
 
 The DBML contains these 15 future tables:
 
-- `DANCED_USER`
+- `ONDA_USER`
 - `USERNAME_HOLD`
 - `EMAIL_VERIFICATION_REQUEST`
 - `EMAIL_CHANGE_REQUEST`
@@ -411,7 +411,7 @@ notification types, report uniqueness, and service-only invariants.
 
 ### Module map
 
-#### `ingestion/client.py`
+#### `backend/ingestion/client.py`
 
 - `FetchResult`: frozen four-field dataclass:
   - `status_code`
@@ -427,7 +427,7 @@ notification types, report uniqueness, and service-only invariants.
 - Envelope and pagination navigation are allowed; event-domain interpretation is
   Transformer-only.
 
-#### `ingestion/transformer.py`
+#### `backend/ingestion/transformer.py`
 
 - Processes one `RAW_INGEST` row.
 - Produces:
@@ -444,7 +444,7 @@ notification types, report uniqueness, and service-only invariants.
 - Unusable whole payload becomes `failed`.
 - Unexpected mid-payload crash leaves `pending` for later recovery sweep.
 
-#### `ingestion/reconciler.py`
+#### `backend/ingestion/reconciler.py`
 
 - Receives completeness verdict from runner.
 - No client/network knowledge.
@@ -463,9 +463,9 @@ notification types, report uniqueness, and service-only invariants.
 - A reappearing event resurrects from hidden automatically.
 - Never deletes canonical or user content.
 
-#### `ingestion/runner.py`
+#### `backend/ingestion/runner.py`
 
-- Acquires MySQL advisory lock `danced_sync_ra`.
+- Acquires MySQL advisory lock `onda_sync_ra`.
 - Creates and completes/crashes `SYNC_RUN`.
 - Resolves a seed through `CITY_IDENTITY` before fetching.
 - Sequentially fetches pages.
@@ -477,7 +477,7 @@ notification types, report uniqueness, and service-only invariants.
 - Maintains telemetry.
 - Releases lock exactly once on success and crash.
 
-#### `ingestion/management/commands/sync_ra.py`
+#### `backend/ingestion/management/commands/sync_ra.py`
 
 - Thin operator shell.
 - Bare command performs nightly sync.
@@ -724,7 +724,7 @@ OK
 Standard regression commands:
 
 ```sh
-.venv/bin/python manage.py test ingestion
+.venv/bin/python backend/manage.py test ingestion
 .venv/bin/python docs/recon/fixtures/audit_expectations.py
 git diff --check
 ```
@@ -837,7 +837,7 @@ remains the same backfill code path with a different runtime window.
 The completed supervised backfill used:
 
 ```sh
-.venv/bin/python manage.py sync_ra --backfill \
+.venv/bin/python backend/manage.py sync_ra --backfill \
   --window-start 2026-06-01 \
   --window-end 2026-09-30 \
   --page-size 20
@@ -851,7 +851,7 @@ volume, and supervision plan first.
 ### Bare command
 
 ```sh
-.venv/bin/python manage.py sync_ra
+.venv/bin/python backend/manage.py sync_ra
 ```
 
 Defaults:
@@ -866,7 +866,7 @@ Defaults:
 Explicit windows override the planner:
 
 ```sh
-.venv/bin/python manage.py sync_ra \
+.venv/bin/python backend/manage.py sync_ra \
   --window-start YYYY-MM-DD \
   --window-end YYYY-MM-DD \
   --page-size 20
@@ -877,13 +877,13 @@ Explicit windows override the planner:
 Installed user plist:
 
 ```text
-/Users/ilkerbaydar/Library/LaunchAgents/com.tan.danced.sync.plist
+~/Library/LaunchAgents/com.onda.sync-ra.plist
 ```
 
 Label:
 
 ```text
-com.tan.danced.sync
+com.tan.onda.sync
 ```
 
 Verified schedule:
@@ -895,40 +895,40 @@ Daily at 16:00 (4:00 PM local time)
 Actual program:
 
 ```text
-/Users/ilkerbaydar/Desktop/danced_app/.venv/bin/python
+/path/to/onda/.venv/bin/python
 ```
 
 Arguments:
 
 ```text
-/Users/ilkerbaydar/Desktop/danced_app/manage.py
+/path/to/onda/backend/manage.py
 sync_ra
 ```
 
 Working directory:
 
 ```text
-/Users/ilkerbaydar/Desktop/danced_app
+/path/to/onda
 ```
 
 Logs:
 
 ```text
-/Users/ilkerbaydar/Desktop/danced_app/logs/sync.log
-/Users/ilkerbaydar/Desktop/danced_app/logs/sync.err.log
+/path/to/onda/logs/sync.log
+/path/to/onda/logs/sync.err.log
 ```
 
 Verify registration:
 
 ```sh
-launchctl list | grep com.tan.danced.sync
-launchctl print gui/$(id -u)/com.tan.danced.sync
+launchctl list | grep com.tan.onda.sync
+launchctl print gui/$(id -u)/com.tan.onda.sync
 ```
 
 Trigger manually:
 
 ```sh
-launchctl kickstart -k gui/$(id -u)/com.tan.danced.sync
+launchctl kickstart -k gui/$(id -u)/com.tan.onda.sync
 ```
 
 Read logs:
@@ -979,7 +979,7 @@ Alarm behavior:
 - launchd captures stderr in:
 
 ```text
-/Users/ilkerbaydar/Desktop/danced_app/logs/sync.err.log
+/path/to/onda/logs/sync.err.log
 ```
 
 There is no email provider, pager, Slack webhook, or hosted monitoring service.
@@ -1107,14 +1107,14 @@ next work is a browsable catalog UI over real data.
 pwd
 git status --short
 git log -5 --oneline --decorate
-.venv/bin/python manage.py showmigrations
+.venv/bin/python backend/manage.py showmigrations
 ```
 
 ### Verify code and contracts
 
 ```sh
-.venv/bin/python manage.py check
-.venv/bin/python manage.py test ingestion
+.venv/bin/python backend/manage.py check
+.venv/bin/python backend/manage.py test ingestion
 .venv/bin/python docs/recon/fixtures/audit_expectations.py
 git diff --check
 ```
@@ -1122,7 +1122,7 @@ git diff --check
 ### Inspect latest run
 
 ```sh
-.venv/bin/python manage.py shell -c "
+.venv/bin/python backend/manage.py shell -c "
 from ingestion.models import SyncRun
 r = SyncRun.objects.latest('id')
 print(
@@ -1141,7 +1141,7 @@ print(
 ### Inspect catalog counts
 
 ```sh
-.venv/bin/python manage.py shell -c "
+.venv/bin/python backend/manage.py shell -c "
 from catalog.models import Event, Venue, Artist
 from django.db.models import Count
 print('events', Event.objects.count())
@@ -1158,13 +1158,13 @@ print(list(
 ### Run one supervised nightly sync
 
 ```sh
-.venv/bin/python manage.py sync_ra
+.venv/bin/python backend/manage.py sync_ra
 ```
 
 ### Check local scheduler
 
 ```sh
-launchctl print gui/$(id -u)/com.tan.danced.sync
+launchctl print gui/$(id -u)/com.tan.onda.sync
 tail -100 logs/sync.log
 tail -100 logs/sync.err.log
 ```
@@ -1198,7 +1198,7 @@ My next goal is: <insert goal>.
 
 ## Short project narrative for interviews
 
-Danced’s data pipeline ingests unofficial live-event listings into a source-neutral
+Onda’s data pipeline ingests unofficial live-event listings into a source-neutral
 catalog while preserving raw evidence and isolating provider identity. The design
 uses append-only request archives, replay-safe transformation, per-event
 transactions, quarantine rather than destructive drops, concrete identity tables

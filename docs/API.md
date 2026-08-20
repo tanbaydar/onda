@@ -245,13 +245,13 @@ This is a web-application boundary, not an authorization model for third-party A
 
 | Concern | Source |
 |---|---|
-| Top-level route composition | `config/urls.py` |
-| Auth routes | `users/urls.py` |
-| Product/social routes | `users/been_urls.py` |
-| Catalog views/serialization | `catalog/views.py` |
-| Search | `catalog/search.py` |
-| User views/serialization | `users/views.py` |
-| Domain transactions | `users/services.py` |
+| Top-level route composition | `backend/config/urls.py` |
+| Auth routes | `backend/users/urls.py` |
+| Product/social routes | `backend/users/been_urls.py` |
+| Catalog views/serialization | `backend/catalog/views.py` |
+| Search | `backend/catalog/search.py` |
+| User views/serialization | `backend/users/views.py` |
+| Domain transactions | `backend/users/services.py` |
 | Browser fetch and CSRF wrapper | `frontend/src/api.js` |
 
 For data behavior behind these endpoints, continue with [APPLICATION_DATA.md](APPLICATION_DATA.md). For table relationships, see [DATABASE.md](DATABASE.md).

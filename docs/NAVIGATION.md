@@ -1,4 +1,4 @@
-# Danced Navigation Contract
+# Onda Navigation Contract
 
 > Status: binding product-navigation contract
 >
@@ -10,7 +10,7 @@
 
 ## Purpose
 
-Danced has exactly five primary destination positions:
+Onda has exactly five primary destination positions:
 
 1. Home
 2. Discover
@@ -376,7 +376,7 @@ primary-navigation item.
 Discover is not listed because it is one of the five final destinations. Its current
 `/` route is transitional and governed by the landing rules.
 
-The `Danced` header text is not a navigation item because it is a plain paragraph.
+The `Onda` header text is not a navigation item because it is a plain paragraph.
 If it later becomes a link, its target must follow the landing rules rather than
 create a sixth destination.
 

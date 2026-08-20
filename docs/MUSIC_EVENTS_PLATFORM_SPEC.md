@@ -1,7 +1,7 @@
 # Music Events Social Diary — Product and Technical Specification
 
 **Status:** Working specification v0.1  
-**Working title:** Danced  
+**Working title:** Onda
 **Product shorthand:** Letterboxd for music events  
 **Initial stack:** React with JSX · Python/Django · Django REST Framework · MySQL 8  
 **Database client:** DataGrip
@@ -10,11 +10,11 @@
 
 ## 1. Product definition
 
-Danced is a consumer social diary for music events.
+Onda is a consumer social diary for music events.
 
 The central analogy is exact:
 
-| Letterboxd | Danced |
+| Letterboxd | Onda |
 |---|---|
 | Film | Music event |
 | Film page | Event page |
@@ -736,7 +736,7 @@ frontend/src/
   features/
     accounts/
     activity/
-    catalog/
+    backend/catalog/
     diary/
     lists/
     social/
@@ -897,4 +897,3 @@ A release is usable when:
 - Image storage provider
 - Production hosting and deployment platform
 - Event data source and ingestion method
-

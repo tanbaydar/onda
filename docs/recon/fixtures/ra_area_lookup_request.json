@@ -1,8 +1,8 @@
 {
-  "operationName": "DANCED_AREA_LOOKUP",
+  "operationName": "ONDA_AREA_LOOKUP",
   "variables": {
     "areaUrlName": "newyorkcity",
     "countryUrlCode": "us"
   },
-  "query": "query DANCED_AREA_LOOKUP($areaUrlName: String!, $countryUrlCode: String!) { area(areaUrlName: $areaUrlName, countryUrlCode: $countryUrlCode) { id name urlName country { id name urlCode } } }"
+  "query": "query ONDA_AREA_LOOKUP($areaUrlName: String!, $countryUrlCode: String!) { area(areaUrlName: $areaUrlName, countryUrlCode: $countryUrlCode) { id name urlName country { id name urlCode } } }"
 }

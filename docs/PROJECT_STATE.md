@@ -1,8 +1,8 @@
-# Danced — Project State and Conversation Handoff
+# Onda — Project State and Conversation Handoff
 
 > Last verified: 2026-08-02 (America/New_York)
 >
-> Repository: `/Users/ilkerbaydar/Desktop/danced_app`
+> Repository: `/path/to/onda`
 >
 > Branch: `main`
 >
@@ -157,7 +157,7 @@ gated demo.
 
 ## Read this first
 
-Danced is a Letterboxd-style social diary for live music. It now has three complete
+Onda is a Letterboxd-style social diary for live music. It now has three complete
 working foundations:
 
 1. A conservative, replayable Resident Advisor ingestion pipeline over live New
@@ -311,9 +311,9 @@ still configure delivery, flip the flag, and replace the immediate-use landing f
 Read current artifacts in this order:
 
 1. `docs/PRODUCT_QA_SPEC.md` — 210 decisions plus appended amendments.
-2. `docs/danced.dbml` — frozen full database blueprint.
+2. `docs/onda.dbml` — frozen full database blueprint.
 3. `docs/ERD_REVIEW.md` — reviewed ORM/physical deltas and freeze-breaks.
-4. `docs/danced-data-architecture.md` — ingestion ownership and invariants.
+4. `docs/onda-data-architecture.md` — ingestion ownership and invariants.
 5. `docs/recon/fixtures/README.md` — frozen fixture and Transformer contract.
 6. Committed tests — executable contracts for implemented behavior.
 7. Committed migrations — immutable physical-schema history.
@@ -401,7 +401,7 @@ users.0013_enforce_favorite_user_cascades
 
 The user-zone tables implemented through Milestone 3 are:
 
-- `DANCED_USER`
+- `ONDA_USER`
 - `DIARY_ENTRY`
 - `REVIEW`
 - `REVIEW_LIKE`
@@ -420,7 +420,7 @@ The custom-user migration surgery preserved catalog and raw-ingestion evidence; 
 durable pre-surgery dump remains outside the repository at:
 
 ```text
-/Users/ilkerbaydar/danced-backups/danced_pre_users_20260731.sql
+/path/to/private-backups/pre_users_20260731.sql
 ```
 
 Do not migrate unused DBML tables speculatively. A slice introduces only tables it
@@ -609,9 +609,9 @@ privacy chrome, and favorite-cap feedback.
 
 ### Runtime ownership
 
-- `ingestion/client.py` owns bounded transport and retry behavior.
+- `backend/ingestion/client.py` owns bounded transport and retry behavior.
 - Every fetch outcome is archived before domain admission.
-- `ingestion/transformer.py` owns RA listing shape and quarantines one observation
+- `backend/ingestion/transformer.py` owns RA listing shape and quarantines one observation
   without leaving a partial canonical graph.
 - Wrapper grain proves completeness; unique event-ID grain owns identity and
   reconciliation.
@@ -626,10 +626,10 @@ privacy chrome, and favorite-cap feedback.
 Local LaunchAgent:
 
 ```text
-label: com.tan.danced.sync
+label: com.tan.onda.sync
 schedule: daily at 16:00 local time
-program: /Users/ilkerbaydar/Desktop/danced_app/.venv/bin/python
-working directory: /Users/ilkerbaydar/Desktop/danced_app
+program: /path/to/onda/.venv/bin/python
+working directory: /path/to/onda
 stdout: logs/sync.log
 stderr: logs/sync.err.log
 ```
@@ -816,10 +816,10 @@ git log -10 --oneline --decorate
 ### Verify repository contracts
 
 ```sh
-.venv/bin/python manage.py check
-.venv/bin/python manage.py test --noinput
+.venv/bin/python backend/manage.py check
+.venv/bin/python backend/manage.py test --noinput
 .venv/bin/python docs/recon/fixtures/audit_expectations.py
-.venv/bin/python manage.py makemigrations --check --dry-run
+.venv/bin/python backend/manage.py makemigrations --check --dry-run
 npm test --prefix frontend
 npm run build --prefix frontend
 git diff --check
@@ -830,7 +830,7 @@ git diff --check
 Terminal 1:
 
 ```sh
-.venv/bin/python manage.py runserver
+.venv/bin/python backend/manage.py runserver
 ```
 
 Terminal 2:
@@ -845,7 +845,7 @@ Open `http://127.0.0.1:5173`.
 ### Inspect the scheduler
 
 ```sh
-launchctl print gui/$(id -u)/com.tan.danced.sync
+launchctl print gui/$(id -u)/com.tan.onda.sync
 tail -100 logs/sync.log
 tail -100 logs/sync.err.log
 ```
@@ -853,7 +853,7 @@ tail -100 logs/sync.err.log
 ### Inspect the latest run
 
 ```sh
-.venv/bin/python manage.py shell -c "
+.venv/bin/python backend/manage.py shell -c "
 from ingestion.models import SyncRun
 r = SyncRun.objects.latest('id')
 print(r.id, r.run_type, r.status, r.started_at, r.finished_at,
@@ -873,7 +873,7 @@ boundary; owner WBT Profile history still requires an explicit product amendment
 
 ## Resume-project narrative
 
-Danced's strongest claim is not feature count. It is the way boundaries preserve
+Onda's strongest claim is not feature count. It is the way boundaries preserve
 truth under unreliable external data and privacy-sensitive social reads.
 
 The ingestion side archives exact evidence, separates wrapper completeness from
