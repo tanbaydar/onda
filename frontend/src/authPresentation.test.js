@@ -30,3 +30,10 @@ test("auth CSS and page sources contain the danger register and one code field p
   assert.equal((verify.match(/auth-code-input/g) ?? []).length, 1);
   assert.equal((reset.match(/auth-code-input/g) ?? []).length, 1);
 });
+
+test("password reset request opens the code form without an intermediate action", () => {
+  const request = readFileSync(new URL("./pages/PasswordResetRequestPage.jsx", import.meta.url), "utf8");
+  assert.match(request, /await fetchWithCsrf[\s\S]*navigate\("\/reset-password\/confirm", \{ state: \{ email \} \}\)/);
+  assert.doesNotMatch(request, />Enter code</);
+  assert.doesNotMatch(request, /setAccepted/);
+});
