@@ -1096,7 +1096,7 @@ product code must not invent semantics for those administrative fields.
 
 ### Product not yet clickable
 
-The pipeline is impressive but not recruiter-facing by itself. The highest-value
+The pipeline is technically substantial but not self-explanatory by itself. The highest-value
 next work is a browsable catalog UI over real data.
 
 ## Commands a future conversation will need
