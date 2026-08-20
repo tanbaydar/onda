@@ -4,9 +4,9 @@ import test from "node:test";
 
 const read = (path) => readFileSync(new URL(path, import.meta.url), "utf8");
 
-test("document chrome uses the onda title and favicon", () => {
+test("document chrome uses the Onda App title and favicon", () => {
   const html = read("../index.html");
-  assert.match(html, /<title>onda<\/title>/);
+  assert.match(html, /<title>Onda App<\/title>/);
   assert.match(html, /rel="icon"[^>]+href="\/favicon\.png\?v=fd4862a7"/);
   assert.match(html, /rel="shortcut icon"[^>]+href="\/favicon\.png\?v=fd4862a7"/);
 });
