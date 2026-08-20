@@ -1,6 +1,6 @@
-# Onda engineering documentation
+# Documentation
 
-This directory has two layers:
+This is Onda's detailed engineering reference. It has two layers:
 
 1. A short review path that explains the shipped system.
 2. Evidence and design records that preserve the detailed reasoning behind it.

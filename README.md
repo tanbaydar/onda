@@ -9,160 +9,211 @@
 </p>
 
 <p align="center">
-  <a href="https://ondaapp.io">Live demo</a> ·
-  <a href="docs/README.md">Engineering documentation</a>
+  <a href="DEMO.md"><strong>Demo</strong></a> ·
+  <a href="#how-it-works"><strong>How it works</strong></a> ·
+  <a href="docs/README.md"><strong>Documentation</strong></a>
 </p>
 
-> **Demo video:** coming soon. The finished video will be added to this section as an MP4 repository asset.
+Onda lets people browse live-music events in New York City and Boston, mark plans, log attendance with half-star ratings, publish reviews, follow public or private profiles, and save favorite events, artists, and venues.
 
-## What Onda does
+The interface is the visible product. The harder engineering problem is underneath it: live music does not have one complete, trusted catalog that Onda can treat as permanent truth. Listings change, disappear, arrive malformed, and use identities owned by an external provider. Onda has to turn those observations into stable product data without allowing a bad response to corrupt the catalog or erase a user's history.
 
-Onda turns a changing live-event catalog into a personal and social record. A user can browse upcoming and past events in New York City and Boston, mark plans, log attendance with a half-star rating, publish reviews, follow public or private profiles, and build favorite event, artist, and venue lists.
+## How it works
 
-The interface is the visible product. The central engineering problem is the data behind it: live-music listings are fragmented, mutable, and not backed by a single complete, trusted catalog. Onda therefore treats external listings as fallible observations—not database truth.
-
-[See the product as a user →](docs/PRODUCT_GUIDE.md)
-
-## System at a glance
+### Start with the whole system
 
 ```mermaid
 flowchart LR
-    subgraph Source[External boundary]
-        RA[RA listing pages]
-    end
+    Source[External event listings]
 
-    subgraph Ingestion[Asynchronous ingestion]
-        Client[Bounded source adapter]
-        Raw[(Raw evidence)]
-        Transform[Validate + normalize]
+    subgraph Background[Background data path]
+        Fetch[Scheduled, bounded fetch]
+        Evidence[(Raw evidence)]
+        Boundary[Validate and translate]
         Reject[(Quarantine)]
     end
 
-    subgraph Product[Onda modular monolith]
+    subgraph Product[User request path]
         Catalog[(Canonical catalog)]
+        Social[(User and social data)]
         API[Django JSON API]
-        Social[(User + social data)]
         UI[React application]
     end
 
-    RA --> Client --> Raw --> Transform
-    Transform -->|admit| Catalog
-    Transform -->|reject one observation| Reject
+    User[User] <--> UI
+    Source --> Fetch --> Evidence --> Boundary
+    Boundary -->|valid observation| Catalog
+    Boundary -->|invalid observation| Reject
     Catalog --> API
     Social <--> API
     API <--> UI
 ```
 
-Onda is deliberately a **modular monolith**, not a distributed system. Django owns the ingestion, catalog, user, privacy, and API modules; MySQL provides the transactional boundary; React is a same-origin client. The external data source is asynchronous, so source latency or failure cannot enter a user request path.
+There are two deliberately separate paths:
 
-## Where the engineering work is
+- A **scheduled background path** acquires external listings and decides what Onda can safely trust.
+- A **user request path** reads Onda-owned catalog and social data from MySQL. Search, profiles, event pages, and Home never wait for the external provider.
 
-- **Evidence before trust.** Every terminal page-fetch result is archived before parsing. A malformed response remains inspectable instead of disappearing into a log line.
-- **Failure isolation.** Each listing observation is admitted in its own transaction. A bad event is quarantined without rolling back valid siblings or leaving a partial venue/artist/event graph.
-- **Provider identity firewall.** Source IDs terminate in four identity-mapping tables. Product tables use canonical IDs and contain no Resident Advisor identifiers.
-- **Safe absence handling.** Missing listings can hide an event only after a complete fetch and repeated misses. Incomplete data may add known-good observations; it may never subtract catalog state.
-- **Query-time social feed.** Six activity types are combined with `UNION ALL`, privacy-filtered inside each branch, and cursor-paginated without a fan-out feed table.
-- **Venue-local time.** Event state is evaluated in the venue city's IANA timezone, including upcoming/past classification and expiry of “Will Be There.”
-- **Operational controls.** Production has mutual-exclusion locks, bounded retries and request budgets, health checks, rotating logs, daily backups, and a scheduled restore drill.
+The application is a **modular monolith**: one Django deployment owns ingestion, catalog, accounts, privacy, and the API; React is the browser client; MySQL is the transactional boundary. The source is remote and unreliable, but Onda is not presented as a distributed microservice system.
 
-The source adapter is replaceable by design, but that statement has limits: **v1 has one implemented provider and still depends on it for coverage**. Adding another provider requires a new adapter plus deliberate entity mapping; it is not a configuration-only swap.
+### 1. Turn uncertain listings into stable catalog data
 
-[Read the ingestion design →](docs/INGESTION.md) · [Follow canonical data through the application →](docs/APPLICATION_DATA.md)
+```mermaid
+flowchart TD
+    Fetch[Terminal page-fetch result] --> Archive[Archive before parsing]
+    Archive --> Split[Evaluate each event observation]
+    Split --> Valid{Valid enough to admit?}
+    Valid -->|No| Rejected[Store reason and original evidence]
+    Valid -->|Yes| Tx[One database transaction]
+    Tx --> IDs[Resolve provider identity maps]
+    IDs --> Graph[Upsert city, venue, artists, event, and lineup]
+    Graph --> Commit[Commit the complete graph]
+    Tx -->|any exception| Rollback[Roll back every canonical write]
+    Rollback --> Rejected
 
-## Documentation map
+    Archive --> Complete{Was the full source window proven complete?}
+    Complete -->|Yes| Reconcile[Update presence and absence counters]
+    Complete -->|No| Preserve[Do not infer that missing events disappeared]
+```
 
-| Document | Question it answers |
+The technical terms describe concrete behavior:
+
+| Term | What Onda actually does |
 |---|---|
-| [Product guide](docs/PRODUCT_GUIDE.md) | What can a user do, and what rules do they see? |
-| [Event ingestion](docs/INGESTION.md) | How does unreliable external data become trusted catalog state? |
-| [Application data](docs/APPLICATION_DATA.md) | What happens after an event crosses into Onda? |
-| [API](docs/API.md) | How do React, Django, sessions, errors, and pagination fit together? |
-| [Database](docs/DATABASE.md) | What is the shipped schema and why is it divided this way? |
-| [Evidence-level data flow](docs/DATA_FLOW.md) | Which code and tests enforce each path and invariant? |
+| **Raw evidence** | Stores every terminal fetch result before parsing it, including malformed bodies and transport failures. “What arrived” remains separate from “what Onda concluded.” |
+| **Validation and quarantine** | Evaluates each event independently. A malformed event is rejected with a reason while valid siblings from the same page continue. Onda does not invent missing artists, repair dates, or admit a partial event graph. |
+| **Per-observation transaction** | The venue, artists, event, identity mappings, and ordered lineup commit together—or all roll back. A failure cannot leave half an event in the catalog. |
+| **Idempotency** | Replaying the same provider identity updates the same canonical row instead of creating a duplicate. Rejection records are also uniquely keyed so recovery does not duplicate them. |
+| **Identity mapping** | Provider IDs end in four mapping tables for cities, venues, artists, and events. Product and social tables reference stable Onda IDs, never Resident Advisor IDs. This translation boundary is the system's anti-corruption layer. |
+| **Completeness-gated reconciliation** | Onda treats absence as evidence only after every expected page and observation was accounted for. An incomplete fetch may add valid data, but it may never hide existing data. |
 
-## Measured and verified
+An event omitted from one complete nightly snapshot becomes `unverified`; after three consecutive complete misses it becomes `hidden`. It is not deleted. Ratings, reviews, likes, plans, and favorites remain attached to the canonical event and reappear if a later valid observation restores it.
 
-The following is a reproducible engineering snapshot, not a claim about internet-scale traffic:
+The adapter is replaceable by design, but Onda is not source-independent today. Version 1 has one implemented provider. Adding another requires a bounded client, source-to-canonical mapping, real entity-resolution decisions, completeness rules, fixtures, and tests—it is not a configuration switch.
 
-- **238 Django tests** passed against MySQL.
-- **96 frontend tests** passed with Node's test runner.
-- **13 captured ingestion fixtures** passed their contract audit.
-- Django reported no pending model migrations.
-- A committed local benchmark seeded **100,000 activity rows** across all six Home-feed branches. With 20 warm-ups followed by 200 measured requests, page 1 had a **45.908 ms p95** and page 50 a **31.618 ms p95**, while a test asserted four database queries. It used Django's in-process HTTP client on an Apple M4 Pro and excluded network/Gunicorn latency; it is a regression baseline, not a production load test. See [`feed-benchmark.yaml`](contracts/cv-mining/feed-benchmark.yaml).
+[Read the full ingestion design →](docs/INGESTION.md)
 
-Verified on **August 20, 2026**.
+### 2. Put user actions behind one transactional API
 
-## Deployment snapshot
+Onda uses a first-party, same-origin JSON API. React sends the session cookie on each request; Django resolves authentication and requires its CSRF cookie/header pair for unsafe methods. Views validate HTTP input, domain services own state transitions, and MySQL constraints enforce the invariants that must survive every code path.
 
-The live demo runs on a single AWS EC2 `t4g.small` host with Docker Compose:
+One rating illustrates the boundary:
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant React
+    participant API as Django API
+    participant Service as Domain service
+    participant DB as MySQL
+    participant Home as Follower's Home
+
+    User->>React: Submit 4.5 stars
+    React->>API: PUT /api/events/{id}/been/<br/>session + CSRF + JSON
+    API->>API: Authenticate, authorize, validate
+    API->>Service: Save rating for visible event
+    Service->>DB: Transaction + row lock
+    DB-->>Service: One user-event diary row
+    Service-->>React: 201 created or 200 updated
+    Home->>DB: Read current visible activity
+    DB-->>Home: Rating appears for eligible followers
+```
+
+This path distinguishes malformed input from valid requests that violate product rules. For example, a badly shaped rating receives `400`; an authenticated attempt to log an event before its venue-local start receives `409 Conflict`. A review requires a rating, one user can have only one diary entry per event, and half-star values are enforced in both service logic and database checks.
+
+The API is intentionally described as a **first-party application boundary**, not a public developer platform: there are no API keys, OAuth scopes, OpenAPI compatibility promises, or third-party service-level guarantees.
+
+[Review the API contract →](docs/API.md)
+
+### 3. Build the social layer from current truth
+
+Onda does not copy each action into a fan-out feed table. Home is assembled when it is requested from six existing sources:
+
+```mermaid
+flowchart LR
+    Followees[Approved followees] --> Plans[Will Be There]
+    Followees --> Likes[Review likes]
+    Followees --> Ratings[Ratings]
+    Followees --> Follows[New follows]
+    Followees --> Events[Favorite events]
+    Followees --> Artists[Favorite artists]
+
+    Plans --> Union[(UNION ALL)]
+    Likes --> Union
+    Ratings --> Union
+    Follows --> Union
+    Events --> Union
+    Artists --> Union
+
+    Union --> Cursor[Stable three-part cursor]
+    Cursor --> Page[20-item Home page]
+```
+
+Each branch produces the same shape and applies profile privacy and event visibility **before** the union and pagination. That ordering matters: filtering afterward could reveal that a private row existed, produce short pages, or make cursors inconsistent.
+
+The cursor uses `(activity time, activity type, source key)`, not time alone, so simultaneous actions still have a total, repeatable order. Because Home reads the source rows directly, an unlike, unfollow, privacy change, or hidden event is reflected on the next request without repairing copied feed records or sending writes to every follower.
+
+The tradeoff is a more complex read. Onda therefore includes a reproducible regression benchmark with 100,000 activity rows across all six branches. It measured 45.908 ms p95 for page 1 and 31.618 ms p95 for page 50 over 200 in-process requests after warm-up, with a test asserting four database queries. This is a local regression baseline—not a production traffic or capacity claim.
+
+Time-sensitive behavior is evaluated in the event venue's IANA timezone. Whether an event is upcoming, whether it can be added to Been, and whether “Will Be There” is still active cannot change merely because the server or viewer is in another timezone.
+
+[Follow canonical data through the social layer →](docs/APPLICATION_DATA.md)
+
+### 4. Operate one system deliberately
 
 ```mermaid
 flowchart TB
-    Browser[Browser] -->|HTTPS| Caddy[Caddy<br/>TLS + static React build]
-    Caddy -->|/api/*| Web[Django 6 + Gunicorn]
-    Web --> DB[(MySQL 8.4)]
-    Scheduler[Host cron] -->|nightly sync| Web
-    Scheduler -->|daily backup| DB
-    Backup[(Private S3 backup)]
-    DB --> Backup
+    Browser[Browser] -->|HTTPS| Caddy[Caddy<br/>TLS + React build]
+    Caddy -->|/api/*| Django[Django + Gunicorn]
+    Django --> MySQL[(MySQL 8.4)]
+    Scheduler[Host cron] -->|nightly ingestion| Django
+    Scheduler -->|daily dump| MySQL
+    MySQL --> Backup[(Private encrypted S3 backups<br/>30-day expiry)]
+    Health[Five-minute host probe] --> Caddy
+    Health --> Django
+    Health --> MySQL
 ```
 
-Caddy is the only public container; Django and MySQL stay on the private Compose network. The host runs a five-minute health probe, a nightly source sync, daily database backups, log rotation, and a monthly restore-check job. Successful backup uploads and repeated health passes were observed. The restore check is scheduled but had not yet reached its first scheduled run when this snapshot was verified.
+The current engineering demo runs on one AWS EC2 `t4g.small` using Docker Compose. Caddy is the only public container; Django and MySQL remain on the private Compose network. Container health checks, bounded logs, process-level locks, deployment-time backups, and post-deploy health checks keep the operational model proportional to the application's actual scale.
 
-The latest completed ingestion run inspected was a backfill across two configured cities: both seeds succeeded, **1,919 observations were admitted, 1,128 were quarantined, and none were dropped**. “Admitted” counts valid source observations, not necessarily newly created unique events, because canonical writes are idempotent upserts.
+> **Verified August 20, 2026:** the public site and API were live over valid HTTPS; Caddy, Django, and MySQL were running; eight consecutive scheduled ingestion runs completed without a hard error; eight daily backup jobs completed and uploaded to a private S3 bucket with SSE-S3 encryption, public access blocked, and a 30-day expiration rule. A host-local health probe runs every five minutes. The monthly isolated restore drill is scheduled, but had not yet completed its first scheduled run.
 
-[Read the deployment and operations runbook →](DEPLOY.md)
+This is operational evidence, not an internet-scale claim. The health probe writes to host logs; it is not an external uptime-alerting service.
 
-## Technology
+[Read deployment and operations documentation →](docs/DEPLOYMENT.md)
 
-- Python 3.12, Django 6.0.7, Gunicorn
-- MySQL 8.4 in production
-- React 19, React Router 7, Vite 8
-- Docker Compose, Caddy, GitHub Actions
-- Plain Django JSON views with session authentication and CSRF protection; no DRF or public API façade
+## Evidence and limits
 
-## Run locally
+The current verification baseline is reproducible from the repository:
 
-Prerequisites: Python 3.12+, Node.js 22+, and MySQL 8.
+- **239 Django tests** pass against MySQL.
+- **98 frontend tests** pass with Node's test runner, followed by a production Vite build and dependency audit.
+- **13 captured ingestion fixtures** pass their contract audit.
+- GitHub Actions runs the backend and frontend suites on every change to `main`.
+- The shipped domain schema contains **24 Onda-owned tables** across ingestion evidence, canonical identity, and application/social data.
 
-```sh
-python3 -m venv .venv
-.venv/bin/pip install -r requirements.txt
-cp .env.example .env
-```
+[See the latest CI run →](https://github.com/tanbaydar/onda/actions) · [Inspect the database diagrams →](docs/DATABASE.md) · [Trace claims to code and tests →](docs/DATA_FLOW.md)
 
-Create a MySQL database named `danced`, set the `DANCED_DB_*` values and a development `DJANGO_SECRET_KEY` in `.env`, then run:
+The boundaries are equally important:
 
-```sh
-.venv/bin/python manage.py migrate
-.venv/bin/python manage.py runserver 127.0.0.1:8000
-```
+- Onda is a modular monolith with a scheduled external-data boundary, not a distributed streaming platform.
+- Version 1 has one implemented event provider. If that provider becomes unavailable, existing catalog and user data remain readable, but catalog updates stop.
+- Onda has not been broadly distributed or commercialized. Before broader distribution or commercial use, the source arrangement should be reassessed with Resident Advisor.
+- The current deployment is an engineering demo. Email-verification enforcement and search-engine indexing are disabled.
+- Onda is independent of and not affiliated with Resident Advisor.
 
-In another terminal:
+## Repository guide
 
-```sh
-cd frontend
-npm install
-npm run dev -- --host 127.0.0.1
-```
+| Start here | What it contains |
+|---|---|
+| [Demo](DEMO.md) | The product walkthrough and, when ready, its video commentary |
+| **How it works** | A concise explanation of the system and its engineering decisions |
+| [Documentation](docs/README.md) | Detailed ingestion, application-data, API, database, deployment, and evidence references |
 
-Open [http://127.0.0.1:5173](http://127.0.0.1:5173). The source synchronization command is operator-facing; read [the ingestion guide](docs/INGESTION.md) and [operations runbook](docs/OPERATIONS.md) before running `manage.py sync_ra`.
-
-## Current boundaries
-
-- Onda has not been released as a consumer product or commercialized. The current deployment is an engineering demo. Before broader distribution or commercial use, I intend to contact Resident Advisor and reassess the source arrangement.
-- The v1 source adapter reads a publicly reachable, unauthenticated Resident Advisor listing endpoint. It does not use credentials, cookies, CAPTCHA bypass, or challenge circumvention. Onda is not affiliated with Resident Advisor.
-- No second event provider is implemented. The canonical model limits downstream coupling, but replacement still requires integration and entity-resolution work.
-- Email-verification code exists, but enforcement and outbound transactional email are not enabled on the current demo deployment.
-- Search-engine indexing is disabled on the demo. This does not restrict access; anyone with the URL can open it.
-- Onda is independent of Resident Advisor, Letterboxd, Beli, and TMDB; those names and marks belong to their respective owners.
-
-## Repository name
-
-The project began under the internal codename **Danced** and was later named **Onda**. Stable internal identifiers such as the `DANCED_*` environment variables, database user-table name, and some historical document filenames remain intentionally unchanged; renaming them would create migration risk without changing the product.
+**Stack:** Python 3.12 · Django 6 · MySQL 8.4 · React 19 · Vite 8 · Docker Compose · Caddy · GitHub Actions
 
 ## Rights
 
 Copyright © 2026 Tan Baydar. All rights reserved.
 
-This repository is public for inspection. Apart from the limited rights needed for GitHub to host the repository and provide public-repository features such as viewing and forking, **no license is granted** to use, copy, modify, distribute, sublicense, or create derivative works from its contents. GitHub explains the effect of publishing a repository without a license in its [licensing documentation](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/licensing-a-repository).
+This repository is published for inspection. No license is granted to use, copy, modify, distribute, sublicense, or create derivative works from its contents beyond the rights GitHub requires to provide its public-repository features.
