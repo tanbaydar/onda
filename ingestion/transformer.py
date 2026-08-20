@@ -46,6 +46,7 @@ class EventDTO:
     title: str
     date_text: str
     start_time_text: str | None
+    is_ticketed: bool | None
     cover_image_url: str | None
     venue_source_id: str
     venue_name: str
@@ -139,6 +140,10 @@ def _parse_event(listing: Any) -> EventDTO:
             "event.startTime is not a string or null",
         )
 
+    is_ticketed = event.get("isTicketed")
+    if is_ticketed is not None and not isinstance(is_ticketed, bool):
+        is_ticketed = None
+
     cover_image_url = event_cover_image_url(event)
     flyer_front = event.get("flyerFront")
     if flyer_front is not None and not isinstance(flyer_front, str):
@@ -200,6 +205,7 @@ def _parse_event(listing: Any) -> EventDTO:
         title=title,
         date_text=date_text,
         start_time_text=start_time_text,
+        is_ticketed=is_ticketed,
         cover_image_url=cover_image_url,
         venue_source_id=venue_source_id,
         venue_name=venue_name,
@@ -306,6 +312,7 @@ def _upsert_event(
             title=dto.title,
             event_date=parsed_date,
             start_time=parsed_start_time,
+            is_ticketed=dto.is_ticketed,
             venue=venue,
             cover_image_url=dto.cover_image_url,
             status="active",
@@ -322,6 +329,7 @@ def _upsert_event(
         event.title = dto.title
         event.event_date = parsed_date
         event.start_time = parsed_start_time
+        event.is_ticketed = dto.is_ticketed
         event.venue = venue
         event.cover_image_url = dto.cover_image_url
         event.status = "active"
@@ -330,6 +338,7 @@ def _upsert_event(
                 "title",
                 "event_date",
                 "start_time",
+                "is_ticketed",
                 "venue",
                 "cover_image_url",
                 "status",

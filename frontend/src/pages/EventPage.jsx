@@ -12,7 +12,7 @@ import ConfirmDialog from "../components/ConfirmDialog.jsx";
 import RatingHistogram from "../components/RatingHistogram.jsx";
 import StarInput from "../components/StarInput.jsx";
 import ImageSlot from "../components/ImageSlot.jsx";
-import { eventIsPast } from "../eventTime.js";
+import { eventCanShowTicketLink, eventIsPast } from "../eventTime.js";
 import { artistPath, eventPath, venuePath } from "../entityRoutes.js";
 import EventReviewRow from "../components/EventReviewRow.jsx";
 import useCanonicalEntityRoute from "../useCanonicalEntityRoute.js";
@@ -217,6 +217,9 @@ export default function EventPage({ user, sessionReady, onAuthenticationRequired
         {isPast ? <p><Link to={venuePath(event.venue)}>{event.venue.name}</Link></p> : null}
         <p><Link to={`/discover?city_id=${event.venue.city.id}`}>{event.venue.city.name}</Link></p>
         </div>
+        {eventCanShowTicketLink(event) ? (
+          <a className="event-ticket-link" href={event.ticket_url} target="_blank" rel="noopener noreferrer">Get tickets</a>
+        ) : null}
         <section className="event-lineup">
           <h2>Lineup</h2>
           <ol>

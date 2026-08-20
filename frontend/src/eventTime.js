@@ -9,6 +9,14 @@ export function venueLocalDate(timeZone, now = new Date()) {
   return `${values.year}-${values.month}-${values.day}`;
 }
 
+export function eventCanShowTicketLink(event, now = new Date()) {
+  return Boolean(
+    event.is_ticketed === true &&
+      event.ticket_url &&
+      event.event_date >= venueLocalDate(event.venue.city.timezone, now),
+  );
+}
+
 export function eventIsPast(event, now = new Date()) {
   const parts = new Intl.DateTimeFormat("en-US", {
     timeZone: event.venue.city.timezone,

@@ -51,6 +51,7 @@ class Event(models.Model):
     title = models.CharField(max_length=500)
     event_date = models.DateField()
     start_time = models.TimeField(null=True, blank=True)
+    is_ticketed = models.BooleanField(null=True)
     venue = models.ForeignKey(
         Venue,
         db_column="venue_id",

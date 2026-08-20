@@ -1,16 +1,18 @@
 from zoneinfo import ZoneInfo
 
 from django.core.paginator import EmptyPage, Paginator
-from django.db.models import Avg, Count, Prefetch, Q
+from django.db.models import Avg, Count, OuterRef, Prefetch, Q, Subquery
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 
+from config.sources import Source
 from catalog.models import (
     Artist,
     City,
     Event,
     EventArtist,
+    EventIdentity,
     EventStatus,
     Venue,
 )
@@ -47,6 +49,7 @@ def _positive_integer(request, name, *, default=None, maximum=None):
 
 
 def _serialize_event(event):
+    ra_source_id = getattr(event, "ra_source_id", None)
     payload = {
         "id": event.id,
         "title": event.title,
@@ -54,6 +57,12 @@ def _serialize_event(event):
         "start_time": (
             event.start_time.isoformat()
             if event.start_time is not None
+            else None
+        ),
+        "is_ticketed": event.is_ticketed,
+        "ticket_url": (
+            f"https://ra.co/events/{ra_source_id}"
+            if ra_source_id is not None
             else None
         ),
         "cover_image_url": event.cover_image_url,
@@ -119,8 +128,13 @@ def _serialize_city_list_item(city):
 
 def _event_queryset():
     lineup = EventArtist.objects.select_related("artist").order_by("position")
+    ra_source_id = EventIdentity.objects.filter(
+        event=OuterRef("pk"),
+        source=Source.RA,
+    ).values("source_id")[:1]
     return (
         Event.objects.filter(status__in=VISIBLE_EVENT_STATUSES)
+        .annotate(ra_source_id=Subquery(ra_source_id))
         .select_related("venue__city")
         .prefetch_related(
             Prefetch(

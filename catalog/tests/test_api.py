@@ -8,6 +8,7 @@ from catalog.models import (
     City,
     Event,
     EventArtist,
+    EventIdentity,
     EventStatus,
     Venue,
 )
@@ -225,6 +226,8 @@ class CatalogApiTests(TestCase):
                 "title": "Today First",
                 "event_date": "2026-08-14",
                 "start_time": "23:30:00",
+                "is_ticketed": None,
+                "ticket_url": None,
                 "cover_image_url": (
                     "https://example.invalid/today-first.jpg"
                 ),
@@ -463,6 +466,27 @@ class CatalogApiTests(TestCase):
         self.assertIn("unavailable_reason", been)
         self.assertEqual(will_be_there_summary, {"active_count": 0})
         self.assertNotIn("status", detail_payload)
+
+    def test_event_ticket_url_uses_ra_identity_and_is_null_when_unmapped(self):
+        self.today_first.is_ticketed = True
+        self.today_first.save(update_fields=["is_ticketed"])
+        EventIdentity.objects.create(
+            event=self.today_first,
+            source="ra",
+            source_id="1234567",
+        )
+
+        mapped = self.client.get(f"/api/events/{self.today_first.id}/")
+        unmapped = self.client.get(f"/api/events/{self.tomorrow.id}/")
+
+        self.assertEqual(mapped.status_code, 200)
+        self.assertTrue(mapped.json()["is_ticketed"])
+        self.assertEqual(
+            mapped.json()["ticket_url"],
+            "https://ra.co/events/1234567",
+        )
+        self.assertEqual(unmapped.status_code, 200)
+        self.assertIsNone(unmapped.json()["ticket_url"])
 
     def test_hidden_event_detail_is_not_found(self):
         response = self.client.get(f"/api/events/{self.hidden.id}/")
