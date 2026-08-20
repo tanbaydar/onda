@@ -32,3 +32,7 @@ Kill the per-item overlines (WBT ATTENDANCE / FAVORITE / RATING AVERAGE / WILL B
 - Desktop identity uses the existing 160×200 artwork and one continuous content column for title, venue/date/city, lineup, rating/WBT state, and owner actions. Community/review sections align to that content column so the page does not jump between unrelated left edges.
 - Event meta inherits the 16px stack register, including the semantic `time` element; the global micro timestamp rule must not shrink event identity dates.
 - Attendee collections use the shared people-row identity grammar (26px avatar, functional name, muted handle). Pagination chrome is absent when a detail collection has only one page.
+
+## Dated delta — 2026-08-20 sparse upcoming hierarchy
+- A desktop event with no artwork collapses completely to one prose measure. Identity, lineup, WBT state, and every community section share one left edge; the absent 160×200 artwork must not leave a phantom column or narrower downstream measure.
+- Zero WBT is an empty state, not an active judgment count. Withhold the aggregate WBT block entirely and let the Public attendance section carry the quiet UI sentence “No active marks yet.” The large judgment numeral appears only when the active count is at least one. If that total is nonzero but privacy leaves the Public collection empty, the section instead says “No public marks are visible.”

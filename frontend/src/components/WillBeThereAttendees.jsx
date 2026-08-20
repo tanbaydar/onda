@@ -6,7 +6,7 @@ import { profilePath } from "../profileRoutes.js";
 import ProfileAvatar from "./ProfileAvatar.jsx";
 
 
-export default function WillBeThereAttendees({ eventId, scope, user, version }) {
+export default function WillBeThereAttendees({ eventId, scope, user, version, activeCount = null }) {
   const [page, setPage] = useState(1);
   const [retry, setRetry] = useState(0);
   const [state, setState] = useState({ loading: true, error: null, data: null });
@@ -59,7 +59,7 @@ export default function WillBeThereAttendees({ eventId, scope, user, version }) 
         </>
       ) : null}
       {state.data && state.data.results.length === 0 ? (
-        <p>No one in this section has marked Will Be There.</p>
+        <p>{isCircle ? "No one in your Circle has marked Will Be There." : activeCount === 0 ? "No active marks yet." : "No public marks are visible."}</p>
       ) : null}
       {state.data && state.data.results.length > 0 ? (
         <>

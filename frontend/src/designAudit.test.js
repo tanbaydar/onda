@@ -56,6 +56,19 @@ test("event attendee lists use the shared profile-row identity grammar", () => {
   assert.match(attendees, /className="event-attendee-row"/);
 });
 
+test("sparse upcoming events keep one hierarchy and withhold a zero WBT numeral", () => {
+  const eventPage = read("./pages/EventPage.jsx");
+  const attendees = read("./components/WillBeThereAttendees.jsx");
+  const css = read("./styles.css");
+  assert.match(eventPage, /event-page-no-artwork/);
+  assert.match(eventPage, /!isPast && wbtCount > 0 \? <div className="wbt-count">/);
+  assert.match(eventPage, /activeCount=\{wbtCount\}/);
+  assert.match(attendees, /"No active marks yet\."/);
+  assert.match(attendees, /"No public marks are visible\."/);
+  assert.match(css, /\.event-page-no-artwork>\.event-identity,\.event-page-no-artwork>section\{max-width:var\(--measure-prose\)\}/);
+  assert.match(css, /\.event-page\.event-page-no-artwork>section\{margin-left:0\}/);
+});
+
 test("venue identity presents a natural location and omits operational geography", () => {
   const venue = read("./pages/VenuePage.jsx");
   assert.equal(formatVenueLocation({ name: "Boston", region_name: "Massachusetts", country_code: "US" }), "Boston, Massachusetts · United States");
