@@ -61,7 +61,19 @@ if [[ ! "$table_count" =~ ^[0-9]+$ || "$table_count" -eq 0 ]]; then
   exit 1
 fi
 
-docker exec "$container_name" mysqlcheck \
-  --user=root --password="$restore_password" "$restore_database" >/dev/null
+check_sql="$(docker exec "$container_name" mysql \
+  --batch --skip-column-names --user=root --password="$restore_password" \
+  --execute="SELECT CONCAT('CHECK TABLE \\`', table_name, '\\`;') FROM information_schema.tables WHERE table_schema = '$restore_database' AND table_type = 'BASE TABLE';")"
+check_output="$(printf '%s\n' "$check_sql" | docker exec -i "$container_name" \
+  mysql --batch --skip-column-names --user=root \
+  --password="$restore_password" "$restore_database")"
+ok_count="$(printf '%s\n' "$check_output" | awk -F '\t' \
+  '$3 == "status" && $4 == "OK" { count += 1 } END { print count + 0 }')"
+
+if [[ "$ok_count" -ne "$table_count" ]]; then
+  echo "ERROR: table integrity check passed for $ok_count/$table_count tables" >&2
+  printf '%s\n' "$check_output" >&2
+  exit 1
+fi
 
 echo "Restore verification passed: $table_count tables checked in an isolated container"
