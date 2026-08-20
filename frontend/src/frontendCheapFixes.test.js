@@ -4,6 +4,13 @@ import test from "node:test";
 
 const read = (path) => readFileSync(new URL(path, import.meta.url), "utf8");
 
+test("document chrome uses the onda title and cache-busted favicon", () => {
+  const html = read("../index.html");
+  assert.match(html, /<title>onda<\/title>/);
+  assert.match(html, /rel="icon"[^>]+href="\/onda-favicon\.png"/);
+  assert.match(html, /rel="shortcut icon"[^>]+href="\/onda-favicon\.png"/);
+});
+
 test("the header wordmark is a router home link", () => {
   assert.match(read("./App.jsx"), /<Link className="site-wordmark" to="\/" aria-label="Onda home">/);
   assert.match(read("./App.jsx"), /<img src="\/logo.png" alt="Onda" \/>/);
