@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import DiscoverEventRow from "./DiscoverEventRow.jsx";
 import { formatEventDateTime } from "../formatEventDateTime.js";
 import { entityResultPath } from "../entityRoutes.js";
@@ -18,17 +18,16 @@ export function resultPath(type, item) {
 }
 
 function ResultRow({ type, item, onFocus }) {
-  const navigate = useNavigate();
   return (
     <li>
-      <button className="search-result-row" type="button" onFocus={onFocus} onClick={() => navigate(resultPath(type, item))}>
+      <Link className="search-result-row" to={resultPath(type, item)} onFocus={onFocus}>
         {type === "events" ? <ImageSlot name={item.title} src={item.cover_image_url} referrerPolicy="no-referrer" /> : null}
         {type === "people" ? <ProfileAvatar profile={item} small className="search-avatar" /> : null}
         <span className="search-result-copy">
           <strong>{type === "people" ? item.display_name : item.title ?? item.name}</strong>
           <small>{type === "artists" ? "Artist" : type === "venues" ? item.city.name : type === "people" ? `@${item.username}` : `${item.venue.name} · ${item.event_date}`}</small>
         </span>
-      </button>
+      </Link>
     </li>
   );
 }

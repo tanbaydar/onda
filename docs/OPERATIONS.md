@@ -18,6 +18,18 @@ test; the default is `https://$DANCED_DOMAIN` from `.env`.
 This is an on-host smoke check, not an external uptime monitor. An external monitor
 is still required to detect instance, network, DNS, and regional failures.
 
+Install the recurring five-minute check, monthly restore drill, and host-log
+rotation idempotently with:
+
+```sh
+cd /home/ubuntu/danced
+./install-operations.sh
+```
+
+The installer preserves unrelated cron entries. Container JSON logs are capped
+by Compose; host operation logs rotate daily (or at 10 MiB) with 14 retained
+rotations.
+
 ## Backup restore drill
 
 `backup.sh` validates the gzip stream while creating each dump. Periodically prove

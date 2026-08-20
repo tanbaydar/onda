@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ApiError, fetchWithCsrf } from "../api.js";
+import { savePasswordResetEmail } from "../passwordResetSession.js";
 
 export default function PasswordResetRequestPage() {
   const navigate = useNavigate();
@@ -12,7 +13,8 @@ export default function PasswordResetRequestPage() {
     event.preventDefault(); setSubmitting(true); setError(null);
     try {
       await fetchWithCsrf("/api/auth/password-reset/request/", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email }) });
-      navigate("/reset-password/confirm", { state: { email } });
+      const resetEmail = savePasswordResetEmail(email);
+      navigate("/reset-password/confirm", { state: { email: resetEmail } });
     } catch (requestError) {
       setError(requestError instanceof ApiError && requestError.data?.errors?.email ? requestError.data.errors.email.join(" ") : "The reset request could not be submitted. Try again.");
     } finally { setSubmitting(false); }

@@ -358,15 +358,20 @@ instance role is deliberately write-only, verify the uploaded object through
 **S3 → YOUR_BUCKET_NAME → danced** in the AWS console; the instance cannot read
 or list the bucket.
 
-Create durable log and lock locations:
+Install the recurring health/restore checks and host-log rotation from the
+versioned repository configuration:
 
 ```sh
-mkdir -p /home/ubuntu/danced/logs
-sudo install -d -o ubuntu -g ubuntu /var/lock/danced
-crontab -e
+./install-operations.sh
 ```
 
-Install exactly these four entries (UTC on a default Ubuntu host):
+The installer preserves every existing cron entry, adds the health check and
+monthly restore check only when absent, creates the durable log/lock locations,
+and installs `/etc/logrotate.d/danced`. It is safe to rerun after deployment.
+
+Add the backup and ingestion entries manually if they are not already present.
+
+The resulting four entries should be (UTC on a default Ubuntu host):
 
 ```cron
 15 2 * * * /usr/bin/flock -n /var/lock/danced/backup.lock /home/ubuntu/danced/backup.sh >> /home/ubuntu/danced/logs/backup.log 2>&1
@@ -380,6 +385,10 @@ hour before ingestion, the local/public smoke check runs every five minutes, and
 monthly restore drill checks the newest local dump. Do not suppress stderr: failures
 are operator alarms. Configure an external uptime monitor separately; an on-instance
 cron job cannot report that its own host is unavailable.
+
+Compose caps each container's Docker JSON logs at three 10 MiB files. Host cron
+logs rotate daily, at 10 MiB if reached sooner, and retain 14 compressed
+rotations with mode `0600`.
 
 Verify cron saved the exact entries and that each lockable command can execute:
 

@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Database dumps can contain user data. Apply a private creation mask before
+# creating either the backup directory or the dump itself.
+umask 077
+
 repo_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$repo_dir"
 
@@ -29,6 +33,7 @@ if ! docker compose exec -T db sh -c \
 fi
 
 gzip -t "$backup_file"
+chmod 0600 "$backup_file"
 
 if [[ -n "${BACKUP_BUCKET:-}" ]]; then
   destination="${BACKUP_BUCKET%/}/$(basename "$backup_file")"
