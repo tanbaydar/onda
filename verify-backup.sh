@@ -63,7 +63,7 @@ fi
 
 check_sql="$(docker exec "$container_name" mysql \
   --batch --skip-column-names --user=root --password="$restore_password" \
-  --execute="SELECT CONCAT('CHECK TABLE \\`', table_name, '\\`;') FROM information_schema.tables WHERE table_schema = '$restore_database' AND table_type = 'BASE TABLE';")"
+  --execute="SELECT CONCAT('CHECK TABLE ', table_name, ';') FROM information_schema.tables WHERE table_schema = '$restore_database' AND table_type = 'BASE TABLE';")"
 check_output="$(printf '%s\n' "$check_sql" | docker exec -i "$container_name" \
   mysql --batch --skip-column-names --user=root \
   --password="$restore_password" "$restore_database")"
