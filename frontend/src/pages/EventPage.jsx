@@ -194,13 +194,15 @@ export default function EventPage({ user, sessionReady, onAuthenticationRequired
 
   const event = state.event;
   const isPast = eventIsPast(event);
+  const hasIdentityArtwork = Boolean(event.cover_image_url || isPast);
+  const wbtCount = event.will_be_there_summary.active_count;
   const viewerHasRating = event.viewer_entry?.rating !== null && event.viewer_entry?.rating !== undefined;
   const trimmedReviewLength = reviewBody.trim().length;
   return (
-    <main className="event-page">
+    <main className={hasIdentityArtwork ? "event-page" : "event-page event-page-no-artwork"}>
       <article className={`identity event-identity ${isPast ? "event-identity-past" : "event-identity-upcoming"}`}>
         <h1>{event.title}</h1>
-        {event.cover_image_url || isPast ? <ImageSlot name={event.title} src={event.cover_image_url} alt={event.title} loading="eager" referrerPolicy="no-referrer" /> : null}
+        {hasIdentityArtwork ? <ImageSlot name={event.title} src={event.cover_image_url} alt={event.title} loading="eager" referrerPolicy="no-referrer" /> : null}
         <div className={`event-meta-stack ${isPast ? "event-meta-past" : "event-meta-upcoming"}`}>
         {!isPast ? <p><Link to={venuePath(event.venue)}>{event.venue.name}</Link></p> : null}
         <p>
@@ -227,7 +229,7 @@ export default function EventPage({ user, sessionReady, onAuthenticationRequired
             ))}
           </ol>
         </section>
-        {!isPast ? <div className="wbt-count"><span>{event.will_be_there_summary.active_count}</span><p>{event.will_be_there_summary.active_count === 0 ? "No active marks yet." : pluralize(event.will_be_there_summary.active_count, "active mark")}</p></div> : null}
+        {!isPast && wbtCount > 0 ? <div className="wbt-count"><span>{wbtCount}</span><p>{pluralize(wbtCount, "active mark")}</p></div> : null}
         {isPast ? <div className="event-rating-block">
           {event.rating_summary.state === "available" ? (
             <><p className="rating-value">{event.rating_summary.average.toFixed(1)}</p><RatingHistogram buckets={event.rating_distribution.buckets} /><p>{`Average from ${pluralize(event.rating_summary.count, "rating")}.`}</p></>
@@ -262,6 +264,7 @@ export default function EventPage({ user, sessionReady, onAuthenticationRequired
         scope="public"
         user={user}
         version={willBeThereVersion}
+        activeCount={wbtCount}
       /></> : null}
       {isPast ? <YourCircle
         eventId={event.id}
