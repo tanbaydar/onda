@@ -249,4 +249,3 @@ The distinction prevents duplicated state where the source data already provides
 | First-party JSON views | `backend/users/views.py` |
 | Home query construction | `backend/users/home_feed.py` |
 | Frontend API boundary | `frontend/src/api.js` |
-| Detailed code-and-test evidence | [`DATA_FLOW.md`](DATA_FLOW.md) |

@@ -442,25 +442,9 @@ The schema uses targeted indexes rather than indexing every foreign key twice:
 
 Composite primary/unique keys also provide useful access paths for relationship existence checks. Query-count and cursor behavior for the most complex read—the six-branch Home feed—are covered separately in [APPLICATION_DATA.md](APPLICATION_DATA.md#home-is-a-projection-not-a-ledger).
 
-## Blueprint versus shipped schema
-
-The repository's `onda.dbml` and generated files under `docs/erd/` are an earlier, frozen **design blueprint**. They remain valuable because they preserve design history and can be regenerated, but they contain three planned tables that are not implemented:
-
-| Blueprint table | Shipped behavior instead |
-|---|---|
-| `USERNAME_HOLD` | No username-hold table is shipped. |
-| `REPORT` | No in-app reporting table/workflow is shipped. |
-| `RECENT_SEARCH` | Recent searches stay in browser `localStorage`. |
-
-Therefore:
-
-- blueprint/domain tables: 27;
-- currently shipped Onda-owned tables: 24;
-- Django framework tables: present in the physical database but intentionally omitted from both counts above.
-
-This document is the implementation ERD for the shipped system. The original blueprint and [ERD review record](ERD_REVIEW.md) remain available for auditing how the design changed.
-
 ## Source of truth
+
+The diagrams above cover the 24 Onda-owned tables that are currently shipped. Django framework tables are present in the physical database but omitted because they do not define Onda's domain model. Unshipped design ideas are not included.
 
 | Schema area | Models | Migration history |
 |---|---|---|
