@@ -77,11 +77,11 @@ export default function SearchPage() {
     <main className="search-page" onKeyDown={onKeyDown}>
       <h1>Search</h1>
       <input className="search-primary" type="search" value={query} autoFocus aria-label="Search Danced" onChange={(event) => { setQuery(event.target.value); setActiveIndex(-1); }} />
-      <nav className="search-scopes" aria-label="Search scope">{SCOPES.map(([value, label]) => <button key={value} className={scope === value ? "active" : ""} type="button" onClick={() => changeScope(value)}>{label}</button>)}</nav>
+      <nav className="search-scopes" aria-label="Search scope">{SCOPES.map(([value, label]) => <button key={value} className={scope === value ? "active" : ""} type="button" aria-pressed={scope === value} onClick={() => changeScope(value)}>{label}</button>)}</nav>
       {!trimmed ? <section className="recent-searches"><h2>Recent searches</h2>{recent.length ? <><ul>{recent.map((item) => <li key={item}><button type="button" onClick={() => setQuery(item)}>{item}</button><button type="button" aria-label={`Remove ${item}`} onClick={() => removeRecent(item)}>×</button></li>)}</ul><button className="quiet-action" type="button" onClick={() => { localStorage.removeItem(RECENT_SEARCHES_KEY); setRecent([]); }}>Clear all</button></> : <p>No recent searches.</p>}</section> : null}
-      {state.loading ? <p className="search-status">Searching…</p> : null}
+      {state.loading ? <p className="search-status" role="status" aria-live="polite">Searching…</p> : null}
       {state.error ? <p role="alert">Search could not be loaded.</p> : null}
-      {trimmed && state.data && resultCount === 0 ? <p className="search-empty">No results for &quot;{trimmed}&quot;.</p> : null}
+      {trimmed && state.data && resultCount === 0 ? <p className="search-empty" role="status" aria-live="polite">No results for &quot;{trimmed}&quot;.</p> : null}
       {state.data && resultCount ? <SearchResults data={state.data} scope={scope} activeIndex={activeIndex} onActiveIndex={setActiveIndex} onResultOpen={commitRecent} onViewAll={changeScope} /> : null}
       {scope !== "all" && state.data?.next_cursor ? <button className="quiet-control search-load-more" type="button" disabled={loadingMore} onClick={loadMore}>{loadingMore ? "Loading…" : "Load more"}</button> : null}
     </main>

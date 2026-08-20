@@ -1,0 +1,12 @@
+__LOGS_DIR__/*.log {
+    daily
+    rotate 14
+    size 10M
+    compress
+    delaycompress
+    missingok
+    notifempty
+    copytruncate
+    su __LOG_OWNER__ __LOG_GROUP__
+    create 0600 __LOG_OWNER__ __LOG_GROUP__
+}

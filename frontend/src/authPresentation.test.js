@@ -30,3 +30,20 @@ test("auth CSS and page sources contain the danger register and one code field p
   assert.equal((verify.match(/auth-code-input/g) ?? []).length, 1);
   assert.equal((reset.match(/auth-code-input/g) ?? []).length, 1);
 });
+
+test("password reset request opens the code form without an intermediate action", () => {
+  const request = readFileSync(new URL("./pages/PasswordResetRequestPage.jsx", import.meta.url), "utf8");
+  assert.match(request, /await fetchWithCsrf[\s\S]*savePasswordResetEmail\(email\)[\s\S]*navigate\("\/reset-password\/confirm", \{ state: \{ email: resetEmail \} \}\)/);
+  assert.doesNotMatch(request, />Enter code</);
+  assert.doesNotMatch(request, /setAccepted/);
+});
+
+test("password reset confirmation supports refresh, safe email re-entry, resend, and cleanup", () => {
+  const reset = readFileSync(new URL("./pages/PasswordResetFormPage.jsx", import.meta.url), "utf8");
+  assert.match(reset, /location\.state\?\.email \|\| readPasswordResetEmail\(\)/);
+  assert.match(reset, /if \(!resetEmail\)[\s\S]*Enter your email\./);
+  assert.match(reset, /if \(!email\)[\s\S]*onSubmit=\{enterEmail\}/);
+  assert.match(reset, /onClick=\{resendCode\}[\s\S]*>Resend code</);
+  assert.match(reset, /If an account exists, a code is on its way\./);
+  assert.match(reset, /await fetchWithCsrf\("\/api\/auth\/password-reset\/confirm\/[\s\S]*clearPasswordResetEmail\(\)/);
+});
