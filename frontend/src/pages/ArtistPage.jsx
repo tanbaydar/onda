@@ -21,7 +21,9 @@ export default function ArtistPage({ user, sessionReady }) {
 
   useEffect(() => {
     const controller = new AbortController();
-    setState({ loading: true, error: null, artist: null, notFound: false });
+    setState((current) => current.artist?.id === artistId
+      ? { ...current, loading: false, error: null, notFound: false }
+      : { loading: true, error: null, artist: null, notFound: false });
     if (!sessionReady) return () => controller.abort();
     if (artistId === null) {
       setState({ loading: false, error: null, artist: null, notFound: true });
@@ -35,15 +37,28 @@ export default function ArtistPage({ user, sessionReady }) {
         if (error.name === "AbortError") {
           return;
         }
-        setState({
-          loading: false,
-          error: error.status === 404 ? null : error,
-          artist: null,
-          notFound: error instanceof ApiError && error.status === 404,
-        });
+        setState((current) => current.artist?.id === artistId && error.status !== 404
+          ? { ...current, loading: false, error: null, notFound: false }
+          : {
+              loading: false,
+              error: error.status === 404 ? null : error,
+              artist: null,
+              notFound: error instanceof ApiError && error.status === 404,
+            });
       });
     return () => controller.abort();
   }, [artistId, retry, sessionReady, user?.id]);
+
+  function changeFavorite(nextFavorite) {
+    if (!nextFavorite) {
+      setRetry((value) => value + 1);
+      return;
+    }
+    setState((current) => current.artist ? {
+      ...current,
+      artist: { ...current.artist, viewer_favorite: nextFavorite },
+    } : current);
+  }
 
   if (state.loading) {
     return (
@@ -81,7 +96,7 @@ export default function ArtistPage({ user, sessionReady }) {
         <ArtistAvatar artist={artist} loading="eager" />
         <div className="catalog-identity-copy">
           <h1>{artist.name}</h1>
-          {user ? <FavoriteControl compact path={`/api/artists/${artist.id}/favorite/`} state={artist.viewer_favorite} onChanged={() => setRetry((value) => value + 1)} /> : null}
+          {user ? <FavoriteControl compact path={`/api/artists/${artist.id}/favorite/`} state={artist.viewer_favorite} onChanged={changeFavorite} /> : null}
         </div>
       </article>
       <EventList

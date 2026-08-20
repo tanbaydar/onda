@@ -83,12 +83,12 @@ def _code_hash(user_id, purpose, code):
 def _email_copy(purpose, code):
     if purpose == AccountCodePurpose.EMAIL_VERIFICATION:
         return (
-            "Your Onda verification code",
-            f"Your Onda email verification code is {code}. It expires in 15 minutes.",
+            "Your Onda App verification code",
+            f"Your Onda App email verification code is {code}. It expires in 15 minutes.",
         )
     return (
-        "Your Onda password reset code",
-        f"Your Onda password reset code is {code}. It expires in 15 minutes.",
+        "Your Onda App password reset code",
+        f"Your Onda App password reset code is {code}. It expires in 15 minutes.",
     )
 
 

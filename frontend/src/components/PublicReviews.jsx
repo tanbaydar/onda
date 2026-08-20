@@ -20,12 +20,15 @@ export default function PublicReviews({
   const [page, setPage] = useState(1);
   const [retry, setRetry] = useState(0);
   const [actionError, setActionError] = useState(null);
+  const [pendingLikes, setPendingLikes] = useState(() => new Set());
   const [state, setState] = useState({ loading: true, error: null, data: null });
 
   useEffect(() => {
     const controller = new AbortController();
     const query = new URLSearchParams({ sort, page: String(page) });
-    setState({ loading: true, error: null, data: null });
+    setState((current) => current.data
+      ? { ...current, loading: false, error: null }
+      : { loading: true, error: null, data: null });
     fetchJson(`/api/events/${eventId}/reviews/?${query}`, {
       cache: "no-store",
       signal: controller.signal,
@@ -33,7 +36,9 @@ export default function PublicReviews({
       .then((data) => setState({ loading: false, error: null, data }))
       .catch((error) => {
         if (error.name !== "AbortError") {
-          setState({ loading: false, error, data: null });
+          setState((current) => current.data
+            ? { ...current, loading: false, error }
+            : { loading: false, error, data: null });
         }
       });
     return () => controller.abort();
@@ -41,10 +46,24 @@ export default function PublicReviews({
 
   async function changeLike(review) {
     setActionError(null);
+    setPendingLikes((current) => new Set(current).add(review.id));
     try {
-      await fetchWithCsrf(`/api/reviews/${review.id}/like/`, {
-        method: review.viewer_has_liked ? "DELETE" : "POST",
+      const adding = !review.viewer_has_liked;
+      const response = await fetchWithCsrf(`/api/reviews/${review.id}/like/`, {
+        method: adding ? "POST" : "DELETE",
       });
+      const nextLikeCount = adding
+        ? response?.like_count ?? review.like_count + 1
+        : Math.max(0, review.like_count - 1);
+      setState((current) => current.data ? {
+        ...current,
+        data: {
+          ...current.data,
+          results: current.data.results.map((item) => item.id === review.id
+            ? { ...item, viewer_has_liked: adding, like_count: nextLikeCount }
+            : item),
+        },
+      } : current);
       onSocialChanged();
     } catch (error) {
       if (error.status === 401 || error.status === 403) {
@@ -55,6 +74,12 @@ export default function PublicReviews({
       } else {
         setActionError("The review like could not be changed.");
       }
+    } finally {
+      setPendingLikes((current) => {
+        const next = new Set(current);
+        next.delete(review.id);
+        return next;
+      });
     }
   }
 
@@ -80,7 +105,7 @@ export default function PublicReviews({
           <ol>
             {state.data.results.map((review) => (
               <li key={review.id}>
-                <EventReviewRow person={review.author} rating={review.rating} review={review} onLike={!user || review.author.id !== user.id ? () => changeLike(review) : null} />
+                <EventReviewRow person={review.author} rating={review.rating} review={review} onLike={!user || review.author.id !== user.id ? () => changeLike(review) : null} likePending={pendingLikes.has(review.id)} />
               </li>
             ))}
           </ol>

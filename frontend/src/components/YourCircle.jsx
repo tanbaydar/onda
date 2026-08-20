@@ -15,7 +15,12 @@ export default function YourCircle({
   const [retry, setRetry] = useState(0);
   const [actionError, setActionError] = useState(null);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [pendingLikes, setPendingLikes] = useState(() => new Set());
   const [state, setState] = useState({ loading: true, error: null, data: null });
+
+  useEffect(() => {
+    setPage(1);
+  }, [eventId, version]);
 
   useEffect(() => {
     if (!user) {
@@ -24,16 +29,20 @@ export default function YourCircle({
     }
     const controller = new AbortController();
     const query = new URLSearchParams({ page: String(page), page_size: "10" });
-    if (page === 1) setState({ loading: true, error: null, data: null });
+    if (page === 1) setState((current) => current.data
+      ? { ...current, loading: false, error: null }
+      : { loading: true, error: null, data: null });
     else setLoadingMore(true);
     fetchJson(`/api/events/${eventId}/circle/?${query}`, {
       cache: "no-store",
       signal: controller.signal,
     })
-      .then((data) => { setState((current) => ({ loading: false, error: null, data: page === 1 || !current.data ? data : { ...data, results: [...current.data.results, ...data.results] } })); setLoadingMore(false); })
+      .then((data) => { setState((current) => ({ loading: false, error: null, data: page === 1 || !current.data ? data : { ...data, results: [...current.data.results.filter((existing) => !data.results.some((item) => item.id === existing.id)), ...data.results] } })); setLoadingMore(false); })
       .catch((error) => {
         if (error.name !== "AbortError") {
-          setState({ loading: false, error, data: null });
+          setState((current) => current.data
+            ? { ...current, loading: false, error }
+            : { loading: false, error, data: null });
         }
       })
       .finally(() => setLoadingMore(false));
@@ -42,10 +51,24 @@ export default function YourCircle({
 
   async function changeLike(review) {
     setActionError(null);
+    setPendingLikes((current) => new Set(current).add(review.id));
     try {
-      await fetchWithCsrf(`/api/reviews/${review.id}/like/`, {
-        method: review.viewer_has_liked ? "DELETE" : "POST",
+      const adding = !review.viewer_has_liked;
+      const response = await fetchWithCsrf(`/api/reviews/${review.id}/like/`, {
+        method: adding ? "POST" : "DELETE",
       });
+      const nextLikeCount = adding
+        ? response?.like_count ?? review.like_count + 1
+        : Math.max(0, review.like_count - 1);
+      setState((current) => current.data ? {
+        ...current,
+        data: {
+          ...current.data,
+          results: current.data.results.map((entry) => entry.review?.id === review.id
+            ? { ...entry, review: { ...entry.review, viewer_has_liked: adding, like_count: nextLikeCount } }
+            : entry),
+        },
+      } : current);
       onSocialChanged();
     } catch (error) {
       if (error.status === 401 || error.status === 403) {
@@ -56,6 +79,12 @@ export default function YourCircle({
       } else {
         setActionError("The review like could not be changed.");
       }
+    } finally {
+      setPendingLikes((current) => {
+        const next = new Set(current);
+        next.delete(review.id);
+        return next;
+      });
     }
   }
 
@@ -97,7 +126,7 @@ export default function YourCircle({
             <ol>
               {state.data.results.map((entry) => (
                 <li key={entry.id}>
-                  <EventReviewRow person={entry.user} rating={entry.rating} review={entry.review} ratedAt={entry.rated_at} onLike={entry.review ? () => changeLike(entry.review) : null} />
+                  <EventReviewRow person={entry.user} rating={entry.rating} review={entry.review} ratedAt={entry.rated_at} onLike={entry.review ? () => changeLike(entry.review) : null} likePending={pendingLikes.has(entry.review?.id)} />
                 </li>
               ))}
             </ol>

@@ -43,6 +43,17 @@ test("artist detail and search rows share a circular failed-image placeholder", 
   assert.match(css, /\.artist-avatar\{[^}]*border-radius:50%/);
 });
 
+test("profile favorites keep row-scale artwork and a heart-only owner control", () => {
+  const profile = read("./pages/ProfilePage.jsx");
+  const favorite = read("./components/FavoriteControl.jsx");
+  const css = read("./styles.css");
+  assert.match(profile, /className="profile-favorite-link"/);
+  assert.match(profile, /className="profile-favorite-copy"/);
+  assert.match(favorite, /if \(row\) return <div className="profile-favorite-control">/);
+  assert.match(css, /\.profile-favorite-list \.artist-avatar\{width:var\(--thumb\);height:var\(--thumb\)\}/);
+  assert.match(css, /\.profile-favorite-link\{[^}]*min-height:var\(--thumb-h\)/);
+});
+
 test("one-page detail collections do not render inert pagination chrome", () => {
   assert.match(read("./components/EventList.jsx"), /pagination\.total_pages > 1 \? <nav/);
   assert.match(read("./components/PublicReviews.jsx"), /pagination\.total_pages > 1 \? <nav/);
