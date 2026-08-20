@@ -2,6 +2,10 @@
 	email {$CADDY_ACME_EMAIL}
 }
 
+www.{$DANCED_DOMAIN} {
+	redir https://{$DANCED_DOMAIN}{uri} permanent
+}
+
 {$DANCED_DOMAIN} {
 	header X-Robots-Tag "noindex"
 
