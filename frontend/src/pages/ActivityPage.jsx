@@ -1,30 +1,18 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 import { fetchJson, fetchWithCsrf } from "../api.js";
+import ProfileAvatar from "../components/ProfileAvatar.jsx";
+import { activityNotificationPath, activityNotificationVerb, followRequestKey } from "../activityPresentation.js";
 import { compactRelativeTime } from "../homeFeedPresentation.js";
-import { eventPath } from "../entityRoutes.js";
-
-
-function notificationText(notification) {
-  if (notification.type === "review_like") {
-    return `${notification.actor.display_name} liked your review.`;
-  }
-  if (notification.type === "follow") {
-    return `${notification.actor.display_name} followed you.`;
-  }
-  if (notification.type === "follow_request") {
-    return `${notification.actor.display_name} requested to follow you.`;
-  }
-  return `${notification.actor.display_name} accepted your follow request.`;
-}
 
 
 export default function ActivityPage({ session }) {
-  const navigate = useNavigate();
   const [retry, setRetry] = useState(0);
   const [loadingMore, setLoadingMore] = useState(false);
   const [actionError, setActionError] = useState(null);
+  const [pendingRequestKeys, setPendingRequestKeys] = useState(() => new Set());
+  const [requestActions, setRequestActions] = useState({});
   const [state, setState] = useState({
     loading: true,
     error: null,
@@ -41,16 +29,19 @@ export default function ActivityPage({ session }) {
     setState({ loading: true, error: null, results: [], nextCursor: null });
     Promise.all([
       fetchJson("/api/me/notifications/", { signal: controller.signal }),
+      fetchJson("/api/me/follow-requests/?page_size=100", { signal: controller.signal, cache: "no-store" }),
       fetchWithCsrf("/api/me/notifications/read-all/", { method: "POST", signal: controller.signal }),
     ])
-      .then(([data]) =>
+      .then(([data, requests]) => {
+        setPendingRequestKeys(new Set(requests.results.map(followRequestKey)));
+        setRequestActions({});
         setState({
           loading: false,
           error: null,
           results: data.results,
           nextCursor: data.next_cursor,
-        }),
-      )
+        });
+      })
       .catch((error) => {
         if (error.name !== "AbortError") {
           setState({ loading: false, error, results: [], nextCursor: null });
@@ -77,8 +68,45 @@ export default function ActivityPage({ session }) {
     }
   }
 
-  function openNotification(notification) {
-    navigate(notification.review ? eventPath({ id: notification.review.event_id, title: notification.review.event_title }) : `/u/${notification.actor.username}`);
+  async function decideRequest(notification, action) {
+    setActionError(null);
+    setRequestActions((current) => ({
+      ...current,
+      [notification.id]: { pending: true, action, result: null, error: null },
+    }));
+    try {
+      await fetchWithCsrf(`/api/me/follow-requests/${notification.actor.id}/${action}/`, { method: "POST" });
+      setPendingRequestKeys((current) => {
+        const next = new Set(current);
+        next.delete(followRequestKey(notification));
+        return next;
+      });
+      setRequestActions((current) => ({
+        ...current,
+        [notification.id]: {
+          pending: false,
+          result: action === "accept" ? "Approved" : "Deleted",
+          error: null,
+        },
+      }));
+    } catch (error) {
+      if (error.status === 404) {
+        setPendingRequestKeys((current) => {
+          const next = new Set(current);
+          next.delete(followRequestKey(notification));
+          return next;
+        });
+        setRequestActions((current) => ({
+          ...current,
+          [notification.id]: { pending: false, result: "No longer pending", error: null },
+        }));
+        return;
+      }
+      setRequestActions((current) => ({
+        ...current,
+        [notification.id]: { pending: false, result: null, error: "Request could not be updated. Try again." },
+      }));
+    }
   }
 
   if (session.loading) {
@@ -107,14 +135,28 @@ export default function ActivityPage({ session }) {
       {state.results.length > 0 ? (
         <>
           <ol className="activity-list">
-            {state.results.map((notification) => (
-              <li key={notification.id}>
-                <button className={`activity-row ${notification.read_at ? "read" : "unread"}`} type="button" onClick={() => openNotification(notification)}>
-                  <p><strong>{notificationText(notification)}</strong></p>
-                  <p>@{notification.actor.username} · <time dateTime={notification.created_at}>{compactRelativeTime(notification.created_at)}</time></p>
-                </button>
-              </li>
-            ))}
+            {state.results.map((notification) => {
+              const requestAction = requestActions[notification.id];
+              const actionable = notification.type === "follow_request" && pendingRequestKeys.has(followRequestKey(notification));
+              return (
+                <li className="activity-item" key={notification.id}>
+                  <Link className={`activity-row ${notification.read_at ? "read" : "unread"}`} to={activityNotificationPath(notification)}>
+                    <ProfileAvatar profile={notification.actor} small className="activity-avatar" />
+                    <span className="activity-row-copy">
+                      <span className="activity-message"><strong>{notification.actor.display_name}</strong> {activityNotificationVerb(notification)}</span>
+                      <span className="activity-meta">@{notification.actor.username} · <time dateTime={notification.created_at}>{compactRelativeTime(notification.created_at)}</time></span>
+                    </span>
+                  </Link>
+                  {actionable ? (
+                    <span className="activity-request-actions" aria-label={`Follow request from ${notification.actor.display_name}`}>
+                      <button className="activity-request-approve" type="button" disabled={requestAction?.pending} aria-busy={requestAction?.pending && requestAction.action === "accept"} onClick={() => decideRequest(notification, "accept")}>Approve</button>
+                      <button className="activity-request-delete" type="button" disabled={requestAction?.pending} aria-busy={requestAction?.pending && requestAction.action === "decline"} onClick={() => decideRequest(notification, "decline")}>Delete</button>
+                    </span>
+                  ) : requestAction?.result ? <span className="activity-request-result" role="status">{requestAction.result}</span> : null}
+                  {requestAction?.error ? <p className="activity-request-error" role="alert">{requestAction.error}</p> : null}
+                </li>
+              );
+            })}
           </ol>
           {state.nextCursor ? (
             <button type="button" disabled={loadingMore} onClick={loadMore}>
