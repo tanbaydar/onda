@@ -782,6 +782,22 @@ class TransformerCrossCuttingContractTests(TransformerHarness):
             "https://images.ra.co/front.jpg",
         )
 
+    def test_artwork_mapping_rejects_an_unsafe_direct_flyer_url(self):
+        event = {
+            "flyerFront": "javascript:alert(1)",
+            "images": [
+                {
+                    "type": "FLYERFRONT",
+                    "filename": "https://images.ra.co/fallback.jpg",
+                }
+            ],
+        }
+
+        self.assertEqual(
+            event_cover_image_url(event),
+            "https://images.ra.co/fallback.jpg",
+        )
+
     def test_artwork_mapping_returns_null_without_a_valid_front(self):
         self.assertIsNone(event_cover_image_url({"flyerFront": None, "images": None}))
         self.assertIsNone(

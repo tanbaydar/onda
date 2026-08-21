@@ -216,5 +216,10 @@ class HomeFeedContractTests(TestCase):
     def test_guest_and_invalid_cursor_errors_are_field_keyed(self):
         self.assertEqual(self.client_for().get("/api/me/home/").status_code, 401)
         invalid = self.client_for(self.viewer).get("/api/me/home/", {"cursor": "bad"})
+        oversized = self.client_for(self.viewer).get(
+            "/api/me/home/", {"cursor": "a" * 513}
+        )
         self.assertEqual(invalid.status_code, 400)
+        self.assertEqual(oversized.status_code, 400)
         self.assertIn("cursor", invalid.json()["errors"])
+        self.assertIn("cursor", oversized.json()["errors"])

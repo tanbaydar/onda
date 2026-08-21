@@ -413,6 +413,9 @@ class SocialApiContractTests(TestCase):
             "/api/me/notifications/",
             {"page_size": 1, "cursor": listed.json()["next_cursor"]},
         ).json()
+        oversized_cursor = client.get(
+            "/api/me/notifications/", {"cursor": "a" * 513}
+        )
         first_id = results[0]["id"]
         first = self.request(client, "post", f"/api/me/notifications/{first_id}/read/")
         again = self.request(client, "post", f"/api/me/notifications/{first_id}/read/")
@@ -423,6 +426,8 @@ class SocialApiContractTests(TestCase):
             sorted([item["id"] for item in results], reverse=True),
         )
         self.assertNotEqual(results[0]["id"], next_page["results"][0]["id"])
+        self.assertEqual(oversized_cursor.status_code, 400)
+        self.assertEqual(oversized_cursor.json(), {"error": "cursor is invalid"})
         self.assertEqual(
             first.json()["notification"]["read_at"],
             again.json()["notification"]["read_at"],

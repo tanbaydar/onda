@@ -80,7 +80,7 @@ The technical terms describe concrete behavior:
 
 | Term | What Onda actually does |
 |---|---|
-| **Raw evidence** | Stores every terminal fetch result before parsing it, including malformed bodies and transport failures. “What arrived” remains separate from “what Onda concluded.” |
+| **Raw evidence** | Stores each bounded terminal fetch result before payload parsing, including malformed bodies and transport failures. Oversized responses are refused and recorded as run failures. “What arrived” remains separate from “what Onda concluded.” |
 | **Validation and quarantine** | Evaluates each event independently. A malformed event is rejected with a reason while valid siblings from the same page continue. Onda does not invent missing artists, repair dates, or admit a partial event graph. |
 | **Per-observation transaction** | The venue, artists, event, identity mappings, and ordered lineup commit together—or all roll back. A failure cannot leave half an event in the catalog. |
 | **Idempotency** | Replaying the same provider identity updates the same canonical row instead of creating a duplicate. Rejection records are also uniquely keyed so recovery does not duplicate them. |
@@ -186,11 +186,11 @@ This is operational evidence, not an internet-scale claim. The health probe writ
 
 The current verification baseline is reproducible from the repository:
 
-- **239 Django tests** pass against MySQL.
-- **98 frontend tests** pass with Node's test runner, followed by a production Vite build and dependency audit.
+- **262 Django tests** pass against MySQL.
+- **110 frontend tests** pass with Node's test runner, followed by a production Vite build and dependency audit.
 - **13 synthetic ingestion fixtures** exercise successful, malformed, duplicate, paginated, and lifecycle-sensitive observations.
-- GitHub Actions runs the backend and frontend suites on every change to `main`.
-- The shipped domain schema contains **24 Onda-owned tables** across ingestion evidence, canonical identity, and application/social data.
+- GitHub Actions runs backend, frontend, dependency, secret, configuration, and production-image checks on every change to `main`.
+- The shipped domain schema contains **25 Onda-owned tables** across ingestion evidence, canonical identity, and application/social data.
 
 [See the latest CI run →](https://github.com/tanbaydar/onda/actions) · [Inspect the database diagrams →](docs/DATABASE.md) · [Browse the ingestion tests →](backend/ingestion/tests/)
 
@@ -199,7 +199,7 @@ The boundaries are equally important:
 - Onda is a modular monolith with a scheduled external-data boundary, not a distributed streaming platform.
 - Version 1 has one implemented event provider. If that provider becomes unavailable, existing catalog and user data remain readable, but catalog updates stop.
 - Onda has not been broadly distributed or commercialized. Before broader distribution or commercial use, the source arrangement should be reassessed with Resident Advisor.
-- The current deployment is an engineering demo. Email-verification enforcement and search-engine indexing are disabled.
+- The deployment is an engineering demo, not a distributed consumer service. Production defaults to verified accounts, rejects log-only email delivery, and disables search-engine indexing.
 - Onda is independent of and not affiliated with Resident Advisor.
 
 ## Repository guide

@@ -11,6 +11,8 @@ from users.models import FollowStatus, UserStatus
 SCOPES = ("all", "events", "artists", "venues", "people")
 GROUP_LIMIT = 5
 PAGE_SIZE = 20
+MAX_QUERY_LENGTH = 100
+MAX_OFFSET = 10_000
 
 
 def _rank(field, query):
@@ -118,6 +120,11 @@ def search(request):
     scope = request.GET.get("scope", "all")
     if len(query) < 1:
         return JsonResponse({"errors": {"q": ["Enter at least one character."]}}, status=400)
+    if len(query) > MAX_QUERY_LENGTH:
+        return JsonResponse(
+            {"errors": {"q": [f"Enter at most {MAX_QUERY_LENGTH} characters."]}},
+            status=400,
+        )
     if scope not in SCOPES:
         return JsonResponse({"errors": {"scope": ["Invalid search scope."]}}, status=400)
     try:
@@ -125,7 +132,7 @@ def search(request):
         city_id = int(request.GET["city_id"]) if "city_id" in request.GET else None
     except (TypeError, ValueError):
         return JsonResponse({"errors": {"cursor": ["Invalid search cursor."]}}, status=400)
-    if offset < 0:
+    if offset < 0 or offset > MAX_OFFSET:
         return JsonResponse({"errors": {"cursor": ["Invalid search cursor."]}}, status=400)
 
     if scope == "all":

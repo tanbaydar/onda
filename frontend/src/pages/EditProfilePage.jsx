@@ -91,7 +91,7 @@ export default function EditProfilePage({ session }) {
     setMessage(null);
     setSaving(true);
     try {
-      await fetchWithCsrf("/api/me/profile/", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ display_name: form.display_name, avatar: form.avatar || null, bio: form.bio, home_city_id: form.home_city_id === "" ? null : Number(form.home_city_id) }) });
+      await fetchWithCsrf("/api/me/profile/", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ display_name: form.display_name, bio: form.bio, home_city_id: form.home_city_id === "" ? null : Number(form.home_city_id) }) });
       if (form.is_private !== state.data.account.is_private) await fetchWithCsrf("/api/me/privacy/", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ is_private: form.is_private }) });
       navigate(profilePath(session.user.username));
     } catch (error) {

@@ -133,12 +133,15 @@ sequenceDiagram
 | Retry statuses | 408, 429, 500, 502, 503, 504 | Only expected transient classes retry. |
 | Backoff | Honors `Retry-After`; otherwise full jitter from zero to an exponential ceiling (1 second after attempt 1, 2 seconds after attempt 2; implementation cap 8 seconds) | Responds to throttling without synchronized retry bursts. |
 | Run budget | 1,000 request attempts, including retries | A pagination anomaly cannot produce unbounded traffic. |
+| Network boundary | One fixed HTTPS endpoint; redirects must retain the exact origin | The adapter cannot be redirected to another host or a cloud metadata address. |
+| Response ceiling | 2 MiB per response | A malfunctioning source cannot force an unbounded in-memory read. |
+| Archive budget | 100 MiB of encoded response bodies per run | A run stops before an anomalous source can fill database storage. |
 
 The v1 adapter calls a publicly reachable, unauthenticated Resident Advisor GraphQL listing endpoint using a captured request shape. It uses no account credentials, cookies, CAPTCHA bypass, challenge circumvention, or per-user requests.
 
 ## Evidence is stored before it is judged
 
-For every requested page, the runner creates `RAW_INGEST` from the **terminal fetch result before response validation**. It records:
+For every response inside those safety ceilings, the runner creates `RAW_INGEST` from the **terminal fetch result before payload validation**. It records:
 
 - the tracked source page and sync run;
 - requested date window, page number, and page size;
@@ -146,7 +149,7 @@ For every requested page, the runner creates `RAW_INGEST` from the **terminal fe
 - fetch time;
 - processing status: `pending`, `processed`, or `failed`.
 
-A transport failure is evidence too: it is archived with a null status/body. A malformed HTML body returned under HTTP 200 stays intact when processing marks the row failed. This makes acquisition replayable and separates “what was received” from “what Onda concluded.”
+A transport failure is evidence too: it is archived with a null status/body. A malformed HTML body returned under HTTP 200 stays intact when processing marks the row failed. An over-limit body is deliberately not retained; the run records the named ceiling failure instead. This makes ordinary acquisition replayable without allowing evidence storage itself to become unbounded, and separates “what was received” from “what Onda concluded.”
 
 The raw evidence relationships use restrictive deletion behavior. A run or seed cannot be casually deleted through a cascade that also erases the response history.
 
@@ -260,6 +263,7 @@ The captured RA contract has no structured cancellation field. Onda does not gue
 |---|---|---|
 | Advisory lock already held | Existing run and catalog state | Second run; no duplicate `SYNC_RUN` row |
 | Transport/HTTP failure | Terminal fetch evidence and run diagnostics | Completeness and absence reconciliation |
+| Response or archive ceiling reached | Existing evidence and run diagnostics | Oversized body retention, completeness, and absence reconciliation |
 | Whole payload malformed | Exact archived response body | Every observation on that page |
 | One event malformed | Valid siblings and a rejection record | Partial writes for that event only |
 | Missing provider event ID | Wrapper count and rejection evidence | Completeness for the seed |
@@ -301,7 +305,7 @@ The React application, user tables, and most catalog endpoints should not need p
 As verified on **August 20, 2026**:
 
 - 13 synthetic JSON contracts exercise the ingestion boundary;
-- the full 239-test Django suite passed against MySQL;
+- the full 262-test Django suite passed against MySQL;
 - production scheduled the sync once per night under a host-level `flock`, in addition to the MySQL advisory lock;
 - the most recent completed run inspected was a two-city backfill with 2/2 seeds successful, 1,919 observations admitted, 1,128 quarantined, and 0 dropped;
 - New York City and Boston both had successful source timestamps that day.

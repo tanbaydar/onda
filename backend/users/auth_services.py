@@ -195,7 +195,6 @@ def _delete_user_sessions(user_id):
 
 
 def reset_password(*, user, code, password):
-    password_validation.validate_password(password, user=user)
     with transaction.atomic():
         locked_user = User.objects.select_for_update().get(pk=user.pk)
         _reset_at, error = _consume_account_code_locked(
@@ -204,6 +203,10 @@ def reset_password(*, user, code, password):
             code=code,
         )
         if error is None:
+            # Account-specific validation happens only after the reset code has
+            # been proven. Raising here rolls back code consumption, while an
+            # invalid code cannot reveal attributes of an existing account.
+            password_validation.validate_password(password, user=locked_user)
             locked_user.set_password(password)
             locked_user.save(update_fields=("password",))
             _delete_user_sessions(locked_user.pk)

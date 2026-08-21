@@ -5,6 +5,7 @@ from django.db.models import Avg, Count, Prefetch, Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
+from django.views.decorators.http import require_GET
 
 from catalog.models import (
     Artist,
@@ -178,6 +179,7 @@ def _date_filter(cities, when):
     return date_filter
 
 
+@require_GET
 def event_list(request):
     when = request.GET.get("when")
     if when not in ("upcoming", "past"):
@@ -262,6 +264,7 @@ def event_list(request):
     )
 
 
+@require_GET
 def city_list(request):
     cities = City.objects.order_by("name")
     return JsonResponse(
@@ -274,6 +277,7 @@ def city_list(request):
     )
 
 
+@require_GET
 def venue_detail(request, venue_id):
     venue = get_object_or_404(
         Venue.objects.select_related("city"),
@@ -289,6 +293,7 @@ def venue_detail(request, venue_id):
     return JsonResponse(payload)
 
 
+@require_GET
 def artist_detail(request, artist_id):
     artist = get_object_or_404(Artist, pk=artist_id)
     payload = _serialize_artist(artist)
@@ -301,6 +306,7 @@ def artist_detail(request, artist_id):
     return JsonResponse(payload)
 
 
+@require_GET
 def event_detail(request, event_id):
     event = _canonical_event(event_id)
     from users.models import DiaryEntry, FavoriteEvent, WillBeThere

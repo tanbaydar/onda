@@ -2,12 +2,18 @@ from datetime import date
 from io import BytesIO
 from types import SimpleNamespace
 from unittest.mock import Mock, call, patch
-from urllib.error import HTTPError
+from urllib.error import HTTPError, URLError
+from urllib.request import Request
 
 from django.test import SimpleTestCase
 
-from ingestion.client import RaClient
-from ingestion.runner import RequestBudget
+from ingestion.client import (
+    GRAPHQL_ENDPOINT,
+    RaClient,
+    _SameOriginHttpsRedirectHandler,
+    urlopen,
+)
+from ingestion.runner import RequestBudget, ResponseBudget, ResponseBudgetExhausted
 
 
 class Response:
@@ -22,11 +28,47 @@ class Response:
     def __exit__(self, exc_type, exc_value, traceback):
         return False
 
-    def read(self):
-        return self.body
+    def read(self, size=-1):
+        return self.body if size < 0 else self.body[:size]
 
 
 class RaClientPacingTests(SimpleTestCase):
+    def test_transport_rejects_unconfigured_urls_and_cross_origin_redirects(self):
+        with self.assertRaises(URLError):
+            urlopen(Request("http://169.254.169.254/latest/meta-data/"), timeout=1)
+
+        handler = _SameOriginHttpsRedirectHandler()
+        with self.assertRaises(HTTPError) as raised:
+            handler.redirect_request(
+                Request(GRAPHQL_ENDPOINT, data=b"{}", method="POST"),
+                BytesIO(b"redirect"),
+                302,
+                "Found",
+                {},
+                "http://169.254.169.254/latest/meta-data/",
+            )
+        self.assertEqual(raised.exception.code, 502)
+
+    def test_transport_rejects_an_oversized_response_without_retrying(self):
+        client = RaClient(max_attempts=3, inter_request_delay_seconds=0, delay=Mock())
+        response = Response(body=b"x" * 65)
+
+        with (
+            patch("ingestion.client.MAX_RESPONSE_BYTES", 64),
+            patch("ingestion.client.urlopen", return_value=response) as opener,
+        ):
+            result = client.fetch_page(
+                SimpleNamespace(area_ref="8"),
+                date(2026, 7, 31),
+                date(2026, 8, 7),
+                1,
+                20,
+            )
+
+        self.assertIsNone(result.status_code)
+        self.assertIn("exceeds 64 bytes", result.error)
+        opener.assert_called_once()
+
     def test_inter_page_delay_runs_n_minus_one_times(self):
         delay = Mock()
         client = RaClient(
@@ -81,3 +123,12 @@ class RaClientPacingTests(SimpleTestCase):
         self.assertEqual(result.status_code, 200)
         self.assertEqual(budget.used, 3)
         self.assertEqual(budget.remaining, 7)
+
+    def test_archived_response_budget_counts_encoded_bytes(self):
+        budget = ResponseBudget(limit=4)
+        budget.consume("é")
+        budget.consume("ab")
+
+        self.assertEqual(budget.used, 4)
+        with self.assertRaises(ResponseBudgetExhausted):
+            budget.consume("x")

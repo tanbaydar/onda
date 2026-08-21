@@ -298,6 +298,29 @@ class PasswordResetApiTests(TestCase):
         self.assertEqual(mail.outbox[0].subject, "Your Onda App password reset code")
         self.assertIn("Your Onda App password reset code is", mail.outbox[0].body)
 
+    def test_reset_endpoints_reject_malformed_or_oversized_email(self):
+        client = Client(enforce_csrf_checks=True)
+
+        malformed = self.post(
+            client,
+            "/api/auth/password-reset/request/",
+            {"email": "not-an-email"},
+        )
+        oversized = self.post(
+            client,
+            "/api/auth/password-reset/confirm/",
+            {
+                "email": f"{'x' * 250}@example.com",
+                "code": "123456",
+                "password": "New-real-password-456!",
+            },
+        )
+
+        self.assertEqual(malformed.status_code, 400)
+        self.assertEqual(oversized.status_code, 400)
+        self.assertIn("email", malformed.json()["errors"])
+        self.assertIn("email", oversized.json()["errors"])
+
     def test_reset_code_expiry_attempt_limit_and_cooldown_match_verification(self):
         client = Client(enforce_csrf_checks=True)
         start = timezone.now()
@@ -395,6 +418,63 @@ class PasswordResetApiTests(TestCase):
         self.assertEqual(existing.status_code, 400)
         self.assertEqual(missing.status_code, 400)
         self.assertEqual(existing.json(), missing.json())
+
+    def test_invalid_code_cannot_expose_account_specific_password_rules(self):
+        existing_client = Client(enforce_csrf_checks=True)
+        missing_client = Client(enforce_csrf_checks=True)
+        payload = {
+            "code": "123456",
+            # This is long and uncommon, but deliberately resembles the existing
+            # account's username. That rule must run only after code proof.
+            "password": "reset@example.com",
+        }
+
+        existing = self.post(
+            existing_client,
+            "/api/auth/password-reset/confirm/",
+            {**payload, "email": self.user.email},
+        )
+        missing = self.post(
+            missing_client,
+            "/api/auth/password-reset/confirm/",
+            {**payload, "email": "missing@example.com"},
+        )
+
+        self.assertEqual(existing.status_code, 400)
+        self.assertEqual(existing.json(), {"errors": {"code": ["The code is invalid."]}})
+        self.assertEqual(existing.json(), missing.json())
+
+    def test_account_specific_password_rejection_does_not_consume_valid_code(self):
+        client = Client(enforce_csrf_checks=True)
+        self.post(
+            client,
+            "/api/auth/password-reset/request/",
+            {"email": self.user.email},
+        )
+        code = self.sent_code()
+
+        rejected = self.post(
+            client,
+            "/api/auth/password-reset/confirm/",
+            {
+                "email": self.user.email,
+                "code": code,
+                "password": "reset@example.com",
+            },
+        )
+        accepted = self.post(
+            client,
+            "/api/auth/password-reset/confirm/",
+            {
+                "email": self.user.email,
+                "code": code,
+                "password": "New-real-password-456!",
+            },
+        )
+
+        self.assertEqual(rejected.status_code, 400)
+        self.assertIn("password", rejected.json()["errors"])
+        self.assertEqual(accepted.status_code, 200)
 
     def test_reset_code_locks_after_five_wrong_attempts(self):
         client = Client(enforce_csrf_checks=True)

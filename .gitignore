@@ -1,5 +1,26 @@
 # Local secrets and environment files
 .env*
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+*.mobileprovision
+id_rsa
+id_ed25519
+*.har
+.aws/
+.ssh/
+.npmrc
+.pypirc
+.netrc
+secrets/
+credentials.json
+service-account*.json
+*.tfstate
+*.tfstate.*
+*.tfplan
 
 # Private working material
 AGENTS.md
@@ -14,6 +35,9 @@ media/
 *.sqlite
 *.sqlite3
 *.sqlite3-*
+*.sql
+*.sql.gz
+*.dump
 
 # Python environments, caches, and test output
 .venv/

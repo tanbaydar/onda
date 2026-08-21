@@ -11,8 +11,18 @@ from ingestion.models import RawIngest
 _validate_https_url = URLValidator(schemes=("https",))
 
 
+def _safe_image_url(value):
+    if not isinstance(value, str) or len(value) > 2048:
+        return None
+    try:
+        _validate_https_url(value)
+    except ValidationError:
+        return None
+    return value
+
+
 def event_cover_image_url(event):
-    flyer_front = event.get("flyerFront")
+    flyer_front = _safe_image_url(event.get("flyerFront"))
     if flyer_front is not None:
         return flyer_front
 
@@ -22,14 +32,9 @@ def event_cover_image_url(event):
     for image in images:
         if not isinstance(image, dict) or image.get("type") != "FLYERFRONT":
             continue
-        filename = image.get("filename")
-        if not isinstance(filename, str) or len(filename) > 2048:
-            continue
-        try:
-            _validate_https_url(filename)
-        except ValidationError:
-            continue
-        return filename
+        filename = _safe_image_url(image.get("filename"))
+        if filename is not None:
+            return filename
     return None
 
 

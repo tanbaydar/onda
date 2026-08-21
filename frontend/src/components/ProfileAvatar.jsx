@@ -8,6 +8,6 @@ export default function ProfileAvatar({ profile, small = false, className = "" }
 
   useEffect(() => setFailedSource(null), [profile.avatar]);
 
-  if (profile.avatar && failedSource !== profile.avatar) return <img className={classes} src={profile.avatar} alt={`${profile.display_name}'s avatar`} loading={small ? "lazy" : "eager"} onError={() => setFailedSource(profile.avatar)} />;
+  if (profile.avatar && failedSource !== profile.avatar) return <img className={classes} src={profile.avatar} alt={`${profile.display_name}'s avatar`} loading={small ? "lazy" : "eager"} referrerPolicy="no-referrer" onError={() => setFailedSource(profile.avatar)} />;
   return <span className={classes} aria-label={`${profile.display_name}'s initials avatar`}>{profileInitials(profile.display_name)}</span>;
 }
