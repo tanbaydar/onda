@@ -21,6 +21,7 @@ test("Discover advances through an observed sentinel and preserves loaded rows o
   assert.match(list, /className="discover-scroll-sentinel" ref=\{loadMoreRef\}/);
   assert.match(list, /data: discover && page > 1 \? current\.data : null/);
   assert.doesNotMatch(list, />Load more</);
+  assert.match(list, /appendUniqueEvents\(current\.data\.results, data\.results\)/);
 });
 
 test("search focus is one inset border rather than a second outer rectangle", () => {
@@ -59,6 +60,20 @@ test("profile favorites separate entity types while keeping row-scale artwork an
   assert.match(css, /\.profile-favorite-link\{[^}]*min-height:var\(--thumb-h\)/);
 });
 
+test("profile social counts open a responsive, infinitely scrolling people list", () => {
+  const profile = read("./pages/ProfilePage.jsx");
+  const connections = read("./components/ProfileConnectionsDialog.jsx");
+  const css = read("./styles.css");
+  assert.match(profile, /setConnections\("followers"\)/);
+  assert.match(profile, /setConnections\("following"\)/);
+  assert.match(connections, /<dialog/);
+  assert.match(connections, /new IntersectionObserver/);
+  assert.match(connections, /\/\$\{kind\}\/\?page=1/);
+  assert.match(connections, /<ProfileAvatar profile=\{person\} small/);
+  assert.match(css, /\.profile-connections-dialog\{width:100%;max-width:none;height:100dvh/);
+  assert.match(css, /@media \(min-width:768px\)[\s\S]*\.profile-connections-dialog\{width:min\(calc\(100% - 48px\),480px\)/);
+});
+
 test("one-page detail collections do not render inert pagination chrome", () => {
   assert.match(read("./components/EventList.jsx"), /pagination\.total_pages > 1 \? <nav/);
   assert.match(read("./components/PublicReviews.jsx"), /pagination\.total_pages > 1 \? <nav/);
@@ -72,17 +87,26 @@ test("event attendee lists use the shared profile-row identity grammar", () => {
   assert.match(attendees, /className="event-attendee-row"/);
 });
 
-test("sparse upcoming events keep one hierarchy and withhold a zero WBT numeral", () => {
+test("sparse upcoming events keep one hierarchy, withhold a zero WBT numeral, and omit Favorite", () => {
   const eventPage = read("./pages/EventPage.jsx");
   const attendees = read("./components/WillBeThereAttendees.jsx");
   const css = read("./styles.css");
   assert.match(eventPage, /event-page-no-artwork/);
   assert.match(eventPage, /!isPast && wbtCount > 0 \? <div className="wbt-count">/);
+  assert.match(eventPage, /\{isPast \? <FavoriteControl compact/);
+  assert.match(eventPage, /className="wbt-action"/);
+  assert.match(eventPage, /: "Will Be There"/);
   assert.match(eventPage, /activeCount=\{wbtCount\}/);
   assert.match(attendees, /"No active marks yet\."/);
   assert.match(attendees, /"No public marks are visible\."/);
   assert.match(css, /\.event-page-no-artwork>\.event-identity,\.event-page-no-artwork>section\{max-width:var\(--measure-prose\)\}/);
   assert.match(css, /\.event-page\.event-page-no-artwork>section\{margin-left:0\}/);
+});
+
+test("event lineup gives every artist one subordinate functional-text treatment", () => {
+  const css = read("./styles.css");
+  assert.match(css, /\.event-lineup a\{[^}]*font-family:var\(--font-fn\);font-size:var\(--text-ui\);font-weight:500/);
+  assert.doesNotMatch(css, /\.event-lineup li:first-child/);
 });
 
 test("venue identity presents a natural location and omits operational geography", () => {

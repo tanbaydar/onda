@@ -239,6 +239,33 @@ class TransformerFixtureContractTests(TransformerHarness):
             },
         )
 
+    def test_distinct_source_ids_for_one_semantic_event_are_canonical_aliases(self):
+        payload = self.fixture_json("ra_listing_complete.synthetic.json")
+        first = payload["data"]["eventListings"]["data"][0]["event"]
+        duplicate = copy.deepcopy(first)
+        duplicate["id"] = "syn-event-complete-alias"
+        duplicate["contentUrl"] = "/events/syn-event-complete-alias"
+        payload["data"]["eventListings"]["data"] = [
+            {"event": first},
+            {"event": duplicate},
+        ]
+        payload["data"]["eventListings"]["totalResults"] = 2
+        raw = self.make_raw("ra_listing_complete.synthetic.json", payload=payload)
+
+        outcome = transform(raw)
+
+        self.assert_outcome(
+            outcome,
+            admitted=2,
+            quarantined=0,
+            dropped=0,
+            observed={"syn-event-complete-1", "syn-event-complete-alias"},
+        )
+        canonical = self.event_for_source_id("syn-event-complete-1")
+        alias = self.event_for_source_id("syn-event-complete-alias")
+        self.assertEqual(alias.canonical_event_id, canonical.id)
+        self.assertEqual(EventIdentity.objects.count(), 2)
+
     def test_date_only(self):
         raw = self.make_raw("ra_listing_date_only.synthetic.json")
 

@@ -121,6 +121,8 @@ The feed has no independently populated timeline table. Each request combines th
 - A user can choose up to three favorite events, three favorite artists, and three favorite venues.
 - Favorite event and artist actions can appear in followers' Home feeds. Favorite venues are part of the profile and personalized venue navigation, not a feed activity type.
 - Profiles report events in Been, reviews written, venues and cities visited, average rating given, followers, and following.
+- Selecting Followers or Following opens the corresponding paginated people list; desktop uses a modal and mobile uses the full screen, with continuous loading inside the list.
+- Profile owners can delete a written review directly from its Been row. The rating and Been entry remain, matching the event-detail deletion rule.
 - The profile's own rating distribution is shown when it has data; event-wide community averages use the separate three-rating threshold described above.
 
 ## Notifications

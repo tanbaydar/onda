@@ -121,6 +121,8 @@ The code paths are implemented and tested, but outbound transactional email is n
 | Method | Path | Purpose |
 |---|---|---|
 | `GET` | `/api/users/{username}/` | Profile identity and viewer relationship state |
+| `GET` | `/api/users/{username}/followers/` | Paginated approved followers as public profile identities |
+| `GET` | `/api/users/{username}/following/` | Paginated approved followees as public profile identities |
 | `GET` | `/api/users/{username}/been/` | Paginated diary entries |
 | `GET` | `/api/users/{username}/reviews/` | Paginated/sortable profile reviews |
 | `GET` | `/api/users/{username}/favorites/` | Favorite events, artists, and venues |

@@ -27,7 +27,7 @@ from django.utils.dateparse import parse_datetime
 from PIL import Image, ImageOps, UnidentifiedImageError
 
 from catalog.models import Artist, City, EventArtist, Venue
-from catalog.views import _event_queryset, _serialize_artist, _serialize_event, _serialize_venue
+from catalog.views import _canonical_event, _serialize_artist, _serialize_event, _serialize_venue
 from .forms import LoginForm, RegistrationForm
 from .home_feed import decode_cursor as decode_home_cursor
 from .home_feed import encode_cursor as encode_home_cursor
@@ -243,7 +243,7 @@ def _rating_from_payload(request):
 
 
 def _visible_event(event_id):
-    return get_object_or_404(_event_queryset(), pk=event_id)
+    return _canonical_event(event_id)
 
 
 def _review_body(request):
@@ -836,6 +836,65 @@ def profile_detail(request, username):
             ),
         }
     return JsonResponse(payload)
+
+
+def _profile_connections(request, username, *, kind):
+    profile = _profile_user(username)
+    pagination = _pagination(request, default=20, maximum=100)
+    if pagination is None:
+        return JsonResponse(
+            {"error": "page and page_size must be positive integers"}, status=400
+        )
+    page_number, page_size = pagination
+    if kind == "followers":
+        relationships = (
+            Follow.objects.filter(
+                followee=profile,
+                status=FollowStatus.APPROVED,
+                follower__status=UserStatus.ACTIVE,
+                follower__username__isnull=False,
+            )
+            .select_related("follower")
+            .order_by("-approved_at", "-follower_id")
+        )
+        connected_user = lambda follow: follow.follower
+    else:
+        relationships = (
+            Follow.objects.filter(
+                follower=profile,
+                status=FollowStatus.APPROVED,
+                followee__status=UserStatus.ACTIVE,
+                followee__username__isnull=False,
+            )
+            .select_related("followee")
+            .order_by("-approved_at", "-followee_id")
+        )
+        connected_user = lambda follow: follow.followee
+    paginator = Paginator(relationships, page_size)
+    try:
+        page = paginator.page(page_number)
+    except EmptyPage:
+        return JsonResponse({"error": "page out of range"}, status=404)
+    return JsonResponse(
+        {
+            "profile": serialize_public_user(profile),
+            "results": [
+                serialize_public_user(connected_user(follow))
+                for follow in page.object_list
+            ],
+            "pagination": _pagination_payload(page, page_size, paginator.count),
+        }
+    )
+
+
+@require_GET
+def profile_followers(request, username):
+    return _profile_connections(request, username, kind="followers")
+
+
+@require_GET
+def profile_following(request, username):
+    return _profile_connections(request, username, kind="following")
 
 
 @require_http_methods(["PUT"])

@@ -272,13 +272,13 @@ export default function EventPage({ user, sessionReady, onAuthenticationRequired
             {!isPast ? <>
             {willBeThereError ? <p>{willBeThereError}</p> : null}
             {event.viewer_will_be_there.can_mark ? (
-              <button className={event.viewer_will_be_there.is_marked ? "wbt-marked" : ""} type="button" disabled={saving} onClick={changeWillBeThere}>
+              <button className="wbt-action" type="button" disabled={saving} onClick={changeWillBeThere}>
                 {event.viewer_will_be_there.is_marked
                   ? "Remove Will Be There"
-                  : "Mark Will Be There"}
+                  : "Will Be There"}
               </button>
             ) : null}</> : null}
-            <FavoriteControl compact path={`/api/events/${event.id}/favorite/`} state={event.viewer_favorite} onChanged={changeFavorite} />
+            {isPast ? <FavoriteControl compact path={`/api/events/${event.id}/favorite/`} state={event.viewer_favorite} onChanged={changeFavorite} /> : null}
             {isPast && event.viewer_will_be_there.was_marked ? <p className="dormant-wbt">Will Be There · marked</p> : null}
             {actionError ? <p role="alert">{actionError}</p> : null}
         </div> : null}

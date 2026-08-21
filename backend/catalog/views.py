@@ -120,7 +120,10 @@ def _serialize_city_list_item(city):
 def _event_queryset():
     lineup = EventArtist.objects.select_related("artist").order_by("position")
     return (
-        Event.objects.filter(status__in=VISIBLE_EVENT_STATUSES)
+        Event.objects.filter(
+            status__in=VISIBLE_EVENT_STATUSES,
+            canonical_event__isnull=True,
+        )
         .select_related("venue__city")
         .prefetch_related(
             Prefetch(
@@ -129,6 +132,14 @@ def _event_queryset():
                 to_attr="_ordered_event_artists",
             )
         )
+    )
+
+
+def _canonical_event(event_id):
+    return get_object_or_404(
+        _event_queryset()
+        .filter(Q(pk=event_id) | Q(source_aliases__pk=event_id))
+        .distinct()
     )
 
 
@@ -291,7 +302,7 @@ def artist_detail(request, artist_id):
 
 
 def event_detail(request, event_id):
-    event = get_object_or_404(_event_queryset(), pk=event_id)
+    event = _canonical_event(event_id)
     from users.models import DiaryEntry, FavoriteEvent, WillBeThere
     from users.services import (
         NOT_STARTED_MESSAGE,

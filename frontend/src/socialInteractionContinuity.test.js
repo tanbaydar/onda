@@ -52,3 +52,14 @@ test("event mutations preserve the event shell and update Will Be There in place
   assert.match(event, /is_marked: marking,[\s\S]*was_marked: marking/);
   assert.match(event, /active_count: Math\.max\(0,[\s\S]*\+ \(marking \? 1 : -1\)\)/);
 });
+
+
+test("owner review deletion from Been updates only the affected row", () => {
+  const profile = read("./pages/ProfilePage.jsx");
+  const row = read("./components/ProfileDiaryRow.jsx");
+
+  assert.match(profile, /\/been\/review\/`, \{ method: "DELETE" \}/);
+  assert.match(profile, /entry\.event\.id === event\.id \? \{ \.\.\.entry, has_review: false \}/);
+  assert.match(profile, /owner && entry\.has_review \? \(\) => setReviewToDelete/);
+  assert.match(row, />Delete review<\/button>/);
+});

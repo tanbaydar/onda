@@ -1,6 +1,7 @@
 from zoneinfo import ZoneInfo
 
 from django.db import transaction
+from django.db.models import Q
 from django.utils import timezone
 
 from catalog.models import CityIdentity, Event, EventIdentity
@@ -45,7 +46,7 @@ def reconcile(
 
         identities = list(
             EventIdentity.objects.select_for_update()
-            .select_related("event")
+            .select_related("event", "event__canonical_event")
             .filter(
                 source=seed.source,
                 event__venue__city=city,
@@ -65,16 +66,18 @@ def reconcile(
             if identity.misses != new_misses:
                 identity.misses = new_misses
                 identity.save(update_fields=["misses"])
-            affected_event_ids.add(identity.event_id)
+            affected_event_ids.add(
+                identity.event.canonical_event_id or identity.event_id
+            )
 
         for event_id in affected_event_ids:
             all_identities = list(
                 EventIdentity.objects.select_for_update().filter(
-                    event_id=event_id
+                    Q(event_id=event_id) | Q(event__canonical_event_id=event_id)
                 )
             )
             status = _derived_status(all_identities)
-            event = Event.objects.select_for_update().get(pk=event_id)
-            if event.status != status:
-                event.status = status
-                event.save(update_fields=["status"])
+            related_events = Event.objects.select_for_update().filter(
+                Q(pk=event_id) | Q(canonical_event_id=event_id)
+            )
+            related_events.exclude(status=status).update(status=status)

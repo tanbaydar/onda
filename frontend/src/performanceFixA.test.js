@@ -13,7 +13,7 @@ test("Discover source renders one active ledger and retains separate ledger stat
   assert.match(page, /ledger=\{ledgers\.recent\}/);
   assert.doesNotMatch(page, /hidden=\{/);
   assert.match(list, /ledger\?\.requestKey === requestKey/);
-  assert.match(list, /results: \[\.\.\.current\.data\.results, \.\.\.data\.results\]/);
+  assert.match(list, /results: appendUniqueEvents\(current\.data\.results, data\.results\)/);
 });
 
 test("viewer-sensitive route sources wait for session resolution", () => {

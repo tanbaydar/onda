@@ -155,6 +155,7 @@ erDiagram
         bigint venue_id FK
         varchar cover_image_url
         varchar status
+        bigint canonical_event_id FK
     }
 
     EVENT_ARTIST {
@@ -204,6 +205,8 @@ Composite uniqueness that cannot be expressed field-by-field in the compact diag
 Canonical records never store an RA ID. A provider ID is unique only inside its `(entity type, source)` namespace and resolves through the matching identity table. This supports stable Onda IDs when provider display attributes change and creates a place for another source identity if a future integration deliberately maps it to the same real entity.
 
 `EVENT.status` is constrained to `active`, `unverified`, or `hidden`. `EVENT_IDENTITY.misses` and `last_seen_at` retain the source testimony used to derive that status. Catalog indexes support `(status, event_date)` and `(venue_id, event_date)` reads.
+
+A provider can occasionally publish separate source IDs for the same show. When title, venue, local date/time, and ordered lineup all agree, the later `EVENT` row retains its own identity evidence but points to the earliest row through `canonical_event_id`. Catalog reads expose only the canonical row, old alias URLs resolve to it, and lifecycle reconciliation considers evidence from the whole alias group. The migration only marks groups that have no user-owned Been, Will Be There, or favorite data; it never deletes source or event rows.
 
 Deletion intent differs by relationship:
 

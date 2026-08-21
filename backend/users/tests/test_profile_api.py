@@ -165,6 +165,68 @@ class ProfileApiContractTests(TestCase):
         self.assertEqual(follower.json()["profile"]["follower_count"], 1)
         self.assertEqual(owner.json()["profile"]["follower_count"], 1)
 
+    def test_followers_and_following_return_only_approved_public_identities(self):
+        self.approve(self.follower, self.public_user)
+        self.approve(self.viewer, self.public_user)
+        self.approve(self.public_user, self.private_user)
+        Follow.objects.create(
+            follower=self.viewer,
+            followee=self.private_user,
+            status=FollowStatus.PENDING,
+            created_at=NOW,
+            approved_at=None,
+        )
+
+        first_page = self.client.get(
+            f"/api/users/{self.public_user.username}/followers/",
+            {"page": 1, "page_size": 1},
+        )
+        second_page = self.client.get(
+            f"/api/users/{self.public_user.username}/followers/",
+            {"page": 2, "page_size": 1},
+        )
+        following = self.client.get(
+            f"/api/users/{self.public_user.username}/following/"
+        )
+        private_followers = self.client.get(
+            f"/api/users/{self.private_user.username}/followers/"
+        )
+
+        self.assertEqual((first_page.status_code, second_page.status_code), (200, 200))
+        self.assertEqual(first_page.json()["pagination"]["total_results"], 2)
+        follower_usernames = {
+            first_page.json()["results"][0]["username"],
+            second_page.json()["results"][0]["username"],
+        }
+        self.assertEqual(
+            follower_usernames,
+            {self.follower.username, self.viewer.username},
+        )
+        self.assertEqual(
+            [user["username"] for user in following.json()["results"]],
+            [self.private_user.username],
+        )
+        self.assertEqual(
+            [user["username"] for user in private_followers.json()["results"]],
+            [self.public_user.username],
+        )
+        serialized = json.dumps(
+            first_page.json()["results"] + following.json()["results"]
+        )
+        for forbidden in ("email", "bio", "home_city", "is_private"):
+            self.assertNotIn(forbidden, serialized)
+
+    def test_connection_lists_validate_pagination_and_unknown_profiles(self):
+        invalid = self.client.get(
+            f"/api/users/{self.public_user.username}/followers/", {"page": 0}
+        )
+        out_of_range = self.client.get(
+            f"/api/users/{self.public_user.username}/following/", {"page": 2}
+        )
+        missing = self.client.get("/api/users/no.such.user/followers/")
+
+        self.assertEqual((invalid.status_code, out_of_range.status_code, missing.status_code), (400, 404, 404))
+
     def test_relationship_capabilities_cover_follow_request_withdraw_and_follows_you(self):
         inverse = self.approve(self.public_user, self.viewer)
         none = self.auth_client(self.viewer).get(

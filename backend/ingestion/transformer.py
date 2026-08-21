@@ -360,7 +360,57 @@ def _upsert_event(
                 for artist_id, position in desired_lineup
             ]
         )
+    _refresh_semantic_alias(event)
     return event
+
+
+def _normalized_title(value: str) -> str:
+    return " ".join(value.split()).casefold()
+
+
+def _event_artist_ids(event: Event) -> list[int]:
+    return list(
+        EventArtist.objects.filter(event=event)
+        .order_by("position")
+        .values_list("artist_id", flat=True)
+    )
+
+
+def _refresh_semantic_alias(event: Event) -> None:
+    """Collapse provider aliases without deleting their source evidence."""
+    if (
+        event.diary_entries.exists()
+        or event.will_be_there_entries.exists()
+        or event.favorited_by.exists()
+    ):
+        if event.canonical_event_id is not None:
+            event.canonical_event = None
+            event.save(update_fields=["canonical_event"])
+        return
+
+    event_lineup = _event_artist_ids(event)
+    target_id = None
+    candidates = (
+        Event.objects.select_for_update()
+        .filter(
+            id__lt=event.id,
+            event_date=event.event_date,
+            start_time=event.start_time,
+            venue_id=event.venue_id,
+            canonical_event__isnull=True,
+        )
+        .order_by("id")
+    )
+    for candidate in candidates:
+        if _normalized_title(candidate.title) != _normalized_title(event.title):
+            continue
+        if _event_artist_ids(candidate) == event_lineup:
+            target_id = candidate.id
+            break
+
+    if event.canonical_event_id != target_id:
+        event.canonical_event_id = target_id
+        event.save(update_fields=["canonical_event"])
 
 
 def _admit_event(*, dto: EventDTO, source: str, city) -> None:

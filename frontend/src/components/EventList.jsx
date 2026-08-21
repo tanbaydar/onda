@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { fetchJson } from "../api.js";
+import { appendUniqueEvents } from "../eventListPresentation.js";
 import DiscoverEventRow from "./DiscoverEventRow.jsx";
 
 export default function EventList({
@@ -52,7 +53,7 @@ export default function EventList({
     setState((current) => ({ loading: true, error: null, data: discover && page > 1 ? current.data : null }));
     fetchJson(`/api/events/?${query}`, { signal: controller.signal })
       .then((data) => {
-        setState((current) => ({ loading: false, error: null, data: discover && page > 1 && current.data ? { ...data, results: [...current.data.results, ...data.results] } : data }));
+        setState((current) => ({ loading: false, error: null, data: discover && page > 1 && current.data ? { ...data, results: appendUniqueEvents(current.data.results, data.results) } : data }));
       })
       .catch((error) => {
         if (error.name !== "AbortError") {

@@ -191,6 +191,27 @@ class CatalogApiTests(TestCase):
         self.assertNotIn(self.hidden.id, ids)
         self.assertNotIn(self.other_city.id, ids)
 
+    def test_semantic_source_alias_is_hidden_from_lists_and_resolves_to_canonical_detail(self):
+        alias = Event.objects.create(
+            title=self.tomorrow.title,
+            event_date=self.tomorrow.event_date,
+            start_time=self.tomorrow.start_time,
+            venue=self.tomorrow.venue,
+            cover_image_url="https://example.invalid/alias.jpg",
+            status=EventStatus.ACTIVE,
+            canonical_event=self.tomorrow,
+        )
+        EventArtist.objects.create(event=alias, artist=self.artist, position=1)
+
+        listing = self.get_events(page_size=100)
+        detail = self.client.get(f"/api/events/{alias.id}/")
+
+        ids = [event["id"] for event in listing.json()["results"]]
+        self.assertIn(self.tomorrow.id, ids)
+        self.assertNotIn(alias.id, ids)
+        self.assertEqual(detail.status_code, 200)
+        self.assertEqual(detail.json()["id"], self.tomorrow.id)
+
     def test_today_is_upcoming_until_venue_local_midnight(self):
         response = self.get_events(page_size=100)
 

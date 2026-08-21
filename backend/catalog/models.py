@@ -64,6 +64,14 @@ class Event(models.Model):
         choices=EventStatus,
         default=EventStatus.ACTIVE,
     )
+    canonical_event = models.ForeignKey(
+        "self",
+        db_column="canonical_event_id",
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="source_aliases",
+    )
 
     class Meta:
         db_table = "EVENT"

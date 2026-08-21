@@ -10,6 +10,8 @@ import RatingHistogram from "../components/RatingHistogram.jsx";
 import ImageSlot from "../components/ImageSlot.jsx";
 import FavoriteControl from "../components/FavoriteControl.jsx";
 import ArtistAvatar from "../components/ArtistAvatar.jsx";
+import ProfileConnectionsDialog from "../components/ProfileConnectionsDialog.jsx";
+import ConfirmDialog from "../components/ConfirmDialog.jsx";
 import { formatEventDateTime } from "../formatEventDateTime.js";
 import { artistPath, eventPath, venuePath } from "../entityRoutes.js";
 import { PROFILE_EMPTY_STATES, profileTabPath } from "../profilePresentation.js";
@@ -21,9 +23,12 @@ function Pagination({ pagination, onPage }) {
   return <nav className="profile-pagination" aria-label="Profile content pagination"><button className="quiet-control" type="button" disabled={pagination.previous_page === null} onClick={() => onPage(pagination.previous_page)}>Previous</button><span>Page {pagination.page} of {pagination.total_pages}</span><button className="quiet-control" type="button" disabled={pagination.next_page === null} onClick={() => onPage(pagination.next_page)}>Next</button></nav>;
 }
 
-function BeenTab({ username }) {
+function BeenTab({ onReviewDeleted, owner, username }) {
   const [page, setPage] = useState(1);
   const [retry, setRetry] = useState(0);
+  const [reviewToDelete, setReviewToDelete] = useState(null);
+  const [deletingReviewId, setDeletingReviewId] = useState(null);
+  const [actionError, setActionError] = useState(null);
   const [state, setState] = useState({ loading: true, error: null, data: null });
   useEffect(() => {
     const controller = new AbortController();
@@ -31,12 +36,36 @@ function BeenTab({ username }) {
     fetchJson(`/api/users/${encodeURIComponent(username)}/been/?page=${page}`, { signal: controller.signal, cache: "no-store" }).then((data) => setState({ loading: false, error: null, data })).catch((error) => { if (error.name !== "AbortError") setState({ loading: false, error, data: null }); });
     return () => controller.abort();
   }, [page, retry, username]);
+
+  async function deleteReview(event) {
+    setDeletingReviewId(event.id);
+    setActionError(null);
+    try {
+      await fetchWithCsrf(`/api/events/${event.id}/been/review/`, { method: "DELETE" });
+      setState((current) => current.data ? {
+        ...current,
+        data: {
+          ...current.data,
+          results: current.data.results.map((entry) => entry.event.id === event.id ? { ...entry, has_review: false } : entry),
+        },
+      } : current);
+      onReviewDeleted();
+    } catch (error) {
+      if (error.status === 404) setRetry((value) => value + 1);
+      else setActionError("The review could not be deleted.");
+    } finally {
+      setDeletingReviewId(null);
+    }
+  }
+
   return (
     <section className="profile-tab-panel" aria-label="Been">
       {state.loading ? <p>Loading Been history.</p> : null}
       {state.error ? <><p>Been history could not be loaded.</p><button className="quiet-control" type="button" onClick={() => setRetry((value) => value + 1)}>Retry</button></> : null}
       {state.data?.results.length === 0 ? <p className="profile-tab-empty">{PROFILE_EMPTY_STATES.been}</p> : null}
-      {state.data?.results.length ? <><ol className="profile-diary-list">{state.data.results.map((entry) => <ProfileDiaryRow key={entry.id} event={entry.event} rating={entry.rating} hasReview={entry.has_review} />)}</ol><Pagination pagination={state.data.pagination} onPage={setPage} /></> : null}
+      {actionError ? <p role="alert">{actionError}</p> : null}
+      {state.data?.results.length ? <><ol className="profile-diary-list">{state.data.results.map((entry) => <ProfileDiaryRow key={entry.id} event={entry.event} rating={entry.rating} hasReview={entry.has_review} onDeleteReview={owner && entry.has_review ? () => setReviewToDelete(entry.event) : null} reviewPending={deletingReviewId === entry.event.id} />)}</ol><Pagination pagination={state.data.pagination} onPage={setPage} /></> : null}
+      <ConfirmDialog open={reviewToDelete !== null} title="Delete your written review?" consequence="Its likes will be permanently deleted. Your rating and Been entry will remain." confirmLabel="Delete review" onCancel={() => setReviewToDelete(null)} onConfirm={() => { const event = reviewToDelete; setReviewToDelete(null); if (event) deleteReview(event); }} />
     </section>
   );
 }
@@ -62,15 +91,15 @@ function ReviewsTab({ username, sort }) {
   );
 }
 
-function ProfileStatistics({ username }) {
+function ProfileStatistics({ username, version = 0 }) {
   const [retry, setRetry] = useState(0);
   const [state, setState] = useState({ loading: true, error: null, data: null });
   useEffect(() => {
     const controller = new AbortController();
-    setState({ loading: true, error: null, data: null });
+    setState((current) => current.data ? { ...current, loading: false, error: null } : { loading: true, error: null, data: null });
     fetchJson(`/api/users/${encodeURIComponent(username)}/stats/`, { signal: controller.signal, cache: "no-store" }).then((data) => setState({ loading: false, error: null, data })).catch((error) => { if (error.name !== "AbortError") setState({ loading: false, error, data: null }); });
     return () => controller.abort();
-  }, [retry, username]);
+  }, [retry, username, version]);
   if (state.loading) return <section className="profile-statistics"><h2>Statistics</h2><p>Loading statistics.</p></section>;
   if (state.error) return <section className="profile-statistics"><h2>Statistics</h2><p>Statistics could not be loaded.</p><button className="quiet-control" type="button" onClick={() => setRetry((value) => value + 1)}>Retry</button></section>;
   const statistics = state.data.statistics;
@@ -133,6 +162,8 @@ export default function ProfilePage({ session, tab = "been" }) {
   const [reviewSort, setReviewSort] = useState("newest");
   const [followPending, setFollowPending] = useState(false);
   const [followError, setFollowError] = useState(null);
+  const [connections, setConnections] = useState(null);
+  const [profileVersion, setProfileVersion] = useState(0);
   const [state, setState] = useState({ loading: true, error: null, data: null });
   useEffect(() => {
     const controller = new AbortController();
@@ -178,15 +209,16 @@ export default function ProfilePage({ session, tab = "been" }) {
         <div className="profile-identity-copy">
           <h1>{profile.display_name}</h1>
           <p className="profile-handle-line">@{profile.username}{profile.home_city ? ` · ${profile.home_city.name}` : ""}{data.relationship?.follows_you ? " · Follows you" : ""}{data.relationship?.outgoing_status === "approved" ? " · Following" : ""}</p>
-          <div className="profile-social-counts"><span><strong>{profile.follower_count}</strong><small>Followers</small></span><span><strong>{profile.following_count}</strong><small>Following</small></span></div>
+          <div className="profile-social-counts"><button type="button" aria-haspopup="dialog" onClick={() => setConnections("followers")}><strong>{profile.follower_count}</strong><small>Followers</small></button><button type="button" aria-haspopup="dialog" onClick={() => setConnections("following")}><strong>{profile.following_count}</strong><small>Following</small></button></div>
           {owner ? <Link className="profile-edit-link" to="/settings/profile">Edit profile</Link> : <><FollowControl relationship={data.relationship} pending={followPending} onChange={changeFollow} />{followError ? <p className="profile-follow-error" role="alert">{followError}</p> : null}</>}
           {profile.bio ? <p className="profile-bio">{profile.bio}</p> : null}
         </div>
       </header>
-      {data.access !== "stub" ? <ProfileStatistics username={profile.username} /> : null}
+      {data.access !== "stub" ? <ProfileStatistics username={profile.username} version={profileVersion} /> : null}
       {profileNavigationVisible(data.access) ? <nav className="profile-tabs" aria-label="Profile sections"><Link className={tab === "been" ? "active" : ""} aria-current={tab === "been" ? "page" : undefined} to={profileTabPath(profile.username, "been")}>Been</Link><Link className={tab === "reviews" ? "active" : ""} aria-current={tab === "reviews" ? "page" : undefined} to={profileTabPath(profile.username, "reviews")}>Reviews</Link>{tab === "reviews" ? <SortMenu value={reviewSort} onChange={setReviewSort} /> : null}</nav> : null}
-      {data.access === "stub" ? <p className="profile-private-stub">This account is private. Follow and receive approval to see its activity.</p> : tab === "reviews" ? <ReviewsTab key={reviewSort} username={profile.username} sort={reviewSort} /> : <BeenTab username={profile.username} />}
+      {data.access === "stub" ? <p className="profile-private-stub">This account is private. Follow and receive approval to see its activity.</p> : tab === "reviews" ? <ReviewsTab key={reviewSort} username={profile.username} sort={reviewSort} /> : <BeenTab username={profile.username} owner={owner} onReviewDeleted={() => setProfileVersion((value) => value + 1)} />}
       {data.access !== "stub" ? <ProfileFavorites username={profile.username} owner={owner} /> : null}
+      <ProfileConnectionsDialog open={connections !== null} initialKind={connections ?? "followers"} profile={profile} counts={{ followers: profile.follower_count, following: profile.following_count }} onClose={() => setConnections(null)} />
     </main>
   );
 }
