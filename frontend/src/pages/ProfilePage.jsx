@@ -78,6 +78,27 @@ function ProfileStatistics({ username }) {
   return <section className="profile-statistics"><h2>Statistics</h2><div className="profile-statistics-strip"><div className="profile-stat stat-lead"><span className="stat-value">{statistics.events_in_been}</span><span className="stat-label">Events in Been</span></div><div className="profile-stat stat-reviews"><span className="stat-value">{statistics.written_reviews}</span><span className="stat-label">Written reviews</span></div><div className="profile-stat stat-venues"><span className="stat-value">{statistics.venues_visited}</span><span className="stat-label">Venues visited</span></div><div className="profile-stat stat-cities"><span className="stat-value">{statistics.cities_visited}</span><span className="stat-label">Cities visited</span></div><div className="profile-judgment-unit"><div className="profile-stat"><span className="stat-value">{statistics.average_rating_given.state === "available" ? statistics.average_rating_given.value.toFixed(1) : "—"}</span><span className="stat-label">Average rating given</span></div><RatingHistogram className="profile-stat-histogram" buckets={ratingBuckets} /></div></div></section>;
 }
 
+function ProfileFavoriteGroup({ group, owner, onRemove, onReconcile }) {
+  if (!group.items.length) return null;
+  const headingId = `profile-favorite-${group.key}`;
+  return (
+    <section className="profile-favorite-group" aria-labelledby={headingId}>
+      <h3 id={headingId}>{group.label}</h3>
+      <ul className="profile-favorite-list">
+        {group.items.map((item) => (
+          <li className={`profile-favorite-item${owner ? " is-owner" : ""}`} key={item.key}>
+            <Link className="profile-favorite-link" to={item.to}>
+              {item.artist ? <ArtistAvatar artist={item.artist} small className="profile-favorite-thumb" /> : <ImageSlot className="profile-favorite-thumb" name={item.name} src={item.image} />}
+              <span className="profile-favorite-copy"><strong>{item.name}</strong>{item.meta ? <small>{item.meta}</small> : null}</span>
+            </Link>
+            {owner ? <FavoriteControl row path={item.favoritePath} state={{ is_favorite: true }} onChanged={(nextFavorite) => nextFavorite ? onRemove(item) : onReconcile()} /> : null}
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
 function ProfileFavorites({ username, owner }) {
   const [retry, setRetry] = useState(0);
   const [state, setState] = useState({ loading: true, error: null, favorites: null });
@@ -88,10 +109,10 @@ function ProfileFavorites({ username, owner }) {
   }, [owner, retry, username]);
   if (state.loading) return <section className="profile-favorites"><h2>Favorites</h2><p>Loading favorites.</p></section>;
   if (state.error && !state.favorites) return <section className="profile-favorites"><h2>Favorites</h2><p>Favorites could not be loaded.</p><button className="quiet-control" type="button" onClick={() => setRetry((value) => value + 1)}>Retry</button></section>;
-  const items = [
-    ...state.favorites.events.map(({ event }) => ({ key: `event-${event.id}`, collection: "events", id: event.id, to: eventPath(event), name: event.title, meta: `${formatEventDateTime(event.event_date, event.start_time)} · ${event.venue.name}`, image: event.cover_image_url, favoritePath: `/api/events/${event.id}/favorite/` })),
-    ...state.favorites.artists.map(({ artist }) => ({ key: `artist-${artist.id}`, collection: "artists", id: artist.id, to: artistPath(artist), name: artist.name, artist, favoritePath: `/api/artists/${artist.id}/favorite/` })),
-    ...state.favorites.venues.map(({ venue }) => ({ key: `venue-${venue.id}`, collection: "venues", id: venue.id, to: venuePath(venue), name: venue.name, meta: venue.city.name, favoritePath: `/api/venues/${venue.id}/favorite/` })),
+  const groups = [
+    { key: "events", label: "Events", items: state.favorites.events.map(({ event }) => ({ key: `event-${event.id}`, collection: "events", id: event.id, to: eventPath(event), name: event.title, meta: `${formatEventDateTime(event.event_date, event.start_time)} · ${event.venue.name}`, image: event.cover_image_url, favoritePath: `/api/events/${event.id}/favorite/` })) },
+    { key: "artists", label: "Artists", items: state.favorites.artists.map(({ artist }) => ({ key: `artist-${artist.id}`, collection: "artists", id: artist.id, to: artistPath(artist), name: artist.name, artist, favoritePath: `/api/artists/${artist.id}/favorite/` })) },
+    { key: "venues", label: "Venues", items: state.favorites.venues.map(({ venue }) => ({ key: `venue-${venue.id}`, collection: "venues", id: venue.id, to: venuePath(venue), name: venue.name, meta: venue.city.name, favoritePath: `/api/venues/${venue.id}/favorite/` })) },
   ];
   function removeFavorite(item) {
     const entityKey = item.collection.slice(0, -1);
@@ -103,7 +124,7 @@ function ProfileFavorites({ username, owner }) {
       },
     } : current);
   }
-  return <section className="profile-favorites"><h2>Favorites</h2>{state.error ? <p role="alert">Favorites could not be refreshed.</p> : null}{items.length ? <ul className="profile-favorite-list">{items.map((item) => <li className={`profile-favorite-item${owner ? " is-owner" : ""}`} key={item.key}><Link className="profile-favorite-link" to={item.to}>{item.artist ? <ArtistAvatar artist={item.artist} small className="profile-favorite-thumb" /> : <ImageSlot className="profile-favorite-thumb" name={item.name} src={item.image} />}<span className="profile-favorite-copy"><strong>{item.name}</strong>{item.meta ? <small>{item.meta}</small> : null}</span></Link>{owner ? <FavoriteControl row path={item.favoritePath} state={{ is_favorite: true }} onChanged={(nextFavorite) => nextFavorite ? removeFavorite(item) : setRetry((value) => value + 1)} /> : null}</li>)}</ul> : null}</section>;
+  return <section className="profile-favorites"><h2>Favorites</h2>{state.error ? <p role="alert">Favorites could not be refreshed.</p> : null}<div className="profile-favorite-groups">{groups.map((group) => <ProfileFavoriteGroup key={group.key} group={group} owner={owner} onRemove={removeFavorite} onReconcile={() => setRetry((value) => value + 1)} />)}</div></section>;
 }
 
 export default function ProfilePage({ session, tab = "been" }) {
