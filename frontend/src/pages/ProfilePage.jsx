@@ -16,7 +16,7 @@ import { formatEventDateTime } from "../formatEventDateTime.js";
 import { artistPath, eventPath, venuePath } from "../entityRoutes.js";
 import { PROFILE_EMPTY_STATES, profileTabPath } from "../profilePresentation.js";
 import { profileNavigationVisible, profilePath } from "../profileRoutes.js";
-import { profileRatingBuckets } from "../ratingHistogram.js";
+import { profileRatingBuckets, profileRatingCount, profileRatingLowVolumeNote } from "../ratingHistogram.js";
 
 function Pagination({ pagination, onPage }) {
   if (pagination.total_pages <= 1) return null;
@@ -103,8 +103,11 @@ function ProfileStatistics({ username, version = 0 }) {
   if (state.loading) return <section className="profile-statistics"><h2>Statistics</h2><p>Loading statistics.</p></section>;
   if (state.error) return <section className="profile-statistics"><h2>Statistics</h2><p>Statistics could not be loaded.</p><button className="quiet-control" type="button" onClick={() => setRetry((value) => value + 1)}>Retry</button></section>;
   const statistics = state.data.statistics;
-  const ratingBuckets = profileRatingBuckets(state.data.rating_distribution);
-  return <section className="profile-statistics"><h2>Statistics</h2><div className="profile-statistics-strip"><div className="profile-stat stat-lead"><span className="stat-value">{statistics.events_in_been}</span><span className="stat-label">Events in Been</span></div><div className="profile-stat stat-reviews"><span className="stat-value">{statistics.written_reviews}</span><span className="stat-label">Written reviews</span></div><div className="profile-stat stat-venues"><span className="stat-value">{statistics.venues_visited}</span><span className="stat-label">Venues visited</span></div><div className="profile-stat stat-cities"><span className="stat-value">{statistics.cities_visited}</span><span className="stat-label">Cities visited</span></div><div className="profile-judgment-unit"><div className="profile-stat"><span className="stat-value">{statistics.average_rating_given.state === "available" ? statistics.average_rating_given.value.toFixed(1) : "—"}</span><span className="stat-label">Average rating given</span></div><RatingHistogram className="profile-stat-histogram" buckets={ratingBuckets} /></div></div></section>;
+  const distribution = state.data.rating_distribution;
+  const ratingBuckets = profileRatingBuckets(distribution);
+  const ratingCount = profileRatingCount(distribution);
+  const ratingNote = profileRatingLowVolumeNote(distribution);
+  return <section className="profile-statistics"><h2>Statistics</h2><div className="profile-statistics-strip"><div className="profile-stat stat-lead"><span className="stat-value">{statistics.events_in_been}</span><span className="stat-label">Events in Been</span></div><div className="profile-stat stat-reviews"><span className="stat-value">{statistics.written_reviews}</span><span className="stat-label">Written reviews</span></div><div className="profile-stat stat-venues"><span className="stat-value">{statistics.venues_visited}</span><span className="stat-label">Venues visited</span></div><div className="profile-stat stat-cities"><span className="stat-value">{statistics.cities_visited}</span><span className="stat-label">Cities visited</span></div><div className="profile-judgment-unit"><div className="profile-stat"><span className="stat-value">{statistics.average_rating_given.state === "available" ? statistics.average_rating_given.value.toFixed(1) : "—"}</span><span className="stat-label">Average rating given</span></div><div className={`profile-histogram-group${ratingCount === 0 ? " is-empty" : ""}`}><RatingHistogram className="profile-stat-histogram" buckets={ratingBuckets} staticLabel={ratingCount === 0 ? "Rating distribution: no ratings given yet." : null} />{ratingNote ? <p className="profile-histogram-note">{ratingNote}</p> : null}</div></div></div></section>;
 }
 
 function ProfileFavoriteGroup({ group, owner, onRemove, onReconcile }) {
@@ -143,6 +146,7 @@ function ProfileFavorites({ username, owner }) {
     { key: "artists", label: "Artists", items: state.favorites.artists.map(({ artist }) => ({ key: `artist-${artist.id}`, collection: "artists", id: artist.id, to: artistPath(artist), name: artist.name, artist, favoritePath: `/api/artists/${artist.id}/favorite/` })) },
     { key: "venues", label: "Venues", items: state.favorites.venues.map(({ venue }) => ({ key: `venue-${venue.id}`, collection: "venues", id: venue.id, to: venuePath(venue), name: venue.name, meta: venue.city.name, favoritePath: `/api/venues/${venue.id}/favorite/` })) },
   ];
+  const hasFavorites = groups.some((group) => group.items.length > 0);
   function removeFavorite(item) {
     const entityKey = item.collection.slice(0, -1);
     setState((current) => current.favorites ? {
@@ -153,7 +157,7 @@ function ProfileFavorites({ username, owner }) {
       },
     } : current);
   }
-  return <section className="profile-favorites"><h2>Favorites</h2>{state.error ? <p role="alert">Favorites could not be refreshed.</p> : null}<div className="profile-favorite-groups">{groups.map((group) => <ProfileFavoriteGroup key={group.key} group={group} owner={owner} onRemove={removeFavorite} onReconcile={() => setRetry((value) => value + 1)} />)}</div></section>;
+  return <section className="profile-favorites"><h2>Favorites</h2>{state.error ? <p role="alert">Favorites could not be refreshed.</p> : null}{hasFavorites ? <div className="profile-favorite-groups">{groups.map((group) => <ProfileFavoriteGroup key={group.key} group={group} owner={owner} onRemove={removeFavorite} onReconcile={() => setRetry((value) => value + 1)} />)}</div> : <div className="profile-favorites-empty"><p>No favorites yet.</p>{owner ? <Link to="/discover">Discover events</Link> : null}</div>}</section>;
 }
 
 export default function ProfilePage({ session, tab = "been" }) {

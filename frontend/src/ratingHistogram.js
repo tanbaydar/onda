@@ -7,10 +7,24 @@ export function ratingTooltip(bucket) {
 }
 
 export function profileRatingBuckets(distribution) {
-  if (distribution.state === "available") return distribution.buckets;
+  if (distribution?.state === "available" && Array.isArray(distribution.buckets)) return distribution.buckets;
   return Array.from({ length: 10 }, (_, index) => ({
     rating: (index + 1) / 2,
     count: 0,
     relative_value: 0,
   }));
+}
+
+export function profileRatingCount(distribution) {
+  return profileRatingBuckets(distribution).reduce(
+    (total, bucket) => total + (Number.isFinite(bucket.count) && bucket.count > 0 ? bucket.count : 0),
+    0,
+  );
+}
+
+export function profileRatingLowVolumeNote(distribution) {
+  const count = profileRatingCount(distribution);
+  if (count === 0) return "No ratings given yet.";
+  if (count < 5) return `${count} ${count === 1 ? "rating" : "ratings"} given`;
+  return null;
 }

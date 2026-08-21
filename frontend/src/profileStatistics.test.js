@@ -13,9 +13,13 @@ test("dense profile fixture carries four-digit identity and strip counts", () =>
   }
 });
 
-test("profile histogram CSS source declares one placement size outside media overrides", () => {
-  const occurrences = css.match(/\.rating-histogram\.profile-stat-histogram\{width:104px;flex:0 0 104px\}/g) ?? [];
+test("profile histogram CSS source declares one contextualized placement size outside media overrides", () => {
+  const occurrences = css.match(/\.profile-histogram-group\{width:104px;flex:0 0 104px\}/g) ?? [];
   assert.equal(occurrences.length, 1);
+  assert.match(css, /\.rating-histogram\.profile-stat-histogram\{width:100%\}/);
   assert.match(css, /\.profile-stat-histogram \.hist-bars\{height:30px\}/);
-  assert.doesNotMatch(css, /@media[^}]+profile-stat-histogram[^}]+(?:width|height)/s);
+  assert.match(css, /\.profile-histogram-group\.is-empty \.hist-fill\{background:var\(--border-strong\)\}/);
+  assert.match(css, /\.hist-bar\[data-tooltip\]:hover::after/);
+  assert.doesNotMatch(css, /\.hist-bar:hover::after/);
+  assert.doesNotMatch(css, /@media[^}]+(?:profile-histogram-group|profile-stat-histogram)[^}]+(?:width|height)/s);
 });
