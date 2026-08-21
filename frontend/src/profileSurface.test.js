@@ -41,3 +41,11 @@ test("ProfilePage source uses the four-option custom sort contract without selec
   assert.doesNotMatch(profile, /<select/);
   assert.doesNotMatch(profile, /Sort reviews<\/label>/);
 });
+
+test("ProfilePage gives empty favorites purposeful owner and viewer states", () => {
+  const profile = readFileSync(new URL("./pages/ProfilePage.jsx", import.meta.url), "utf8");
+  assert.match(profile, /const hasFavorites = groups\.some\(\(group\) => group\.items\.length > 0\)/);
+  assert.match(profile, /className="profile-favorites-empty"><p>No favorites yet\.<\/p>/);
+  assert.match(profile, /owner \? <Link to="\/discover">Discover events<\/Link> : null/);
+  assert.match(profile, /hasFavorites \? <div className="profile-favorite-groups">/);
+});
