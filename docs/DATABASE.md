@@ -1,6 +1,6 @@
 # Shipped database: crow's-foot reference
 
-This document describes the **implemented Onda product schema** as of August 20, 2026. It is derived from the current Django models and migrations: 24 project-owned tables across ingestion, canonical identity, and application data.
+This document describes the **implemented Onda product schema** as of August 21, 2026. It is derived from the current Django models and migrations: 25 project-owned tables across ingestion, canonical identity, and application data.
 
 It deliberately excludes Django framework tables and generated framework junctions for admin, permissions, groups, content types, migrations, and sessions. Those tables exist in the deployed database but do not express Onda's domain model.
 
@@ -33,8 +33,8 @@ flowchart LR
         Identity[Four provider identity maps]
     end
 
-    subgraph AZ[Application — 11 tables]
-        Accounts[Accounts + follows]
+    subgraph AZ[Application — 12 tables]
+        Accounts[Accounts + follows + abuse controls]
         Diary[Diary + reviews + likes]
         Social[Plans + favorites + notifications]
     end
@@ -266,6 +266,15 @@ erDiagram
         datetime consumed_at
     }
 
+    REQUEST_THROTTLE {
+        bigint id PK
+        varchar scope
+        char key_hash
+        datetime window_started_at
+        int count
+        datetime updated_at
+    }
+
     FOLLOW {
         bigint follower_id PK, FK
         bigint followee_id PK, FK
@@ -383,6 +392,12 @@ erDiagram
 fields such as the password hash and staff/activity flags, omitted above so the
 domain relationships remain readable.
 
+`REQUEST_THROTTLE` bounds repeated login, registration, account-code, password-reset,
+and avatar-upload attempts. It has no user foreign key by design. The rate-limit key
+is an HMAC of an account identifier or client address; the raw email, username, or IP
+address is not stored in this table. `(scope, key_hash)` is unique, `count` must remain
+positive, and `updated_at` is indexed so expired windows can be removed efficiently.
+
 ### Composite identities and caps
 
 The following relationships use composite primary keys, which makes “the same relationship twice” physically impossible:
@@ -442,12 +457,13 @@ The schema uses targeted indexes rather than indexing every foreign key twice:
 | `FOLLOW(followee_id, status)` | follower counts, requests, privacy checks |
 | `NOTIFICATION(recipient_id, created_at)` | notification timeline |
 | `NOTIFICATION(recipient_id, read_at)` | unread counts and bulk read |
+| `REQUEST_THROTTLE(updated_at)` | expired rate-limit window cleanup |
 
 Composite primary/unique keys also provide useful access paths for relationship existence checks. Query-count and cursor behavior for the most complex read—the six-branch Home feed—are covered separately in [APPLICATION_DATA.md](APPLICATION_DATA.md#home-is-a-projection-not-a-ledger).
 
 ## Source of truth
 
-The diagrams above cover the 24 Onda-owned tables that are currently shipped. Django framework tables are present in the physical database but omitted because they do not define Onda's domain model. Unshipped design ideas are not included.
+The diagrams above cover the 25 Onda-owned tables that are currently shipped. Django framework tables are present in the physical database but omitted because they do not define Onda's domain model. Unshipped design ideas are not included.
 
 | Schema area | Models | Migration history |
 |---|---|---|

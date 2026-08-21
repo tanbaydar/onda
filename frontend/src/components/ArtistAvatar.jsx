@@ -14,6 +14,7 @@ export default function ArtistAvatar({ artist, small = false, className = "", lo
         src={source}
         alt={`${artist.name} artist portrait`}
         loading={loading ?? (small ? "lazy" : "eager")}
+        referrerPolicy="no-referrer"
         onError={() => setFailedSource(source)}
       />
     );

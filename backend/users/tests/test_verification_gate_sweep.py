@@ -223,7 +223,7 @@ class VerificationGateSweepTests(TestCase):
             ("unfavorite venue", "delete", f"/api/venues/{self.other_venue.id}/favorite/", None, 204),
             ("mark WBT", "put", f"/api/events/{self.upcoming_events[0].id}/will-be-there/", None, 201),
             ("unmark WBT", "delete", f"/api/events/{self.upcoming_events[1].id}/will-be-there/", None, 204),
-            ("edit profile", "put", "/api/me/profile/", {"display_name": "Gate Sweep", "avatar": None, "bio": None, "home_city_id": None}, 200),
+            ("edit profile", "put", "/api/me/profile/", {"display_name": "Gate Sweep", "bio": None, "home_city_id": None}, 200),
             ("change privacy", "put", "/api/me/privacy/", {"is_private": False}, 200),
         )
 

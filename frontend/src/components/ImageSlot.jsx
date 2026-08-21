@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { imageSlotInitial } from "../polishPresentation.js";
 
-export default function ImageSlot({ name, src = null, className = "", alt = "", referrerPolicy, loading = "lazy" }) {
+export default function ImageSlot({ name, src = null, className = "", alt = "", referrerPolicy = "no-referrer", loading = "lazy" }) {
   const [failedSource, setFailedSource] = useState(null);
 
   useEffect(() => setFailedSource(null), [src]);

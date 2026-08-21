@@ -180,6 +180,27 @@ class AccountCode(models.Model):
         ]
 
 
+class RequestThrottle(models.Model):
+    scope = models.CharField(max_length=40)
+    key_hash = models.CharField(max_length=64)
+    window_started_at = models.DateTimeField()
+    count = models.PositiveIntegerField(default=1)
+    updated_at = models.DateTimeField(auto_now=True, db_index=True)
+
+    class Meta:
+        db_table = "REQUEST_THROTTLE"
+        constraints = [
+            models.UniqueConstraint(
+                fields=("scope", "key_hash"),
+                name="uq_request_throttle_scope_key",
+            ),
+            models.CheckConstraint(
+                condition=Q(count__gte=1),
+                name="ck_request_throttle_positive_count",
+            ),
+        ]
+
+
 class FollowStatus(models.TextChoices):
     PENDING = "pending", "Pending"
     APPROVED = "approved", "Approved"

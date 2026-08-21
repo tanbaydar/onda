@@ -26,6 +26,7 @@ from ingestion.transformer import transform
 DEFAULT_PAGE_SIZE = 20
 DEFAULT_NIGHTLY_DAYS = 30
 MAX_REQUESTS_PER_RUN = 1_000
+MAX_ARCHIVED_BYTES_PER_RUN = 100 * 1024 * 1024
 
 
 class SyncAlreadyRunning(Exception):
@@ -33,6 +34,10 @@ class SyncAlreadyRunning(Exception):
 
 
 class RequestBudgetExhausted(Exception):
+    pass
+
+
+class ResponseBudgetExhausted(Exception):
     pass
 
 
@@ -54,6 +59,23 @@ class RequestBudget:
                 f"{self.used} attempts"
             )
         self.used += 1
+
+
+class ResponseBudget:
+    def __init__(self, *, limit):
+        if limit < 1:
+            raise ValueError("response budget limit must be at least one")
+        self.limit = limit
+        self.used = 0
+
+    def consume(self, body_text):
+        size = len(body_text.encode("utf-8")) if body_text is not None else 0
+        if self.used + size > self.limit:
+            raise ResponseBudgetExhausted(
+                f"archived response ceiling {self.limit} bytes exhausted after "
+                f"{self.used} bytes"
+            )
+        self.used += size
 
 
 class MySqlAdvisoryLock:
@@ -149,6 +171,7 @@ def _fetch_seed(
     window_end,
     page_size,
     request_budget,
+    response_budget,
     client_counts_attempts,
 ):
     page_number = 1
@@ -164,6 +187,12 @@ def _fetch_seed(
                 page_size,
             )
         except RequestBudgetExhausted as exc:
+            state.fetch_valid = False
+            state.errors.append(str(exc))
+            return
+        try:
+            response_budget.consume(result.body_text)
+        except ResponseBudgetExhausted as exc:
             state.fetch_valid = False
             state.errors.append(str(exc))
             return
@@ -272,6 +301,7 @@ def run_sync(
 ):
     client = client or RaClient()
     request_budget = RequestBudget(limit=MAX_REQUESTS_PER_RUN)
+    response_budget = ResponseBudget(limit=MAX_ARCHIVED_BYTES_PER_RUN)
     attach_request_budget = getattr(client, "attach_request_budget", None)
     client_counts_attempts = attach_request_budget is not None
     if client_counts_attempts:
@@ -328,6 +358,7 @@ def run_sync(
                 window_end=window_end,
                 page_size=page_size,
                 request_budget=request_budget,
+                response_budget=response_budget,
                 client_counts_attempts=client_counts_attempts,
             )
 

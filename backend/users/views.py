@@ -2,8 +2,10 @@ import json
 import math
 import base64
 import io
+import re
 import uuid
 from decimal import Decimal
+from urllib.parse import unquote, urlsplit
 
 from django.contrib.auth import authenticate, login, logout, password_validation
 from django.conf import settings
@@ -11,7 +13,7 @@ from django.core.exceptions import ValidationError
 from django.core.paginator import EmptyPage, Paginator
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
-from django.core.validators import URLValidator
+from django.core.validators import validate_email
 from django.db import transaction
 from django.db.models import Avg, Count, Exists, OuterRef, Prefetch, Q
 from django.db.models.functions import Length
@@ -61,6 +63,7 @@ from .models import (
     FavoriteEvent,
     FavoriteVenue,
 )
+from .rate_limits import RateLimitExceeded, client_address, consume_rate_limit
 from .services import (
     EventNotStarted,
     NOT_STARTED_MESSAGE,
@@ -93,6 +96,57 @@ from .services import (
     save_favorite,
     remove_favorite,
 )
+
+
+MAX_AVATAR_BYTES = 2 * 1024 * 1024
+MAX_AVATAR_DIMENSION = 4096
+MAX_AVATAR_PIXELS = MAX_AVATAR_DIMENSION * MAX_AVATAR_DIMENSION
+MAX_CURSOR_LENGTH = 512
+
+
+def _owned_avatar_storage_name(user_id, avatar_url):
+    """Return only the canonical storage path owned by this user."""
+    if not isinstance(avatar_url, str):
+        return None
+    media_path = f"/{settings.MEDIA_URL.strip('/')}/"
+    path = unquote(urlsplit(avatar_url).path)
+    match = re.fullmatch(
+        rf"{re.escape(media_path)}avatars/{user_id}/([0-9a-f]{{32}}\.jpg)",
+        path,
+    )
+    if match is None:
+        return None
+    return f"avatars/{user_id}/{match.group(1)}"
+
+
+def _delete_owned_avatar(user_id, avatar_url):
+    storage_name = _owned_avatar_storage_name(user_id, avatar_url)
+    if storage_name is not None:
+        default_storage.delete(storage_name)
+
+
+def _rate_limit(scope, key):
+    policy = settings.ONDA_AUTH_RATE_LIMITS[scope]
+    try:
+        consume_rate_limit(
+            scope=scope,
+            key=key,
+            limit=policy["limit"],
+            window_seconds=policy["window_seconds"],
+        )
+    except RateLimitExceeded as exc:
+        response = JsonResponse(
+            {"errors": {"rate_limit": ["Too many requests. Try again later."]}},
+            status=429,
+        )
+        response["Retry-After"] = str(exc.retry_after)
+        response["Cache-Control"] = "no-store"
+        return response
+    return None
+
+
+def _auth_rate_limit(request, scope):
+    return _rate_limit(scope, client_address(request))
 
 
 def _user_payload(user):
@@ -182,6 +236,19 @@ def _json_object(request):
     except (json.JSONDecodeError, UnicodeDecodeError):
         return None
     return value if isinstance(value, dict) else None
+
+
+def _normalized_email(value):
+    if not isinstance(value, str):
+        return None
+    email = value.strip().lower()
+    if not email or len(email) > 254:
+        return None
+    try:
+        validate_email(email)
+    except ValidationError:
+        return None
+    return email
 
 
 def _form_errors(form):
@@ -294,6 +361,8 @@ def _cursor_encode(notification):
 
 
 def _cursor_decode(value):
+    if not isinstance(value, str) or not 1 <= len(value) <= MAX_CURSOR_LENGTH:
+        return None
     try:
         padded = value + "=" * (-len(value) % 4)
         timestamp, identifier = base64.urlsafe_b64decode(padded).decode().rsplit("|", 1)
@@ -318,6 +387,9 @@ def session_detail(request):
 
 @require_POST
 def register(request):
+    throttle = _auth_rate_limit(request, "register")
+    if throttle is not None:
+        return throttle
     payload = _json_object(request)
     if payload is None:
         return JsonResponse(
@@ -339,6 +411,9 @@ def register(request):
 
 @require_POST
 def login_view(request):
+    throttle = _auth_rate_limit(request, "login")
+    if throttle is not None:
+        return throttle
     payload = _json_object(request)
     if payload is None:
         return JsonResponse(
@@ -348,6 +423,9 @@ def login_view(request):
     form = LoginForm(payload)
     if not form.is_valid():
         return JsonResponse({"errors": _form_errors(form)}, status=400)
+    throttle = _rate_limit("login_account", form.cleaned_data["email"])
+    if throttle is not None:
+        return throttle
     user = authenticate(
         request,
         email=(
@@ -383,6 +461,9 @@ def verification_code_request(request):
         return auth_error
     if request.user.email_verified_at is not None:
         return JsonResponse({"sent": False, "already_verified": True})
+    throttle = _rate_limit("verification_request_account", str(request.user.pk))
+    if throttle is not None:
+        return throttle
     try:
         issue_account_code(
             user=request.user,
@@ -424,18 +505,28 @@ def verification_code_confirm(request):
 
 @require_POST
 def password_reset_request(request):
+    throttle = _auth_rate_limit(request, "password_reset_request")
+    if throttle is not None:
+        return throttle
     payload = _json_object(request)
-    if payload is None or not isinstance(payload.get("email"), str):
+    email = _normalized_email(payload.get("email") if payload is not None else None)
+    if email is None:
         return JsonResponse(
             {"errors": {"email": ["Enter a valid email address."]}},
             status=400,
         )
-    request_password_reset(email=payload["email"].strip().lower())
+    throttle = _rate_limit("password_reset_request_account", email)
+    if throttle is not None:
+        return throttle
+    request_password_reset(email=email)
     return JsonResponse({"accepted": True})
 
 
 @require_POST
 def password_reset_confirm(request):
+    throttle = _auth_rate_limit(request, "password_reset_confirm")
+    if throttle is not None:
+        return throttle
     payload = _json_object(request)
     if payload is None:
         return JsonResponse(
@@ -446,7 +537,8 @@ def password_reset_confirm(request):
     password = payload.get("password")
     code = payload.get("code")
     errors = {}
-    if not isinstance(email, str) or not email.strip():
+    normalized_email = _normalized_email(email)
+    if normalized_email is None:
         errors["email"] = ["Enter a valid email address."]
     if not isinstance(code, str) or len(code) != 6 or not code.isascii() or not code.isdigit():
         errors["code"] = ["Enter a 6-digit code."]
@@ -454,6 +546,10 @@ def password_reset_confirm(request):
         errors["password"] = ["Enter a new password."]
     if errors:
         return JsonResponse({"errors": errors}, status=400)
+    email = normalized_email
+    throttle = _rate_limit("password_reset_confirm_account", email)
+    if throttle is not None:
+        return throttle
     try:
         # Validate without account attributes before lookup so an invalid reset
         # submission cannot use user-specific errors for account enumeration.
@@ -463,7 +559,7 @@ def password_reset_confirm(request):
             {"errors": {"password": list(exc.messages)}},
             status=400,
         )
-    user = User.objects.filter(email__iexact=email.strip()).first()
+    user = User.objects.filter(email__iexact=email).first()
     if user is None:
         return JsonResponse(
             {"errors": {"code": ["The code is invalid."]}},
@@ -909,7 +1005,7 @@ def profile_edit(request):
             status=400,
         )
     errors = {}
-    required = ("display_name", "avatar", "bio", "home_city_id")
+    required = ("display_name", "bio", "home_city_id")
     for field in required:
         if field not in payload:
             errors[field] = ["This field is required."]
@@ -923,19 +1019,8 @@ def profile_edit(request):
         else:
             display_name = display_name.strip()
 
-    avatar = payload.get("avatar")
     if "avatar" in payload:
-        if avatar is not None and type(avatar) is not str:
-            errors["avatar"] = ["Avatar must be an HTTP or HTTPS URL, or null."]
-        elif type(avatar) is str:
-            avatar = avatar.strip() or None
-            if avatar is not None:
-                try:
-                    URLValidator(schemes=("http", "https"))(avatar)
-                except ValidationError:
-                    errors["avatar"] = ["Avatar must be an HTTP or HTTPS URL, or null."]
-                if len(avatar) > 2048:
-                    errors["avatar"] = ["Avatar URL cannot exceed 2,048 characters."]
+        errors["avatar"] = ["Use the avatar upload endpoint to change your photo."]
 
     bio = payload.get("bio")
     if "bio" in payload:
@@ -962,10 +1047,9 @@ def profile_edit(request):
     if errors:
         return JsonResponse({"errors": errors}, status=400)
     request.user.display_name = display_name
-    request.user.avatar = avatar
     request.user.bio = bio
     request.user.home_city = home_city
-    request.user.save(update_fields=("display_name", "avatar", "bio", "home_city"))
+    request.user.save(update_fields=("display_name", "bio", "home_city"))
     return JsonResponse({"profile": _profile_identity(request.user)})
 
 
@@ -978,30 +1062,40 @@ def profile_avatar(request):
     if request.method == "DELETE":
         request.user.avatar = None
         request.user.save(update_fields=("avatar",))
-        if previous and settings.MEDIA_URL in previous:
-            default_storage.delete(previous.split(settings.MEDIA_URL, 1)[1])
+        _delete_owned_avatar(request.user.id, previous)
         return JsonResponse({"profile": _profile_identity(request.user)})
+    throttle = _rate_limit("avatar_upload_account", str(request.user.pk))
+    if throttle is not None:
+        return throttle
     upload = request.FILES.get("avatar")
     if upload is None:
         return JsonResponse({"errors": {"avatar": ["Choose a JPEG, PNG, or WebP image."]}}, status=400)
-    if upload.size > 2 * 1024 * 1024:
+    if upload.size > MAX_AVATAR_BYTES:
         return JsonResponse({"errors": {"avatar": ["Photo must be 2MB or smaller."]}}, status=400)
     try:
         image = Image.open(upload)
         if image.format not in {"JPEG", "PNG", "WEBP"}:
             raise UnidentifiedImageError
+        width, height = image.size
+        if (
+            width < 1
+            or height < 1
+            or width > MAX_AVATAR_DIMENSION
+            or height > MAX_AVATAR_DIMENSION
+            or width * height > MAX_AVATAR_PIXELS
+        ):
+            raise ValueError("avatar dimensions exceed the processing limit")
         image = ImageOps.exif_transpose(image).convert("RGB")
         image = ImageOps.fit(image, (512, 512), method=Image.Resampling.LANCZOS, centering=(0.5, 0.5))
         output = io.BytesIO()
         image.save(output, format="JPEG", quality=88, optimize=True)
-    except (UnidentifiedImageError, OSError, ValueError):
+    except (Image.DecompressionBombError, UnidentifiedImageError, OSError, ValueError):
         return JsonResponse({"errors": {"avatar": ["Choose a valid JPEG, PNG, or WebP image."]}}, status=400)
     name = f"avatars/{request.user.id}/{uuid.uuid4().hex}.jpg"
     stored = default_storage.save(name, ContentFile(output.getvalue()))
     request.user.avatar = request.build_absolute_uri(f"{settings.MEDIA_URL}{stored}")
     request.user.save(update_fields=("avatar",))
-    if previous and settings.MEDIA_URL in previous:
-        default_storage.delete(previous.split(settings.MEDIA_URL, 1)[1])
+    _delete_owned_avatar(request.user.id, previous)
     return JsonResponse({"profile": _profile_identity(request.user)})
 
 

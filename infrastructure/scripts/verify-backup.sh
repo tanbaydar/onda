@@ -17,7 +17,7 @@ fi
 
 gzip -t "$backup_file"
 
-mysql_image="${RESTORE_MYSQL_IMAGE:-mysql:8.4}"
+mysql_image="${RESTORE_MYSQL_IMAGE:-onda-db:local}"
 container_name="onda-restore-check-$(date -u +%Y%m%d%H%M%S)-$$"
 restore_database="onda_restore"
 restore_password="$(openssl rand -hex 24)"

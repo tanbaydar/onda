@@ -16,8 +16,6 @@
 
 The demo shows the product surface. The root [How it works](README.md#how-it-works) section explains the engineering behind it, including why user requests never depend on the external listing source, how malformed observations are isolated, and how the social feed enforces privacy before pagination.
 
-## Live engineering demo
+## Availability
 
-[Open ondaapp.io](https://ondaapp.io)
-
-The deployment is an engineering demonstration, not a broadly released consumer product. Search-engine indexing and email-verification enforcement are disabled, and Onda is not affiliated with Resident Advisor.
+Onda is not publicly distributed. The repository will use the recorded walkthrough instead of directing visitors to the operator's deployment. Search-engine indexing remains disabled, and Onda is not affiliated with Resident Advisor.

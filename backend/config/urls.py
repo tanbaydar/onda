@@ -29,7 +29,6 @@ from catalog.views import (
 from catalog.search import search
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
     path("api/auth/", include("users.urls")),
     path("api/", include("users.been_urls")),
     path("api/cities/", city_list, name="city-list"),
@@ -39,5 +38,7 @@ urlpatterns = [
     path("api/venues/<int:venue_id>/", venue_detail, name="venue-detail"),
     path("api/artists/<int:artist_id>/", artist_detail, name="artist-detail"),
 ]
+if settings.ADMIN_ENABLED:
+    urlpatterns.append(path("admin/", admin.site.urls))
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

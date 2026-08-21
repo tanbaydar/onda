@@ -11,7 +11,7 @@ on 2026-07-30; RA's edge does not correlate it with requested geography.
 from __future__ import annotations
 
 import json
-import random
+import secrets
 import socket
 import time
 from dataclasses import dataclass
@@ -19,7 +19,8 @@ from datetime import date, datetime, timezone as datetime_timezone
 from email.utils import parsedate_to_datetime
 from pathlib import Path
 from urllib.error import HTTPError, URLError
-from urllib.request import Request, urlopen
+from urllib.parse import urlsplit
+from urllib.request import HTTPRedirectHandler, Request, build_opener
 
 from django.utils import timezone
 
@@ -30,7 +31,9 @@ BASE_BACKOFF_SECONDS = 1.0
 MAX_BACKOFF_SECONDS = 8.0
 REQUEST_TIMEOUT_SECONDS = 20
 INTER_REQUEST_DELAY_SECONDS = 1.5
+MAX_RESPONSE_BYTES = 2 * 1024 * 1024
 RETRYABLE_HTTP_STATUSES = frozenset({408, 429, 500, 502, 503, 504})
+_JITTER = secrets.SystemRandom()
 
 # This exact public, non-authenticated set passed the supervised RA edge probe.
 HEADERS = {
@@ -51,6 +54,55 @@ _REQUEST_CONTRACT = (
     / "contracts"
     / "ra_event_listings.json"
 )
+
+
+def _origin(url):
+    parsed = urlsplit(url)
+    return parsed.scheme, parsed.hostname, parsed.port
+
+
+class _SameOriginHttpsRedirectHandler(HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        if _origin(newurl) != _origin(GRAPHQL_ENDPOINT):
+            raise HTTPError(
+                req.full_url,
+                502,
+                "cross-origin ingestion redirect refused",
+                headers,
+                fp,
+            )
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
+
+
+_HTTPS_OPENER = build_opener(_SameOriginHttpsRedirectHandler())
+
+
+def urlopen(request, *, timeout):
+    if request.full_url != GRAPHQL_ENDPOINT or _origin(request.full_url)[0] != "https":
+        raise URLError("ingestion request URL is not the configured HTTPS endpoint")
+    return _HTTPS_OPENER.open(request, timeout=timeout)
+
+
+class ResponseTooLarge(Exception):
+    pass
+
+
+def _bounded_response_text(response):
+    content_length = response.headers.get("Content-Length")
+    try:
+        declared_length = int(content_length) if content_length is not None else None
+    except (TypeError, ValueError):
+        declared_length = None
+    if declared_length is not None and declared_length > MAX_RESPONSE_BYTES:
+        raise ResponseTooLarge(
+            f"ingestion response exceeds {MAX_RESPONSE_BYTES} bytes"
+        )
+    body = response.read(MAX_RESPONSE_BYTES + 1)
+    if len(body) > MAX_RESPONSE_BYTES:
+        raise ResponseTooLarge(
+            f"ingestion response exceeds {MAX_RESPONSE_BYTES} bytes"
+        )
+    return body.decode("utf-8", errors="replace")
 
 
 @dataclass(frozen=True)
@@ -137,7 +189,7 @@ class RaClient:
             try:
                 with urlopen(request, timeout=self.timeout_seconds) as response:
                     status = response.status
-                    body = response.read().decode("utf-8", errors="replace")
+                    body = _bounded_response_text(response)
                     result = FetchResult(
                         status_code=status,
                         body_text=body,
@@ -154,7 +206,15 @@ class RaClient:
                         continue
                     return result
             except HTTPError as exc:
-                body = exc.read().decode("utf-8", errors="replace")
+                try:
+                    body = _bounded_response_text(exc)
+                except ResponseTooLarge as size_error:
+                    return FetchResult(
+                        status_code=None,
+                        body_text=None,
+                        fetched_at=timezone.now(),
+                        error=str(size_error),
+                    )
                 result = FetchResult(
                     status_code=exc.code,
                     body_text=body,
@@ -170,6 +230,13 @@ class RaClient:
                     )
                     continue
                 return result
+            except ResponseTooLarge as exc:
+                return FetchResult(
+                    status_code=None,
+                    body_text=None,
+                    fetched_at=timezone.now(),
+                    error=str(exc),
+                )
             except (TimeoutError, socket.timeout, URLError) as exc:
                 last_transport_error = self._transport_error_text(exc, attempt)
                 if attempt < self.max_attempts:
@@ -198,7 +265,7 @@ class RaClient:
                 MAX_BACKOFF_SECONDS,
                 BASE_BACKOFF_SECONDS * (2 ** (attempt - 1)),
             )
-            delay = random.uniform(0, ceiling)
+            delay = _JITTER.uniform(0, ceiling)
         self.delay(delay)
 
     @staticmethod

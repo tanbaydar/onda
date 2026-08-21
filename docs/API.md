@@ -174,7 +174,7 @@ The route rejects non-half-star values with `400` and a not-yet-started event wi
 
 | Method | Path | Purpose |
 |---|---|---|
-| `PUT` | `/api/me/profile/` | Edit display name, bio, home city, and avatar URL fields accepted by the profile contract |
+| `PUT` | `/api/me/profile/` | Edit display name, bio, and home city; avatar URLs cannot be written directly |
 | `POST`, `DELETE` | `/api/me/profile/avatar/` | Upload/process or remove avatar media |
 | `PUT` | `/api/me/privacy/` | Change public/private state transactionally |
 | `POST`, `DELETE` | `/api/users/{user_id}/follow/` | Follow/request or unfollow |
@@ -189,7 +189,7 @@ The route rejects non-half-star values with `400` and a not-yet-started event wi
 
 Each favorite type has a three-item service cap. `PUT` is idempotent for an already-favorited target; `DELETE` is idempotent and returns `204` whether or not the row existed.
 
-Avatar uploads are validated as images, normalized with Pillow, stripped of metadata by decode/re-encode, resized to the configured square output, and stored through Django's storage interface. The public profile stores a URL rather than exposing a filesystem path.
+Avatar uploads are size- and dimension-bounded, validated as JPEG/PNG/WebP images, normalized with Pillow, stripped of metadata by decode/re-encode, resized to the configured square output, and stored through Django's storage interface. Deletion accepts only the current user's canonical storage path; clients cannot supply or delete another stored object.
 
 ## Home and notifications
 
@@ -226,7 +226,7 @@ Search uses `scope=all` for up to five results in each group, or one of `events`
 | `403` | Private-profile boundary or account action blocked by verification policy |
 | `404` | Unknown, hidden, not visible, absent relationship where required, or page out of range |
 | `409` | Valid input conflicts with domain state or a uniqueness/action rule |
-| `429` | Account-code resend cooldown |
+| `429` | Account-code cooldown or an authentication endpoint rate limit; responses include `Retry-After` when applicable |
 | `405` | Route exists but does not allow that HTTP method |
 
 Validation responses normally use field-oriented `{"errors": {...}}`; a few resource and pagination paths return a singular `{"error": "..."}`. That inconsistency is part of the current first-party contract and is not presented as a uniform public API design.
@@ -234,7 +234,9 @@ Validation responses normally use field-oriented `{"errors": {...}}`; a few reso
 ## API security boundary
 
 - Cookies are same-origin; unsafe methods require `X-CSRFToken`.
-- Production settings enforce HTTPS redirect, secure cookies, HSTS, MIME sniffing protection, and frame denial.
+- Production settings enforce HTTPS redirect, secure cookies, HSTS, a restrictive browser security policy, MIME sniffing protection, and frame denial.
+- Authentication limits are shared through MySQL across application workers, and client-address keys are HMACed before storage.
+- Caddy bounds API request bodies before Django parses them.
 - Django's session ID, password hashes, verification-code hashes, and self-only email fields are never part of public serializers.
 - Visibility querysets filter private content before serialization.
 - Hidden catalog objects resolve through the same not-found surface as unknown IDs.

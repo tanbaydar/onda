@@ -30,6 +30,7 @@ from .models import (
 
 ACTIVITY_TYPES = ("will_be_there", "review_like", "rated_been", "follow", "favorite_event", "favorite_artist")
 SOURCE_KEY_RE = re.compile(r"^\d{20}(?::\d{20})?$")
+MAX_CURSOR_LENGTH = 512
 
 
 def _source_part(field):
@@ -78,6 +79,8 @@ def encode_cursor(row):
 
 
 def decode_cursor(value):
+    if not isinstance(value, str) or not 1 <= len(value) <= MAX_CURSOR_LENGTH:
+        return None
     try:
         padded = value + "=" * (-len(value) % 4)
         decoded = json.loads(base64.urlsafe_b64decode(padded).decode())

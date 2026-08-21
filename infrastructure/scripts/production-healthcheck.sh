@@ -34,9 +34,20 @@ curl --fail --silent --show-error --location \
   --dump-header "$headers" --output /dev/null \
   "$base_url/api/cities/"
 
-if ! grep -Eiq '^x-robots-tag:[[:space:]]*noindex([[:space:]]|$)' "$headers"; then
-  echo "ERROR: public health response is missing X-Robots-Tag: noindex" >&2
-  exit 1
-fi
+require_header() {
+  local label="$1"
+  local pattern="$2"
+  if ! grep -Eiq "$pattern" "$headers"; then
+    echo "ERROR: public health response is missing or has an invalid $label header" >&2
+    exit 1
+  fi
+}
+
+require_header "Cache-Control" '^cache-control:[[:space:]]*no-store([[:space:]]|$)'
+require_header "Content-Security-Policy" '^content-security-policy:[[:space:]].*default-src'
+require_header "Strict-Transport-Security" '^strict-transport-security:[[:space:]]*max-age=31536000([;[:space:]]|$)'
+require_header "X-Content-Type-Options" '^x-content-type-options:[[:space:]]*nosniff([[:space:]]|$)'
+require_header "X-Frame-Options" '^x-frame-options:[[:space:]]*deny([[:space:]]|$)'
+require_header "X-Robots-Tag" '^x-robots-tag:[[:space:]]*noindex([[:space:]]|$)'
 
 echo "Production health check passed: db, web, caddy, and $base_url/api/cities/"

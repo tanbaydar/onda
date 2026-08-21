@@ -7,10 +7,30 @@ www.{$ONDA_DOMAIN} {
 }
 
 {$ONDA_DOMAIN} {
-	header X-Robots-Tag "noindex"
+	encode
+
+	header {
+		-Server
+		Content-Security-Policy "default-src 'self'; base-uri 'self'; connect-src 'self'; font-src 'self'; form-action 'self'; frame-ancestors 'none'; frame-src 'none'; img-src 'self' https: data:; manifest-src 'self'; media-src 'self'; object-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; upgrade-insecure-requests"
+		Cross-Origin-Opener-Policy "same-origin"
+		Cross-Origin-Resource-Policy "same-origin"
+		Permissions-Policy "camera=(), geolocation=(), microphone=(), payment=(), usb=()"
+		Referrer-Policy "no-referrer"
+		?Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		X-Robots-Tag "noindex"
+	}
+
+	request_body /api/* {
+		max_size 3MB
+	}
 
 	handle /api/* {
-		reverse_proxy web:8000
+		header Cache-Control "no-store"
+		reverse_proxy web:8000 {
+			header_up X-Real-IP {remote_host}
+		}
 	}
 
 	handle_path /static/* {

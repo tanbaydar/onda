@@ -8,7 +8,7 @@ Onda is a social diary for live music: it helps people find events, remember the
 
 The current catalog covers configured event listings in **New York City and Boston**. It is an engineering demo, not a launched consumer service.
 
-[Open the live demo](https://ondaapp.io)
+[See the recorded walkthrough placeholder](../DEMO.md)
 
 > **Video walkthrough:** coming soon. The finished MP4 will be linked from the root README.
 

@@ -17,6 +17,7 @@ echo "Creating and verifying the required pre-deploy backup"
 git pull --ff-only
 docker compose build
 docker compose up -d db
+docker compose run --rm web python manage.py check --deploy --fail-level WARNING
 docker compose run --rm web python manage.py migrate --noinput
 docker compose up -d
 

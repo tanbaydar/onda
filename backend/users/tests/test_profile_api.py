@@ -2,6 +2,8 @@ import json
 import io
 import tempfile
 from datetime import UTC, datetime, timedelta
+from pathlib import Path
+from unittest.mock import patch
 
 from django.db import IntegrityError, connection, transaction
 from django.db.models.deletion import RestrictedError
@@ -379,9 +381,10 @@ class ProfileApiContractTests(TestCase):
 
     def test_profile_edit_validates_and_preserves_nonempty_bio_verbatim(self):
         client = self.auth_client(self.public_user)
+        self.public_user.avatar = "https://legacy.example.test/avatar.png"
+        self.public_user.save(update_fields=("avatar",))
         payload = {
             "display_name": "  Updated Name  ",
-            "avatar": "  https://example.com/avatar.png  ",
             "bio": "  visible bio\n",
             "home_city_id": self.new_york.id,
         }
@@ -390,7 +393,7 @@ class ProfileApiContractTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(self.public_user.display_name, "Updated Name")
-        self.assertEqual(self.public_user.avatar, "https://example.com/avatar.png")
+        self.assertEqual(self.public_user.avatar, "https://legacy.example.test/avatar.png")
         self.assertEqual(self.public_user.bio, "  visible bio\n")
         self.assertEqual(self.public_user.home_city, self.new_york)
 
@@ -398,7 +401,6 @@ class ProfileApiContractTests(TestCase):
         client = self.auth_client(self.public_user)
         valid = {
             "display_name": "x" * 50,
-            "avatar": "",
             "bio": " \t\n ",
             "home_city_id": None,
         }
@@ -406,7 +408,11 @@ class ProfileApiContractTests(TestCase):
         too_long_bio = self.put_json(client, "/api/me/profile/", {**valid, "bio": "x" * 151})
         bad_name = self.put_json(client, "/api/me/profile/", {**valid, "display_name": "  "})
         bad_city = self.put_json(client, "/api/me/profile/", {**valid, "home_city_id": 999999})
-        bad_avatar = self.put_json(client, "/api/me/profile/", {**valid, "avatar": "not a URL"})
+        bad_avatar = self.put_json(
+            client,
+            "/api/me/profile/",
+            {**valid, "avatar": "https://example.test/not-accepted.jpg"},
+        )
         self.public_user.refresh_from_db()
 
         self.assertEqual(cleared.status_code, 200)
@@ -448,9 +454,64 @@ class ProfileApiContractTests(TestCase):
         token = client.cookies["csrftoken"].value
         invalid = client.post("/api/me/profile/avatar/", {"avatar": SimpleUploadedFile("bad.gif", b"GIF89a", content_type="image/gif")}, HTTP_X_CSRFTOKEN=token)
         oversize = client.post("/api/me/profile/avatar/", {"avatar": SimpleUploadedFile("large.png", b"x" * (2 * 1024 * 1024 + 1), content_type="image/png")}, HTTP_X_CSRFTOKEN=token)
-        self.assertEqual((invalid.status_code, oversize.status_code), (400, 400))
+        wide_image = Image.new("RGB", (4097, 1), "red")
+        wide_source = io.BytesIO()
+        wide_image.save(wide_source, "PNG")
+        oversized_dimensions = client.post(
+            "/api/me/profile/avatar/",
+            {
+                "avatar": SimpleUploadedFile(
+                    "wide.png",
+                    wide_source.getvalue(),
+                    content_type="image/png",
+                )
+            },
+            HTTP_X_CSRFTOKEN=token,
+        )
+        self.assertEqual(
+            (invalid.status_code, oversize.status_code, oversized_dimensions.status_code),
+            (400, 400, 400),
+        )
         self.assertIn("avatar", invalid.json()["errors"])
         self.assertIn("avatar", oversize.json()["errors"])
+        self.assertIn("avatar", oversized_dimensions.json()["errors"])
+
+    def test_avatar_upload_handles_decompression_bomb_rejection(self):
+        client = self.auth_client(self.public_user)
+        token = client.cookies["csrftoken"].value
+        upload = SimpleUploadedFile("bomb.png", b"not-decoded", content_type="image/png")
+
+        with patch(
+            "users.views.Image.open",
+            side_effect=Image.DecompressionBombError("unsafe pixel count"),
+        ):
+            response = client.post(
+                "/api/me/profile/avatar/",
+                {"avatar": upload},
+                HTTP_X_CSRFTOKEN=token,
+            )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("avatar", response.json()["errors"])
+
+    def test_avatar_removal_never_deletes_another_users_file(self):
+        client = self.auth_client(self.public_user)
+        token = client.cookies["csrftoken"].value
+        victim_name = f"avatars/{self.private_user.id}/{'a' * 32}.jpg"
+        with tempfile.TemporaryDirectory() as media_root, override_settings(MEDIA_ROOT=media_root):
+            victim_path = Path(media_root) / victim_name
+            victim_path.parent.mkdir(parents=True)
+            victim_path.write_bytes(b"victim-avatar")
+            self.public_user.avatar = f"https://testserver/media/{victim_name}"
+            self.public_user.save(update_fields=("avatar",))
+
+            removed = client.delete(
+                "/api/me/profile/avatar/",
+                HTTP_X_CSRFTOKEN=token,
+            )
+
+            self.assertEqual(removed.status_code, 200)
+            self.assertTrue(victim_path.exists())
 
     def test_home_city_delete_is_restricted_at_orm_and_database_layers(self):
         city = City.objects.create(

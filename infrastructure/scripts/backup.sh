@@ -39,7 +39,10 @@ chmod 0600 "$backup_file"
 if [[ -n "${BACKUP_BUCKET:-}" ]]; then
   destination="${BACKUP_BUCKET%/}/$(basename "$backup_file")"
   echo "Uploading $backup_file to $destination"
-  aws s3 cp "$backup_file" "$destination" --region "${AWS_REGION:?AWS_REGION must be set when BACKUP_BUCKET is set}"
+  aws s3 cp "$backup_file" "$destination" \
+    --region "${AWS_REGION:?AWS_REGION must be set when BACKUP_BUCKET is set}" \
+    --sse AES256 \
+    --only-show-errors
 else
   echo "BACKUP_BUCKET is empty; verified local dump retained at $backup_file"
 fi
