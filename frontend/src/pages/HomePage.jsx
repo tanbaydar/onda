@@ -84,10 +84,10 @@ export default function HomePage({ session }) {
   const redirect = homeAccessRedirect(session.user);
   if (redirect) return <Navigate to={redirect} replace />;
   return (
-    <main className="feed-page">
-      {state.loading ? <p className="home-feed-status">Loading activity.</p> : null}
+    <main className="feed-page" aria-busy={state.loading}>
+      {state.loading ? <p className="home-feed-status" role="status" aria-live="polite">Loading activity.</p> : null}
       {state.error ? (
-        <div className="home-feed-status"><p>Home activity could not be loaded.</p><button className="quiet-control" type="button" onClick={() => setRetry((value) => value + 1)}>Retry</button></div>
+        <div className="home-feed-status" role="alert"><p>Home activity could not be loaded.</p><button className="quiet-control" type="button" onClick={() => setRetry((value) => value + 1)}>Retry</button></div>
       ) : null}
       {!state.loading && !state.error && state.results.length === 0 ? (
         <div className="home-feed-empty"><p>{HOME_EMPTY_COPY}</p><Link to="/discover">Discover events</Link></div>

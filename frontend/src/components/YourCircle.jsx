@@ -69,17 +69,17 @@ export default function YourCircle({
   }
 
   return (
-    <section>
+    <section aria-busy={state.loading}>
       <h2>Your Circle</h2>
-      {actionError ? <p>{actionError}</p> : null}
-      {state.loading ? <p>Loading Your Circle.</p> : null}
+      {actionError ? <p className="favorite-notice" role="alert">{actionError}</p> : null}
+      {state.loading ? <p role="status" aria-live="polite">Loading Your Circle.</p> : null}
       {state.error ? (
-        <>
+        <div role="alert">
           <p>Your Circle could not be loaded.</p>
           <button type="button" onClick={() => setRetry((value) => value + 1)}>
             Retry
           </button>
-        </>
+        </div>
       ) : null}
       {state.data ? (
         <>

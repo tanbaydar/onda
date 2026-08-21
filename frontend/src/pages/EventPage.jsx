@@ -238,7 +238,7 @@ export default function EventPage({ user, sessionReady, onAuthenticationRequired
         {user ? <div className="event-owner-block">
             {isPast && !viewerHasRating ? <StarInput value={rating} disabled={saving} onChange={(value) => setRating(String(value))} onCommit={saveRating} /> : null}
             {!isPast ? <>
-            {willBeThereError ? <p>{willBeThereError}</p> : null}
+            {willBeThereError ? <p className="favorite-notice" role="alert">{willBeThereError}</p> : null}
             {event.viewer_will_be_there.can_mark ? (
               <button className={event.viewer_will_be_there.is_marked ? "wbt-marked" : ""} type="button" disabled={saving} onClick={changeWillBeThere}>
                 {event.viewer_will_be_there.is_marked
@@ -248,7 +248,7 @@ export default function EventPage({ user, sessionReady, onAuthenticationRequired
             ) : null}</> : null}
             <FavoriteControl compact path={`/api/events/${event.id}/favorite/`} state={event.viewer_favorite} onChanged={() => setRetry((value) => value + 1)} />
             {isPast && event.viewer_will_be_there.was_marked ? <p className="dormant-wbt">Will Be There · marked</p> : null}
-            {actionError ? <p role="alert">{actionError}</p> : null}
+            {actionError ? <p className="favorite-notice" role="alert">{actionError}</p> : null}
         </div> : null}
       </article>
       {!isPast ? <><WillBeThereAttendees

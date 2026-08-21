@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 
 import { fetchJson } from "../api.js";
 import { recordRecentSearch } from "../recentSearches.js";
+import { searchQueryReady } from "../searchPageState.js";
 import SearchResults from "./SearchResults.jsx";
 
 export default function DiscoverSearch({ cityId, cityName = "this city" }) {
@@ -14,9 +15,10 @@ export default function DiscoverSearch({ cityId, cityName = "this city" }) {
   const [loading, setLoading] = useState(false);
   const [retry, setRetry] = useState(0);
   const trimmed = query.trim();
+  const searchReady = searchQueryReady(trimmed);
 
   useEffect(() => {
-    if (!trimmed) { setData(null); setError(null); setLoading(false); return undefined; }
+    if (!searchReady) { setData(null); setError(null); setLoading(false); return undefined; }
     const controller = new AbortController();
     setError(null);
     setLoading(true);
@@ -27,7 +29,7 @@ export default function DiscoverSearch({ cityId, cityName = "this city" }) {
         .catch((nextError) => { if (nextError.name !== "AbortError") { setData(null); setError(nextError); setLoading(false); } });
     }, 250);
     return () => { clearTimeout(timer); controller.abort(); };
-  }, [cityId, retry, trimmed]);
+  }, [cityId, retry, searchReady, trimmed]);
 
   useEffect(() => {
     function close(event) { if (!rootRef.current?.contains(event.target)) { setQuery(""); setData(null); } }
@@ -36,7 +38,7 @@ export default function DiscoverSearch({ cityId, cityName = "this city" }) {
   }, []);
 
   function openSearch() {
-    if (!trimmed) return;
+    if (!searchReady) return;
     recordRecentSearch(query);
     navigate(`/search?${new URLSearchParams({ q: trimmed, scope: "events" })}`);
   }
@@ -47,7 +49,7 @@ export default function DiscoverSearch({ cityId, cityName = "this city" }) {
         <input type="text" value={query} aria-label={`Search events in ${cityName}`} placeholder={`Search events in ${cityName}`} onChange={(event) => setQuery(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") openSearch(); if (event.key === "Escape") { setQuery(""); setData(null); } }} />
         {query ? <button className="discover-search-clear" type="button" aria-label="Clear search" onClick={() => { setQuery(""); setData(null); }}>×</button> : null}
       </div>
-      {trimmed && (data || error || loading) ? (
+      {searchReady && (data || error || loading) ? (
         <div className="search-panel">
           {loading ? <p className="search-status" role="status" aria-live="polite">Searching…</p> : null}
           {error ? <p className="search-error" role="alert">Search failed. <button type="button" onClick={() => setRetry((value) => value + 1)}>Try again.</button></p> : null}

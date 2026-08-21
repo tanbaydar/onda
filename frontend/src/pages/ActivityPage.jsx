@@ -89,17 +89,17 @@ export default function ActivityPage({ session }) {
   }
 
   return (
-    <main className="activity-page">
+    <main className="activity-page" aria-busy={state.loading}>
       <h1>Activity</h1>
-      {actionError ? <p>{actionError}</p> : null}
-      {state.loading ? <p>Loading activity.</p> : null}
+      {actionError ? <p role="alert">{actionError}</p> : null}
+      {state.loading ? <p role="status" aria-live="polite">Loading activity.</p> : null}
       {state.error ? (
-        <>
+        <div role="alert">
           <p>Activity could not be loaded.</p>
           <button type="button" onClick={() => setRetry((value) => value + 1)}>
             Retry
           </button>
-        </>
+        </div>
       ) : null}
       {!state.loading && !state.error && state.results.length === 0 ? (
         <p>No activity yet.</p>

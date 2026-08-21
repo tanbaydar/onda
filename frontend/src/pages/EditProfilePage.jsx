@@ -7,7 +7,16 @@ import ProfileAvatar from "../components/ProfileAvatar.jsx";
 import { profileBioCount } from "../profilePresentation.js";
 import { profilePath } from "../profileRoutes.js";
 
+const PROFILE_FIELD_ERROR_IDS = {
+  avatar: "profile-avatar-errors",
+  display_name: "profile-display-name-errors",
+  bio: "profile-bio-errors",
+  home_city_id: "profile-home-city-errors",
+  is_private: "profile-privacy-errors",
+};
+
 function Pagination({ pagination, onPage }) {
+  if (pagination.total_pages <= 1) return null;
   return <nav aria-label="Follow request pagination"><button className="quiet-control" type="button" disabled={pagination.previous_page === null} onClick={() => onPage(pagination.previous_page)}>Previous</button><span>Page {pagination.page} of {pagination.total_pages}</span><button className="quiet-control" type="button" disabled={pagination.next_page === null} onClick={() => onPage(pagination.next_page)}>Next</button></nav>;
 }
 
@@ -26,10 +35,10 @@ function FollowRequests() {
     catch { setState((current) => ({ ...current, error: new Error("request") })); }
   }
   return (
-    <section className="edit-follow-requests">
+    <section className="edit-follow-requests" aria-busy={state.loading}>
       <h2>Follow requests</h2>
-      {state.loading ? <p>Loading follow requests.</p> : null}
-      {state.error ? <><p>Follow requests could not be changed or loaded.</p><button className="quiet-control" type="button" onClick={() => setRetry((value) => value + 1)}>Retry</button></> : null}
+      {state.loading ? <p role="status" aria-live="polite">Loading follow requests.</p> : null}
+      {state.error ? <div role="alert"><p>Follow requests could not be changed or loaded.</p><button className="quiet-control" type="button" onClick={() => setRetry((value) => value + 1)}>Retry</button></div> : null}
       {state.data?.results.length === 0 ? <p className="edit-profile-empty">No pending follow requests.</p> : null}
       {state.data?.results.length ? <><ul>{state.data.results.map((request) => <li key={request.user.id}><ProfileAvatar profile={request.user} small /><Link to={profilePath(request.user.username)}>{request.user.display_name}</Link><span className="follow-request-actions"><button className="quiet-control" type="button" onClick={() => decide(request.user.id, "accept")}>Approve</button><button className="quiet-control" type="button" onClick={() => decide(request.user.id, "decline")}>Decline</button></span></li>)}</ul><Pagination pagination={state.data.pagination} onPage={setPage} /></> : null}
     </section>
@@ -105,11 +114,11 @@ export default function EditProfilePage({ session }) {
       {message ? <p role="alert">{message}</p> : null}
       {errors.request ? <ul role="alert">{fieldErrors("request")}</ul> : null}
       <form onSubmit={submit}>
-        <div className="edit-avatar-upload"><ProfileAvatar profile={preview} /><div><label className={`avatar-upload-control${avatarState.uploading ? " is-uploading" : ""}`}>{avatarState.uploading ? "Uploading…" : "Upload photo"}<input type="file" accept="image/jpeg,image/png,image/webp" disabled={avatarState.uploading} onChange={uploadAvatar} /></label>{form.avatar ? <button className="avatar-remove" type="button" disabled={avatarState.uploading} onClick={removeAvatar}>Remove</button> : null}{avatarState.error ? <p className="avatar-upload-error" role="alert">{avatarState.error}</p> : null}</div></div>
-        <div className="edit-profile-field"><label htmlFor="profile-display-name">Display name</label><input id="profile-display-name" value={form.display_name} maxLength="50" onChange={(event) => setForm({ ...form, display_name: event.target.value })} />{errors.display_name ? <ul role="alert">{fieldErrors("display_name")}</ul> : null}</div>
-        <div className="edit-profile-field edit-profile-bio"><label htmlFor="profile-bio">Bio</label><textarea id="profile-bio" rows="3" value={form.bio} maxLength="150" onChange={(event) => setForm({ ...form, bio: event.target.value })} /><output htmlFor="profile-bio">{profileBioCount(form.bio)}</output>{errors.bio ? <ul role="alert">{fieldErrors("bio")}</ul> : null}</div>
-        <div className="edit-profile-field"><CityDropdown cities={cities} selectedCity={selectedCity} nullOptionLabel="No home city" label="Home city" getOptionLabel={(city) => `${city.name}, ${city.region_code}`} onSelect={(cityId) => setForm({ ...form, home_city_id: cityId === null ? "" : String(cityId) })} />{errors.home_city_id ? <ul role="alert">{fieldErrors("home_city_id")}</ul> : null}</div>
-        <fieldset className="privacy-field"><legend>Account privacy</legend><label><input type="radio" name="profile-privacy" checked={!form.is_private} onChange={() => setForm({ ...form, is_private: false })} /> Public</label><label><input type="radio" name="profile-privacy" checked={form.is_private} onChange={() => setForm({ ...form, is_private: true })} /> Private</label><p>{privacyCopy}</p></fieldset>
+        <div className="edit-avatar-upload"><ProfileAvatar profile={preview} /><div><label className={`avatar-upload-control${avatarState.uploading ? " is-uploading" : ""}`}>{avatarState.uploading ? "Uploading…" : "Upload photo"}<input type="file" accept="image/jpeg,image/png,image/webp" disabled={avatarState.uploading} aria-invalid={Boolean(avatarState.error)} aria-describedby={avatarState.error ? PROFILE_FIELD_ERROR_IDS.avatar : undefined} onChange={uploadAvatar} /></label>{form.avatar ? <button className="avatar-remove" type="button" disabled={avatarState.uploading} onClick={removeAvatar}>Remove</button> : null}{avatarState.error ? <p id={PROFILE_FIELD_ERROR_IDS.avatar} className="avatar-upload-error" role="alert">{avatarState.error}</p> : null}</div></div>
+        <div className="edit-profile-field"><label htmlFor="profile-display-name">Display name</label><input id="profile-display-name" value={form.display_name} maxLength="50" aria-invalid={Boolean(errors.display_name)} aria-describedby={errors.display_name ? PROFILE_FIELD_ERROR_IDS.display_name : undefined} onChange={(event) => setForm({ ...form, display_name: event.target.value })} />{errors.display_name ? <ul id={PROFILE_FIELD_ERROR_IDS.display_name} role="alert">{fieldErrors("display_name")}</ul> : null}</div>
+        <div className="edit-profile-field edit-profile-bio"><label htmlFor="profile-bio">Bio</label><textarea id="profile-bio" rows="3" value={form.bio} maxLength="150" aria-invalid={Boolean(errors.bio)} aria-describedby={errors.bio ? `profile-bio-count ${PROFILE_FIELD_ERROR_IDS.bio}` : "profile-bio-count"} onChange={(event) => setForm({ ...form, bio: event.target.value })} /><output id="profile-bio-count" htmlFor="profile-bio">{profileBioCount(form.bio)}</output>{errors.bio ? <ul id={PROFILE_FIELD_ERROR_IDS.bio} role="alert">{fieldErrors("bio")}</ul> : null}</div>
+        <div className="edit-profile-field"><CityDropdown cities={cities} selectedCity={selectedCity} nullOptionLabel="No home city" label="Home city" getOptionLabel={(city) => `${city.name}, ${city.region_code}`} invalid={Boolean(errors.home_city_id)} describedBy={errors.home_city_id ? PROFILE_FIELD_ERROR_IDS.home_city_id : undefined} onSelect={(cityId) => setForm({ ...form, home_city_id: cityId === null ? "" : String(cityId) })} />{errors.home_city_id ? <ul id={PROFILE_FIELD_ERROR_IDS.home_city_id} role="alert">{fieldErrors("home_city_id")}</ul> : null}</div>
+        <fieldset className="privacy-field" aria-invalid={Boolean(errors.is_private)} aria-describedby={errors.is_private ? `profile-privacy-copy ${PROFILE_FIELD_ERROR_IDS.is_private}` : "profile-privacy-copy"}><legend>Account privacy</legend><label><input type="radio" name="profile-privacy" checked={!form.is_private} onChange={() => setForm({ ...form, is_private: false })} /> Public</label><label><input type="radio" name="profile-privacy" checked={form.is_private} onChange={() => setForm({ ...form, is_private: true })} /> Private</label><p id="profile-privacy-copy">{privacyCopy}</p>{errors.is_private ? <ul id={PROFILE_FIELD_ERROR_IDS.is_private} role="alert">{fieldErrors("is_private")}</ul> : null}</fieldset>
         <button className="edit-profile-save" type="submit" disabled={saving}>{saving ? "Saving…" : "Save changes"}</button>
         <Link className="edit-profile-cancel" to={profilePath(session.user.username)}>Cancel</Link>
       </form>

@@ -14,7 +14,7 @@ import { formatEventDateTime } from "../formatEventDateTime.js";
 import { artistPath, eventPath, venuePath } from "../entityRoutes.js";
 import { PROFILE_EMPTY_STATES, profileTabPath } from "../profilePresentation.js";
 import { profileNavigationVisible, profilePath } from "../profileRoutes.js";
-import { profileRatingBuckets } from "../ratingHistogram.js";
+import { profileRatingBuckets, profileRatingHistogramVisible } from "../ratingHistogram.js";
 
 function Pagination({ pagination, onPage }) {
   if (pagination.total_pages <= 1) return null;
@@ -74,8 +74,10 @@ function ProfileStatistics({ username }) {
   if (state.loading) return <section className="profile-statistics"><h2>Statistics</h2><p>Loading statistics.</p></section>;
   if (state.error) return <section className="profile-statistics"><h2>Statistics</h2><p>Statistics could not be loaded.</p><button className="quiet-control" type="button" onClick={() => setRetry((value) => value + 1)}>Retry</button></section>;
   const statistics = state.data.statistics;
-  const ratingBuckets = profileRatingBuckets(state.data.rating_distribution);
-  return <section className="profile-statistics"><h2>Statistics</h2><div className="profile-statistics-strip"><div className="profile-stat stat-lead"><span className="stat-value">{statistics.events_in_been}</span><span className="stat-label">Events in Been</span></div><div className="profile-stat stat-reviews"><span className="stat-value">{statistics.written_reviews}</span><span className="stat-label">Written reviews</span></div><div className="profile-stat stat-venues"><span className="stat-value">{statistics.venues_visited}</span><span className="stat-label">Venues visited</span></div><div className="profile-stat stat-cities"><span className="stat-value">{statistics.cities_visited}</span><span className="stat-label">Cities visited</span></div><div className="profile-judgment-unit"><div className="profile-stat"><span className="stat-value">{statistics.average_rating_given.state === "available" ? statistics.average_rating_given.value.toFixed(1) : "—"}</span><span className="stat-label">Average rating given</span></div><RatingHistogram className="profile-stat-histogram" buckets={ratingBuckets} /></div></div></section>;
+  const distribution = state.data.rating_distribution;
+  const ratingBuckets = profileRatingBuckets(distribution);
+  const showRatingHistogram = profileRatingHistogramVisible(distribution);
+  return <section className="profile-statistics"><h2>Statistics</h2><div className="profile-statistics-strip"><div className="profile-stat stat-lead"><span className="stat-value">{statistics.events_in_been}</span><span className="stat-label">Events in Been</span></div><div className="profile-stat stat-reviews"><span className="stat-value">{statistics.written_reviews}</span><span className="stat-label">Written reviews</span></div><div className="profile-stat stat-venues"><span className="stat-value">{statistics.venues_visited}</span><span className="stat-label">Venues visited</span></div><div className="profile-stat stat-cities"><span className="stat-value">{statistics.cities_visited}</span><span className="stat-label">Cities visited</span></div><div className="profile-judgment-unit"><div className="profile-stat"><span className="stat-value">{statistics.average_rating_given.state === "available" ? statistics.average_rating_given.value.toFixed(1) : "—"}</span><span className="stat-label">Average rating given</span></div>{showRatingHistogram ? <RatingHistogram className="profile-stat-histogram" buckets={ratingBuckets} /> : null}</div></div></section>;
 }
 
 function ProfileFavorites({ username, owner }) {
@@ -93,7 +95,8 @@ function ProfileFavorites({ username, owner }) {
     ...state.favorites.artists.map(({ artist }) => ({ key: `artist-${artist.id}`, to: artistPath(artist), name: artist.name, artist, favoritePath: `/api/artists/${artist.id}/favorite/` })),
     ...state.favorites.venues.map(({ venue }) => ({ key: `venue-${venue.id}`, to: venuePath(venue), name: venue.name, meta: venue.city.name, favoritePath: `/api/venues/${venue.id}/favorite/` })),
   ];
-  return <section className="profile-favorites"><h2>Favorites</h2>{items.length ? <ul className="profile-favorite-list">{items.map((item) => <li key={item.key}>{item.artist ? <ArtistAvatar artist={item.artist} small className="profile-favorite-thumb" /> : <ImageSlot className="profile-favorite-thumb" name={item.name} src={item.image} />}<Link to={item.to}><strong>{item.name}</strong>{item.meta ? <small>{item.meta}</small> : null}</Link>{owner ? <FavoriteControl row path={item.favoritePath} state={{ is_favorite: true }} onChanged={() => setRetry((value) => value + 1)} /> : null}</li>)}</ul> : null}</section>;
+  if (items.length === 0) return null;
+  return <section className="profile-favorites"><h2>Favorites</h2><ul className="profile-favorite-list">{items.map((item) => <li key={item.key}>{item.artist ? <ArtistAvatar artist={item.artist} small className="profile-favorite-thumb" /> : <ImageSlot className="profile-favorite-thumb" name={item.name} src={item.image} />}<Link to={item.to}><strong>{item.name}</strong>{item.meta ? <small>{item.meta}</small> : null}</Link>{owner ? <FavoriteControl row path={item.favoritePath} state={{ is_favorite: true }} onChanged={() => setRetry((value) => value + 1)} /> : null}</li>)}</ul></section>;
 }
 
 export default function ProfilePage({ session, tab = "been" }) {

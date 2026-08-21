@@ -4,8 +4,20 @@ import test from "node:test";
 import {
   EMPTY_SEARCH_STATE,
   isCurrentSearchRequest,
+  MIN_SEARCH_QUERY_LENGTH,
+  searchQueryReady,
   scopeTransition,
 } from "./searchPageState.js";
+
+test("search waits for two trimmed characters", () => {
+  assert.equal(MIN_SEARCH_QUERY_LENGTH, 2);
+  for (const query of ["", " ", "a", " a "]) {
+    assert.equal(searchQueryReady(query), false, JSON.stringify(query));
+  }
+  for (const query of ["ab", " ab ", "a b"]) {
+    assert.equal(searchQueryReady(query), true, JSON.stringify(query));
+  }
+});
 
 test("active-query scope switching resets results in both directions", () => {
   assert.deepEqual(scopeTransition("all", "artists"), {

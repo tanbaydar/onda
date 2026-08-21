@@ -81,15 +81,15 @@ export default function DiscoverPage() {
   }, [requestedCityId, selectedCity, setSearchParams]);
 
   return (
-    <main className="discover-page">
-      {state.loading ? <p>Loading cities.</p> : null}
+    <main className="discover-page" aria-busy={state.loading}>
+      {state.loading ? <p role="status" aria-live="polite">Loading cities.</p> : null}
       {state.error ? (
-        <>
+        <div className="event-list-error" role="alert">
           <p>Cities could not be loaded.</p>
           <button type="button" onClick={() => setRetry((value) => value + 1)}>
             Retry
           </button>
-        </>
+        </div>
       ) : null}
       {state.cities && state.cities.length === 0 ? (
         <p>No cities are available.</p>

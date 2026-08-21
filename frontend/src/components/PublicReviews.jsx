@@ -59,18 +59,18 @@ export default function PublicReviews({
   }
 
   return (
-    <section className="event-public-reviews">
+    <section className="event-public-reviews" aria-busy={state.loading}>
       <h2>Public</h2>
       <SortMenu value={sort} options={EVENT_REVIEW_SORTS} onChange={(value) => { setSort(value); setPage(1); }} />
-      {actionError ? <p>{actionError}</p> : null}
-      {state.loading ? <p>Loading public reviews.</p> : null}
+      {actionError ? <p className="favorite-notice" role="alert">{actionError}</p> : null}
+      {state.loading ? <p role="status" aria-live="polite">Loading public reviews.</p> : null}
       {state.error ? (
-        <>
+        <div role="alert">
           <p>Public reviews could not be loaded.</p>
           <button type="button" onClick={() => setRetry((value) => value + 1)}>
             Retry
           </button>
-        </>
+        </div>
       ) : null}
       {state.data && state.data.results.length === 0 ? (
         <p>No public reviews yet.</p>

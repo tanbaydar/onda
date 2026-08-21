@@ -47,16 +47,16 @@ export default function WillBeThereAttendees({ eventId, scope, user, version }) 
     );
   }
   return (
-    <section>
+    <section aria-busy={state.loading}>
       <h2>{heading}</h2>
-      {state.loading ? <p>Loading attendees.</p> : null}
+      {state.loading ? <p role="status" aria-live="polite">Loading attendees.</p> : null}
       {state.error ? (
-        <>
+        <div role="alert">
           <p>Attendees could not be loaded.</p>
           <button type="button" onClick={() => setRetry((value) => value + 1)}>
             Retry
           </button>
-        </>
+        </div>
       ) : null}
       {state.data && state.data.results.length === 0 ? (
         <p>No one in this section has marked Will Be There.</p>

@@ -8,6 +8,8 @@ export default function CityDropdown({
   nullOptionLabel = null,
   getOptionLabel = (city) => city.name,
   hideLabel = false,
+  invalid = false,
+  describedBy,
 }) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef(null);
@@ -64,7 +66,7 @@ export default function CityDropdown({
   return (
     <div className="city-dropdown" ref={rootRef}>
       <span className={`city-dropdown-label${hideLabel ? " sr-only" : ""}`} id={`${id}-label`}>{label}</span>
-      <button className="city-dropdown-trigger" type="button" aria-labelledby={`${id}-label ${id}-value`} aria-haspopup="listbox" aria-expanded={open} onClick={() => setOpen((value) => !value)} onKeyDown={handleTriggerKeyDown}>
+      <button className="city-dropdown-trigger" type="button" aria-labelledby={`${id}-label ${id}-value`} aria-describedby={describedBy} aria-invalid={invalid || undefined} aria-haspopup="listbox" aria-expanded={open} onClick={() => setOpen((value) => !value)} onKeyDown={handleTriggerKeyDown}>
         <span id={`${id}-value`}>{selectedLabel}</span><span aria-hidden="true">{open ? "↑" : "↓"}</span>
       </button>
       {open ? (

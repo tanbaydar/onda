@@ -1,4 +1,9 @@
 export const EMPTY_SEARCH_STATE = { loading: false, error: null, data: null };
+export const MIN_SEARCH_QUERY_LENGTH = 2;
+
+export function searchQueryReady(query) {
+  return query.trim().length >= MIN_SEARCH_QUERY_LENGTH;
+}
 
 export function scopeTransition(currentScope, nextScope) {
   if (currentScope === nextScope) return null;

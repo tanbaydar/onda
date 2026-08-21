@@ -27,9 +27,11 @@ test("ConfirmDialog source dispatches confirm and cancel only from onClose", () 
   assert.match(dialog, /closingReason\.current = event\.nativeEvent\.submitter/);
 });
 
-test("CSS source contains no filled action controls", () => {
+test("only the ruled destructive dialog action uses an action fill", () => {
   const styles = [read("./styles.css"), read("./discover.css"), read("./eventReviews.css")].join("\n");
-  assert.doesNotMatch(styles, /background(?:-color)?:var\(--action\)/);
+  assert.match(styles, /dialog \.destructive\{[^}]*background:var\(--action\);color:var\(--bg\)/);
+  const withoutDestructiveDialog = styles.replace(/dialog \.destructive\{[^}]*\}/, "");
+  assert.doesNotMatch(withoutDestructiveDialog, /background(?:-color)?:var\(--action\)/);
   assert.doesNotMatch(styles, /background(?:-color)?:#[0-9a-f]{3,8}/i);
 });
 
