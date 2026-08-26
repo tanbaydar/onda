@@ -494,7 +494,221 @@ The following remain open after applying dated overrides:
 
 Older flags resolved by later handoffs must not be reopened accidentally: Discover Recent rating anatomy, grouped one-line feed activity, avatar upload replacing Avatar URL, Discover automatic continuation, artist portrait fallback, persistent auth chrome, and responsive event identity alignment.
 
-## 9. QA matrix
+## 9. Design-lead priorities
+
+These priorities are design-lead recommendations derived from the audit. They are intentionally opinionated, but they are not operator rulings. “MUST improve” means the current design creates an accessibility, trust, task-completion, or contract-integrity problem. “SHOULD improve” means the experience is viable but below the quality bar. “MUST stay” protects the choices that make Onda recognizable and coherent while improvements are made.
+
+### 9.1 MUST improve
+
+#### M1. Make quiet text readable
+
+The current muted text token is too light for the small sizes it carries. At 3.45:1 on white, it is used for timestamps, handles, navigation, labels, histogram axes, read Activity items, and secondary actions that often contain necessary information.
+
+Required direction:
+
+- Keep the three-level hierarchy—ink, secondary, muted—but darken the muted step until normal-sized text meets the 4.5:1 review target.
+- If a lighter grey is retained for purely decorative marks, split decoration from readable text rather than letting one token do both jobs.
+- Do not solve this by enlarging every label or making all secondary content visually equal.
+- Recheck disabled states separately; disabled controls may remain recessive, but their meaning must not depend on unreadable text.
+
+Acceptance criteria:
+
+- All essential 11–14px text reaches 4.5:1 against its actual background.
+- Primary, secondary, and muted roles remain visibly distinct.
+- Read Activity rows still recede without becoming illegible.
+
+#### M2. Make control boundaries and focus states perceivable everywhere
+
+The current strong border is only 1.74:1 on white. Several menus and triggers also remove the browser outline and replace it with a very light wash or text-color shift. A keyboard user gets a strong focus treatment in Search but a weak or invisible one in City, Sort, Account, auth, histogram, and guest chrome.
+
+Required direction:
+
+- Establish one product-wide focus ring or inset-focus token with at least 3:1 contrast against adjacent colors.
+- Apply it to every link, button, input, custom listbox trigger, option, menu item, heart, histogram control, tab, and dialog action.
+- Preserve the Search ruling of one rectangle by drawing focus inward where a bordered control already exists.
+- Increase the contrast of boundaries that are necessary to recognize an input or control; decorative ledger hairlines may remain quiet.
+- Never remove a native outline unless an equally visible authored state replaces it.
+
+Acceptance criteria:
+
+- Every interactive element is locatable in a keyboard-only pass.
+- Focus does not depend on color alone or on a 1.13:1 background wash.
+- Focus is not clipped by overflow containers, fixed bars, or panel edges.
+
+#### M3. Resolve the compact histogram's impossible interaction density
+
+The profile histogram places ten interactive buttons into 104px. Each target is roughly 8–9px wide after gaps. That cannot support reliable tapping, and keyboard focus/tooltip behavior is visually fragile. The handoff requires tap tooltips while the compact placement makes adequate targets impossible; this is a real design conflict.
+
+Required direction—choose one through an operator ruling:
+
+1. Make the compact histogram non-interactive and expose the full distribution as accessible text, with the chart acting as a visual summary; or
+2. Keep the sparkline visual but open a larger, properly targeted detail view for interaction; or
+3. Increase the interactive chart to a width that can provide adequate targets, accepting that this changes the statistics composition.
+
+Acceptance criteria:
+
+- No interactive bucket has a microscopic hit target.
+- All ten values are available to screen-reader and keyboard users.
+- Tooltips do not overlap, clip, or require hover as the only discovery path.
+- The compact chart remains subordinate to the average numeral.
+
+#### M4. Make authentication flows prevent avoidable errors
+
+Authentication is a high-consequence task. The reset-code and new-password steps currently know their input rules but do not consistently express them in field semantics or action availability. The reset request also navigates directly to code entry, while the authoritative handoff specifies a non-enumerating confirmation state before “Enter code.”
+
+Required direction:
+
+- Resolve the reset-request flow conflict explicitly: either ship the ruled confirmation step or amend the handoff to authorize direct progression.
+- Keep the non-enumerating message and repeat the destination email so the person knows which inbox to check.
+- Add the known six-digit and eight-character constraints to field semantics as well as submit handling.
+- Prevent submission of obviously incomplete codes and empty required fields while preserving server validation as the final authority.
+- Attach every error to its owning field with `aria-describedby`; do not reuse one password error ambiguously across two fields.
+- Give the sole next action in completion states the visual weight of an action, not only a tiny quiet link.
+
+Acceptance criteria:
+
+- A person can identify the destination, required code length, expiry, resend path, and current step without guessing.
+- Keyboard, paste, autofill, password-manager, and refresh/re-entry paths all remain usable.
+- Invalid local states do not generate unnecessary network requests.
+
+#### M5. Raise essential mobile actions to a reliable target size
+
+The most expressive controls—rating stars and hearts—already use 44px targets, but primary mobile navigation, menu triggers, pagination, quiet recovery links, and Follow can be materially smaller. These are frequent or essential actions, not incidental prose.
+
+Required direction:
+
+- Use 44px as the mobile usability target for primary navigation, account/menu triggers, row removal, critical auth recovery, and irreversible dialog actions.
+- Where a visibly compact control must remain, enlarge its invisible hit area without changing the typographic rhythm.
+- Maintain at least the accessibility minimum and enough separation to avoid adjacent-target errors.
+- Do not inflate every desktop text link into a large button; this is a responsive interaction rule.
+
+Acceptance criteria:
+
+- Bottom navigation and top-bar account actions can be tapped one-handed without precision.
+- Adjacent small controls do not create overlapping or ambiguous hit areas.
+- Enlarged hit areas do not change ledger alignment or add card-like chrome.
+
+#### M6. Close contract conflicts before adding more surface area
+
+The implementation and written authority currently disagree or remain undecided in places that affect visible behavior: Recent searches below the two-character Search threshold, the reset confirmation step, unverified-event treatment, focus grammar, and several shipped pieces of flagged copy/motion.
+
+Required direction:
+
+- Create explicit operator rulings for each shipped-but-unratified choice.
+- Decide whether unverified catalog content needs a user-visible trust signal; do not leave dormant CSS as a proxy for that decision.
+- Treat Search recents as an explicit empty-query exception if they remain.
+- Ratify or remove the favorite pulse, hover “Remove” copy, “Lineup,” lowercase “more,” and remaining auth/profile copy.
+- Add a dedicated artist-page handoff before materially expanding that surface.
+
+Acceptance criteria:
+
+- Every shipped visual behavior can be traced to a current handoff.
+- No unresolved `FLAG` is enforced accidentally by a test as though it were approved.
+- Obsolete clauses are clearly superseded rather than left to interpretation.
+
+### 9.2 SHOULD improve
+
+#### S1. Standardize system feedback language
+
+Choose one loading convention, one retry grammar, and one completion grammar. Current periods and ellipses vary across “Loading activity.”, “Loading…”, and “Loading more events…”. Use an ellipsis for work in progress, a period for a stable statement, and consistent verbs for Retry versus Try again.
+
+#### S2. Strengthen recovery without adding chrome
+
+Every recoverable initial or continuation failure should preserve successful content and offer an in-place Retry. Home, Activity, Search, profile modules, follow actions, and edit-profile loading should follow the same recovery anatomy. This should remain one quiet line plus one action, not a banner stack.
+
+#### S3. Improve auth secondary-action discoverability
+
+Reset, register, resend, switch-email, and login paths are often 12px quiet links. Keep them secondary, but increase target area and ensure their text uses a passing color. When a secondary action is the only next step, promote it to a quiet bordered action.
+
+#### S4. Normalize component tokens without flattening scoped character
+
+Move repeated 11px, title, focus, target, and panel values into named tokens when they represent a shared role. Keep truly scoped geometry local. The objective is traceability and reliable change, not reducing the entire design to six values.
+
+#### S5. Add visual-regression evidence
+
+Commit representative captures or automated baselines for 390px and desktop, using sparse and dense fixtures. Prioritize fixed chrome, Event past/upcoming, Discover rows, Profile statistics, auth error states, long names, failed images, open menus, and keyboard focus.
+
+#### S6. Establish a small motion policy
+
+Either keep state changes instant or define a restrained motion vocabulary with duration, easing, purpose, and reduced-motion behavior. Do not let the favorite pulse become precedent for decorative animation elsewhere.
+
+#### S7. Finish microcopy governance
+
+Create a short approved vocabulary for loading, empty, error, retry, confirmation, destructive, and relationship states. Resolve “more” versus “Read more,” “Requested,” dormant WBT text, and Save/Cancel labels. Keep pluralization centralized.
+
+#### S8. Stress-test editorial typography
+
+Verify display faces with long event names, non-Latin characters, narrow screens, browser zoom, and font-loading fallback. Preserve the hierarchy while preventing awkward widows, clipped diacritics, and metadata collisions. Do not respond by reducing all display type to functional sans.
+
+#### S9. Clarify current location and selection without more color
+
+Active navigation and tabs already use weight and an indicator. Extend that clarity consistently to scopes, custom listboxes, current pagination, and menu selection using weight, position, underline, or check semantics—not judgment green.
+
+#### S10. Document the Artist surface
+
+The portrait fallback is coherent, but the full Artist page is under-specified. A dedicated handoff should decide identity metadata, empty states, event-ledger omissions, favorite placement, and future biography/link behavior before the page grows.
+
+### 9.3 MUST stay as it is
+
+#### K1. Keep the editorial allocation rule
+
+Display type carries identity, green carries judgment, imagery carries atmosphere, and space carries reviews. Improvements must not let one channel take over another's job.
+
+#### K2. Keep the white, flat, square visual language
+
+Pure white, hairlines, square controls, no shadows, no gradients, no cards, and no generic elevation are the clearest expression of the product. Accessibility fixes should darken necessary boundaries and focus—not introduce floating panels, rounded containers, or a dashboard aesthetic.
+
+#### K3. Keep the three-font role separation
+
+Rozha One gives catalog identity, General Sans keeps the interface quiet, and Gambetta makes reviews readable and editorial. Preserve the rationing of display type and the profile-heading exception.
+
+#### K4. Keep green exclusive to judgment
+
+Do not turn the accent into a generic success, navigation, CTA, focus, or branding color. Ratings, likes, committed favorites, active WBT state/count, and rating distributions are its proper domain.
+
+#### K5. Keep past/upcoming hierarchy inversion
+
+Past events should lead toward reviews and ratings; upcoming events should lead toward flier, lineup, venue/date, and WBT. A single static event template would weaken the diary concept.
+
+#### K6. Keep reviews prominent through placement and measure
+
+Do not convert reviews into loud cards, oversized quotes, colored panels, or display typography. Their importance comes from being early, readable, uncrowded, and limited to a humane line length.
+
+#### K7. Keep ledger composition instead of card grids
+
+Event, feed, activity, favorite, search, and people collections should remain continuous ledgers with shared edges and sibling hairlines. This is central to Onda's information density and editorial calm.
+
+#### K8. Keep the image grammar
+
+Event fliers stay rectangular 4:5 atmosphere; people and artist portraits stay circular identity. Preserve the shared initial and silhouette fallbacks and the refusal to invent decorative imagery.
+
+#### K9. Keep the responsive event identity alignment
+
+Mobile stays title-led with the small artwork/meta pair; desktop keeps one flier plus one continuous content column. Community sections must not jump to unrelated left edges.
+
+#### K10. Keep persistent, restrained navigation
+
+Wordmark, primary destinations, and account controls should remain available on every route, including auth. Preserve text-led navigation and avoid a left rail, oversized app shell, or route-specific chrome replacement.
+
+#### K11. Keep restrained, reversible action grammar
+
+Outlined controls remain the normal action style; hearts and stars remain familiar glyphs; reversible actions stay immediate; confirmation is reserved for irreversible consequences; destructive confirmation remains ink-filled rather than red theatre.
+
+#### K12. Keep calm, non-promotional content
+
+No exclamation-heavy auth voice, countdowns, urgency, scarcity, badges, or engagement bait. Onda should continue to feel like a trusted diary at the door of a venue, not a ticketing funnel.
+
+### 9.4 Recommended sequence
+
+1. Rule and implement contrast plus the universal focus grammar.
+2. Resolve histogram interaction density and essential mobile targets.
+3. Align authentication recovery with its handoff and strengthen error prevention.
+4. Close shipped-versus-authority conflicts and ratify open copy/motion choices.
+5. Normalize feedback language and recovery anatomy.
+6. Add visual-regression coverage before further visual expansion.
+7. Produce the dedicated Artist handoff before adding Artist features.
+
+## 10. QA matrix
 
 Every affected surface should be reviewed at minimum in these conditions:
 
@@ -524,7 +738,7 @@ Visual checks should verify:
 - Focus is visible in every interactive state.
 - Review measure stays readable and does not expand to the full desktop shell.
 
-## 10. Definition of done for future UI work
+## 11. Definition of done for future UI work
 
 A UI change is design-complete only when:
 
@@ -541,7 +755,7 @@ A UI change is design-complete only when:
 11. Any adjacent issue is reported, not repaired outside the named scope.
 12. The new or amended handoff remains the authority; this consolidated document is updated only as an index and audit record.
 
-## 11. Standard format for new component records
+## 12. Standard format for new component records
 
 Use this structure when adding a component or surface to the design system:
 
