@@ -37,7 +37,10 @@ print(json.dumps({
     'allowed_hosts': settings.ALLOWED_HOSTS,
     'admin_enabled': settings.ADMIN_ENABLED,
     'email_verification_enforced': settings.EMAIL_VERIFICATION_ENFORCED,
+    'hsts_include_subdomains': settings.SECURE_HSTS_INCLUDE_SUBDOMAINS,
+    'hsts_preload': settings.SECURE_HSTS_PRELOAD,
     'referrer_policy': settings.SECURE_REFERRER_POLICY,
+    'silenced_system_checks': settings.SILENCED_SYSTEM_CHECKS,
     'trust_x_real_ip': settings.ONDA_TRUST_X_REAL_IP,
 }))
 """
@@ -57,7 +60,10 @@ print(json.dumps({
                 "allowed_hosts": ["onda.example.test"],
                 "admin_enabled": False,
                 "email_verification_enforced": True,
+                "hsts_include_subdomains": False,
+                "hsts_preload": False,
                 "referrer_policy": "no-referrer",
+                "silenced_system_checks": ["security.W005", "security.W021"],
                 "trust_x_real_ip": True,
             },
         )
