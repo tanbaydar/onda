@@ -368,7 +368,7 @@ test.describe("public-beta visual contract", () => {
     expect(hierarchy.lineupTitle.fontSize).toBe("14px");
     expect(hierarchy.lineupTitle.fontWeight).toBe("600");
     expect(hierarchy.count.fontFamily).toBe(hierarchy.meta.fontFamily);
-    expect(hierarchy.button.color).not.toBe(hierarchy.count.color);
+    expect(hierarchy.button.color).toBe(hierarchy.count.color);
     expect(hierarchy.overflow).toBeLessThanOrEqual(0);
 
     const wbt = page.getByRole("button", { name: "Will Be There" });
