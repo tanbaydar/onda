@@ -51,7 +51,7 @@ test("bare, stale, and legacy paths replace while canonical paths remain", () =>
 
 test("named internal-link source files contain no legacy entity path literals", () => {
   for (const file of [
-    "./components/EventList.jsx", "./components/ProfileDiaryRow.jsx", "./components/SearchResults.jsx",
+    "./components/EventList.jsx", "./components/EventRowPresenter.jsx", "./components/SearchResults.jsx",
     "./homeFeedPresentation.js", "./pages/ActivityPage.jsx", "./pages/EventPage.jsx", "./pages/ProfilePage.jsx",
   ]) {
     const source = readFileSync(new URL(file, import.meta.url), "utf8");

@@ -4,7 +4,7 @@ import { Link, useParams } from "react-router-dom";
 import { fetchJson, fetchWithCsrf } from "../api.js";
 import FollowControl from "../components/FollowControl.jsx";
 import ProfileAvatar from "../components/ProfileAvatar.jsx";
-import ProfileDiaryRow from "../components/ProfileDiaryRow.jsx";
+import EventRowPresenter from "../components/EventRowPresenter.jsx";
 import SortMenu from "../components/SortMenu.jsx";
 import RatingHistogram from "../components/RatingHistogram.jsx";
 import ImageSlot from "../components/ImageSlot.jsx";
@@ -65,7 +65,7 @@ function BeenTab({ onReviewDeleted, owner, username }) {
       {state.error ? <><p>Been history could not be loaded.</p><button className="recovery-action quiet-control" type="button" onClick={() => setRetry((value) => value + 1)}>Retry</button></> : null}
       {state.data?.results.length === 0 ? <p className="profile-tab-empty">{PROFILE_EMPTY_STATES.been}</p> : null}
       {actionError ? <p role="alert">{actionError}</p> : null}
-      {state.data?.results.length ? <><ol className="profile-diary-list ledger-list">{state.data.results.map((entry) => <ProfileDiaryRow key={entry.id} event={entry.event} rating={entry.rating} hasReview={entry.has_review} onDeleteReview={owner && entry.has_review ? () => setReviewToDelete(entry.event) : null} reviewPending={deletingReviewId === entry.event.id} />)}</ol><Pagination pagination={state.data.pagination} onPage={setPage} /></> : null}
+      {state.data?.results.length ? <><ol className="profile-diary-list ledger-list">{state.data.results.map((entry) => <EventRowPresenter key={entry.id} variant="profile-diary" event={entry.event} rating={entry.rating} hasReview={entry.has_review} onDeleteReview={owner && entry.has_review ? () => setReviewToDelete(entry.event) : null} reviewPending={deletingReviewId === entry.event.id} />)}</ol><Pagination pagination={state.data.pagination} onPage={setPage} /></> : null}
       <ConfirmDialog open={reviewToDelete !== null} title="Delete your written review?" consequence="Its likes will be permanently deleted. Your rating and Been entry will remain." confirmLabel="Delete review" onCancel={() => setReviewToDelete(null)} onConfirm={() => { const event = reviewToDelete; setReviewToDelete(null); if (event) deleteReview(event); }} />
     </section>
   );
@@ -89,7 +89,7 @@ function ReviewsTab({ username }) {
       {state.loading ? <p>Loading reviews…</p> : null}
       {state.error ? <><p>Reviews could not be loaded.</p><button className="recovery-action quiet-control" type="button" onClick={() => setRetry((value) => value + 1)}>Retry</button></> : null}
       {state.data?.results.length === 0 ? <p className="profile-tab-empty">{PROFILE_EMPTY_STATES.reviews}</p> : null}
-      {state.data?.results.length ? <><ol className="profile-diary-list ledger-list">{state.data.results.map((review) => <ProfileDiaryRow key={review.id} event={review.event} rating={review.rating} hasReview />)}</ol><Pagination pagination={state.data.pagination} onPage={setPage} /></> : null}
+      {state.data?.results.length ? <><ol className="profile-diary-list ledger-list">{state.data.results.map((review) => <EventRowPresenter key={review.id} variant="profile-diary" event={review.event} rating={review.rating} hasReview />)}</ol><Pagination pagination={state.data.pagination} onPage={setPage} /></> : null}
     </section>
   );
 }

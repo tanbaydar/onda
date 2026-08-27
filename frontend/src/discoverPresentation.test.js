@@ -7,7 +7,7 @@ import { formatCompactEventDateTime } from "./formatEventDateTime.js";
 
 const page = readFileSync(new URL("./pages/DiscoverPage.jsx", import.meta.url), "utf8");
 const eventList = readFileSync(new URL("./components/EventList.jsx", import.meta.url), "utf8");
-const eventRow = readFileSync(new URL("./components/DiscoverEventRow.jsx", import.meta.url), "utf8");
+const eventRow = readFileSync(new URL("./components/EventRowPresenter.jsx", import.meta.url), "utf8");
 const styles = readFileSync(new URL("./discover.css", import.meta.url), "utf8");
 
 test("DiscoverPage uses the city as its successful identity and a functional initial-state title", () => {
@@ -27,15 +27,27 @@ test("Discover lineup keeps listing order and collapses after two names", () => 
   assert.equal(compactLineup([], null), "");
 });
 
-test("DiscoverEventRow source uses compact dates and contains no prose labels", () => {
+test("EventRowPresenter uses compact dates and contains no prose labels", () => {
   assert.equal(formatCompactEventDateTime("2026-08-06", "22:00:00"), "Thu 6 Aug, 10:00 pm");
   assert.doesNotMatch(eventRow, /Venue:|Artists:/);
   assert.match(eventRow, /discover-event-row/);
-  assert.match(eventList, /<DiscoverEventRow/);
+  assert.match(eventList, /<EventRowPresenter/);
 });
 
 test("DiscoverPage and CSS sources contain the ruled tabs and two-line title register", () => {
   assert.match(page, /className="section-tabs"/);
   assert.match(styles, /\.discover-event-title\{[^}]*-webkit-line-clamp:2/);
   assert.match(styles, /\.discover-page>\.section-tabs/);
+});
+
+test("event rows keep the display title and use one existing information recipe", () => {
+  const informationRule = styles.match(/\.discover-event-meta,\.discover-event-lineup\{[^}]+\}/)?.[0] ?? "";
+  assert.match(styles, /\.discover-event-title\{[^}]*font-family:var\(--font-display\)/);
+  assert.match(informationRule, /color:var\(--text-secondary\)/);
+  assert.match(informationRule, /font-family:var\(--font-fn\)/);
+  assert.match(informationRule, /font-size:var\(--text-ui\)/);
+  assert.match(informationRule, /font-weight:400/);
+  assert.match(styles, /\.discover-event-meta time\{color:inherit;font:inherit\}/);
+  assert.doesNotMatch(styles, /\.discover-event-meta time\{[^}]*font-weight:500/);
+  assert.doesNotMatch(styles, /\.discover-event-lineup\{[^}]*font-size:var\(--text-micro\)/);
 });

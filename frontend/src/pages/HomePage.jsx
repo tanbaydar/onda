@@ -2,11 +2,8 @@ import { useEffect, useState } from "react";
 import { Link, Navigate, useLocation } from "react-router-dom";
 
 import { fetchJson } from "../api.js";
-import { formatEventDateTime } from "../formatEventDateTime.js";
-import FeedReviewExcerpt from "../components/FeedReviewExcerpt.jsx";
+import EventRowPresenter from "../components/EventRowPresenter.jsx";
 import ProfileAvatar from "../components/ProfileAvatar.jsx";
-import RatingStars from "../components/RatingStars.jsx";
-import ImageSlot from "../components/ImageSlot.jsx";
 import { compactRelativeTime, feedItemPath, groupFeedItems, HOME_EMPTY_COPY, HOME_FEED_VERBS } from "../homeFeedPresentation.js";
 import { homeAccessRedirect } from "../landing.js";
 
@@ -21,13 +18,10 @@ function FeedItem({ item }) {
   const event = item.target.event;
   const artist = item.target.artist;
   const followed = item.target.user;
-  const isRated = item.type === "rated_been";
   const objectName = event?.title ?? artist?.name ?? followed?.display_name;
+  if (event) return <EventRowPresenter variant="feed-object" item={item} />;
   return (
-    <Link className={`home-feed-item${event ? " home-feed-event" : ""}${isRated ? " home-feed-rich" : ""}`} to={feedItemPath(item)}>
-      {event ? (
-        <ImageSlot className="home-feed-flier" name={event.title} src={event.cover_image_url} />
-      ) : null}
+    <Link className="home-feed-item" to={feedItemPath(item)}>
       <span className="home-feed-copy">
         <span className="home-feed-actor-line">
           <ProfileAvatar profile={item.actor} small />
@@ -36,14 +30,7 @@ function FeedItem({ item }) {
           {followed ? <strong className="home-feed-followed-name">{objectName}</strong> : null}
           <time dateTime={item.activity_at}>{compactRelativeTime(item.activity_at)}</time>
         </span>
-        {event || artist ? <strong className="home-feed-object">{objectName}</strong> : null}
-        {isRated ? <RatingStars className="home-feed-stars" value={item.context.rating} /> : null}
-        {item.type === "will_be_there" ? (
-          <span className="home-feed-meta">{formatEventDateTime(event.event_date, event.start_time)} · {event.venue.name}</span>
-        ) : null}
-        {isRated && item.context.review ? (
-          <FeedReviewExcerpt>{item.context.review.body}</FeedReviewExcerpt>
-        ) : null}
+        {artist ? <strong className="home-feed-object">{objectName}</strong> : null}
       </span>
     </Link>
   );

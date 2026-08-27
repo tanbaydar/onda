@@ -1,8 +1,9 @@
 # Onda UI/UX design contract and audit
 
-- Status: consolidated reference and implementation audit
+- Status: consolidated reference, implementation audit, and remediation record
 - Audit date: 2026-08-26
-- Implementation baseline: `5ea03c6`
+- Original audit baseline: `5ea03c6`
+- Current remediation evidence: `frontend/design-audits/2026-08-27-system-audit/07-remediation-completion.md`
 - Scope: the responsive React web application under `frontend/`
 
 ## 1. How to use this document
@@ -295,6 +296,7 @@ General Sans 12/500, uppercase, `0.05em` tracking, muted. Use 32–48px above an
 
 - Standard event row: 56×70 flier slot plus display title and metadata.
 - Discover row: 80×100 flier, two-line title clamp, compact date/venue, one-line lineup.
+- The event title retains its governed display role. Date, venue, and lineup share one complete supporting-information recipe: General Sans `--text-ui` (14px), weight 400, secondary. Do not create distinctions between them by remixing family, size, weight, or neutral color; governed semantic states such as venue TBA and judgment remain explicit exceptions.
 - Mobile standard row stacks title → date → venue → lineup/judgment.
 - Desktop standard row spreads identity left and date/venue or judgment right within 800px.
 - Rows use 12–16px vertical padding and muted hairlines between siblings.
@@ -493,6 +495,21 @@ The following remain open after applying dated overrides:
 - Histogram 1px zero stub in the compact profile placement.
 
 Older flags resolved by later handoffs must not be reopened accidentally: Discover Recent rating anatomy, grouped one-line feed activity, avatar upload replacing Avatar URL, Discover automatic continuation, artist portrait fallback, persistent auth chrome, and responsive event identity alignment.
+
+### 8.4 Dated remediation status — 2026-08-27
+
+This dated status supersedes the historical statuses in 8.2 where they conflict. The older rows remain above to preserve the diagnostic record.
+
+- A11Y-01 through A11Y-04 are closed by the accessibility handoff, ruled token values, the shared 2px focus grammar, explicit action-target roles, and browser geometry checks.
+- A11Y-05 is closed: the only authorized 120ms favorite pulse has a `prefers-reduced-motion: reduce` override.
+- SYS-02 is closed by the Search handoff's explicit empty-query Recent-searches exception.
+- SYS-03 is closed by the cross-cutting ellipsis/Retry vocabulary and static recurrence checks.
+- SYS-04 is closed as infrastructure: the committed Playwright suite exercises the ruled viewport, overflow, focus, target, typography, failed-media, dense-content, and recovery contracts; source tests cover the remaining state ownership and frozen behavior.
+- SYS-06 is closed by `frontend/design-handoffs/artist-handoff.md`.
+- The EventRow ownership gap is closed by `EventRowPresenter.jsx`, which owns `standard-ledger`, `compact-overlay`, `profile-diary`, and `feed-object` variants. Page containers still own route composition.
+- The implementation keeps role ownership local to the existing React/CSS system. The earlier `frontend/src/ui/` tree was explicitly illustrative; creating wrapper files with no repeated product role would violate the instruction not to build a generic abstraction library.
+
+The exact release inputs, generated assets, validation results, and production-parity evidence are maintained in the remediation completion record rather than duplicated here.
 
 ## 9. Design-lead priorities
 

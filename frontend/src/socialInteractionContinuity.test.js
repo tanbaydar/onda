@@ -56,7 +56,7 @@ test("event mutations preserve the event shell and update Will Be There in place
 
 test("owner review deletion from Been updates only the affected row", () => {
   const profile = read("./pages/ProfilePage.jsx");
-  const row = read("./components/ProfileDiaryRow.jsx");
+  const row = read("./components/EventRowPresenter.jsx");
 
   assert.match(profile, /\/been\/review\/`, \{ method: "DELETE" \}/);
   assert.match(profile, /entry\.event\.id === event\.id \? \{ \.\.\.entry, has_review: false \}/);

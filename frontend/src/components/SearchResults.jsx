@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
-import DiscoverEventRow from "./DiscoverEventRow.jsx";
+import EventRowPresenter from "./EventRowPresenter.jsx";
 import { entityResultPath } from "../entityRoutes.js";
 import ImageSlot from "./ImageSlot.jsx";
 import ProfileAvatar from "./ProfileAvatar.jsx";
@@ -40,14 +40,14 @@ export default function SearchResults({ data, scope = "all", activeIndex, onActi
   }, [activeIndex]);
   let rowIndex = -1;
   if (scope !== "all") {
-    return <ul ref={rootRef} className={`search-results ${scope === "events" && !compact ? "discover-event-ledger" : ""}`} onClickCapture={onResultOpen}>{data.results.map((item) => { rowIndex += 1; const index = rowIndex; return scope === "events" ? <DiscoverEventRow key={item.id} event={item} compact variant={compact ? "overlay" : "standard"} onFocus={() => onActiveIndex(index)} /> : <ResultRow key={item.id} type={scope} item={item} onFocus={() => onActiveIndex(index)} />; })}</ul>;
+    return <ul ref={rootRef} className={`search-results ${scope === "events" && !compact ? "discover-event-ledger" : ""}`} onClickCapture={onResultOpen}>{data.results.map((item) => { rowIndex += 1; const index = rowIndex; return scope === "events" ? <EventRowPresenter key={item.id} event={item} compact variant={compact ? "compact-overlay" : "standard-ledger"} onFocus={() => onActiveIndex(index)} /> : <ResultRow key={item.id} type={scope} item={item} onFocus={() => onActiveIndex(index)} />; })}</ul>;
   }
   return (
     <div className="search-groups" ref={rootRef}>
       {GROUPS.map(([type, label]) => {
         const group = data.groups[type];
         if (!group?.results.length) return null;
-        return <section key={type}><h2 className="section-heading">{label}</h2><ul className={`search-results ${type === "events" && !compact ? "discover-event-ledger" : ""}`} onClickCapture={onResultOpen}>{group.results.map((item) => { rowIndex += 1; const index = rowIndex; return type === "events" ? <DiscoverEventRow key={item.id} event={item} compact variant={compact ? "overlay" : "standard"} onFocus={() => onActiveIndex(index)} /> : <ResultRow key={item.id} type={type} item={item} onFocus={() => onActiveIndex(index)} />; })}</ul>{group.total > 5 ? <button className="quiet-action" type="button" onClick={() => onViewAll(type)}>View all ({group.total})</button> : null}</section>;
+        return <section key={type}><h2 className="section-heading">{label}</h2><ul className={`search-results ${type === "events" && !compact ? "discover-event-ledger" : ""}`} onClickCapture={onResultOpen}>{group.results.map((item) => { rowIndex += 1; const index = rowIndex; return type === "events" ? <EventRowPresenter key={item.id} event={item} compact variant={compact ? "compact-overlay" : "standard-ledger"} onFocus={() => onActiveIndex(index)} /> : <ResultRow key={item.id} type={type} item={item} onFocus={() => onActiveIndex(index)} />; })}</ul>{group.total > 5 ? <button className="quiet-action" type="button" onClick={() => onViewAll(type)}>View all ({group.total})</button> : null}</section>;
       })}
     </div>
   );

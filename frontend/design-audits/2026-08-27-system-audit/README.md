@@ -2,6 +2,8 @@
 
 > Diagnostic audit artifact dated 2026-08-27. This folder records evidence and proposals; it does not replace the binding Markdown handoffs in `frontend/design-handoffs/` and does not authorize product-behavior changes.
 
+> Remediation status: DEC-00–DEC-09 were subsequently approved and implemented. Read [the completion record](07-remediation-completion.md) for the historical-plan reconciliation, final correction, test inventory, and release evidence. The findings below remain the original diagnostic baseline rather than a claim about current production.
+
 ## Bottom line
 
 The professional-quality problem is structural, not a marketing, branding, or “make it prettier” problem.
@@ -41,6 +43,7 @@ The [complete route/state matrix](01-route-state-matrix.md) is the coverage cont
 5. [Foundations solution architecture](05a-solution-architecture-foundations.md) — LEAD-001–007 in the requested format: lead problem, technical explanation, solution proposals, no-go constraints, decisions, acceptance, and sequencing.
 6. [Surface solution architecture](05b-solution-architecture-surfaces.md) — the same complete format for LEAD-008–014.
 7. [Governance, decisions, and validation](06-governance-decisions-and-validation.md) — consolidated no-go registry, decision register, remediation phases, primitive boundaries, and regression matrix.
+8. [Remediation completion](07-remediation-completion.md) — implementation reconciliation, frozen mechanical acceptance inventory, and source/production release evidence.
 
 ## What the three obvious symptoms actually mean
 
@@ -102,7 +105,7 @@ The solution architecture deliberately does not prescribe a page-by-page repaint
 
 The detailed dependencies and exit criteria are in [the governance phases](06-governance-decisions-and-validation.md#3-dependency-aware-remediation-phases).
 
-## Operator decisions required before affected implementation
+## Operator decisions required before affected implementation — historical
 
 These are genuine gray spaces. The audit records options and consequences without silently choosing:
 
@@ -117,7 +120,7 @@ These are genuine gray spaces. The audit records options and consequences withou
 - DEC-08 — footer presence on authentication routes;
 - DEC-09 — whether the Discover overlay uses the shared event-row role or a separately ruled compact variant.
 
-The mutually exclusive options are in the [operator decision register](06-governance-decisions-and-validation.md#2-operator-decision-register).
+The mutually exclusive options are in the [operator decision register](06-governance-decisions-and-validation.md#2-operator-decision-register). All ten were later approved; the binding choices are in `frontend/design-handoffs/system-remediation-rulings-2026-08-27.md`.
 
 ## No-go summary
 

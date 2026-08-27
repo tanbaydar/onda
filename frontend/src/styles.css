@@ -447,9 +447,9 @@ dialog .destructive{border-color:var(--action);background:var(--action);color:va
 :focus-visible{outline:var(--focus-width) solid var(--action)!important;outline-offset:var(--sp-2)}
 :is(input:not([type="radio"]):not([type="checkbox"]),select,textarea):focus-visible{border-color:var(--action);outline:none!important;box-shadow:inset 0 0 0 1px var(--action)}
 .search-primary:focus-visible,.discover-search input:focus-visible{outline:none!important;box-shadow:inset 0 0 0 1px var(--action)}
-.navigation-action,.account-action,.menu-action,.tab-action,.recovery-action,.pagination-action,.mobile-target,.row-removal-action,.dialog-action,.quiet-action,.like-action,.auth-action{min-width:var(--target-min);min-height:var(--target-min)}
+.navigation-action.navigation-action,.account-action.account-action,.menu-action.menu-action,.tab-action.tab-action,.recovery-action.recovery-action,.pagination-action.pagination-action,.mobile-target.mobile-target,.row-removal-action.row-removal-action,.dialog-action.dialog-action,.quiet-action.quiet-action,.like-action.like-action,.auth-action.auth-action{min-width:var(--target-min);min-height:var(--target-min)}
 @media (max-width:767px){
- .navigation-action,.account-action,.menu-action,.tab-action,.recovery-action,.pagination-action,.mobile-target,.row-removal-action,.dialog-action,.quiet-action,.auth-action{display:inline-flex;min-width:44px;min-height:var(--target-mobile);align-items:center;justify-content:center}
+ .navigation-action.navigation-action,.account-action.account-action,.menu-action.menu-action,.tab-action.tab-action,.recovery-action.recovery-action,.pagination-action.pagination-action,.mobile-target.mobile-target,.row-removal-action.row-removal-action,.dialog-action.dialog-action,.quiet-action.quiet-action,.auth-action.auth-action{display:inline-flex;min-width:44px;min-height:var(--target-mobile);align-items:center;justify-content:center}
  .auth-links a,.auth-link-button{min-width:44px;min-height:var(--target-mobile)}
 }
 @media (prefers-reduced-motion:reduce){

@@ -43,12 +43,11 @@ test("rating CSS and surface sources share the one-em clipped glyph implementati
   const css = readFileSync(new URL("./styles.css", import.meta.url), "utf8");
   const starInput = readFileSync(new URL("./components/StarInput.jsx", import.meta.url), "utf8");
   const review = readFileSync(new URL("./components/EventReviewRow.jsx", import.meta.url), "utf8");
-  const diary = readFileSync(new URL("./components/ProfileDiaryRow.jsx", import.meta.url), "utf8");
-  const feed = readFileSync(new URL("./pages/HomePage.jsx", import.meta.url), "utf8");
+  const presenter = readFileSync(new URL("./components/EventRowPresenter.jsx", import.meta.url), "utf8");
   assert.match(css, /\.rating-star-glyph\{[^}]*width:1em;height:1em/);
   assert.match(css, /\.rating-star-fill\{[^}]*clip-path:inset\(0 calc\(100% - var\(--star-fill\)\) 0 0\)/);
   assert.match(starInput, /<RatingStarGlyph fill=\{fill\}/);
   assert.match(review, /<RatingStars className="event-review-stars"/);
-  assert.match(diary, /<RatingStars className="profile-row-stars"/);
-  assert.match(feed, /<RatingStars className="home-feed-stars"/);
+  assert.match(presenter, /<RatingStars className="profile-row-stars"/);
+  assert.match(presenter, /<RatingStars className="home-feed-stars"/);
 });
