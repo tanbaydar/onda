@@ -1576,7 +1576,7 @@ def event_review_list(request, event_id):
     )
     viewer = effective_visibility_viewer(request.user)
     if viewer.is_authenticated:
-        reviews = reviews.annotate(
+        reviews = reviews.exclude(entry__user=viewer).annotate(
             viewer_has_liked=Exists(
                 ReviewLike.objects.filter(
                     user=viewer,
