@@ -114,6 +114,11 @@ SECURE_HSTS_INCLUDE_SUBDOMAINS = _strict_boolean(
     "DJANGO_SECURE_HSTS_INCLUDE_SUBDOMAINS", "false"
 )
 SECURE_HSTS_PRELOAD = _strict_boolean("DJANGO_SECURE_HSTS_PRELOAD", "false")
+# Per operator ruling, the current production domain does not commit every
+# present and future subdomain to HTTPS and is not submitted for browser
+# preload. Silence only the two deployment checks that require those policies;
+# every other deployment warning and error remains visible and blocking.
+SILENCED_SYSTEM_CHECKS = ["security.W005", "security.W021"]
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
