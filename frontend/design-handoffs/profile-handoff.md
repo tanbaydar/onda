@@ -57,4 +57,5 @@ Judgment color: Been-row stars + the strip's judgment unit ONLY. Display face: n
 
 - Follow requests do not appear in Edit Profile. Profile editing ends after Save/Cancel because social inbox work is not profile configuration.
 - Pending follow requests appear at the top of Activity, before its notification ledger. A persistent summary row exposes the pending count and disclosure state; expanding it reveals requester identity plus Approve/Delete actions in the existing quiet control register.
+- Instagram-style dual access is intentional: while a request remains pending, its matching notification row also exposes Approve/Delete. Resolving the request in either location removes the pending actions from the other location; historical notification copy remains after resolution.
 - The request module loads and recovers independently. Failure to load or decide a request must not hide already-loaded Activity notifications, and an empty request collection renders no placeholder section.

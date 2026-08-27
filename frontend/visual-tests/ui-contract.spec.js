@@ -432,7 +432,7 @@ test.describe("public-beta visual contract", () => {
     await expectNoHorizontalOverflow(page);
   });
 
-  test("pending follow requests own the top of Activity and disclose decisions", async ({ page }) => {
+  test("pending follow requests are actionable from both Activity locations", async ({ page }) => {
     const notification = {
       id: 25,
       type: "follow_request",
@@ -451,10 +451,15 @@ test.describe("public-beta visual contract", () => {
     expect(positions.requests).toBeLessThan(positions.notifications);
     await expect(page.getByText("2 pending requests")).toBeVisible();
     await page.getByRole("button", { name: /Follow requests/ }).click();
-    await expect(page.getByRole("button", { name: "Approve" }).first()).toBeVisible();
-    await expect(page.getByRole("button", { name: "Delete" }).first()).toBeVisible();
-    await expect(page.locator(".activity-item button")).toHaveCount(0);
+    await expect(page.locator(".activity-follow-request-actions").getByRole("button", { name: "Approve" })).toHaveCount(2);
+    await expect(page.locator(".activity-follow-request-actions").getByRole("button", { name: "Delete" })).toHaveCount(2);
+    await expect(page.locator(".activity-item .activity-request-actions")).toBeVisible();
+    await expect(page.locator(".activity-item .activity-request-actions").getByRole("button", { name: "Approve" })).toHaveCount(1);
+    await expect(page.locator(".activity-item .activity-request-actions").getByRole("button", { name: "Delete" })).toHaveCount(1);
     await expectMinimumTargets(page.locator(".activity-follow-request-actions button"), page.viewportSize().width < 768 ? 44 : 24);
+    await expectMinimumTargets(page.locator(".activity-request-actions button"), page.viewportSize().width < 768 ? 44 : 24);
+    await page.locator(".activity-follow-request-actions").getByRole("button", { name: "Approve" }).first().click();
+    await expect(page.locator(".activity-item .activity-request-actions")).toHaveCount(0);
     await expectNoHorizontalOverflow(page);
   });
 

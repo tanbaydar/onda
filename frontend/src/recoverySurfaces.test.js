@@ -29,9 +29,10 @@ test("Activity displays notifications even when mark-all-read bookkeeping fails"
   assert.ok(initialLoad.indexOf("results: data.results") < initialLoad.indexOf("markAllRead(controller.signal)"));
   assert.match(source, /Activity is visible, but it could not be marked as read\./);
   assert.match(source, /Retry marking as read/);
-  assert.match(source, /<ActivityFollowRequests \/>/);
+  assert.match(source, /<ActivityFollowRequests refreshToken=\{requestRefresh\} onDecided=\{removePendingRequest\} \/>/);
   assert.match(requests, /Follow requests could not be loaded\.[\s\S]*Retry/);
   assert.match(requests, /follow-requests\/\$\{userId\}\/\$\{action\}\//);
+  assert.match(source, /follow-requests\/\$\{notification\.actor\.id\}\/\$\{action\}\//);
   assert.doesNotMatch(source, /Promise\.all\([\s\S]*follow-requests/);
 });
 
