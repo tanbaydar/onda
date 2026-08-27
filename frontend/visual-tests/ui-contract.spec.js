@@ -15,10 +15,40 @@ const EMPTY_PAGINATION = {
   previous_page: null,
 };
 
-async function mockPublicApi(page, { authenticated = false } = {}) {
+const EVENT_ROW_FIXTURE = {
+  id: 468,
+  slug: "keep-on-leon-vynehall-open-to-close",
+  title: "KEEP ON - Leon Vynehall (OPEN TO CLOSE)",
+  event_date: "2026-08-27",
+  start_time: "22:00:00",
+  cover_image_url: null,
+  venue: { id: 335, slug: "middlesex", name: "Middlesex" },
+  artists: [{ id: 842, name: "Leon Vynehall" }],
+  rating_summary: { state: "unavailable", average: null, count: 0 },
+};
+
+const DENSE_EVENT_ROW_FIXTURES = [
+  EVENT_ROW_FIXTURE,
+  {
+    ...EVENT_ROW_FIXTURE,
+    id: 469,
+    slug: "an-extremely-long-event-title-for-capacity-validation",
+    title: "AN EXTREMELY LONG EVENT TITLE WITH MULTIPLE ARTISTS AND AN OPEN-TO-CLOSE ANNOUNCEMENT",
+    cover_image_url: "/failed-event-poster.jpg",
+    venue: { id: 336, slug: "a-venue-with-a-long-name", name: "A Venue With A Deliberately Long Name" },
+    artists: [
+      { id: 843, name: "A Deliberately Long Artist Name" },
+      { id: 844, name: "Another Deliberately Long Artist Name" },
+      { id: 845, name: "Third Artist" },
+    ],
+  },
+];
+
+async function mockPublicApi(page, { authenticated = false, events = [], continuationFailure = false, initialEventFailure = false } = {}) {
   await page.route("**/api/**", async (route) => {
     const url = new URL(route.request().url());
     let body;
+    let status = 200;
 
     if (url.pathname === "/api/auth/session/") {
       body = {
@@ -29,7 +59,21 @@ async function mockPublicApi(page, { authenticated = false } = {}) {
     } else if (url.pathname === "/api/cities/") {
       body = { results: [{ id: 1, name: "Boston" }] };
     } else if (url.pathname === "/api/events/") {
-      body = { results: [], pagination: EMPTY_PAGINATION };
+      const pageNumber = Number(url.searchParams.get("page") ?? "1");
+      if (initialEventFailure || (continuationFailure && pageNumber > 1)) {
+        status = 500;
+        body = { detail: "fixture failure" };
+      } else {
+        body = {
+          results: events,
+          pagination: {
+            ...EMPTY_PAGINATION,
+            total_count: events.length,
+            total_pages: continuationFailure ? 2 : 1,
+            next_page: continuationFailure ? 2 : null,
+          },
+        };
+      }
     } else if (url.pathname === "/api/search/") {
       body = { results: [], next_cursor: null };
     } else {
@@ -37,7 +81,7 @@ async function mockPublicApi(page, { authenticated = false } = {}) {
     }
 
     await route.fulfill({
-      status: 200,
+      status,
       contentType: "application/json",
       body: JSON.stringify(body),
     });
@@ -156,6 +200,68 @@ test.describe("public-beta visual contract", () => {
       labelColor: "rgb(110, 110, 110)",
       inputBorderColor: "rgb(148, 148, 148)",
     });
+  });
+
+  test("event rows keep the display title and give all information one computed recipe", async ({ page }) => {
+    await openRoute(page, PUBLIC_ROUTES[2], { events: [EVENT_ROW_FIXTURE] });
+    const styles = await page.locator(".discover-event-row").evaluate((row) => {
+      const read = (selector) => {
+        const style = getComputedStyle(row.querySelector(selector));
+        return {
+          color: style.color,
+          fontFamily: style.fontFamily,
+          fontSize: style.fontSize,
+          fontWeight: style.fontWeight,
+        };
+      };
+      return {
+        title: read(".discover-event-title"),
+        meta: read(".discover-event-meta"),
+        time: read("time"),
+        lineup: read(".discover-event-lineup"),
+      };
+    });
+    expect(styles.title.fontFamily).toContain("Rozha One");
+    expect(styles.meta).toEqual(styles.time);
+    expect(styles.meta).toEqual(styles.lineup);
+    expect(styles.meta.fontFamily).toContain("General Sans");
+    expect(styles.meta.fontSize).toBe("14px");
+    expect(styles.meta.fontWeight).toBe("400");
+  });
+
+  test("failed event media falls back without changing the governed row geometry", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "mobile-chrome-390", "Failed media is measured once at the primary mobile evidence width.");
+    await page.route("**/failed-event-poster.jpg", (route) => route.abort());
+    await openRoute(page, PUBLIC_ROUTES[2], { events: [DENSE_EVENT_ROW_FIXTURES[1]] });
+    await expect(page.locator(".discover-event-flier.image-slot")).toBeVisible();
+    await expect(page.locator(".discover-event-flier img")).toHaveCount(0);
+    await expectNoHorizontalOverflow(page);
+  });
+
+  test("dense event rows survive 200 percent text enlargement", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "desktop-chrome-1280", "Text enlargement is measured once with desktop capacity.");
+    await page.route("**/failed-event-poster.jpg", (route) => route.abort());
+    await openRoute(page, PUBLIC_ROUTES[2], { events: DENSE_EVENT_ROW_FIXTURES });
+    await page.addStyleTag({ content: `:root{--text-micro:24px;--text-ui:28px;--text-body:32px;--text-body-lg:36px;--text-row-title:40px;--text-title-past:48px;--text-title:72px}` });
+    await expect(page.locator(".discover-event-row")).toHaveCount(2);
+    await expectNoHorizontalOverflow(page);
+  });
+
+  test("initial event failure owns one local Retry target", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "mobile-chrome-390", "Initial recovery is measured once at the primary mobile evidence width.");
+    await openRoute(page, PUBLIC_ROUTES[2], { initialEventFailure: true });
+    await expect(page.getByText("Events could not be loaded.")).toBeVisible();
+    const retry = page.getByRole("button", { name: "Retry" });
+    await expectMinimumTargets(retry);
+  });
+
+  test("continuation failure preserves successful event rows and retries locally", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "mobile-chrome-390", "Continuation recovery is measured once at the primary mobile evidence width.");
+    await openRoute(page, PUBLIC_ROUTES[2], { events: [EVENT_ROW_FIXTURE], continuationFailure: true });
+    await expect(page.locator(".discover-event-row")).toHaveCount(1);
+    await expect(page.getByText("More events could not be loaded.")).toBeVisible();
+    await expect(page.locator(".discover-event-row")).toHaveCount(1);
+    await expectMinimumTargets(page.getByRole("button", { name: "Retry" }));
   });
 
   test("keyboard focus is visibly at least two pixels on every route class", async ({ page }) => {

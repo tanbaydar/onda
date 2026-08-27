@@ -14,8 +14,8 @@ Upcoming/Recent in the ruled tab register: active ink 600 + 2px ink indicator ov
 ## Event rows (Discover variant of EventListRow)
 - Flier 80×100 (existing 4:5 size; NOT 56×70 — Discover is a primary imagery surface). `--image-slot` placeholder when absent (designed collapse, no icon).
 - Event name: display face 20px desktop / 18px mobile, line-height 1.25, max 2 lines (`-webkit-line-clamp:2`), never underlined.
-- Meta line: fn 14 desktop / 12 mobile — date compact per product grammar ("Thu 6 Aug, 10:00 pm") weight 500 `--text-secondary` · venue name 400. No "Venue:" label. Venue TBA renders muted.
-- Lineup line: micro 12 `--text-muted`, listing order, 2–3 names then "+N" ("System Failure, Echotheism +1"). One line, no links inside the row. No "Artists:" label.
+- Information uses one existing functional recipe at both widths: General Sans `--text-ui` (14px), weight 400, `--text-secondary`. Date, venue, and lineup may remain separate semantic elements or lines, but none receives a different family, size, weight, or neutral color. Date stays compact per product grammar ("Thu 6 Aug, 10:00 pm"). No "Venue:" or "Artists:" labels. Venue TBA remains the governed muted unavailable-data exception.
+- Lineup keeps listing order, 2–3 names then "+N" ("System Failure, Echotheism +1"). It remains one line with no links inside the row.
 - Whole row navigates; hover bg none (hairline register); separators `--border-muted`; padding 16 vertical, gap 16.
 - Desktop measure: centered 800 ledger (per Home centering ruling).
 - Pagination: existing "Load more" grammar.
@@ -23,6 +23,10 @@ Upcoming/Recent in the ruled tab register: active ink 600 + 2px ink indicator ov
 ## Dated delta — 2026-08-20 discover continuation
 - The visible "Load more" control is withdrawn. Reaching the end of the loaded ledger requests the next page automatically through an observed sentinel, preserving the current Upcoming/Recent ledger and scroll position.
 - Continuation loading uses one quiet micro status line in the existing ledger slot. A failed continuation keeps every loaded row in place and offers Retry; it never clears the ledger.
+
+## Dated delta — 2026-08-27 information typography
+- Per operator ruling, the event-name display treatment remains unchanged.
+- All textual information beneath it uses the single existing functional information recipe specified above. Agents must reuse that complete role rather than recombining its tokens into component-specific text styles.
 
 ## States
 - Guest = signed-in composition, only the header chrome differs (auth cluster per auth-header-handoff.md; mobile guest has no tab bar).

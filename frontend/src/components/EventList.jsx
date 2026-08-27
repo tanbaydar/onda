@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { fetchJson } from "../api.js";
 import { appendUniqueEvents } from "../eventListPresentation.js";
-import DiscoverEventRow from "./DiscoverEventRow.jsx";
+import EventRowPresenter from "./EventRowPresenter.jsx";
 
 export default function EventList({
   heading,
@@ -104,9 +104,10 @@ export default function EventList({
         <>
           <ul className="discover-event-ledger ledger-list">
             {state.data.results.map((event) => (
-              <DiscoverEventRow
+              <EventRowPresenter
                 key={event.id}
                 event={event}
+                variant="standard-ledger"
                 showVenue={showVenue}
                 omittedArtistId={omittedArtistId}
                 compact={!discover}

@@ -19,12 +19,18 @@ Ruled 2026-08-27 by the current operator. Scope: the cross-system frontend remed
 
 1. Visual meaning is selected explicitly. Identity titles, functional titles, section headings, ledgers, field-error lists, recovery actions, pagination actions, state slots, and social sentence parts may not derive their product role from a bare heading/list tag or a location-based selector.
 2. Initial load, continuation, mutation, session bootstrap, and logout have separate state owners. A local action or continuation failure retains already successful identity and collection content and retries that named operation.
-3. One EventRow presenter family owns event-result semantics. Search, Artist, Venue, Discover, and the Discover overlay consume governed variants rather than page-local row forks.
+3. One EventRow presenter family owns event-result semantics. Search, Artist, Venue, Discover, the Discover overlay, Profile diary rows, and event-bearing Home feed objects consume governed variants rather than page-local row forks. The governed variant names are `standard-ledger`, `compact-overlay`, `profile-diary`, and `feed-object`.
 4. Conditional layouts allocate only mounted semantic slots. A non-owner Favorites row has no action column. A fixed media slot keeps its ruled fallback; a deliberately collapsible identity slot may collapse only where the applicable handoff says so.
 5. The Activity sentence renders actor, verb, object, time, and read status as separate roles. Successful mark-read bookkeeping reconciles local read styling immediately.
 6. Green remains judgment-only. No new fonts, colors, shadows, cards, gradients, radii, or decorative depth are authorized.
 7. Every recoverable error uses the `Retry` vocabulary, a local owner, and the essential mobile target role. Disclosure controls use the shared chevron grammar.
 8. Generic and resource-specific not-found surfaces use a functional system-state title, a concise explanation, and a Return to Discover action.
+
+## Dated delta — 2026-08-27 completion ruling
+
+- Per the operator's instruction to finish every concrete outcome in the approved migration plan, the four EventRow variants above are one implementation family. Profile and Home retain their existing compositions and behavior; consolidation changes ownership only.
+- A named system action role has precedence over component-local compact-button declarations. `recovery-action`, `pagination-action`, `menu-action`, `tab-action`, and the other governed target roles cannot be reduced below the universal target floor or the 44px mobile target by a page selector.
+- The frozen acceptance inventory is `frontend/src/remediationAcceptance.js`. It covers route classes R00–R17, the six viewport capacities, and the ruled density, media, network, interaction, and text-enlargement state families.
 
 ## Release acceptance
 

@@ -18,9 +18,10 @@ test("visual roles are explicit instead of inherited from product-wide tag selec
 
 test("target sizing is owned by named action roles rather than a selector inventory", () => {
   const css = read("./styles.css");
-  assert.match(css, /\.navigation-action,\.account-action,\.menu-action,\.tab-action,\.recovery-action,\.pagination-action/);
+  assert.match(css, /\.navigation-action\.navigation-action,\.account-action\.account-action,\.menu-action\.menu-action,\.tab-action\.tab-action,\.recovery-action\.recovery-action,\.pagination-action\.pagination-action/);
   assert.match(css, /min-height:var\(--target-mobile\)/);
   assert.doesNotMatch(css, /\.city-dropdown-options button,\.discover-search-clear/);
+  assert.match(css, /\.event-list-error button\{min-height:0[^}]+\}[\s\S]*\.recovery-action\.recovery-action[^}]+min-height:var\(--target-min\)/);
 });
 
 test("approved constrained compositions are encoded at the system boundary", () => {
@@ -54,8 +55,14 @@ test("approved hierarchy and availability decisions are represented directly", (
   assert.match(profile, /state\.data\?\.results\.length \? <div className="profile-review-sort"><SortMenu/);
 });
 
-test("the compact Discover result remains in the shared event presenter family", () => {
+test("all four governed event-row variants remain in one presenter family", () => {
   const results = read("./components/SearchResults.jsx");
-  assert.match(results, /<DiscoverEventRow[\s\S]*variant=\{compact \? "overlay" : "standard"\}/);
+  const profile = read("./pages/ProfilePage.jsx");
+  const home = read("./pages/HomePage.jsx");
+  const presenter = read("./components/EventRowPresenter.jsx");
+  assert.match(results, /<EventRowPresenter[\s\S]*variant=\{compact \? "compact-overlay" : "standard-ledger"\}/);
+  assert.match(profile, /<EventRowPresenter[^>]*variant="profile-diary"/);
+  assert.match(home, /<EventRowPresenter variant="feed-object"/);
+  for (const variant of ["standard-ledger", "compact-overlay", "profile-diary", "feed-object"]) assert.match(presenter, new RegExp(variant));
   assert.doesNotMatch(results, /function CompactEventResultRow/);
 });

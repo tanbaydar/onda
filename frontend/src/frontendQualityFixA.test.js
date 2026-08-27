@@ -34,14 +34,14 @@ test("CSS source reserves the action fill for destructive confirmation", () => {
   assert.doesNotMatch(styles, /background(?:-color)?:#[0-9a-f]{3,8}/i);
 });
 
-test("event-list sources compose DiscoverEventRow and contain no labeled prose", () => {
+test("event-list sources compose EventRowPresenter and contain no labeled prose", () => {
   const list = read("./components/EventList.jsx");
-  const row = read("./components/DiscoverEventRow.jsx");
+  const row = read("./components/EventRowPresenter.jsx");
   const search = read("./components/SearchResults.jsx");
   const artist = read("./pages/ArtistPage.jsx");
   const venue = read("./pages/VenuePage.jsx");
-  assert.match(list, /<DiscoverEventRow/);
-  assert.match(search, /<DiscoverEventRow/);
+  assert.match(list, /<EventRowPresenter/);
+  assert.match(search, /<EventRowPresenter/);
   assert.match(artist, /<EventList/);
   assert.match(venue, /<EventList/);
   assert.doesNotMatch(list + row, /Venue:|Artists:/);

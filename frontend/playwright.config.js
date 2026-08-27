@@ -2,6 +2,8 @@ import { defineConfig } from "@playwright/test";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
+import { REMEDIATION_VIEWPORTS } from "./src/remediationAcceptance.js";
+
 const chromeExecutablePath = process.env.PLAYWRIGHT_CHROME_PATH;
 const chromeChannel = process.env.PLAYWRIGHT_BROWSER_CHANNEL ?? "chrome";
 const artifactsRoot = process.env.PLAYWRIGHT_OUTPUT_DIR ?? join(tmpdir(), "onda-playwright-results");
@@ -24,28 +26,10 @@ export default defineConfig({
     trace: "retain-on-failure",
     video: "off",
   },
-  projects: [
-    {
-      name: "mobile-chrome-320",
-      use: { viewport: { width: 320, height: 720 } },
-    },
-    {
-      name: "mobile-chrome-390",
-      use: { viewport: { width: 390, height: 844 } },
-    },
-    {
-      name: "mobile-chrome-767",
-      use: { viewport: { width: 767, height: 900 } },
-    },
-    {
-      name: "desktop-chrome-768",
-      use: { viewport: { width: 768, height: 900 } },
-    },
-    {
-      name: "desktop-chrome-1280",
-      use: { viewport: { width: 1280, height: 900 } },
-    },
-  ],
+  projects: REMEDIATION_VIEWPORTS.map(({ name, width, height }) => ({
+    name,
+    use: { viewport: { width, height } },
+  })),
   webServer: {
     command: "npm run dev -- --host 127.0.0.1 --port 4173 --strictPort",
     url: "http://127.0.0.1:4173",

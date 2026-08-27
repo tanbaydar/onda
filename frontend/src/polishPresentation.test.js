@@ -16,8 +16,12 @@ test("Discover Recent judgment renders only at the three-rating gate", () => {
 });
 
 test("named surface sources compose the shared image, heart, and rating-star implementations", () => {
-  const files = ["components/DiscoverEventRow.jsx", "components/ProfileDiaryRow.jsx", "components/SearchResults.jsx", "pages/HomePage.jsx", "pages/ProfilePage.jsx", "pages/EventPage.jsx"].map((path) => readFileSync(new URL(path, import.meta.url), "utf8"));
-  for (const source of files) assert.match(source, /ImageSlot/);
+  const presenter = readFileSync(new URL("./components/EventRowPresenter.jsx", import.meta.url), "utf8");
+  assert.match(presenter, /ImageSlot/);
+  for (const path of ["components/SearchResults.jsx", "pages/HomePage.jsx", "pages/ProfilePage.jsx"]) {
+    assert.match(readFileSync(new URL(path, import.meta.url), "utf8"), /EventRowPresenter/);
+  }
+  assert.match(readFileSync(new URL("./pages/EventPage.jsx", import.meta.url), "utf8"), /ImageSlot/);
   const favorite = readFileSync(new URL("./components/FavoriteControl.jsx", import.meta.url), "utf8");
   assert.match(favorite, /♡/); assert.match(favorite, /♥/); assert.match(favorite, /favorite-heart-row/);
   assert.match(favorite, /setTimeout\(\(\) => setFilled\(false\), 120\)/);
