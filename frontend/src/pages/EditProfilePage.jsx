@@ -37,7 +37,7 @@ function FollowRequests() {
   return (
     <section className="edit-follow-requests" aria-busy={state.loading}>
       <h2>Follow requests</h2>
-      {state.loading ? <p role="status" aria-live="polite">Loading follow requests.</p> : null}
+      {state.loading ? <p role="status" aria-live="polite">Loading follow requests…</p> : null}
       {state.error ? <div role="alert"><p>Follow requests could not be changed or loaded.</p><button className="quiet-control" type="button" onClick={() => setRetry((value) => value + 1)}>Retry</button></div> : null}
       {state.data?.results.length === 0 ? <p className="edit-profile-empty">No pending follow requests.</p> : null}
       {state.data?.results.length ? <><ul>{state.data.results.map((request) => <li key={request.user.id}><ProfileAvatar profile={request.user} small /><Link to={profilePath(request.user.username)}>{request.user.display_name}</Link><span className="follow-request-actions"><button className="quiet-control" type="button" onClick={() => decide(request.user.id, "accept")}>Approve</button><button className="quiet-control" type="button" onClick={() => decide(request.user.id, "decline")}>Decline</button></span></li>)}</ul><Pagination pagination={state.data.pagination} onPage={setPage} /></> : null}
@@ -48,6 +48,7 @@ function FollowRequests() {
 export default function EditProfilePage({ session }) {
   const navigate = useNavigate();
   const [cities, setCities] = useState([]);
+  const [loadRetry, setLoadRetry] = useState(0);
   const [state, setState] = useState({ loading: true, error: null, data: null });
   const [form, setForm] = useState(null);
   const [errors, setErrors] = useState({});
@@ -58,6 +59,8 @@ export default function EditProfilePage({ session }) {
   useEffect(() => {
     if (!session.user) return undefined;
     const controller = new AbortController();
+    setState({ loading: true, error: null, data: null });
+    setForm(null);
     Promise.all([
       fetchJson(`/api/users/${encodeURIComponent(session.user.username)}/`, { signal: controller.signal, cache: "no-store" }),
       fetchJson("/api/cities/", { signal: controller.signal }),
@@ -67,7 +70,7 @@ export default function EditProfilePage({ session }) {
       setForm({ display_name: data.profile.display_name, avatar: data.profile.avatar ?? "", bio: data.profile.bio ?? "", home_city_id: data.profile.home_city?.id ?? "", is_private: data.account.is_private });
     }).catch((error) => { if (error.name !== "AbortError") setState({ loading: false, error, data: null }); });
     return () => controller.abort();
-  }, [session.user]);
+  }, [loadRetry, session.user]);
 
   async function submit(event) {
     event.preventDefault();
@@ -101,10 +104,10 @@ export default function EditProfilePage({ session }) {
     try { await fetchWithCsrf("/api/me/profile/avatar/", { method: "DELETE" }); setForm((current) => ({ ...current, avatar: "" })); setAvatarState({ uploading: false, error: null }); }
     catch { setAvatarState({ uploading: false, error: "Photo could not be removed." }); }
   }
-  if (session.loading) return <main className="edit-profile-page"><p>Checking session.</p></main>;
+  if (session.loading) return <main className="edit-profile-page"><p>Checking session…</p></main>;
   if (!session.user) return <Navigate to="/login" replace />;
-  if (state.loading || !form) return <main className="edit-profile-page"><p>Loading profile settings.</p></main>;
-  if (state.error) return <main className="edit-profile-page"><h1>Edit profile</h1><p>Profile settings could not be loaded.</p></main>;
+  if (state.error) return <main className="edit-profile-page"><h1>Edit profile</h1><div role="alert"><p>Profile settings could not be loaded.</p><button className="quiet-control" type="button" onClick={() => setLoadRetry((value) => value + 1)}>Retry</button></div></main>;
+  if (state.loading || !form) return <main className="edit-profile-page"><p>Loading profile settings…</p></main>;
   const selectedCity = cities.find((city) => String(city.id) === String(form.home_city_id)) ?? null;
   const preview = { display_name: form.display_name || state.data.profile.display_name, avatar: form.avatar || null };
   const privacyCopy = form.is_private ? "Existing approved followers keep access, and future follows require approval." : "Your profile and attributed content become public, and every pending request is accepted immediately.";

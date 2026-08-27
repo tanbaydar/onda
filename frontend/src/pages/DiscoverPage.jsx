@@ -82,7 +82,7 @@ export default function DiscoverPage() {
 
   return (
     <main className="discover-page" aria-busy={state.loading}>
-      {state.loading ? <p role="status" aria-live="polite">Loading cities.</p> : null}
+      {state.loading ? <p role="status" aria-live="polite">Loading cities…</p> : null}
       {state.error ? (
         <div className="event-list-error" role="alert">
           <p>Cities could not be loaded.</p>

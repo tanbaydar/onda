@@ -36,3 +36,11 @@ Events only, scoped to the selected city. Panel overlays the city ledger (same p
 - The primary search field keeps one rectangular border when focused. Focus thickens inward; no offset outer outline or second rectangle is rendered.
 - Native browser search decorations are suppressed so the field never introduces an unallocated colored clear glyph.
 - Artist results carry the shared circular artist portrait/fallback from the polish delta rather than a text-only row.
+
+## Dated delta — 2026-08-27 empty-query, focus, and recovery
+
+- Recent searches are ratified as the explicit empty-query exception. At one trimmed character the result area remains silent; at an empty query the Recent searches section may render.
+- A typed query has an authored `Clear search` control inside the one-rectangle field composition. Clear and Escape both cancel stale work and restore the empty-query state.
+- Initial search failure renders a local Retry. Continuation failure preserves every loaded result and renders a separate local Retry.
+- Keyboard-focused result and option rows use the quiet wash plus a 2px action inset/outline. This closes the earlier unruled focus-row flag; wash alone is not sufficient.
+- Search remains free of judgment green.

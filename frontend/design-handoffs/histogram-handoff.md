@@ -19,3 +19,11 @@ Kill the 10-row horizontal-bar list (rows, hairline separators, per-row labels, 
 
 ## Flag
 No ≥5-rating profile fixture exists — spec render uses flagged stand-in counts; add a dense-profile fixture before integration QA.
+
+## Dated delta — 2026-08-27 static distribution and accessible detail
+
+- Ten microscopic bucket controls are withdrawn at every placement. Bars are static chart marks: no button role, per-bar focus, hover-only tooltip, or tap toggle.
+- The chart has one accessible description that exposes all ten `rating: count` values in order, including zero-count buckets.
+- Event placement adds one native `View distribution` disclosure below the chart. Its expanded content is a readable ten-row label/value list and its summary meets the mobile target rule.
+- Profile statistics placement remains a static 104×30 sparkline without a visible disclosure; all values remain available to assistive technology through the chart description.
+- Existing proportional height, uniform judgment color, axis endpoints, rating threshold, and zero-stub rulings remain unchanged.

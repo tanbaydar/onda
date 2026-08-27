@@ -35,3 +35,9 @@ Correction pass 2026-08-01 — structure from v2 approved and unchanged (header 
 - "Requested" state copy/behavior unrendered (no fixture) — same fixed box, confirm copy at integration.
 - Private-stub F/F counts: no private-profile follower fixture — counts are stand-ins; confirm the serializer exposes counts on private profiles (the ruling implies it must).
 - 4-digit counts QA carries over (secondary at 36px: "1,204" ≈ 90px — still fits; verify at integration).
+
+## Dated delta — 2026-08-27 compact placement ratification
+
+- The 1px zero-count stub is ratified for the 104×30 profile sparkline placement. The standalone/event histogram retains its 2px stub.
+- `Requested` is ratified for pending outbound follow requests, within the same fixed FollowControl box.
+- Private stubs expose Followers and Following counts. The private design fixture now carries four-digit values so visibility, wrapping, and serializer expectations are covered in integration QA.

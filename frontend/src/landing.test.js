@@ -6,6 +6,7 @@ import {
   GUEST_DISCOVER,
   homeAccessRedirect,
   landingPath,
+  landingPathForSession,
   postAuthDestination,
 } from "./landing.js";
 
@@ -32,5 +33,20 @@ test("legacy city links take precedence and preserve the city for every viewer",
   assert.equal(
     landingPath({ id: 1 }, "?city_id=999"),
     "/discover?city_id=999",
+  );
+});
+
+test("a failed session lookup falls back to public Discover instead of blocking browsing", () => {
+  assert.equal(landingPathForSession({ loading: true, user: null }), null);
+  assert.equal(
+    landingPathForSession({ loading: false, error: new Error("offline"), user: null }),
+    GUEST_DISCOVER,
+  );
+  assert.equal(
+    landingPathForSession(
+      { loading: false, error: new Error("offline"), user: null },
+      "?city_id=2",
+    ),
+    "/discover?city_id=2",
   );
 });

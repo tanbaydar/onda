@@ -45,3 +45,11 @@ Strip sits between header and tabs: statistics are header-band data; the tabs co
 
 ## Allocation audit (page-wide)
 Judgment color: Been-row stars + the strip's judgment unit ONLY. Display face: name (header override), event names, strip numerals. Everything else functional/prose registers. No global resets; all styles scoped.
+
+## Dated delta — 2026-08-27 copy, targets, and local recovery
+
+- Empty-tab copy is ratified: `No events in Been yet.` and `No reviews yet.` Save/Cancel and `/settings/profile` are ratified as shipped.
+- `Requested` is ratified for an outgoing pending follow request. Approve/Decline remains the ruled follow-request composition.
+- Follow action failure is local to FollowControl, preserves the loaded profile, and offers Retry. It never replaces the profile with a page-level failure.
+- Edit Profile initial-load failure keeps the route context and offers Retry in place.
+- Follow and essential profile actions meet the cross-cutting mobile target ruling while retaining their quiet visual register.

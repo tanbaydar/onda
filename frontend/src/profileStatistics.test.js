@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 const fixture = JSON.parse(readFileSync(new URL("../design-fixtures/profile-rating-dense.json", import.meta.url)));
+const privateFixture = JSON.parse(readFileSync(new URL("../design-fixtures/profile-other-private.json", import.meta.url)));
 const css = readFileSync(new URL("./styles.css", import.meta.url), "utf8");
 
 test("dense profile fixture carries four-digit identity and strip counts", () => {
@@ -11,6 +12,12 @@ test("dense profile fixture carries four-digit identity and strip counts", () =>
   for (const key of ["events_in_been", "written_reviews", "venues_visited", "cities_visited"]) {
     assert.ok(fixture.statistics[key] >= 1000);
   }
+});
+
+test("private profile fixture covers public four-digit relationship counts", () => {
+  assert.equal(privateFixture.access, "stub");
+  assert.ok(privateFixture.profile.follower_count >= 1000);
+  assert.ok(privateFixture.profile.following_count >= 1000);
 });
 
 test("profile histogram CSS source declares one placement size outside media overrides", () => {

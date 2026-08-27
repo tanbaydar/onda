@@ -68,3 +68,10 @@ Replaces the "Add favorite" quiet micro link everywhere favoriting exists (event
 ## Dated delta — 2026-08-20 artist portrait fallback
 - Artist identity imagery is now portrait grammar: a circular, center-cropped photo when present and a neutral circular head-and-shoulders silhouette when absent or failed, matching the familiar social-profile fallback idiom.
 - The same fallback appears at identity scale on Artist pages and row scale in Search and Favorites. This scoped ruling supersedes the earlier “artists are never circles” clause for portrait surfaces only; event fliers and venue/event list slots remain rectangular.
+
+## Dated delta — 2026-08-27 favorite and motion ratification
+
+- Detail favorites retain word + heart. The favorited hover copy `Remove` and cap-rejection copy `Favorites are limited to 3 per type.` are ratified.
+- The 120ms commit-only favorite pulse is ratified as the system's sole optional state-feedback motion. It is disabled under reduced-motion preference; un-favorite remains instant.
+- The upcoming full-bleed hero exclusion remains: the initial placeholder does not expand to poster scale.
+- Client-side avatar cropping remains outside the current design boundary. Display cropping in the circular mask is the complete current requirement.

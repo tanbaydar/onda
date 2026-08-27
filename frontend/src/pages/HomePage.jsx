@@ -79,13 +79,13 @@ export default function HomePage({ session }) {
     }
   }
 
-  if (session.loading) return <main><p>Checking session.</p></main>;
+  if (session.loading) return <main><p>Checking session…</p></main>;
   if (session.error) return <main><p>Home could not be loaded.</p></main>;
   const redirect = homeAccessRedirect(session.user);
   if (redirect) return <Navigate to={redirect} replace />;
   return (
     <main className="feed-page" aria-busy={state.loading}>
-      {state.loading ? <p className="home-feed-status" role="status" aria-live="polite">Loading activity.</p> : null}
+      {state.loading ? <p className="home-feed-status" role="status" aria-live="polite">Loading activity…</p> : null}
       {state.error ? (
         <div className="home-feed-status" role="alert"><p>Home activity could not be loaded.</p><button className="quiet-control" type="button" onClick={() => setRetry((value) => value + 1)}>Retry</button></div>
       ) : null}
@@ -93,7 +93,7 @@ export default function HomePage({ session }) {
         <div className="home-feed-empty"><p>{HOME_EMPTY_COPY}</p><Link to="/discover">Discover events</Link></div>
       ) : null}
       {state.results.length > 0 ? <ol className="home-feed-list">{groupFeedItems(state.results).map((item) => <li key={`${item.type}-${item.activity_at}-${item.actor.id}-${item.target.event?.id ?? item.target.user?.id ?? item.target.artist?.id}`}><FeedItem item={item} /></li>)}</ol> : null}
-      {state.next && !state.error ? <button className="home-feed-load-more" type="button" disabled={loadingMore} onClick={loadMore}>{loadingMore ? "Loading more." : "Load more"}</button> : null}
+      {state.next && !state.error ? <button className="home-feed-load-more" type="button" disabled={loadingMore} onClick={loadMore}>{loadingMore ? "Loading more…" : "Load more"}</button> : null}
     </main>
   );
 }

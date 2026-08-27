@@ -2,8 +2,13 @@ export function histogramBarHeight(relativeValue) {
   return relativeValue === 0 ? "var(--sp-2)" : `${relativeValue * 100}%`;
 }
 
-export function ratingTooltip(bucket) {
-  return `${bucket.count} · ${bucket.rating.toFixed(1)}★`;
+export function ratingBucketLabel(bucket) {
+  const unit = bucket.count === 1 ? "rating" : "ratings";
+  return `${bucket.rating.toFixed(1)} stars: ${bucket.count} ${unit}`;
+}
+
+export function ratingDistributionDescription(buckets) {
+  return `${buckets.map(ratingBucketLabel).join(". ")}.`;
 }
 
 export function profileRatingBuckets(distribution) {

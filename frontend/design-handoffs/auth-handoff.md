@@ -47,3 +47,13 @@ Built field set only: username, email, password. Primary "Register" · "Already 
 ## Dated delta — 2026-08-20 persistent product chrome
 - The auth-only chrome exception is withdrawn. Primary navigation and the current session's account controls coexist on every route: guests keep Discover/Search with Register/Log in, while signed-in viewers keep their signed-in navigation with the account menu.
 - Mobile keeps the wordmark and account actions in the fixed top bar and the public navigation in the fixed bottom bar. Page content reserves both bars directly; no selector-dependent spacing is allowed.
+
+## Dated delta — 2026-08-27 public-beta completion and validation
+
+- The single six-character code field and the error/confirmation copy in this handoff are ratified. The non-enumerating password-reset confirmation is security-sensitive product copy and remains verbatim.
+- Known local invalid states do not submit: Login requires both fields; verification and reset codes require exactly six digits; a new password requires at least eight characters; confirmation must match. Server validation remains final authority.
+- Every validation message is owned by its field and referenced by that field through `aria-describedby`. The non-specific invalid-credentials response remains attached to Password.
+- Password-reset request success stays on the request route and replaces the form with the ruled confirmation, repeated destination email, primary `Enter code`, and quiet `Use a different email`.
+- Verification success is terminal: the code form is removed, the completion is announced, and one primary `Continue` action refreshes session state. A stale verification form must not remain active.
+- Registration shows no Public-only or Private-only consequence before a privacy choice exists. After selection, the consequence text must describe that selected state only.
+- The sole next action in a completion state uses the primary auth action register, not a micro link.

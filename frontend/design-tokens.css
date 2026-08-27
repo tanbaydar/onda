@@ -55,8 +55,8 @@
   --bg:#FFFFFF; --bg-subtle:#F1F1F1;              /* bg-subtle: unverified banner only */
   --backdrop:rgba(27,27,27,.4);                   /* ConfirmDialog dim */
   --text:#1B1B1B;                                 /* ink; never #000 */
-  --text-secondary:#4F4F4F; --text-muted:#8A8A8A; /* muted = floor for text */
-  --border-strong:#C4C4C4;                        /* inputs, quiet controls */
+  --text-secondary:#4F4F4F; --text-muted:#6E6E6E; /* muted = readable floor for text (5.10:1 on white) */
+  --border-strong:#949494;                        /* functional boundaries (3.03:1 on white) */
   --border:#E6E6E6;                               /* the ledger hairline */
   --border-muted:#F1F1F1;                         /* quiet-row hairline */
   --image-slot:#ECECEC; --avatar:#DEDEDE;
@@ -66,6 +66,9 @@
   --judgment-muted:#82CEAB;                       /* RESERVE — unused (histogram ruled same-color) */
   --chart:var(--judgment);                        /* histogram bars = judgment, ruled */
   --danger:#753129; --danger-text:#57241E;        /* wine, derived at forest depth: validation + error/Retry text & borders ONLY; never buttons */
+  --focus-width:2px;                              /* product-wide visible keyboard focus */
+  --target-min:24px;                              /* WCAG AA pointer-target floor */
+  --target-mobile:44px;                           /* essential mobile action target */
 }
 @media (min-width:768px){:root{
   --text-row-title:20px; --text-title-past:24px; --text-numeral-sm:24px;

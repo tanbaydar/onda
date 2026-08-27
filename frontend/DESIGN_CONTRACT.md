@@ -3,6 +3,7 @@
 - Status: consolidated reference and implementation audit
 - Audit date: 2026-08-26
 - Implementation baseline: `5ea03c6`
+- Remediation ruling: approved for public beta on 2026-08-27; implementation status is recorded in §§8–9
 - Scope: the responsive React web application under `frontend/`
 
 ## 1. How to use this document
@@ -119,8 +120,8 @@ No colors outside the semantic palette are permitted without a new ruling.
 | `--bg-subtle` | `#F1F1F1` | — | Quiet wash; currently used for menus and the reserved unverified banner |
 | `--text` | `#1B1B1B` | 17.22:1 | Primary ink; use instead of black |
 | `--text-secondary` | `#4F4F4F` | 8.19:1 | Secondary copy and quiet controls |
-| `--text-muted` | `#8A8A8A` | 3.45:1 | Recessive chrome and metadata |
-| `--border-strong` | `#C4C4C4` | 1.74:1 | Inputs and quiet control boundaries |
+| `--text-muted` | `#6E6E6E` | 5.10:1 | Readable recessive chrome and metadata |
+| `--border-strong` | `#949494` | 3.03:1 | Perceivable inputs and quiet control boundaries |
 | `--border` | `#E6E6E6` | 1.25:1 | Standard hairlines |
 | `--border-muted` | `#F1F1F1` | 1.13:1 | Repeating-row separators |
 | `--image-slot` | `#ECECEC` | — | Event/catalog image fallback |
@@ -199,6 +200,8 @@ Responsive rules:
 - No cards, shadows, gradients, glass, glow, or general elevation.
 - Popup panels remain flat: white background, strong hairline outline, no shadow.
 - The confirm-dialog backdrop is the only dimensional overlay treatment.
+- Keyboard focus uses a 2px ink treatment. Bordered fields draw it inward to preserve one rectangle.
+- Essential mobile actions provide a 44×44px target without requiring visually inflated button chrome.
 
 ### 3.6 Imagery and fallback grammar
 
@@ -324,7 +327,8 @@ General Sans 12/500, uppercase, `0.05em` tracking, muted. Use 32–48px above an
 - Fewer than three event ratings: withhold the numeral/chart and use “Not enough ratings for an average yet.”
 - Histogram order is ½★ to 5★, left to right.
 - All bars share one color. Zero buckets use a baseline stub, never disappear.
-- Permanent labels are only `½` and `5`; tooltip copy is `N · X★`.
+- Permanent axis labels are only `½` and `5`; bars are static and the accessible description exposes all ten values.
+- Event placement offers one `View distribution` disclosure with a readable ten-row list. Profile placement has no visible disclosure.
 - Profile histogram appears only at five or more ratings.
 - Profile placement is a 104×30px sparkline companion to the average; event placement may use the 160×100px module.
 
@@ -338,7 +342,7 @@ General Sans 12/500, uppercase, `0.05em` tracking, muted. Use 32–48px above an
 - Hover before commit darkens to ink, not green.
 - Removal is immediate and reversible; no dialog.
 - A rejected three-per-type action keeps the heart outline and shows persistent inline danger copy.
-- The shipped 120ms fill pulse is an unresolved optional motion choice, not a system-wide motion grammar.
+- The 120ms commit-only fill pulse is the sole optional feedback motion and is disabled under reduced motion.
 
 ### 5.10 Follow control
 
@@ -348,8 +352,8 @@ Follow, Unfollow, Request to follow, and Requested use one fixed 150px-minimum, 
 
 - Header: 26–34px person avatar, functional name, muted handle/context, stars.
 - Body: Gambetta 16/1.6 at no more than 640px.
-- Feed excerpts clamp to four lines and offer quiet lowercase “more” in the shipped choice.
-- Event/profile excerpts clamp around 8–10 lines and expand in place.
+- Feed excerpts clamp to four lines and offer quiet `Read more` copy within the event-target row.
+- Event/profile excerpts clamp around 8–10 lines and expand in place with `Read more` / `Show less`.
 - Metadata is 12px muted; likes and Like/Unlike use judgment green.
 - Own review shows “Yours” and one “Edit ▾” affordance; it does not show a like control.
 - Reviews gain importance from placement and space, not display type or decorative containers.
@@ -360,7 +364,7 @@ Follow, Unfollow, Request to follow, and Requested use one fixed 150px-minimum, 
 - Options are 14px with 8×12px padding.
 - Selected option is 600.
 - The account and sort menus are approved as shipped.
-- City-dropdown and result-row focus treatment remains only partially ruled; see audit risks.
+- City-dropdown and result rows use their quiet wash plus the universal 2px ink keyboard focus treatment.
 
 ### 5.13 Confirm dialog
 
@@ -398,7 +402,7 @@ Follow, Unfollow, Request to follow, and Requested use one fixed 150px-minimum, 
 | Edit profile | 360px column. Avatar upload, display name, bio counter, home city, privacy, save/cancel, and follow requests. Avatar removal is immediate and recoverable. |
 | Activity `/activity` | H1 plus one 800px ledger. Whole rows route. Unread names 600; read state recedes to muted/500. Relative timestamp. No action chrome within rows. |
 | Venue detail | Display name, linked natural-language location, favorite directly beneath, then Upcoming and Past compact event ledgers. No cards, labels, or timezone. |
-| Artist detail | Circular portrait/fallback, display name, favorite, then Upcoming/Past compact ledgers. Portrait treatment is ruled; the broader artist-page composition has no dedicated handoff and should not be generalized without one. |
+| Artist detail | Circular portrait/fallback, display name, favorite, then Upcoming/Past compact ledgers, governed by the dedicated Artist handoff. |
 | Not found | Functional H1, concise explanation, one route back to Discover. No decorative error illustration. |
 
 ## 7. Interaction, semantics, and accessibility
@@ -422,7 +426,7 @@ Follow, Unfollow, Request to follow, and Requested use one fixed 150px-minimum, 
 - Star input: Left/Right steps 0.5; Enter commits; pointer and drag behavior have keyboard equivalents.
 - Dialog focus stays within the native dialog lifecycle and returns appropriately after close.
 - Interactive elements must expose a visible keyboard focus state.
-- The established 44px hit areas for hearts and rating stars are the preferred mobile target. Existing smaller controls must at minimum retain adequate separation and a visible state.
+- Essential mobile actions use a 44×44px product target. All other pointer targets meet the 24×24px minimum or its spacing/equivalent-control exceptions.
 
 ### 7.3 Contrast audit baseline
 
@@ -455,54 +459,49 @@ For QA, evaluate normal text against 4.5:1 and meaningful component/focus bounda
 - Empty Favorites is silent.
 - Account and Sort menus use the approved flat-panel treatment.
 - Auth, search, feed, profile, event, venue, and activity surfaces expose core landmark/list/status semantics.
-- Destructive dialog action uses the ruled ink fill; avatar upload and primary search have explicit focus treatment.
+- Destructive dialog action uses the ruled ink fill; focus is explicit and consistent across interactive surfaces.
+- Auth prevents known invalid local submissions, reset preserves its non-enumerating confirmation step, and verification ends in a terminal completion state.
+- Histogram bars are static summaries; event placement provides one accessible distribution disclosure and profile placement exposes the values semantically.
+- Search, Activity, Profile actions, and Edit Profile use local recovery that preserves successful content.
+- Public browsing continues when session lookup fails, with guest chrome and a persistent Retry line.
+- The Artist surface has a dedicated authoritative handoff.
 
 ### 8.2 Audit risks requiring a ruling or scoped follow-up
 
 | ID | Risk | Evidence and impact | Status |
 |---|---|---|---|
-| A11Y-01 | Muted text contrast | `--text-muted` is 3.45:1 on white but is used for 11–14px navigation, labels, timestamps, handles, and read-state content. This misses the 4.5:1 normal-text audit target. | Open; changing the token would alter an approved visual register. |
-| A11Y-02 | Control-boundary contrast | `--border-strong` is 1.74:1 on white but carries inputs, quiet controls, menus, and dialog boundaries. Meaningful boundaries may miss the 3:1 non-text audit target. | Open; requires a system-level color ruling. |
-| A11Y-03 | Uneven keyboard focus | Search results/scopes and avatar upload have strong focus. City, Sort, Account, guest auth, histogram bars, and some auth fields remove native outlines and rely on low-contrast color/wash changes. | Partially ruled; city/search row treatment remains flagged. |
-| A11Y-04 | Small targets | Hearts and rating stars use 44px targets, but mobile nav links, quiet links, menu triggers, pagination controls, and Follow use smaller boxes. | Open as a cross-product touch-target policy. |
-| A11Y-05 | Motion preference | The optional 120ms favorite pulse is shipped without a `prefers-reduced-motion` override, and no broader motion grammar exists. | Open; either ratify instant state only or add a reduced-motion contract. |
+| A11Y-01 | Muted text contrast | `--text-muted` now reaches 5.10:1 on white. | Resolved by the 2026-08-27 accessibility ruling. |
+| A11Y-02 | Control-boundary contrast | `--border-strong` now reaches 3.03:1 on white. | Resolved by the 2026-08-27 accessibility ruling. |
+| A11Y-03 | Uneven keyboard focus | A product-wide 2px ink focus grammar now covers native and custom interactive elements. | Resolved by the 2026-08-27 accessibility ruling. |
+| A11Y-04 | Small targets | Essential mobile actions now provide 44×44px targets. | Resolved by the 2026-08-27 accessibility ruling. |
+| A11Y-05 | Motion preference | The sole favorite pulse is disabled for reduced motion. | Resolved by the 2026-08-27 accessibility ruling. |
 | SYS-01 | Token discipline | Shared foundations are tokenized, but several ruled/scoped sizes remain literal in component CSS, including 11px labels, 20/24/30px scoped titles, and specific geometry. | Acceptable when scoped by a handoff; avoid new literals and consolidate when a token is genuinely reusable. |
-| SYS-02 | Search empty-state ambiguity | The handoff says the page renders nothing below two characters, while the shipped page shows Recent searches only when the query is empty. | Conflict to rule: retain Recent searches as an approved exception or remove them. |
-| SYS-03 | Loading language | Copy alternates among periods and ellipses: “Loading activity.”, “Loading…”, and “Loading more events…”. | Open content-system normalization. |
-| SYS-04 | Visual regression evidence | Fixtures exist, but no committed route screenshots or automated visual baselines were found. Dense wrapping, browser focus, cropping, menus, and 320/390px states therefore require manual verification. | Open QA infrastructure. |
+| SYS-02 | Search empty-state ambiguity | Recent searches are now explicitly authorized only for the empty query. | Resolved by the 2026-08-27 Search ruling. |
+| SYS-03 | Loading language | Work in progress consistently uses an ellipsis; stable statements use a period. | Resolved by the 2026-08-27 accessibility ruling. |
+| SYS-04 | Browser acceptance evidence | Automated browser acceptance covers representative mobile/desktop public and auth states; fixture-driven visual review remains required for dense catalog states. | Browser gate added; dense-state expansion remains a SHOULD. |
 | SYS-05 | Unverified banner | A CSS slot exists, but its styling remains explicitly unruled and the event UI does not currently present a verified/unverified visual state. | Open; do not ship a visual distinction without an operator/product ruling. |
-| SYS-06 | Artist-page authority gap | The portrait rule is explicit, but no dedicated artist handoff defines its full identity hierarchy or event collection details. | Current implementation is evidence only, not a reusable authority. |
+| SYS-06 | Artist-page authority gap | `artist-handoff.md` now defines the complete current surface. | Resolved 2026-08-27. |
 
 ### 8.3 Unresolved handoff flags
 
 The following remain open after applying dated overrides:
 
-- Event dormant WBT record copy.
-- Auth error and confirmation copy ratification, including the non-enumerating reset message.
-- Auth single-field code-entry choice, although it is shipped.
 - Unverified-banner styling.
-- Search/city dropdown keyboard-focus row treatment.
-- Profile empty-tab and Save/Cancel copy.
-- Follow-request Approve/Decline composition.
-- Follow-control “Requested” copy and unverified private-count fixture coverage.
-- Event lineup heading copy “Lineup.”
-- Client-side avatar cropper boundary; current design covers display crop only.
-- Favorite detail word-versus-heart-only choice, “Remove” hover copy, cap-rejection copy, and optional fill animation.
-- Full-bleed upcoming-event hero fallback exclusion, if that hero composition returns.
-- Home review-like fixture/serializer coverage and lowercase “more” copy.
-- Histogram 1px zero stub in the compact profile placement.
+- Unverified-event API exposure and user-facing trust copy, which require a separately named backend ruling.
 
 Older flags resolved by later handoffs must not be reopened accidentally: Discover Recent rating anatomy, grouped one-line feed activity, avatar upload replacing Avatar URL, Discover automatic continuation, artist portrait fallback, persistent auth chrome, and responsive event identity alignment.
 
 ## 9. Design-lead priorities
 
-These priorities are design-lead recommendations derived from the audit. They are intentionally opinionated, but they are not operator rulings. “MUST improve” means the current design creates an accessibility, trust, task-completion, or contract-integrity problem. “SHOULD improve” means the experience is viable but below the quality bar. “MUST stay” protects the choices that make Onda recognizable and coherent while improvements are made.
+These priorities originated as design-lead recommendations derived from the audit. The operator approved their public-beta implementation on 2026-08-27; the corresponding dated handoff deltas are now the authority. “MUST improve” identifies accessibility, trust, task-completion, or contract-integrity failures. “SHOULD improve” identifies quality work below that release bar. “MUST stay” protects the choices that make Onda recognizable and coherent while improvements are made.
+
+Implementation status: M1–M5 are implemented. M6 is implemented for frontend authority conflicts; unverified-event lifecycle exposure remains deliberately held because it changes a shipped backend/API contract and requires a separately named operator ruling.
 
 ### 9.1 MUST improve
 
 #### M1. Make quiet text readable
 
-The current muted text token is too light for the small sizes it carries. At 3.45:1 on white, it is used for timestamps, handles, navigation, labels, histogram axes, read Activity items, and secondary actions that often contain necessary information.
+At the audit baseline, the muted token was too light for the small sizes it carried: 3.45:1 on white across timestamps, handles, navigation, labels, histogram axes, read Activity items, and secondary actions. It is now `#6E6E6E` at 5.10:1.
 
 Required direction:
 
@@ -519,7 +518,7 @@ Acceptance criteria:
 
 #### M2. Make control boundaries and focus states perceivable everywhere
 
-The current strong border is only 1.74:1 on white. Several menus and triggers also remove the browser outline and replace it with a very light wash or text-color shift. A keyboard user gets a strong focus treatment in Search but a weak or invisible one in City, Sort, Account, auth, histogram, and guest chrome.
+At the audit baseline, the strong border was 1.74:1 on white and several menus and triggers replaced browser focus with a light wash or text-color shift. The 2026-08-27 ruling raises the functional boundary to 3.03:1 and establishes one 2px ink focus grammar.
 
 Required direction:
 
@@ -537,7 +536,7 @@ Acceptance criteria:
 
 #### M3. Resolve the compact histogram's impossible interaction density
 
-The profile histogram places ten interactive buttons into 104px. Each target is roughly 8–9px wide after gaps. That cannot support reliable tapping, and keyboard focus/tooltip behavior is visually fragile. The handoff requires tap tooltips while the compact placement makes adequate targets impossible; this is a real design conflict.
+The audit-baseline profile histogram placed ten interactive buttons into 104px, roughly 8–9px per target after gaps. The resolved design uses static bars, an accessible ten-value description, and one larger disclosure on the Event placement only.
 
 Required direction—choose one through an operator ruling:
 
@@ -554,7 +553,7 @@ Acceptance criteria:
 
 #### M4. Make authentication flows prevent avoidable errors
 
-Authentication is a high-consequence task. The reset-code and new-password steps currently know their input rules but do not consistently express them in field semantics or action availability. The reset request also navigates directly to code entry, while the authoritative handoff specifies a non-enumerating confirmation state before “Enter code.”
+At the audit baseline, auth knew several input rules without consistently expressing them in field semantics or action availability, and reset skipped its ruled non-enumerating confirmation. The implemented flow now performs field-owned local validation and preserves the same-screen confirmation step.
 
 Required direction:
 
@@ -573,7 +572,7 @@ Acceptance criteria:
 
 #### M5. Raise essential mobile actions to a reliable target size
 
-The most expressive controls—rating stars and hearts—already use 44px targets, but primary mobile navigation, menu triggers, pagination, quiet recovery links, and Follow can be materially smaller. These are frequent or essential actions, not incidental prose.
+At the audit baseline, rating stars and hearts used 44px targets while primary mobile navigation, menu triggers, pagination, quiet recovery links, and Follow were materially smaller. The universal mobile target ruling now covers those essential actions.
 
 Required direction:
 
@@ -590,7 +589,7 @@ Acceptance criteria:
 
 #### M6. Close contract conflicts before adding more surface area
 
-The implementation and written authority currently disagree or remain undecided in places that affect visible behavior: Recent searches below the two-character Search threshold, the reset confirmation step, unverified-event treatment, focus grammar, and several shipped pieces of flagged copy/motion.
+The audit found implementation/authority disagreements in Search recents, reset confirmation, focus, copy, motion, Artist, and unverified-event treatment. The dated 2026-08-27 deltas close every frontend choice in this plan. Unverified lifecycle exposure alone remains held behind the repository's explicit backend-ruling gate.
 
 Required direction:
 
@@ -709,6 +708,16 @@ No exclamation-heavy auth voice, countdowns, urgency, scarcity, badges, or engag
 7. Produce the dedicated Artist handoff before adding Artist features.
 
 ## 10. QA matrix
+
+Release verification commands from `frontend/`:
+
+```sh
+npm test
+npm run test:visual
+npm run build
+```
+
+The visual suite uses installed Chrome, mocked API boundaries, mobile 390×844 and desktop 1280×900 projects, and failure-only artifacts outside the repository. `PLAYWRIGHT_CHROME_PATH` or `PLAYWRIGHT_BROWSER_CHANNEL` may select another installed Chrome build.
 
 Every affected surface should be reviewed at minimum in these conditions:
 

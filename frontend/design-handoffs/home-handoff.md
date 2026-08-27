@@ -34,3 +34,8 @@ One quiet line ui `--text-secondary`: "No activity from people you follow yet." 
 1. review_like items have no fixture — rendered from a flagged stand-in; confirm the serializer shape (actor, review author, event) before wiring.
 2. "more" affordance copy ("more" vs "Read more") — rendered lowercase "more"; veto if you want parity with the event page's "Read more".
 3. Grouping ("Kim and 2 others followed…") stays legal per the locked spec but is undesigned — flag for a later pass; current anatomy renders one actor per item.
+
+## Dated delta — 2026-08-27 review continuation copy
+
+- The truncated feed marker is `Read more`, not lowercase `more`. It remains inside the whole event-target row.
+- Expanded event-page review copy is `Show less`; collapsed copy is `Read more`. The control meets the essential mobile target rule without gaining button chrome.

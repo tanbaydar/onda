@@ -49,7 +49,7 @@ export default function WillBeThereAttendees({ eventId, scope, user, version }) 
   return (
     <section aria-busy={state.loading}>
       <h2>{heading}</h2>
-      {state.loading ? <p role="status" aria-live="polite">Loading attendees.</p> : null}
+      {state.loading ? <p role="status" aria-live="polite">Loading attendees…</p> : null}
       {state.error ? (
         <div role="alert">
           <p>Attendees could not be loaded.</p>

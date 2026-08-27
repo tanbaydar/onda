@@ -33,7 +33,7 @@ function BeenTab({ username }) {
   }, [page, retry, username]);
   return (
     <section className="profile-tab-panel" aria-label="Been">
-      {state.loading ? <p>Loading Been history.</p> : null}
+      {state.loading ? <p>Loading Been history…</p> : null}
       {state.error ? <><p>Been history could not be loaded.</p><button className="quiet-control" type="button" onClick={() => setRetry((value) => value + 1)}>Retry</button></> : null}
       {state.data?.results.length === 0 ? <p className="profile-tab-empty">{PROFILE_EMPTY_STATES.been}</p> : null}
       {state.data?.results.length ? <><ol className="profile-diary-list">{state.data.results.map((entry) => <ProfileDiaryRow key={entry.id} event={entry.event} rating={entry.rating} hasReview={entry.has_review} />)}</ol><Pagination pagination={state.data.pagination} onPage={setPage} /></> : null}
@@ -54,7 +54,7 @@ function ReviewsTab({ username, sort }) {
   }, [page, retry, sort, username]);
   return (
     <section className="profile-tab-panel" aria-label="Reviews">
-      {state.loading ? <p>Loading reviews.</p> : null}
+      {state.loading ? <p>Loading reviews…</p> : null}
       {state.error ? <><p>Reviews could not be loaded.</p><button className="quiet-control" type="button" onClick={() => setRetry((value) => value + 1)}>Retry</button></> : null}
       {state.data?.results.length === 0 ? <p className="profile-tab-empty">{PROFILE_EMPTY_STATES.reviews}</p> : null}
       {state.data?.results.length ? <><ol className="profile-diary-list">{state.data.results.map((review) => <ProfileDiaryRow key={review.id} event={review.event} rating={review.rating} hasReview />)}</ol><Pagination pagination={state.data.pagination} onPage={setPage} /></> : null}
@@ -71,7 +71,7 @@ function ProfileStatistics({ username }) {
     fetchJson(`/api/users/${encodeURIComponent(username)}/stats/`, { signal: controller.signal, cache: "no-store" }).then((data) => setState({ loading: false, error: null, data })).catch((error) => { if (error.name !== "AbortError") setState({ loading: false, error, data: null }); });
     return () => controller.abort();
   }, [retry, username]);
-  if (state.loading) return <section className="profile-statistics"><h2>Statistics</h2><p>Loading statistics.</p></section>;
+  if (state.loading) return <section className="profile-statistics"><h2>Statistics</h2><p>Loading statistics…</p></section>;
   if (state.error) return <section className="profile-statistics"><h2>Statistics</h2><p>Statistics could not be loaded.</p><button className="quiet-control" type="button" onClick={() => setRetry((value) => value + 1)}>Retry</button></section>;
   const statistics = state.data.statistics;
   const distribution = state.data.rating_distribution;
@@ -88,7 +88,7 @@ function ProfileFavorites({ username, owner }) {
     fetchJson(`/api/users/${encodeURIComponent(username)}/favorites/`, { signal: controller.signal, cache: "no-store" }).then((favorites) => setState({ loading: false, error: null, favorites })).catch((error) => { if (error.name !== "AbortError") setState({ loading: false, error, favorites: null }); });
     return () => controller.abort();
   }, [owner, retry, username]);
-  if (state.loading) return <section className="profile-favorites"><h2>Favorites</h2><p>Loading favorites.</p></section>;
+  if (state.loading) return <section className="profile-favorites"><h2>Favorites</h2><p>Loading favorites…</p></section>;
   if (state.error) return <section className="profile-favorites"><h2>Favorites</h2><p>Favorites could not be loaded.</p><button className="quiet-control" type="button" onClick={() => setRetry((value) => value + 1)}>Retry</button></section>;
   const items = [
     ...state.favorites.events.map(({ event }) => ({ key: `event-${event.id}`, to: eventPath(event), name: event.title, meta: `${formatEventDateTime(event.event_date, event.start_time)} · ${event.venue.name}`, image: event.cover_image_url, favoritePath: `/api/events/${event.id}/favorite/` })),
@@ -104,6 +104,7 @@ export default function ProfilePage({ session, tab = "been" }) {
   const [retry, setRetry] = useState(0);
   const [reviewSort, setReviewSort] = useState("newest");
   const [state, setState] = useState({ loading: true, error: null, data: null });
+  const [followState, setFollowState] = useState({ saving: false, error: null });
   useEffect(() => {
     const controller = new AbortController();
     setState({ loading: true, error: null, data: null });
@@ -113,17 +114,24 @@ export default function ProfilePage({ session, tab = "been" }) {
   }, [retry, session.loading, session.user?.id, username]);
 
   async function changeFollow() {
+    if (followState.saving) return;
     const relationship = state.data.relationship;
+    setFollowState({ saving: true, error: null });
     try {
       await fetchWithCsrf(`/api/users/${state.data.profile.id}/follow/`, { method: relationship.can_follow ? "POST" : "DELETE" });
+      setFollowState({ saving: false, error: null });
       setRetry((value) => value + 1);
     } catch (error) {
-      if (error.status === 404 || error.status === 409) setRetry((value) => value + 1);
-      else setState((current) => ({ ...current, error }));
+      if (error.status === 404 || error.status === 409) {
+        setFollowState({ saving: false, error: null });
+        setRetry((value) => value + 1);
+      } else {
+        setFollowState({ saving: false, error });
+      }
     }
   }
 
-  if (state.loading) return <main><p>Loading profile.</p></main>;
+  if (state.loading) return <main><p>Loading profile…</p></main>;
   if (state.error?.status === 404) return <main><h1>Profile not found</h1><p>This profile does not exist.</p></main>;
   if (state.error) return <main><p>Profile could not be loaded.</p><button type="button" onClick={() => setRetry((value) => value + 1)}>Retry</button></main>;
   const data = state.data;
@@ -137,7 +145,7 @@ export default function ProfilePage({ session, tab = "been" }) {
           <h1>{profile.display_name}</h1>
           <p className="profile-handle-line">@{profile.username}{profile.home_city ? ` · ${profile.home_city.name}` : ""}{data.relationship?.follows_you ? " · Follows you" : ""}{data.relationship?.outgoing_status === "approved" ? " · Following" : ""}</p>
           <div className="profile-social-counts"><span><strong>{profile.follower_count}</strong><small>Followers</small></span><span><strong>{profile.following_count}</strong><small>Following</small></span></div>
-          {owner ? <Link className="profile-edit-link" to="/settings/profile">Edit profile</Link> : <FollowControl relationship={data.relationship} onChange={changeFollow} />}
+          {owner ? <Link className="profile-edit-link" to="/settings/profile">Edit profile</Link> : <><FollowControl relationship={data.relationship} onChange={changeFollow} />{followState.error ? <div className="profile-action-error" role="alert"><p>Follow status could not be changed.</p><button className="quiet-control" type="button" disabled={followState.saving} onClick={changeFollow}>{followState.saving ? "Retrying…" : "Retry"}</button></div> : null}</>}
           {profile.bio ? <p className="profile-bio">{profile.bio}</p> : null}
         </div>
       </header>

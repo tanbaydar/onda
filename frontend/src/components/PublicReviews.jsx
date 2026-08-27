@@ -63,7 +63,7 @@ export default function PublicReviews({
       <h2>Public</h2>
       <SortMenu value={sort} options={EVENT_REVIEW_SORTS} onChange={(value) => { setSort(value); setPage(1); }} />
       {actionError ? <p className="favorite-notice" role="alert">{actionError}</p> : null}
-      {state.loading ? <p role="status" aria-live="polite">Loading public reviews.</p> : null}
+      {state.loading ? <p role="status" aria-live="polite">Loading public reviews…</p> : null}
       {state.error ? (
         <div role="alert">
           <p>Public reviews could not be loaded.</p>

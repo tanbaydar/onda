@@ -72,7 +72,7 @@ export default function YourCircle({
     <section aria-busy={state.loading}>
       <h2>Your Circle</h2>
       {actionError ? <p className="favorite-notice" role="alert">{actionError}</p> : null}
-      {state.loading ? <p role="status" aria-live="polite">Loading Your Circle.</p> : null}
+      {state.loading ? <p role="status" aria-live="polite">Loading Your Circle…</p> : null}
       {state.error ? (
         <div role="alert">
           <p>Your Circle could not be loaded.</p>
@@ -102,7 +102,7 @@ export default function YourCircle({
               ))}
             </ol>
           )}
-          {state.data.pagination.next_page ? <button className="quiet-action" type="button" disabled={loadingMore} onClick={() => setPage(state.data.pagination.next_page)}>{loadingMore ? "Loading more Circle entries." : `Show ${state.data.pagination.total_results - state.data.results.length} more Circle entries`}</button> : null}
+          {state.data.pagination.next_page ? <button className="quiet-action" type="button" disabled={loadingMore} onClick={() => setPage(state.data.pagination.next_page)}>{loadingMore ? "Loading more Circle entries…" : `Show ${state.data.pagination.total_results - state.data.results.length} more Circle entries`}</button> : null}
         </>
       ) : null}
     </section>
