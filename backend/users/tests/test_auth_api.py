@@ -84,6 +84,7 @@ class AuthApiContractTests(TestCase):
                     "email": "listener@example.com",
                     "username": "listener.one",
                     "display_name": "Listener One",
+                    "avatar": None,
                     "is_private": False,
                 }
             },
@@ -267,6 +268,7 @@ class AuthApiContractTests(TestCase):
             "email": "listener@example.com",
             "username": "listener.one",
             "display_name": "Listener One",
+            "avatar": None,
             "is_private": False,
         }
         self.assertEqual(registered.content, json.dumps({"user": expected_user}).encode())

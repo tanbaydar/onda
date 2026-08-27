@@ -49,3 +49,12 @@ export function formatCompactEventDateTime(eventDate, startTime) {
   const [hour, minute] = startTime.split(":").map(Number);
   return `${date}, ${hour % 12 || 12}:${String(minute).padStart(2, "0")} ${hour >= 12 ? "pm" : "am"}`;
 }
+
+export function formatEventIdentityDateTime(eventDate, startTime) {
+  const [year, month, day] = eventDate.split("-").map(Number);
+  const weekday = WEEKDAYS[new Date(Date.UTC(year, month - 1, day)).getUTCDay()].slice(0, 3);
+  const date = `${weekday}, ${MONTHS[month - 1].slice(0, 3)} ${day}, ${year}`;
+  if (!startTime) return date;
+  const [hour, minute] = startTime.split(":").map(Number);
+  return `${date} · ${hour % 12 || 12}:${String(minute).padStart(2, "0")} ${hour >= 12 ? "PM" : "AM"}`;
+}

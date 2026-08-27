@@ -92,9 +92,10 @@ test("sparse upcoming events keep one hierarchy, withhold a zero WBT numeral, an
   const attendees = read("./components/WillBeThereAttendees.jsx");
   const css = read("./styles.css");
   assert.match(eventPage, /event-page-no-artwork/);
-  assert.match(eventPage, /!isPast && wbtCount > 0 \? <div className="wbt-count">/);
-  assert.match(eventPage, /\{isPast \? <FavoriteControl compact/);
-  assert.match(eventPage, /className="wbt-action"/);
+  assert.match(eventPage, /<div className="event-attendance">/);
+  assert.match(eventPage, /wbtCount > 0 \? <p className="wbt-count">/);
+  assert.equal((eventPage.match(/<FavoriteControl compact/g) ?? []).length, 1);
+  assert.match(eventPage, /wbt-action/);
   assert.match(eventPage, /: "Will Be There"/);
   assert.match(eventPage, /activeCount=\{wbtCount\}/);
   assert.match(attendees, /"No active marks yet\."/);
@@ -105,8 +106,20 @@ test("sparse upcoming events keep one hierarchy, withhold a zero WBT numeral, an
 
 test("event lineup gives every artist one subordinate functional-text treatment", () => {
   const css = read("./styles.css");
-  assert.match(css, /\.event-lineup a\{[^}]*font-family:var\(--font-fn\);font-size:var\(--text-ui\);font-weight:500/);
+  assert.match(css, /\.event-lineup-title\{[^}]*font-size:var\(--text-ui\);font-weight:600/);
+  assert.match(css, /\.event-lineup a\{[^}]*color:var\(--text-secondary\);font-family:var\(--font-fn\);font-size:var\(--text-ui\);font-weight:400/);
   assert.doesNotMatch(css, /\.event-lineup li:first-child/);
+});
+
+test("event identity uses one information recipe and reserves green for committed attendance", () => {
+  const eventPage = read("./pages/EventPage.jsx");
+  const css = read("./styles.css");
+  assert.match(eventPage, /className="event-location-line"/);
+  assert.match(eventPage, /formatEventIdentityDateTime/);
+  assert.match(css, /\.event-meta-stack\{[^}]*color:var\(--text-secondary\);[^}]*font-size:var\(--text-ui\);font-weight:400/);
+  assert.doesNotMatch(css, /\.wbt-count>span|\.wbt-count p/);
+  assert.match(eventPage, /wbt-action\$\{event\.viewer_will_be_there\.is_marked \? " is-marked" : ""\}/);
+  assert.match(css, /\.event-owner-block>button\.wbt-action\.is-marked\{border-color:var\(--judgment\);color:var\(--judgment\)\}/);
 });
 
 test("venue identity presents a natural location and omits operational geography", () => {

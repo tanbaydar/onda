@@ -80,6 +80,17 @@ export default function App() {
     }
   }
 
+  function handleProfileUpdated(profile) {
+    setSession((current) => current.user ? {
+      ...current,
+      user: {
+        ...current.user,
+        display_name: profile.display_name,
+        avatar: profile.avatar,
+      },
+    } : current);
+  }
+
   const isAuthRoute = ["/register", "/login", "/verify-email", "/reset-password", "/reset-password/confirm"].includes(location.pathname);
 
   return (
@@ -151,7 +162,7 @@ export default function App() {
         <Route path="/been" element={<LegacyBeenPage session={session} />} />
         <Route path="/u/:username" element={<ProfilePage session={session} tab="been" />} />
         <Route path="/u/:username/reviews" element={<ProfilePage session={session} tab="reviews" />} />
-        <Route path="/settings/profile" element={<EditProfilePage session={session} />} />
+        <Route path="/settings/profile" element={<EditProfilePage session={session} onProfileUpdated={handleProfileUpdated} />} />
         <Route path="/activity" element={<ActivityPage session={session} />} />
         <Route path="/v/:venueKey" element={<VenuePage user={session.user} sessionReady={!session.loading} />} />
         <Route path="/venues/:venueKey" element={<VenuePage user={session.user} sessionReady={!session.loading} />} />

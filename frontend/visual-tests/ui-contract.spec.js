@@ -27,6 +27,27 @@ const EVENT_ROW_FIXTURE = {
   rating_summary: { state: "unavailable", average: null, count: 0 },
 };
 
+const EVENT_DETAIL_FIXTURE = {
+  id: 468,
+  title: "Franky Rizardo - Flow",
+  event_date: "2099-08-29",
+  start_time: "22:00:00",
+  cover_image_url: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='200'%3E%3Crect width='160' height='200' fill='%23ECECEC'/%3E%3C/svg%3E",
+  venue: {
+    id: 335,
+    name: "Pacha New York",
+    city: { id: 8, name: "New York City", timezone: "America/New_York" },
+  },
+  artists: [
+    { id: 842, name: "Franky Rizardo" },
+    { id: 843, name: "Mason Collective" },
+    { id: 844, name: "Ms. Mada" },
+  ],
+  will_be_there_summary: { active_count: 1 },
+  viewer_will_be_there: { can_mark: true, is_marked: false, was_marked: false },
+  viewer_entry: null,
+};
+
 const DENSE_EVENT_ROW_FIXTURES = [
   EVENT_ROW_FIXTURE,
   {
@@ -53,7 +74,7 @@ async function mockPublicApi(page, { authenticated = false, events = [], continu
     if (url.pathname === "/api/auth/session/") {
       body = {
         user: authenticated
-          ? { id: 7, username: "onda_test", email: "test@example.com", is_verified: true }
+          ? { id: 7, username: "onda_test", display_name: "Onda Test", avatar: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='26' height='26'%3E%3Crect width='26' height='26' fill='%236E6E6E'/%3E%3C/svg%3E", email: "test@example.com", is_verified: true }
           : null,
       };
     } else if (url.pathname === "/api/cities/") {
@@ -74,6 +95,10 @@ async function mockPublicApi(page, { authenticated = false, events = [], continu
           },
         };
       }
+    } else if (url.pathname === "/api/events/468/") {
+      body = EVENT_DETAIL_FIXTURE;
+    } else if (url.pathname.startsWith("/api/events/468/will-be-there/")) {
+      body = { results: [], pagination: EMPTY_PAGINATION };
     } else if (url.pathname === "/api/search/") {
       body = { results: [], next_cursor: null };
     } else {
@@ -286,10 +311,71 @@ test.describe("public-beta visual contract", () => {
     await expectMinimumTargets(page.locator("main.auth-page .auth-links a"));
   });
 
-  test("authenticated mobile account trigger is at least 44px", async ({ page }, testInfo) => {
-    test.skip(!testInfo.project.name.startsWith("mobile"), "The 44px product target is a mobile contract.");
+  test("authenticated account avatar and menu align with the persistent header", async ({ page }) => {
     await openRoute(page, PUBLIC_ROUTES[1], { authenticated: true });
-    await expectMinimumTargets(page.locator(".account-menu-trigger"));
+    const trigger = page.getByRole("button", { name: "Account menu for Onda Test" });
+    await expectMinimumTargets(trigger);
+    await expect(trigger.locator("img.profile-avatar-small")).toBeVisible();
+    await expect(page.getByText("@onda_test")).toHaveCount(0);
+    const viewport = page.viewportSize();
+    const mobile = viewport.width < 768;
+    const headerBox = await page.locator(mobile ? "header.site-header > section" : "header.site-header").boundingBox();
+    const triggerBox = await trigger.boundingBox();
+    expect(headerBox).not.toBeNull();
+    expect(triggerBox).not.toBeNull();
+    expect(Math.abs((triggerBox.y + triggerBox.height / 2) - (headerBox.y + headerBox.height / 2))).toBeLessThanOrEqual(1);
+    await trigger.click();
+    const editProfile = page.getByRole("menuitem", { name: "Edit profile" });
+    await expect(editProfile).toBeVisible();
+    await expect(page.getByRole("menuitem", { name: "Log out" })).toBeVisible();
+    await expectMinimumTargets(editProfile, mobile ? 44 : 24);
+    await expectMinimumTargets(page.getByRole("menuitem", { name: "Log out" }), mobile ? 44 : 24);
+    const panelBox = await page.locator(".account-menu-panel").boundingBox();
+    expect(panelBox).not.toBeNull();
+    expect(panelBox.y).toBeGreaterThanOrEqual(headerBox.y + headerBox.height);
+    expect(Math.abs((panelBox.x + panelBox.width) - (triggerBox.x + triggerBox.width))).toBeLessThanOrEqual(1);
+  });
+
+  test("upcoming event identity has one calm information hierarchy", async ({ page }) => {
+    await mockPublicApi(page, { authenticated: true });
+    await page.goto("/e/franky-rizardo-flow-468");
+    await expect(page.getByRole("heading", { level: 1, name: "Franky Rizardo - Flow" })).toBeVisible();
+    await expect(page.locator(".event-location-line")).toHaveText("Pacha New York · New York City");
+    await expect(page.locator(".event-meta-stack time")).toContainText("Aug 29, 2099 · 10:00 PM");
+    await expect(page.getByRole("heading", { level: 2, name: "Lineup" })).toBeVisible();
+    await expect(page.locator(".event-lineup a")).toHaveCount(3);
+    await expect(page.locator(".wbt-count")).toHaveText("1 active mark");
+
+    const hierarchy = await page.locator("main.event-page").evaluate((main) => {
+      const read = (selector) => {
+        const style = getComputedStyle(main.querySelector(selector));
+        return { color: style.color, fontFamily: style.fontFamily, fontSize: style.fontSize, fontWeight: style.fontWeight };
+      };
+      return {
+        meta: read(".event-meta-stack p"),
+        lineupTitle: read(".event-lineup-title"),
+        artist: read(".event-lineup a"),
+        count: read(".wbt-count"),
+        button: read(".wbt-action"),
+        overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      };
+    });
+    expect(hierarchy.meta.fontSize).toBe("14px");
+    expect(hierarchy.meta.fontWeight).toBe("400");
+    expect(hierarchy.artist.fontSize).toBe(hierarchy.meta.fontSize);
+    expect(hierarchy.artist.fontWeight).toBe(hierarchy.meta.fontWeight);
+    expect(hierarchy.artist.color).toBe(hierarchy.meta.color);
+    expect(hierarchy.lineupTitle.fontSize).toBe("14px");
+    expect(hierarchy.lineupTitle.fontWeight).toBe("600");
+    expect(hierarchy.count.fontFamily).toBe(hierarchy.meta.fontFamily);
+    expect(hierarchy.button.color).not.toBe(hierarchy.count.color);
+    expect(hierarchy.overflow).toBeLessThanOrEqual(0);
+
+    const wbt = page.getByRole("button", { name: "Will Be There" });
+    await wbt.click();
+    await expect(page.getByRole("button", { name: "Remove Will Be There" })).toBeVisible();
+    const committedColor = await page.locator(".wbt-action.is-marked").evaluate((element) => getComputedStyle(element).color);
+    expect(committedColor).toBe(hierarchy.count.color);
   });
 
   test("the 767 to 768 shell transition preserves usable content capacity", async ({ page }, testInfo) => {

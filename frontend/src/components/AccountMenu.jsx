@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
+import ProfileAvatar from "./ProfileAvatar.jsx";
+
 
 export default function AccountMenu({ user, onLogout, logoutState = { pending: false, error: null } }) {
   const [open, setOpen] = useState(false);
@@ -28,8 +30,8 @@ export default function AccountMenu({ user, onLogout, logoutState = { pending: f
 
   return (
     <div className="account-menu" ref={rootRef}>
-      <button className="account-menu-trigger menu-action" type="button" aria-haspopup="menu" aria-expanded={open} ref={triggerRef} onClick={() => setOpen((current) => !current)}>
-        @{user.username}
+      <button className="account-menu-trigger menu-action" type="button" aria-label={`Account menu for ${user.display_name}`} aria-haspopup="menu" aria-expanded={open} ref={triggerRef} onClick={() => setOpen((current) => !current)}>
+        <ProfileAvatar profile={user} small />
       </button>
       {open ? (
         <div className="account-menu-panel">

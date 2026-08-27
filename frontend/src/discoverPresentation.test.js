@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import { compactLineup } from "./discoverPresentation.js";
-import { formatCompactEventDateTime } from "./formatEventDateTime.js";
+import { formatCompactEventDateTime, formatEventIdentityDateTime } from "./formatEventDateTime.js";
 
 const page = readFileSync(new URL("./pages/DiscoverPage.jsx", import.meta.url), "utf8");
 const eventList = readFileSync(new URL("./components/EventList.jsx", import.meta.url), "utf8");
@@ -32,6 +32,11 @@ test("EventRowPresenter uses compact dates and contains no prose labels", () => 
   assert.doesNotMatch(eventRow, /Venue:|Artists:/);
   assert.match(eventRow, /discover-event-row/);
   assert.match(eventList, /<EventRowPresenter/);
+});
+
+test("event identity date and time stay compact without dropping the year", () => {
+  assert.equal(formatEventIdentityDateTime("2026-08-29", "22:00:00"), "Sat, Aug 29, 2026 · 10:00 PM");
+  assert.equal(formatEventIdentityDateTime("2026-08-29", null), "Sat, Aug 29, 2026");
 });
 
 test("DiscoverPage and CSS sources contain the ruled tabs and two-line title register", () => {
