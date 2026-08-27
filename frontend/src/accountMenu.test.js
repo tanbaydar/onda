@@ -39,10 +39,12 @@ test("App source gates AccountMenu to signed-in sessions and exposes guest auth 
   assert.match(app, /className="account-action" to="\/login">Log in<\/Link>/);
 });
 
-test("App loads and synchronizes the existing public profile for header identity", () => {
+test("App synchronizes the session avatar after profile changes", () => {
   const editProfile = readFileSync(new URL("./pages/EditProfilePage.jsx", import.meta.url), "utf8");
-  assert.match(app, /fetchJson\(`\/api\/users\/\$\{encodeURIComponent\(session\.user\.username\)\}\/`/);
-  assert.match(app, /<AccountMenu user=\{accountProfile \?\? session\.user\}/);
-  assert.match(app, /<EditProfilePage session=\{session\} onProfileUpdated=\{setAccountProfile\}/);
+  assert.doesNotMatch(app, /accountProfile/);
+  assert.match(app, /function handleProfileUpdated\(profile\)/);
+  assert.match(app, /avatar: profile\.avatar/);
+  assert.match(app, /<AccountMenu user=\{session\.user\}/);
+  assert.match(app, /<EditProfilePage session=\{session\} onProfileUpdated=\{handleProfileUpdated\}/);
   assert.equal((editProfile.match(/onProfileUpdated\(data\.profile\)/g) ?? []).length, 3);
 });

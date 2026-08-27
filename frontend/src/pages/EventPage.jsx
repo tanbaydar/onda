@@ -5,7 +5,7 @@ import { ApiError, fetchJson, fetchWithCsrf } from "../api.js";
 import PublicReviews from "../components/PublicReviews.jsx";
 import YourCircle from "../components/YourCircle.jsx";
 import WillBeThereAttendees from "../components/WillBeThereAttendees.jsx";
-import { formatEventDateTime } from "../formatEventDateTime.js";
+import { formatEventIdentityDateTime } from "../formatEventDateTime.js";
 import FavoriteControl from "../components/FavoriteControl.jsx";
 import { pluralize } from "../lib/plural.js";
 import ConfirmDialog from "../components/ConfirmDialog.jsx";
@@ -22,7 +22,7 @@ import SystemStatePage from "../components/SystemStatePage.jsx";
 function EventLineup({ artists }) {
   return (
     <section className="event-lineup">
-      <h2 className="section-heading">Lineup</h2>
+      <h2 className="event-lineup-title">Lineup</h2>
       {artists.length ? <ol className="inline-list">
         {artists.map((artist) => <li key={artist.id}><Link to={artistPath(artist)}>{artist.name}</Link></li>)}
       </ol> : <p>No lineup has been listed.</p>}
@@ -242,8 +242,7 @@ export default function EventPage({ user, sessionReady, onAuthenticationRequired
         <h1 className="identity-title">{event.title}</h1>
         {hasIdentityArtwork ? <ImageSlot name={event.title} src={event.cover_image_url} alt={event.title} loading="eager" referrerPolicy="no-referrer" /> : null}
         <div className={`event-meta-stack ${isPast ? "event-meta-past" : "event-meta-upcoming"}`}>
-        {!isPast ? <p><Link to={venuePath(event.venue)}>{event.venue.name}</Link></p> : null}
-        <p>
+        {isPast ? <p>
           <time
             dateTime={
               event.start_time
@@ -251,36 +250,50 @@ export default function EventPage({ user, sessionReady, onAuthenticationRequired
                 : event.event_date
             }
           >
-            {formatEventDateTime(event.event_date, event.start_time)}
+            {formatEventIdentityDateTime(event.event_date, event.start_time)}
           </time>
-        </p>
-        {isPast ? <p><Link to={venuePath(event.venue)}>{event.venue.name}</Link></p> : null}
-        <p><Link to={`/discover?city_id=${event.venue.city.id}`}>{event.venue.city.name}</Link></p>
+        </p> : null}
+        <p className="event-location-line"><Link to={venuePath(event.venue)}>{event.venue.name}</Link><span aria-hidden="true"> · </span><Link to={`/discover?city_id=${event.venue.city.id}`}>{event.venue.city.name}</Link></p>
+        {!isPast ? <p>
+          <time
+            dateTime={
+              event.start_time
+                ? `${event.event_date}T${event.start_time}`
+                : event.event_date
+            }
+          >
+            {formatEventIdentityDateTime(event.event_date, event.start_time)}
+          </time>
+        </p> : null}
         </div>
         {!isPast ? <EventLineup artists={event.artists} /> : null}
-        {!isPast && wbtCount > 0 ? <div className="wbt-count"><span>{wbtCount}</span><p>{pluralize(wbtCount, "active mark")}</p></div> : null}
-        {isPast ? <div className="event-rating-block">
+        {!isPast ? <div className="event-attendance">
+          {wbtCount > 0 ? <p className="wbt-count">{pluralize(wbtCount, "active mark")}</p> : null}
+          {user ? <div className="event-owner-block">
+            {willBeThereError ? <p className="favorite-notice" role="alert">{willBeThereError}</p> : null}
+            {event.viewer_will_be_there.can_mark ? (
+              <button className={`wbt-action${event.viewer_will_be_there.is_marked ? " is-marked" : ""}`} type="button" aria-pressed={event.viewer_will_be_there.is_marked} disabled={saving} onClick={changeWillBeThere}>
+                {event.viewer_will_be_there.is_marked
+                  ? "Remove Will Be There"
+                  : "Will Be There"}
+              </button>
+            ) : null}
+          </div> : null}
+        </div> : <>
+        <div className="event-rating-block">
           {event.rating_summary.state === "available" ? (
             <><p className="rating-value">{event.rating_summary.average.toFixed(1)}</p><RatingHistogram buckets={event.rating_distribution.buckets} /><p>{`Average from ${pluralize(event.rating_summary.count, "rating")}.`}</p></>
           ) : (
             <p>Not enough ratings for an average yet.</p>
           )}
-        </div> : null}
+        </div>
         {user ? <div className="event-owner-block">
-            {isPast && !viewerHasRating ? <StarInput value={rating} disabled={saving} onChange={(value) => setRating(String(value))} onCommit={saveRating} /> : null}
-            {!isPast ? <>
-            {willBeThereError ? <p className="favorite-notice" role="alert">{willBeThereError}</p> : null}
-            {event.viewer_will_be_there.can_mark ? (
-              <button className="wbt-action" type="button" disabled={saving} onClick={changeWillBeThere}>
-                {event.viewer_will_be_there.is_marked
-                  ? "Remove Will Be There"
-                  : "Will Be There"}
-              </button>
-            ) : null}</> : null}
-            {isPast ? <FavoriteControl compact path={`/api/events/${event.id}/favorite/`} state={event.viewer_favorite} onChanged={changeFavorite} /> : null}
-            {isPast && event.viewer_will_be_there.was_marked ? <p className="dormant-wbt">Will Be There · marked</p> : null}
+            {!viewerHasRating ? <StarInput value={rating} disabled={saving} onChange={(value) => setRating(String(value))} onCommit={saveRating} /> : null}
+            <FavoriteControl compact path={`/api/events/${event.id}/favorite/`} state={event.viewer_favorite} onChanged={changeFavorite} />
+            {event.viewer_will_be_there.was_marked ? <p className="dormant-wbt">Will Be There · marked</p> : null}
             {actionError ? <p className="favorite-notice" role="alert">{actionError}</p> : null}
         </div> : null}
+        </>}
       </article>
       {!isPast && user ? <><WillBeThereAttendees
         eventId={event.id}

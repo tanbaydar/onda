@@ -46,7 +46,6 @@ export default function App() {
     error: null,
     user: null,
   });
-  const [accountProfile, setAccountProfile] = useState(null);
   const [logoutState, setLogoutState] = useState({ pending: false, error: null });
 
   useEffect(() => {
@@ -64,20 +63,6 @@ export default function App() {
     return () => controller.abort();
   }, [retry]);
 
-  useEffect(() => {
-    if (!session.user) {
-      setAccountProfile(null);
-      return undefined;
-    }
-    const controller = new AbortController();
-    fetchJson(`/api/users/${encodeURIComponent(session.user.username)}/`, { signal: controller.signal, cache: "no-store" })
-      .then((data) => setAccountProfile(data.profile ?? null))
-      .catch((error) => {
-        if (error.name !== "AbortError") setAccountProfile(null);
-      });
-    return () => controller.abort();
-  }, [session.user?.username]);
-
   async function handleLogout() {
     if (logoutState.pending) return;
     setLogoutState({ pending: true, error: null });
@@ -88,12 +73,22 @@ export default function App() {
         headers: { "Content-Type": "application/json" },
       });
       setSession({ loading: false, error: null, user: null });
-      setAccountProfile(null);
       setLogoutState({ pending: false, error: null });
       navigate(GUEST_DISCOVER, { replace: true });
     } catch (error) {
       setLogoutState({ pending: false, error });
     }
+  }
+
+  function handleProfileUpdated(profile) {
+    setSession((current) => current.user ? {
+      ...current,
+      user: {
+        ...current.user,
+        display_name: profile.display_name,
+        avatar: profile.avatar,
+      },
+    } : current);
   }
 
   const isAuthRoute = ["/register", "/login", "/verify-email", "/reset-password", "/reset-password/confirm"].includes(location.pathname);
@@ -111,7 +106,7 @@ export default function App() {
         </nav>
         <section aria-label="Account controls">
           {session.user ? (
-            <AccountMenu user={accountProfile ?? session.user} onLogout={handleLogout} logoutState={logoutState} />
+            <AccountMenu user={session.user} onLogout={handleLogout} logoutState={logoutState} />
           ) : (
             <p className="guest-auth-controls"><Link className="guest-register account-action" to="/register">Register</Link><Link className="account-action" to="/login">Log in</Link></p>
           )}
@@ -167,7 +162,7 @@ export default function App() {
         <Route path="/been" element={<LegacyBeenPage session={session} />} />
         <Route path="/u/:username" element={<ProfilePage session={session} tab="been" />} />
         <Route path="/u/:username/reviews" element={<ProfilePage session={session} tab="reviews" />} />
-        <Route path="/settings/profile" element={<EditProfilePage session={session} onProfileUpdated={setAccountProfile} />} />
+        <Route path="/settings/profile" element={<EditProfilePage session={session} onProfileUpdated={handleProfileUpdated} />} />
         <Route path="/activity" element={<ActivityPage session={session} />} />
         <Route path="/v/:venueKey" element={<VenuePage user={session.user} sessionReady={!session.loading} />} />
         <Route path="/venues/:venueKey" element={<VenuePage user={session.user} sessionReady={!session.loading} />} />

@@ -23,6 +23,7 @@ Overrides "flier-absent = slot stays EMPTY / designed collapse" (design-tokens.c
 - FLAG (engineering boundary): design specs center-crop display in the circle mask only; whether a client-side cropper ships is an engineering ruling. If a cropper is added later it needs its own design pass — nothing here assumes it.
 
 ## 4. Event-page metadata alignment (kills "Venue:" / "City:" labels + ARTISTS overline)
+The dated information-hierarchy override in `event-handoff.md` supersedes this section's three-step metadata colors, micro-uppercase Lineup title, and headliner-specific display treatment. The self-identifying, label-free content rule remains in force.
 - Meta = the locked self-identifying stacks, no labels ever: past = date ui/500 → venue `--text-secondary` → city `--text-muted` (three-step recession); upcoming = venue-led 16px stack. Production's labeled prose is replaced by these verbatim.
 - Lineup: KEEPING a quiet header, argued — the event page is the one surface holding the FULL ordered lineup; after the meta stack, a bare artist-name column starting with a display-face headliner can misread as more title material. One section heading in the existing register (caps micro 500 `--text-muted`), copy **"Lineup"** (not ARTISTS — FLAG: copy ratification).
 - Lineup rows: headliner first — display face 20px, ink; supporting artists in listing order, fn 14 `--text-secondary`, one per row, padding 8 vertical, NO hairlines (a lineup is one group — whitespace rhythm only), full-width tap targets, whole row → artist page. No inline underlines; hover = text to ink.
@@ -38,7 +39,7 @@ Overrides "flier-absent = slot stays EMPTY / designed collapse" (design-tokens.c
 
 ### Dated override — 2026-08-27 account identity trigger
 
-- The signed-in account trigger is the person's existing 26px circular profile avatar inside a 44px control. The visible `@username` is removed from persistent chrome. Missing, loading, or failed imagery uses the existing initials fallback; no new icon or image treatment is introduced.
+- The signed-in account trigger is the person's existing 26px circular profile avatar inside a 44px control. The visible `@username` is removed from persistent chrome. Missing or failed imagery uses the existing initials fallback; no new icon or image treatment is introduced.
 - The trigger is vertically centered in the 64px header. The flat panel aligns its right edge to the trigger and opens below the header hairline using the shared spacing scale.
 - The panel retains the two shipped rows, `Edit profile` and `Log out`, with the existing typography, boundary, wash, focus, target, logout, and recovery behavior. Remembered-account switching is explicitly outside this change.
 

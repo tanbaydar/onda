@@ -39,3 +39,13 @@ Kill the per-item overlines (WBT ATTENDANCE / FAVORITE / RATING AVERAGE / WILL B
 - The dormant past-event record copy is ratified as `Will Be There · marked`, rendered as one quiet line only when the viewer previously marked the event.
 - When no artists are listed, the section remains present and renders one quiet line: `No lineup has been listed.` It must not render a bare heading followed by an empty list.
 - No unverified-event banner or status treatment is authorized by this frontend ruling. Exposing the ingestion lifecycle through the API and UI remains held pending a separate operator ruling that explicitly names that backend contract change.
+
+## Dated override — 2026-08-27 information hierarchy
+
+This operator-approved override supersedes the earlier three-step event metadata styling, display-scale WBT numeral, unconditional green WBT control, and micro-uppercase Lineup treatment wherever they conflict.
+
+- Event identity retains one dominant display title. Venue, city, date, time, and lineup names share one existing information recipe: General Sans UI size, regular weight, and secondary ink.
+- Venue and city form one self-identifying line separated by a middle dot. Date and time form the other compact line. Upcoming identity remains location-led; past identity remains date-led.
+- `Lineup` uses the existing UI size in semibold primary ink and sentence case. It is separated from artist information by the shared 8px step; artists remain a semantic ordered list with 6px internal rhythm.
+- Upcoming attendance is one compact group after Lineup: the active-mark sentence and owner action share a row when capacity permits and wrap as a unit when constrained. The display-font numeral is removed.
+- An unmarked `Will Be There` action uses the standard ink action boundary. Judgment green appears on the action only after commitment; the active-mark count may remain judgment green because it represents committed social activity.

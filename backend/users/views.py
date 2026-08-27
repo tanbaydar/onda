@@ -157,6 +157,7 @@ def _user_payload(user):
         "email": user.email,
         "username": user.username,
         "display_name": user.display_name,
+        "avatar": user.avatar,
         "is_private": user.is_private,
     }
     if settings.EMAIL_VERIFICATION_ENFORCED:
