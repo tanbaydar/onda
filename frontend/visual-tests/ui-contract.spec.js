@@ -22,7 +22,7 @@ const EVENT_ROW_FIXTURE = {
   event_date: "2026-08-27",
   start_time: "22:00:00",
   cover_image_url: null,
-  venue: { id: 335, slug: "middlesex", name: "Middlesex" },
+  venue: { id: 335, slug: "middlesex", name: "Middlesex", city: { id: 1, name: "Boston", timezone: "America/New_York" } },
   artists: [{ id: 842, name: "Leon Vynehall" }],
   rating_summary: { state: "unavailable", average: null, count: 0 },
 };
@@ -66,6 +66,41 @@ const FOLLOW_REQUEST_FIXTURES = [
   { user: { id: 8, username: "first_listener", display_name: "First Listener", avatar: null }, created_at: "2026-08-27T12:00:00Z" },
   { user: { id: 9, username: "second_listener", display_name: "Second Listener", avatar: null }, created_at: "2026-08-27T13:00:00Z" },
 ];
+
+const PROFILE_EVENT_FIXTURE = {
+  ...EVENT_ROW_FIXTURE,
+  event_date: "2000-08-20",
+  cover_image_url: null,
+};
+
+const PROFILE_FIXTURE = {
+  profile: {
+    id: 7,
+    username: "onda_test",
+    display_name: "Onda Test",
+    avatar: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Crect width='160' height='160' fill='%236E6E6E'/%3E%3C/svg%3E",
+    bio: "Finding the rooms worth remembering.",
+    home_city: { id: 1, name: "Boston", timezone: "America/New_York" },
+    follower_count: 846,
+    following_count: 792,
+  },
+  access: "owner",
+  account: { is_private: false },
+};
+
+const PROFILE_STATS_FIXTURE = {
+  statistics: {
+    events_in_been: 18,
+    written_reviews: 7,
+    venues_visited: 12,
+    cities_visited: 3,
+    average_rating_given: { state: "available", value: 4.5 },
+  },
+  rating_distribution: {
+    state: "available",
+    buckets: Array.from({ length: 10 }, (_, index) => ({ rating: (index + 1) / 2, count: index === 8 ? 5 : 0, relative_value: index === 8 ? 1 : 0 })),
+  },
+};
 
 const DENSE_EVENT_ROW_FIXTURES = [
   EVENT_ROW_FIXTURE,
@@ -128,6 +163,16 @@ async function mockPublicApi(page, { authenticated = false, events = [], continu
       body = {};
     } else if (url.pathname === "/api/me/follow-requests/") {
       body = { results: followRequests, pagination: { page: 1, page_size: 20, total_results: followRequests.length, total_pages: 1, next_page: null, previous_page: null } };
+    } else if (url.pathname === "/api/users/onda_test/") {
+      body = PROFILE_FIXTURE;
+    } else if (url.pathname === "/api/users/onda_test/stats/") {
+      body = PROFILE_STATS_FIXTURE;
+    } else if (url.pathname === "/api/users/onda_test/been/") {
+      body = { results: [{ id: 1, event: PROFILE_EVENT_FIXTURE, rating: 4.5, has_review: true }], pagination: EMPTY_PAGINATION };
+    } else if (url.pathname === "/api/users/onda_test/reviews/") {
+      body = { results: [{ id: 1, event: PROFILE_EVENT_FIXTURE, rating: 4.5, body: "The room, the sound, and the crowd all landed at once.", published_at: "2026-08-20T12:00:00Z", like_count: 0 }], pagination: EMPTY_PAGINATION };
+    } else if (url.pathname === "/api/users/onda_test/favorites/") {
+      body = { events: [], artists: [], venues: [] };
     } else if (url.pathname === "/api/search/") {
       body = { results: [], next_cursor: null };
     } else {
@@ -283,6 +328,13 @@ test.describe("public-beta visual contract", () => {
     expect(styles.meta.fontWeight).toBe("400");
   });
 
+  test("Discover is venue-first and suppresses start time for past events", async ({ page }) => {
+    await openRoute(page, PUBLIC_ROUTES[2], { events: [PROFILE_EVENT_FIXTURE] });
+    const meta = page.locator(".discover-event-meta");
+    await expect(meta).toContainText("Middlesex · Sun 20 Aug");
+    await expect(meta).not.toContainText("10:00 pm");
+  });
+
   test("failed event media falls back without changing the governed row geometry", async ({ page }, testInfo) => {
     test.skip(testInfo.project.name !== "mobile-chrome-390", "Failed media is measured once at the primary mobile evidence width.");
     await page.route("**/failed-event-poster.jpg", (route) => route.abort());
@@ -412,6 +464,8 @@ test.describe("public-beta visual contract", () => {
     await page.goto("/e/franky-rizardo-flow-468");
     await expect(page.getByRole("heading", { level: 1, name: "Franky Rizardo - Flow" })).toBeVisible();
     await expect(page.getByRole("heading", { level: 2, name: "Lineup" })).toBeVisible();
+    await expect(page.locator(".event-meta-stack time")).toHaveText("Sun, Aug 20, 2000");
+    await expect(page.locator(".event-meta-stack time")).not.toContainText("10:00 PM");
     const positions = await page.locator("main.event-page").evaluate((main) => ({
       lineup: main.querySelector(".event-lineup").getBoundingClientRect().top,
       rating: main.querySelector(".event-rating-block").getBoundingClientRect().top,
@@ -429,6 +483,42 @@ test.describe("public-beta visual contract", () => {
     await expectMinimumTargets(page.locator(".review-actions-options .menu-action"), page.viewportSize().width < 768 ? 44 : 24);
     await page.getByRole("menuitem", { name: "Edit review" }).click();
     await expect(page.getByLabel("Written review")).toBeVisible();
+    await expectNoHorizontalOverflow(page);
+  });
+
+  test("event detail preserves the artwork slot when no flyer exists", async ({ page }) => {
+    await mockPublicApi(page, { eventDetail: { ...EVENT_DETAIL_FIXTURE, cover_image_url: null } });
+    await page.goto("/e/franky-rizardo-flow-468");
+    await expect(page.locator(".event-identity > .image-slot")).toBeVisible();
+    await expectNoHorizontalOverflow(page);
+  });
+
+  test("profile applies Instagram spacing and Letterboxd review placement", async ({ page }) => {
+    await mockPublicApi(page, { authenticated: true });
+    await page.goto("/u/onda_test/reviews");
+    await expect(page.getByRole("heading", { level: 1, name: "Onda Test" })).toBeVisible();
+    await expect(page.getByText("Avg. Rating", { exact: true })).toBeVisible();
+    await expect(page.getByText("The room, the sound, and the crowd all landed at once.")).toBeVisible();
+    await expect(page.locator(".profile-diary-likes")).toContainText("No likes yet");
+    await expect(page.locator(".profile-diary-attended")).not.toContainText("10:00");
+
+    const geometry = await page.locator("main.profile-page").evaluate((main) => {
+      const header = main.querySelector(".profile-header").getBoundingClientRect();
+      const avatar = main.querySelector(".profile-header > .profile-avatar").getBoundingClientRect();
+      const action = main.querySelector(".profile-header-action").getBoundingClientRect();
+      const row = main.querySelector(".profile-diary-row");
+      const top = (selector) => row.querySelector(selector).getBoundingClientRect().top;
+      return {
+        headerWidth: header.width,
+        avatarWidth: avatar.width,
+        actionBelowAvatar: action.top >= avatar.bottom,
+        order: [top(".profile-diary-title-line"), top(".profile-diary-venue"), top(".profile-diary-judgment"), top(".profile-diary-review"), top(".profile-diary-likes")],
+      };
+    });
+    expect(geometry.headerWidth).toBeLessThanOrEqual(800);
+    expect(geometry.avatarWidth).toBe(page.viewportSize().width < 768 ? 80 : 160);
+    expect(geometry.actionBelowAvatar).toBe(true);
+    expect(geometry.order).toEqual([...geometry.order].sort((left, right) => left - right));
     await expectNoHorizontalOverflow(page);
   });
 

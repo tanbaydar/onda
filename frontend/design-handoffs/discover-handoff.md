@@ -28,6 +28,11 @@ Upcoming/Recent in the ruled tab register: active ink 600 + 2px ink indicator ov
 - Per operator ruling, the event-name display treatment remains unchanged.
 - All textual information beneath it uses the single existing functional information recipe specified above. Agents must reuse that complete role rather than recombining its tokens into component-specific text styles.
 
+## Dated operator override — 2026-08-27 event information order
+
+- Discover event metadata is venue-led: venue renders before date. The two retain the same functional information recipe and middle-dot separator.
+- Upcoming rows retain their compact start time. Recent/past rows render the event date without a start time; the stored start time remains data, not user-facing history.
+
 ## States
 - Guest = signed-in composition, only the header chrome differs (auth cluster per auth-header-handoff.md; mobile guest has no tab bar).
 - Judgment color: nowhere on Discover (no judgment data renders here).

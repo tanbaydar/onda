@@ -59,3 +59,10 @@ Judgment color: Been-row stars + the strip's judgment unit ONLY. Display face: n
 - Pending follow requests appear at the top of Activity, before its notification ledger. A persistent summary row exposes the pending count and disclosure state; expanding it reveals requester identity plus Approve/Delete actions in the existing quiet control register.
 - Instagram-style dual access is intentional: while a request remains pending, its matching notification row also exposes Approve/Delete. Resolving the request in either location removes the pending actions from the other location; historical notification copy remains after resolution.
 - The request module loads and recovers independently. Failure to load or decide a request must not hide already-loaded Activity notifications, and an empty request collection renders no placeholder section.
+
+## Dated operator override — 2026-08-27 Instagram spacing and Letterboxd diary rows
+
+- Profile spacing follows the attached Instagram reference without importing Instagram styling or unrelated features. The profile surface is one centered 800px measure. The identity cluster uses a circular 80px avatar beside identity on mobile and the existing 160px identity size on desktop, with a 24–48px governed gap. Display name leads; follower/following counts share one inline row; handle and bio follow; the owner Edit profile or viewer Follow action spans the identity measure beneath the cluster.
+- Statistics, tabs, active diary ledger, and Favorites share the same centered measure. The statistic label is `Avg. Rating`.
+- Been and Reviews rows follow the attached Letterboxd placement using Onda tokens: 80×100 flyer at left; title plus event year at top; venue below; judgment plus `Been` date below that; written review prose and like count continue vertically when supplied. Rows use existing hairlines and functional/prose/display roles only.
+- Past diary rows display the event date without its stored start time. Been may show the existing `Written review` marker because its shipped payload does not include review prose. Reviews renders the shipped body and like count; this ruling does not expand the API contract.

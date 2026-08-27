@@ -109,6 +109,7 @@ export default function EventList({
                 event={event}
                 variant="standard-ledger"
                 showVenue={showVenue}
+                venueFirst={discover}
                 omittedArtistId={omittedArtistId}
                 compact={!discover}
               />
