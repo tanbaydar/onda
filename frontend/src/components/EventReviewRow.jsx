@@ -7,7 +7,7 @@ import ProfileAvatar from "./ProfileAvatar.jsx";
 import RatingStars from "./RatingStars.jsx";
 import ReviewExcerpt from "./ReviewExcerpt.jsx";
 
-export default function EventReviewRow({ person, rating, review = null, ratedAt = null, onLike = null, likePending = false, yours = false, onEdit = null, children = null }) {
+export default function EventReviewRow({ person, rating, review = null, ratedAt = null, onLike = null, likePending = false, yours = false, ownerActions = null, children = null }) {
   const timestamp = review?.published_at ?? ratedAt;
   return (
     <article className="event-review-row">
@@ -16,7 +16,7 @@ export default function EventReviewRow({ person, rating, review = null, ratedAt 
         <Link className="event-review-name" to={profilePath(person.username)}>{person.display_name}</Link>
         <Link className="event-review-handle" to={profilePath(person.username)}>@{person.username}</Link>
         {yours ? <span className="event-review-yours">Yours</span> : null}
-        {onEdit ? <button className="quiet-action event-review-edit" type="button" onClick={onEdit}>Edit ▾</button> : null}
+        {ownerActions}
       </div>
       <RatingStars className="event-review-stars" value={rating} />
       {review?.body ? <ReviewExcerpt>{review.body}</ReviewExcerpt> : <p className="event-review-no-body">No written review.</p>}

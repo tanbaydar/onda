@@ -15,61 +15,6 @@ const PROFILE_FIELD_ERROR_IDS = {
   is_private: "profile-privacy-errors",
 };
 
-function Pagination({ pagination, onPage }) {
-  if (pagination.total_pages <= 1) return null;
-  return <nav aria-label="Follow request pagination"><button className="quiet-control pagination-action" type="button" disabled={pagination.previous_page === null} onClick={() => onPage(pagination.previous_page)}>Previous</button><span>Page {pagination.page} of {pagination.total_pages}</span><button className="quiet-control pagination-action" type="button" disabled={pagination.next_page === null} onClick={() => onPage(pagination.next_page)}>Next</button></nav>;
-}
-
-function FollowRequests() {
-  const [page, setPage] = useState(1);
-  const [retry, setRetry] = useState(0);
-  const [pendingUserId, setPendingUserId] = useState(null);
-  const [state, setState] = useState({ loading: true, error: null, data: null });
-  useEffect(() => {
-    const controller = new AbortController();
-    setState((current) => current.data
-      ? { ...current, loading: false, error: null }
-      : { loading: true, error: null, data: null });
-    fetchJson(`/api/me/follow-requests/?page=${page}`, { signal: controller.signal, cache: "no-store" }).then((data) => setState({ loading: false, error: null, data })).catch((error) => { if (error.name !== "AbortError") setState((current) => current.data ? { ...current, loading: false, error } : { loading: false, error, data: null }); });
-    return () => controller.abort();
-  }, [page, retry]);
-  async function decide(userId, action) {
-    setPendingUserId(userId);
-    setState((current) => ({ ...current, error: null }));
-    try {
-      await fetchWithCsrf(`/api/me/follow-requests/${userId}/${action}/`, { method: "POST" });
-      setState((current) => {
-        if (!current.data) return current;
-        const results = current.data.results.filter((request) => request.user.id !== userId);
-        const totalResults = Math.max(0, current.data.pagination.total_results - 1);
-        return {
-          ...current,
-          data: {
-            ...current.data,
-            results,
-            pagination: {
-              ...current.data.pagination,
-              total_results: totalResults,
-              total_pages: Math.max(1, Math.ceil(totalResults / current.data.pagination.page_size)),
-            },
-          },
-        };
-      });
-      if (state.data?.results.length === 1 && page > 1) setPage(page - 1);
-    } catch { setState((current) => ({ ...current, error: new Error("request") })); }
-    finally { setPendingUserId(null); }
-  }
-  return (
-    <section className="edit-follow-requests" aria-busy={state.loading}>
-      <h2 className="section-heading">Follow requests</h2>
-      {state.loading ? <p role="status" aria-live="polite">Loading follow requests…</p> : null}
-      {state.error ? <div role="alert"><p>Follow requests could not be changed or loaded.</p><button className="quiet-control recovery-action" type="button" onClick={() => setRetry((value) => value + 1)}>Retry</button></div> : null}
-      {state.data?.pagination.total_results === 0 ? <p className="edit-profile-empty">No pending follow requests.</p> : null}
-      {state.data?.results.length ? <><ul className="follow-request-list ledger-list">{state.data.results.map((request) => <li key={request.user.id}><ProfileAvatar profile={request.user} small /><Link to={profilePath(request.user.username)}>{request.user.display_name}</Link><span className="follow-request-actions"><button className="quiet-control mobile-target" type="button" disabled={pendingUserId !== null} aria-busy={pendingUserId === request.user.id} onClick={() => decide(request.user.id, "accept")}>Approve</button><button className="quiet-control mobile-target" type="button" disabled={pendingUserId !== null} aria-busy={pendingUserId === request.user.id} onClick={() => decide(request.user.id, "decline")}>Decline</button></span></li>)}</ul><Pagination pagination={state.data.pagination} onPage={setPage} /></> : null}
-    </section>
-  );
-}
-
 export default function EditProfilePage({ session, onProfileUpdated = () => {} }) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -152,7 +97,6 @@ export default function EditProfilePage({ session, onProfileUpdated = () => {} }
         <button className="edit-profile-save" type="submit" disabled={saving}>{saving ? "Saving…" : "Save changes"}</button>
         <Link className="edit-profile-cancel" to={profilePath(session.user.username)}>Cancel</Link>
       </form>
-      <FollowRequests />
     </main>
   );
 }

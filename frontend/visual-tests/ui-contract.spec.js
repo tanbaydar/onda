@@ -48,6 +48,25 @@ const EVENT_DETAIL_FIXTURE = {
   viewer_entry: null,
 };
 
+const PAST_EVENT_DETAIL_FIXTURE = {
+  ...EVENT_DETAIL_FIXTURE,
+  event_date: "2000-08-20",
+  rating_summary: { state: "unavailable", average: null, count: 1 },
+  rating_distribution: { buckets: [] },
+  viewer_favorite: { is_favorite: false, added_at: null },
+  viewer_will_be_there: { can_mark: false, is_marked: false, was_marked: false },
+  viewer_entry: {
+    rating: 5,
+    rated_at: "2026-08-20T12:00:00Z",
+    review: { id: 14, body: "Incredible.", published_at: "2026-08-20T12:00:00Z", like_count: 0, viewer_has_liked: false },
+  },
+};
+
+const FOLLOW_REQUEST_FIXTURES = [
+  { user: { id: 8, username: "first_listener", display_name: "First Listener", avatar: null }, created_at: "2026-08-27T12:00:00Z" },
+  { user: { id: 9, username: "second_listener", display_name: "Second Listener", avatar: null }, created_at: "2026-08-27T13:00:00Z" },
+];
+
 const DENSE_EVENT_ROW_FIXTURES = [
   EVENT_ROW_FIXTURE,
   {
@@ -65,7 +84,7 @@ const DENSE_EVENT_ROW_FIXTURES = [
   },
 ];
 
-async function mockPublicApi(page, { authenticated = false, events = [], continuationFailure = false, initialEventFailure = false } = {}) {
+async function mockPublicApi(page, { authenticated = false, events = [], continuationFailure = false, initialEventFailure = false, eventDetail = EVENT_DETAIL_FIXTURE, notifications = [], followRequests = [] } = {}) {
   await page.route("**/api/**", async (route) => {
     const url = new URL(route.request().url());
     let body;
@@ -96,9 +115,19 @@ async function mockPublicApi(page, { authenticated = false, events = [], continu
         };
       }
     } else if (url.pathname === "/api/events/468/") {
-      body = EVENT_DETAIL_FIXTURE;
+      body = eventDetail;
     } else if (url.pathname.startsWith("/api/events/468/will-be-there/")) {
       body = { results: [], pagination: EMPTY_PAGINATION };
+    } else if (url.pathname === "/api/events/468/circle/") {
+      body = { rating_summary: { state: "unavailable", average: null, count: 0 }, results: [], pagination: { ...EMPTY_PAGINATION, total_results: 0 } };
+    } else if (url.pathname === "/api/events/468/reviews/") {
+      body = { results: [], pagination: { ...EMPTY_PAGINATION, total_results: 0 } };
+    } else if (url.pathname === "/api/me/notifications/") {
+      body = { results: notifications, next_cursor: null };
+    } else if (url.pathname === "/api/me/notifications/read-all/") {
+      body = {};
+    } else if (url.pathname === "/api/me/follow-requests/") {
+      body = { results: followRequests, pagination: { page: 1, page_size: 20, total_results: followRequests.length, total_pages: 1, next_page: null, previous_page: null } };
     } else if (url.pathname === "/api/search/") {
       body = { results: [], next_cursor: null };
     } else {
@@ -376,6 +405,57 @@ test.describe("public-beta visual contract", () => {
     await expect(page.getByRole("button", { name: "Remove Will Be There" })).toBeVisible();
     const committedColor = await page.locator(".wbt-action.is-marked").evaluate((element) => getComputedStyle(element).color);
     expect(committedColor).toBe(hierarchy.count.color);
+  });
+
+  test("past event keeps lineup in identity and groups owner mutations under Edit", async ({ page }) => {
+    await mockPublicApi(page, { authenticated: true, eventDetail: PAST_EVENT_DETAIL_FIXTURE });
+    await page.goto("/e/franky-rizardo-flow-468");
+    await expect(page.getByRole("heading", { level: 1, name: "Franky Rizardo - Flow" })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 2, name: "Lineup" })).toBeVisible();
+    const positions = await page.locator("main.event-page").evaluate((main) => ({
+      lineup: main.querySelector(".event-lineup").getBoundingClientRect().top,
+      rating: main.querySelector(".event-rating-block").getBoundingClientRect().top,
+      ownerReview: main.querySelector(".owner-entry").getBoundingClientRect().top,
+    }));
+    expect(positions.lineup).toBeLessThan(positions.rating);
+    expect(positions.lineup).toBeLessThan(positions.ownerReview);
+    expect(await page.locator(".event-lineup").count()).toBe(1);
+
+    await page.locator(".review-actions-trigger").click();
+    await expect(page.getByRole("menuitem", { name: "Edit review" })).toBeVisible();
+    await expect(page.getByRole("menuitem", { name: "Remove review" })).toBeVisible();
+    await expect(page.getByRole("menuitem", { name: "Remove from Been" })).toBeVisible();
+    await expect(page.getByText("Remove rating", { exact: true })).toHaveCount(0);
+    await expectMinimumTargets(page.locator(".review-actions-options .menu-action"), page.viewportSize().width < 768 ? 44 : 24);
+    await page.getByRole("menuitem", { name: "Edit review" }).click();
+    await expect(page.getByLabel("Written review")).toBeVisible();
+    await expectNoHorizontalOverflow(page);
+  });
+
+  test("pending follow requests own the top of Activity and disclose decisions", async ({ page }) => {
+    const notification = {
+      id: 25,
+      type: "follow_request",
+      actor: FOLLOW_REQUEST_FIXTURES[0].user,
+      created_at: "2026-08-27T12:00:00Z",
+      read_at: null,
+      review: null,
+    };
+    await mockPublicApi(page, { authenticated: true, notifications: [notification], followRequests: FOLLOW_REQUEST_FIXTURES });
+    await page.goto("/activity");
+    await expect(page.getByRole("heading", { level: 1, name: "Activity" })).toBeVisible();
+    const positions = await page.locator("main.activity-page").evaluate((main) => ({
+      requests: main.querySelector(".activity-follow-requests").getBoundingClientRect().top,
+      notifications: main.querySelector(".activity-list").getBoundingClientRect().top,
+    }));
+    expect(positions.requests).toBeLessThan(positions.notifications);
+    await expect(page.getByText("2 pending requests")).toBeVisible();
+    await page.getByRole("button", { name: /Follow requests/ }).click();
+    await expect(page.getByRole("button", { name: "Approve" }).first()).toBeVisible();
+    await expect(page.getByRole("button", { name: "Delete" }).first()).toBeVisible();
+    await expect(page.locator(".activity-item button")).toHaveCount(0);
+    await expectMinimumTargets(page.locator(".activity-follow-request-actions button"), page.viewportSize().width < 768 ? 44 : 24);
+    await expectNoHorizontalOverflow(page);
   });
 
   test("the 767 to 768 shell transition preserves usable content capacity", async ({ page }, testInfo) => {

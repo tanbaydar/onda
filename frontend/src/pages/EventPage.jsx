@@ -15,6 +15,7 @@ import ImageSlot from "../components/ImageSlot.jsx";
 import { eventIsPast } from "../eventTime.js";
 import { artistPath, eventPath, venuePath } from "../entityRoutes.js";
 import EventReviewRow from "../components/EventReviewRow.jsx";
+import ReviewActionsMenu from "../components/ReviewActionsMenu.jsx";
 import useCanonicalEntityRoute from "../useCanonicalEntityRoute.js";
 import "../eventReviews.css";
 import SystemStatePage from "../components/SystemStatePage.jsx";
@@ -130,13 +131,6 @@ export default function EventPage({ user, sessionReady, onAuthenticationRequired
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ rating: Number(nextRating) }),
     });
-  }
-
-  function removeRating() {
-    const warning = state.event.viewer_entry?.review
-      ? "Remove your rating? The event will remain in Been, but your written review and all of its likes will be permanently deleted."
-      : "Remove your rating? The event will remain in Been.";
-    setConfirmation({ title: "Remove your rating?", consequence: warning.replace("Remove your rating? ", ""), label: "Remove rating", action: () => mutate(`/api/events/${eventId}/been/rating/`, { method: "DELETE" }, { reviewsChanged: true }) });
   }
 
   function removeEntry() {
@@ -266,7 +260,7 @@ export default function EventPage({ user, sessionReady, onAuthenticationRequired
           </time>
         </p> : null}
         </div>
-        {!isPast ? <EventLineup artists={event.artists} /> : null}
+        <EventLineup artists={event.artists} />
         {!isPast ? <div className="event-attendance">
           {wbtCount > 0 ? <p className="wbt-count">{pluralize(wbtCount, "active mark")}</p> : null}
           {user ? <div className="event-owner-block">
@@ -316,7 +310,7 @@ export default function EventPage({ user, sessionReady, onAuthenticationRequired
         onSocialChanged={() => setSocialVersion((value) => value + 1)}
         onAuthenticationRequired={onAuthenticationRequired}
       /> : null}
-      {user && isPast && viewerHasRating ? <section className="owner-entry"><EventReviewRow person={user} rating={event.viewer_entry.rating} review={event.viewer_entry.review} ratedAt={event.viewer_entry.rated_at} yours onEdit={() => setEditingEntry((value) => !value)}>{editingEntry ? <div className="owner-entry-editor"><StarInput value={rating} disabled={saving} onChange={(value) => setRating(String(value))} onCommit={saveRating} /><form onSubmit={saveReview}><label htmlFor="review-body">Written review</label><textarea id="review-body" value={reviewBody} required rows={8} onChange={(changeEvent) => setReviewBody(changeEvent.target.value)} /><p>{trimmedReviewLength} of 1,000 stored characters</p><button type="submit" disabled={saving || trimmedReviewLength < 1 || trimmedReviewLength > 1000}>{event.viewer_entry.review ? "Save review changes" : "Publish review"}</button>{event.viewer_entry.review ? <button className="quiet-action" type="button" disabled={saving} onClick={deleteReview}>Delete review</button> : null}</form><button className="quiet-action" type="button" disabled={saving} onClick={removeRating}>Remove rating</button><button className="quiet-action" type="button" disabled={saving} onClick={removeEntry}>Remove from Been</button></div> : null}</EventReviewRow></section> : null}
+      {user && isPast && viewerHasRating ? <section className="owner-entry"><EventReviewRow person={user} rating={event.viewer_entry.rating} review={event.viewer_entry.review} ratedAt={event.viewer_entry.rated_at} yours ownerActions={<ReviewActionsMenu disabled={saving} hasReview={Boolean(event.viewer_entry.review)} onEditReview={() => setEditingEntry(true)} onRemoveReview={deleteReview} onRemoveFromBeen={removeEntry} />}>{editingEntry ? <div className="owner-entry-editor"><StarInput value={rating} disabled={saving} onChange={(value) => setRating(String(value))} onCommit={saveRating} /><form onSubmit={saveReview}><label htmlFor="review-body">Written review</label><textarea id="review-body" value={reviewBody} required rows={8} onChange={(changeEvent) => setReviewBody(changeEvent.target.value)} /><p>{trimmedReviewLength} of 1,000 stored characters</p><div className="owner-entry-form-actions"><button type="submit" disabled={saving || trimmedReviewLength < 1 || trimmedReviewLength > 1000}>{event.viewer_entry.review ? "Save review changes" : "Publish review"}</button><button className="quiet-action" type="button" disabled={saving} onClick={() => setEditingEntry(false)}>Cancel</button></div></form></div> : null}</EventReviewRow></section> : null}
       {isPast ? <PublicReviews
         eventId={event.id}
         user={user}
@@ -325,7 +319,6 @@ export default function EventPage({ user, sessionReady, onAuthenticationRequired
         onAuthenticationRequired={onAuthenticationRequired}
       /> : null}
       {isPast && !user ? <YourCircle eventId={event.id} user={user} version={socialVersion} onSocialChanged={() => {}} onAuthenticationRequired={onAuthenticationRequired} returnTo={`${location.pathname}${location.search}`} /> : null}
-      {isPast ? <EventLineup artists={event.artists} /> : null}
       <ConfirmDialog open={Boolean(confirmation)} title={confirmation?.title ?? ""} consequence={confirmation?.consequence ?? ""} confirmLabel={confirmation?.label ?? "Confirm"} onCancel={() => setConfirmation(null)} onConfirm={() => { const action = confirmation?.action; setConfirmation(null); action?.(); }} />
     </main>
   );

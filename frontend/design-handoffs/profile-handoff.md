@@ -33,7 +33,6 @@ Strip sits between header and tabs: statistics are header-band data; the tabs co
   3. Bio — textarea (min 3 lines); counter bottom-right under the field, micro `--text-muted`, live: `0 / 150`.
   4. Home city — the existing custom dropdown, styled to the input register (input box + ▾ affordance right, fn 16; menu = panel register: `--bg`, 1px `--border-strong`, options ui 14, hover/focus row = the same unruled focus treatment carried from search ⚠).
   5. Account privacy — radio pair, ui 14: ◉ Public ◯ Private, consequence sentence inline micro `--text-secondary` (existing ruled copy).
-  6. Follow requests — quiet section at the end: caps overline + requester rows (avatar 26 + name fn 500 + Approve/Decline as quiet bordered controls, control-sm) — or, when none, ONE quiet muted line "No pending follow requests."
 - Actions: "Save changes" full-width bordered-ink primary (1.5px `--action`, pad 12, fn 16/500 — NO fills) + "Cancel" quiet micro link centered below. Destructive nothing here.
 - ⚠ copy flag: "Save changes", "Cancel", route name unruled.
 
@@ -53,3 +52,9 @@ Judgment color: Been-row stars + the strip's judgment unit ONLY. Display face: n
 - Follow action failure is local to FollowControl, preserves the loaded profile, and offers Retry. It never replaces the profile with a page-level failure.
 - Edit Profile initial-load failure keeps the route context and offers Retry in place.
 - Follow and essential profile actions meet the cross-cutting mobile target ruling while retaining their quiet visual register.
+
+## Dated operator override — 2026-08-27 follow-request ownership
+
+- Follow requests do not appear in Edit Profile. Profile editing ends after Save/Cancel because social inbox work is not profile configuration.
+- Pending follow requests appear at the top of Activity, before its notification ledger. A persistent summary row exposes the pending count and disclosure state; expanding it reveals requester identity plus Approve/Delete actions in the existing quiet control register.
+- The request module loads and recovers independently. Failure to load or decide a request must not hide already-loaded Activity notifications, and an empty request collection renders no placeholder section.
