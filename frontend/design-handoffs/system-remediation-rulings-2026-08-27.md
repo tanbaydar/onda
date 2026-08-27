@@ -39,3 +39,9 @@ Ruled 2026-08-27 by the current operator. Scope: the cross-system frontend remed
 - Successful rows/identity remain mounted during continuation and local-mutation pending/error states.
 - Mobile recovery, pagination, tab, menu, follow, row-removal, and dialog targets are at least 44×44px. All keyboard-operable controls retain the ruled visible 2px focus treatment.
 - Search, Event, Profile, Activity, auth, entity, empty, not-found, and dense fixtures pass source-built tests before deployment. Production root tokens and asset hashes match the verified source build after deployment.
+
+## Dated operator override — 2026-08-27 event and Activity corrections
+
+- DEC-04 remains judgment-led, but no longer moves lineup out of event identity. On past and upcoming events, lineup follows the identity metadata and precedes rating/community/review content.
+- Owner review mutations live under the single `Edit ▾` disclosure: Edit review, Remove review when present, and Remove from Been. Remove rating is not an event-page menu item.
+- Follow requests are an independently loaded disclosure module at the top of Activity. They are absent from Edit Profile and are not action controls attached to historical notification rows.

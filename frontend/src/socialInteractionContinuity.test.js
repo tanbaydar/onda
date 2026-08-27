@@ -33,12 +33,13 @@ test("social collections retain rendered data while they reconcile in the backgr
     read("./components/PublicReviews.jsx"),
     read("./components/YourCircle.jsx"),
     read("./components/WillBeThereAttendees.jsx"),
-    read("./pages/EditProfilePage.jsx"),
+    read("./components/ActivityFollowRequests.jsx"),
   ];
 
-  for (const source of sources) {
+  for (const source of sources.slice(0, 3)) {
     assert.match(source, /current\.data[\s\S]*\.\.\.current, loading: false, error: null/);
   }
+  assert.match(sources[3], /current\.data[\s\S]*\.\.\.current, loading: true, error: null/);
   assert.match(sources[0], /viewer_has_liked: adding, like_count: nextLikeCount/);
   assert.match(sources[1], /viewer_has_liked: adding, like_count: nextLikeCount/);
   assert.match(sources[3], /filter\(\(request\) => request\.user\.id !== userId\)/);

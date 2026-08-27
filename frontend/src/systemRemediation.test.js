@@ -47,9 +47,17 @@ test("initial, continuation, logout, and mutation feedback keep separate owners"
 
 test("approved hierarchy and availability decisions are represented directly", () => {
   const event = read("./pages/EventPage.jsx");
+  const reviewActions = read("./components/ReviewActionsMenu.jsx");
+  const activity = read("./pages/ActivityPage.jsx");
+  const editProfile = read("./pages/EditProfilePage.jsx");
   const publicReviews = read("./components/PublicReviews.jsx");
   const profile = read("./pages/ProfilePage.jsx");
-  assert.ok(event.indexOf("<PublicReviews") < event.lastIndexOf("<EventLineup"));
+  assert.ok(event.indexOf("<EventLineup") < event.indexOf("<PublicReviews"));
+  assert.equal(event.indexOf("<EventLineup"), event.lastIndexOf("<EventLineup"));
+  assert.match(reviewActions, />Edit review<\/button>[\s\S]*>Remove review<\/button>[\s\S]*>Remove from Been<\/button>/);
+  assert.doesNotMatch(event, /Remove rating|removeRating/);
+  assert.ok(activity.indexOf("<ActivityFollowRequests") < activity.indexOf('<ol className="activity-list ledger-list">'));
+  assert.doesNotMatch(editProfile, /FollowRequests|Follow requests|follow-requests/);
   assert.match(event, /!isPast && !user \? <><WillBeThereAttendees eventId=\{event\.id\} scope="public"[\s\S]*scope="circle"/);
   assert.match(publicReviews, /state\.data\?\.results\.length \? <SortMenu/);
   assert.match(profile, /state\.data\?\.results\.length \? <div className="profile-review-sort"><SortMenu/);

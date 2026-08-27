@@ -40,6 +40,12 @@ Kill the per-item overlines (WBT ATTENDANCE / FAVORITE / RATING AVERAGE / WILL B
 - When no artists are listed, the section remains present and renders one quiet line: `No lineup has been listed.` It must not render a bare heading followed by an empty list.
 - No unverified-event banner or status treatment is authorized by this frontend ruling. Exposing the ingestion lifecycle through the API and UI remains held pending a separate operator ruling that explicitly names that backend contract change.
 
+## Dated operator override — 2026-08-27 lineup placement and owner review actions
+
+- Lineup is primary event identity for both upcoming and past events. It sits directly after venue/date/city inside the identity stack and before rating, attendance, Circle, owner review, and Public review content. This expressly supersedes DEC-04 only where DEC-04 previously moved the past-event lineup below community judgment.
+- A rated owner's row has one `Edit ▾` disclosure. Its menu contains `Edit review`, `Remove review` when a written review exists, and `Remove from Been`. Destructive actions retain their existing confirmation dialogs.
+- `Remove rating` is not exposed as a separate event-page action. The review editor contains only the rating/review composer and its save action; destructive actions never sit beneath the form as ungrouped links.
+
 ## Dated override — 2026-08-27 information hierarchy
 
 This operator-approved override supersedes the earlier three-step event metadata styling, display-scale WBT numeral, unconditional green WBT control, and micro-uppercase Lineup treatment wherever they conflict.

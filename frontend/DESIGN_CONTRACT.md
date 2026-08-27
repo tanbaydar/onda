@@ -397,8 +397,8 @@ Follow, Unfollow, Request to follow, and Requested use one fixed 150px-minimum, 
 | Reset form `/reset-password/confirm` | Code step followed by new/confirm password step; same auth and code-entry registers. |
 | Event detail | Identity hierarchy changes by past/upcoming state. Mobile and desktop alignment follow the event delta. Full Lineup group. Rating/WBT page data precedes one unlabelled owner block. Your Circle/Public/attendee sections share the aligned content column. |
 | Profile Been/Reviews | Fused identity header, followers/following, bio, fixed follow/edit affordance, Statistics, tab hairline, active ledger, Favorites. Private stub keeps public identity counts but withholds private modules. |
-| Edit profile | 360px column. Avatar upload, display name, bio counter, home city, privacy, save/cancel, and follow requests. Avatar removal is immediate and recoverable. |
-| Activity `/activity` | H1 plus one 800px ledger. Whole rows route. Unread names 600; read state recedes to muted/500. Relative timestamp. No action chrome within rows. |
+| Edit profile | 360px column. Avatar upload, display name, bio counter, home city, privacy, and save/cancel. Avatar removal is immediate and recoverable. Follow requests do not belong to settings. |
+| Activity `/activity` | H1, an independently loaded follow-request disclosure when requests are pending, then one 800px notification ledger. Whole notification rows route. Unread names 600; read state recedes to muted/500. Relative timestamp. No action chrome within notification rows. |
 | Venue detail | Display name, linked natural-language location, favorite directly beneath, then Upcoming and Past compact event ledgers. No cards, labels, or timezone. |
 | Artist detail | Circular portrait/fallback, display name, favorite, then Upcoming/Past compact ledgers. Portrait treatment is ruled; the broader artist-page composition has no dedicated handoff and should not be generalized without one. |
 | Not found | Functional H1, concise explanation, one route back to Discover. No decorative error illustration. |

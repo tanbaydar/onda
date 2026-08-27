@@ -22,15 +22,17 @@ test("Search exposes an explicit clear action and separate retries for initial a
 
 test("Activity displays notifications even when mark-all-read bookkeeping fails", () => {
   const source = read("./pages/ActivityPage.jsx");
+  const requests = read("./components/ActivityFollowRequests.jsx");
   const initialLoad = section(source, "useEffect(() =>", "  async function markAllRead");
 
   assert.doesNotMatch(initialLoad, /Promise\.all\([\s\S]*notifications\/read-all/);
   assert.ok(initialLoad.indexOf("results: data.results") < initialLoad.indexOf("markAllRead(controller.signal)"));
   assert.match(source, /Activity is visible, but it could not be marked as read\./);
   assert.match(source, /Retry marking as read/);
-  assert.match(source, /follow-requests\/\?page_size=100/);
-  assert.match(source, /decideRequest\(notification, "accept"\)/);
-  assert.match(source, /decideRequest\(notification, "decline"\)/);
+  assert.match(source, /<ActivityFollowRequests \/>/);
+  assert.match(requests, /Follow requests could not be loaded\.[\s\S]*Retry/);
+  assert.match(requests, /follow-requests\/\$\{userId\}\/\$\{action\}\//);
+  assert.doesNotMatch(source, /Promise\.all\([\s\S]*follow-requests/);
 });
 
 test("Profile follow failures stay local and preserve profile connections", () => {
