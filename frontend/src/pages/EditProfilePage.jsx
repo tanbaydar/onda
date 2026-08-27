@@ -70,7 +70,7 @@ function FollowRequests() {
   );
 }
 
-export default function EditProfilePage({ session }) {
+export default function EditProfilePage({ session, onProfileUpdated = () => {} }) {
   const navigate = useNavigate();
   const location = useLocation();
   const [cities, setCities] = useState([]);
@@ -104,8 +104,9 @@ export default function EditProfilePage({ session }) {
     setMessage(null);
     setSaving(true);
     try {
-      await fetchWithCsrf("/api/me/profile/", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ display_name: form.display_name, bio: form.bio, home_city_id: form.home_city_id === "" ? null : Number(form.home_city_id) }) });
+      const data = await fetchWithCsrf("/api/me/profile/", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ display_name: form.display_name, bio: form.bio, home_city_id: form.home_city_id === "" ? null : Number(form.home_city_id) }) });
       if (form.is_private !== state.data.account.is_private) await fetchWithCsrf("/api/me/privacy/", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ is_private: form.is_private }) });
+      onProfileUpdated(data.profile);
       navigate(profilePath(session.user.username));
     } catch (error) {
       if (error.status === 400) setErrors(error.data?.errors ?? { request: ["Profile could not be saved."] });
@@ -121,13 +122,13 @@ export default function EditProfilePage({ session }) {
     if (!file) return;
     setAvatarState({ uploading: true, error: null });
     const body = new FormData(); body.append("avatar", file);
-    try { const data = await fetchWithCsrf("/api/me/profile/avatar/", { method: "POST", body }); setForm((current) => ({ ...current, avatar: data.profile.avatar ?? "" })); setAvatarState({ uploading: false, error: null }); }
+    try { const data = await fetchWithCsrf("/api/me/profile/avatar/", { method: "POST", body }); setForm((current) => ({ ...current, avatar: data.profile.avatar ?? "" })); onProfileUpdated(data.profile); setAvatarState({ uploading: false, error: null }); }
     catch (error) { setAvatarState({ uploading: false, error: error.data?.errors?.avatar?.[0] ?? "Photo could not be uploaded." }); }
     event.target.value = "";
   }
   async function removeAvatar() {
     setAvatarState({ uploading: true, error: null });
-    try { await fetchWithCsrf("/api/me/profile/avatar/", { method: "DELETE" }); setForm((current) => ({ ...current, avatar: "" })); setAvatarState({ uploading: false, error: null }); }
+    try { const data = await fetchWithCsrf("/api/me/profile/avatar/", { method: "DELETE" }); setForm((current) => ({ ...current, avatar: "" })); onProfileUpdated(data.profile); setAvatarState({ uploading: false, error: null }); }
     catch { setAvatarState({ uploading: false, error: "Photo could not be removed." }); }
   }
   if (session.loading) return <main className="edit-profile-page"><p>Checking session…</p></main>;

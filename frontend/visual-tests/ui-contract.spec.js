@@ -53,8 +53,17 @@ async function mockPublicApi(page, { authenticated = false, events = [], continu
     if (url.pathname === "/api/auth/session/") {
       body = {
         user: authenticated
-          ? { id: 7, username: "onda_test", email: "test@example.com", is_verified: true }
+          ? { id: 7, username: "onda_test", display_name: "Onda Test", email: "test@example.com", is_verified: true }
           : null,
+      };
+    } else if (url.pathname === "/api/users/onda_test/") {
+      body = {
+        profile: {
+          id: 7,
+          username: "onda_test",
+          display_name: "Onda Test",
+          avatar: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='26' height='26'%3E%3Crect width='26' height='26' fill='%236E6E6E'/%3E%3C/svg%3E",
+        },
       };
     } else if (url.pathname === "/api/cities/") {
       body = { results: [{ id: 1, name: "Boston" }] };
@@ -286,10 +295,29 @@ test.describe("public-beta visual contract", () => {
     await expectMinimumTargets(page.locator("main.auth-page .auth-links a"));
   });
 
-  test("authenticated mobile account trigger is at least 44px", async ({ page }, testInfo) => {
-    test.skip(!testInfo.project.name.startsWith("mobile"), "The 44px product target is a mobile contract.");
+  test("authenticated account avatar and menu align with the persistent header", async ({ page }) => {
     await openRoute(page, PUBLIC_ROUTES[1], { authenticated: true });
-    await expectMinimumTargets(page.locator(".account-menu-trigger"));
+    const trigger = page.getByRole("button", { name: "Account menu for Onda Test" });
+    await expectMinimumTargets(trigger);
+    await expect(trigger.locator("img.profile-avatar-small")).toBeVisible();
+    await expect(page.getByText("@onda_test")).toHaveCount(0);
+    const viewport = page.viewportSize();
+    const mobile = viewport.width < 768;
+    const headerBox = await page.locator(mobile ? "header.site-header > section" : "header.site-header").boundingBox();
+    const triggerBox = await trigger.boundingBox();
+    expect(headerBox).not.toBeNull();
+    expect(triggerBox).not.toBeNull();
+    expect(Math.abs((triggerBox.y + triggerBox.height / 2) - (headerBox.y + headerBox.height / 2))).toBeLessThanOrEqual(1);
+    await trigger.click();
+    const editProfile = page.getByRole("menuitem", { name: "Edit profile" });
+    await expect(editProfile).toBeVisible();
+    await expect(page.getByRole("menuitem", { name: "Log out" })).toBeVisible();
+    await expectMinimumTargets(editProfile, mobile ? 44 : 24);
+    await expectMinimumTargets(page.getByRole("menuitem", { name: "Log out" }), mobile ? 44 : 24);
+    const panelBox = await page.locator(".account-menu-panel").boundingBox();
+    expect(panelBox).not.toBeNull();
+    expect(panelBox.y).toBeGreaterThanOrEqual(headerBox.y + headerBox.height);
+    expect(Math.abs((panelBox.x + panelBox.width) - (triggerBox.x + triggerBox.width))).toBeLessThanOrEqual(1);
   });
 
   test("the 767 to 768 shell transition preserves usable content capacity", async ({ page }, testInfo) => {

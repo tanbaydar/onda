@@ -36,6 +36,12 @@ Overrides "flier-absent = slot stays EMPTY / designed collapse" (design-tokens.c
 - Account menu: BLESSED as shipped (flat panel, two rows, wash focus).
 - Sort menu: BLESSED as shipped (flat panel, four options, wash focus).
 
+### Dated override — 2026-08-27 account identity trigger
+
+- The signed-in account trigger is the person's existing 26px circular profile avatar inside a 44px control. The visible `@username` is removed from persistent chrome. Missing, loading, or failed imagery uses the existing initials fallback; no new icon or image treatment is introduced.
+- The trigger is vertically centered in the 64px header. The flat panel aligns its right edge to the trigger and opens below the header hairline using the shared spacing scale.
+- The panel retains the two shipped rows, `Edit profile` and `Log out`, with the existing typography, boundary, wash, focus, target, logout, and recovery behavior. Remembered-account switching is explicitly outside this change.
+
 ## 7. Grouped feed activity (closes home-handoff flag 3)
 - Grouping is legal ONLY for the one-liner types (favorited event / favorited artist / follow), same actor + same verb within a feed window; rated_been and WBT never group.
 - Anatomy stays §1-of-home: ONE actor line (avatar 26 + name 600 + verb pluralized, ui `--text-secondary` + timestamp of the latest action right-aligned), then:
