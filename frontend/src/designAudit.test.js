@@ -111,7 +111,7 @@ test("event lineup gives every artist one subordinate functional-text treatment"
   assert.doesNotMatch(css, /\.event-lineup li:first-child/);
 });
 
-test("event identity uses one information recipe and reserves green for committed attendance", () => {
+test("event identity uses one information recipe and keeps the attendance decision green", () => {
   const eventPage = read("./pages/EventPage.jsx");
   const css = read("./styles.css");
   assert.match(eventPage, /className="event-location-line"/);
@@ -119,7 +119,7 @@ test("event identity uses one information recipe and reserves green for committe
   assert.match(css, /\.event-meta-stack\{[^}]*color:var\(--text-secondary\);[^}]*font-size:var\(--text-ui\);font-weight:400/);
   assert.doesNotMatch(css, /\.wbt-count>span|\.wbt-count p/);
   assert.match(eventPage, /wbt-action\$\{event\.viewer_will_be_there\.is_marked \? " is-marked" : ""\}/);
-  assert.match(css, /\.event-owner-block>button\.wbt-action\.is-marked\{border-color:var\(--judgment\);color:var\(--judgment\)\}/);
+  assert.match(css, /\.event-owner-block>button\.wbt-action\{border-color:var\(--judgment\);color:var\(--judgment\)\}/);
 });
 
 test("venue identity presents a natural location and omits operational geography", () => {
