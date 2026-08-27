@@ -494,9 +494,11 @@ dialog .destructive{border-color:var(--action);background:var(--action);color:va
  .star-input-wrap{align-items:flex-start;flex-direction:column;gap:var(--sp-4)}
 }
 @container (min-width:680px){
- .profile-statistics-strip{grid-template-areas:"lead reviews venues cities judgment";grid-template-columns:repeat(4,minmax(72px,1fr)) minmax(176px,1.5fr);align-items:end;gap:var(--sp-24)}
- .profile-judgment-unit{align-items:flex-end}
- .profile-judgment-unit .profile-stat,.profile-judgment-unit .stat-label{max-width:none}
+ .profile-statistics-strip{grid-template-areas:"lead reviews venues cities judgment";grid-template-columns:repeat(4,minmax(0,1fr)) 224px;align-items:end;gap:var(--sp-24)}
+ .profile-judgment-unit{width:224px;align-items:flex-start}
+ .profile-judgment-unit .profile-stat{width:108px;max-width:none;flex:0 0 108px}
+ .profile-judgment-unit .stat-label{max-width:none;white-space:nowrap}
+ .profile-stat-histogram .hist-axis{margin-top:var(--sp-4)}
 }
 @media (min-width:768px){
  :root{--gutter-page:clamp(var(--gutter-mobile),calc(16vw - 99px),var(--gutter-desktop))}

@@ -41,3 +41,10 @@ Correction pass 2026-08-01 — structure from v2 approved and unchanged (header 
 - The 1px zero-count stub is ratified for the 104×30 profile sparkline placement. The standalone/event histogram retains its 2px stub.
 - `Requested` is ratified for pending outbound follow requests, within the same fixed FollowControl box.
 - Private stubs expose Followers and Following counts. The private design fixture now carries four-digit values so visibility, wrapping, and serializer expectations are covered in integration QA.
+
+## Dated operator correction — 2026-08-27 rating-unit cohesion
+
+- Inside the later-ratified centered 800px profile measure, the desktop average and sparkline reserve one 224px judgment unit. They are not separate strip statistics.
+- The average owns 108px, the governed histogram remains 104×30, and their existing 12px gap is unchanged. `Avg. Rating` stays on one desktop line.
+- The average numeral and bar field share a top edge. The histogram axis shares the rating-label line, while the low-volume note remains directly beneath the histogram.
+- Mobile retains the governed stacked strip and two-line rating-label allowance. No type, color, or spacing token is added.

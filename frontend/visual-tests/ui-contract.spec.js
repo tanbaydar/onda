@@ -506,18 +506,35 @@ test.describe("public-beta visual contract", () => {
       const header = main.querySelector(".profile-header").getBoundingClientRect();
       const avatar = main.querySelector(".profile-header > .profile-avatar").getBoundingClientRect();
       const action = main.querySelector(".profile-header-action").getBoundingClientRect();
+      const ratingUnit = main.querySelector(".profile-judgment-unit").getBoundingClientRect();
+      const ratingValue = main.querySelector(".profile-judgment-unit .stat-value").getBoundingClientRect();
+      const ratingLabel = main.querySelector(".profile-judgment-unit .stat-label").getBoundingClientRect();
+      const histogramBars = main.querySelector(".profile-stat-histogram .hist-bars").getBoundingClientRect();
+      const histogramAxis = main.querySelector(".profile-stat-histogram .hist-axis").getBoundingClientRect();
       const row = main.querySelector(".profile-diary-row");
       const top = (selector) => row.querySelector(selector).getBoundingClientRect().top;
       return {
         headerWidth: header.width,
         avatarWidth: avatar.width,
         actionBelowAvatar: action.top >= avatar.bottom,
+        ratingUnitWidth: ratingUnit.width,
+        ratingValueTop: ratingValue.top,
+        ratingLabelTop: ratingLabel.top,
+        ratingLabelHeight: ratingLabel.height,
+        histogramBarsTop: histogramBars.top,
+        histogramAxisTop: histogramAxis.top,
         order: [top(".profile-diary-title-line"), top(".profile-diary-venue"), top(".profile-diary-judgment"), top(".profile-diary-review"), top(".profile-diary-likes")],
       };
     });
     expect(geometry.headerWidth).toBeLessThanOrEqual(800);
     expect(geometry.avatarWidth).toBe(page.viewportSize().width < 768 ? 80 : 160);
     expect(geometry.actionBelowAvatar).toBe(true);
+    if (page.viewportSize().width >= 768) {
+      expect(geometry.ratingUnitWidth).toBe(224);
+      expect(Math.abs(geometry.ratingValueTop - geometry.histogramBarsTop)).toBeLessThanOrEqual(1);
+      expect(Math.abs(geometry.ratingLabelTop - geometry.histogramAxisTop)).toBeLessThanOrEqual(2);
+      expect(geometry.ratingLabelHeight).toBeLessThanOrEqual(18);
+    }
     expect(geometry.order).toEqual([...geometry.order].sort((left, right) => left - right));
     await expectNoHorizontalOverflow(page);
   });
