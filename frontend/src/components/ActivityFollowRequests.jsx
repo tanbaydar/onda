@@ -17,7 +17,7 @@ function FollowRequestPagination({ pagination, onPage }) {
   );
 }
 
-export default function ActivityFollowRequests() {
+export default function ActivityFollowRequests({ refreshToken = 0, onDecided = () => {} }) {
   const [page, setPage] = useState(1);
   const [retry, setRetry] = useState(0);
   const [expanded, setExpanded] = useState(false);
@@ -40,9 +40,10 @@ export default function ActivityFollowRequests() {
         }
       });
     return () => controller.abort();
-  }, [page, retry]);
+  }, [page, refreshToken, retry]);
 
-  async function decide(userId, action) {
+  async function decide(request, action) {
+    const userId = request.user.id;
     setPendingUserId(userId);
     setRequestErrorUserId(null);
     try {
@@ -65,9 +66,11 @@ export default function ActivityFollowRequests() {
           },
         };
       });
+      onDecided(request, action);
       if (moveToPreviousPage) setPage((current) => current - 1);
     } catch (error) {
       if (error.status === 404) {
+        onDecided(request, action);
         setRetry((value) => value + 1);
       } else {
         setRequestErrorUserId(userId);
@@ -116,8 +119,8 @@ export default function ActivityFollowRequests() {
                   <span><strong>{request.user.display_name}</strong><small>@{request.user.username}</small></span>
                 </Link>
                 <span className="activity-follow-request-actions">
-                  <button className="activity-request-approve mobile-target" type="button" disabled={pendingUserId !== null} aria-busy={pendingUserId === request.user.id} onClick={() => decide(request.user.id, "accept")}>Approve</button>
-                  <button className="activity-request-delete mobile-target" type="button" disabled={pendingUserId !== null} aria-busy={pendingUserId === request.user.id} onClick={() => decide(request.user.id, "decline")}>Delete</button>
+                  <button className="activity-request-approve mobile-target" type="button" disabled={pendingUserId !== null} aria-busy={pendingUserId === request.user.id} onClick={() => decide(request, "accept")}>Approve</button>
+                  <button className="activity-request-delete mobile-target" type="button" disabled={pendingUserId !== null} aria-busy={pendingUserId === request.user.id} onClick={() => decide(request, "decline")}>Delete</button>
                 </span>
                 {requestErrorUserId === request.user.id ? <p className="activity-follow-request-row-error" role="alert">Request could not be updated. Try again.</p> : null}
               </li>

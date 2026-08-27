@@ -26,7 +26,7 @@ test("activity copy and destinations preserve notification hierarchy", () => {
   );
 });
 
-test("follow-request decisions use the existing endpoints in the top Activity module", () => {
+test("follow-request decisions use the existing endpoints in both Activity locations", () => {
   const activity = readFileSync(new URL("./pages/ActivityPage.jsx", import.meta.url), "utf8");
   const source = readFileSync(new URL("./components/ActivityFollowRequests.jsx", import.meta.url), "utf8");
 
@@ -34,5 +34,8 @@ test("follow-request decisions use the existing endpoints in the top Activity mo
   assert.match(source, /follow-requests\/\$\{userId\}\/\$\{action\}\//);
   assert.match(source, />Approve<\/button>/);
   assert.match(source, />Delete<\/button>/);
+  assert.match(activity, /follow-requests\/\$\{notification\.actor\.id\}\/\$\{action\}\//);
+  assert.match(activity, /className="activity-request-actions"/);
+  assert.match(activity, />Approve<\/button>[\s\S]*>Delete<\/button>/);
   assert.doesNotMatch(source, /location\.(?:assign|reload)|window\.location/);
 });

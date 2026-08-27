@@ -44,4 +44,4 @@ Ruled 2026-08-27 by the current operator. Scope: the cross-system frontend remed
 
 - DEC-04 remains judgment-led, but no longer moves lineup out of event identity. On past and upcoming events, lineup follows the identity metadata and precedes rating/community/review content.
 - Owner review mutations live under the single `Edit ▾` disclosure: Edit review, Remove review when present, and Remove from Been. Remove rating is not an event-page menu item.
-- Follow requests are an independently loaded disclosure module at the top of Activity. They are absent from Edit Profile and are not action controls attached to historical notification rows.
+- Follow requests are an independently loaded disclosure module at the top of Activity and are absent from Edit Profile. Dated operator correction: a matching request notification also carries Approve/Delete while the request is pending, intentionally duplicating Instagram's two access points; resolving either instance removes the action controls from both while preserving the historical notification.

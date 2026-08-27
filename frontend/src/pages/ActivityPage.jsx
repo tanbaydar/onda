@@ -4,7 +4,7 @@ import { Link, Navigate, useLocation } from "react-router-dom";
 import { fetchJson, fetchWithCsrf } from "../api.js";
 import ActivityFollowRequests from "../components/ActivityFollowRequests.jsx";
 import ProfileAvatar from "../components/ProfileAvatar.jsx";
-import { activityNotificationPath, activityNotificationVerb } from "../activityPresentation.js";
+import { activityNotificationPath, activityNotificationVerb, followRequestKey } from "../activityPresentation.js";
 import { compactRelativeTime } from "../homeFeedPresentation.js";
 
 
@@ -14,6 +14,9 @@ export default function ActivityPage({ session }) {
   const [loadingMore, setLoadingMore] = useState(false);
   const [actionError, setActionError] = useState(null);
   const [markReadState, setMarkReadState] = useState({ loading: false, error: null });
+  const [pendingRequestKeys, setPendingRequestKeys] = useState(() => new Set());
+  const [requestActions, setRequestActions] = useState({});
+  const [requestRefresh, setRequestRefresh] = useState(0);
   const [state, setState] = useState({
     loading: true,
     error: null,
@@ -47,6 +50,20 @@ export default function ActivityPage({ session }) {
     return () => controller.abort();
   }, [retry, session.loading, session.user]);
 
+  useEffect(() => {
+    if (session.loading || !session.user) {
+      setPendingRequestKeys(new Set());
+      return undefined;
+    }
+    const controller = new AbortController();
+    fetchJson("/api/me/follow-requests/?page_size=100", { signal: controller.signal, cache: "no-store" })
+      .then((data) => setPendingRequestKeys(new Set(data.results.map(followRequestKey))))
+      .catch((error) => {
+        if (error.name !== "AbortError") setPendingRequestKeys(new Set());
+      });
+    return () => controller.abort();
+  }, [requestRefresh, session.loading, session.user]);
+
   async function markAllRead(signal) {
     setMarkReadState({ loading: true, error: null });
     try {
@@ -79,6 +96,48 @@ export default function ActivityPage({ session }) {
     }
   }
 
+  function removePendingRequest(request) {
+    setPendingRequestKeys((current) => {
+      const next = new Set(current);
+      next.delete(followRequestKey(request));
+      return next;
+    });
+  }
+
+  async function decideRequest(notification, action) {
+    setRequestActions((current) => ({
+      ...current,
+      [notification.id]: { pending: true, action, result: null, error: null },
+    }));
+    try {
+      await fetchWithCsrf(`/api/me/follow-requests/${notification.actor.id}/${action}/`, { method: "POST" });
+      removePendingRequest(notification);
+      setRequestActions((current) => ({
+        ...current,
+        [notification.id]: {
+          pending: false,
+          result: action === "accept" ? "Approved" : "Deleted",
+          error: null,
+        },
+      }));
+      setRequestRefresh((current) => current + 1);
+    } catch (error) {
+      if (error.status === 404) {
+        removePendingRequest(notification);
+        setRequestActions((current) => ({
+          ...current,
+          [notification.id]: { pending: false, result: "No longer pending", error: null },
+        }));
+        setRequestRefresh((current) => current + 1);
+        return;
+      }
+      setRequestActions((current) => ({
+        ...current,
+        [notification.id]: { pending: false, result: null, error: "Request could not be updated. Try again." },
+      }));
+    }
+  }
+
   if (session.loading) {
     return <main><p>Checking session…</p></main>;
   }
@@ -89,7 +148,7 @@ export default function ActivityPage({ session }) {
   return (
     <main className="activity-page" aria-busy={state.loading}>
       <h1 className="functional-title">Activity</h1>
-      <ActivityFollowRequests />
+      <ActivityFollowRequests refreshToken={requestRefresh} onDecided={removePendingRequest} />
       {actionError ? <div className="continuation-feedback" role="alert"><p>{actionError}</p><button className="recovery-action" type="button" disabled={loadingMore} onClick={loadMore}>{loadingMore ? "Retrying…" : "Retry"}</button></div> : null}
       {markReadState.error ? <div className="activity-action-error" role="alert"><p>Activity is visible, but it could not be marked as read.</p><button className="recovery-action" type="button" disabled={markReadState.loading} onClick={() => markAllRead()}>{markReadState.loading ? "Retrying…" : "Retry marking as read"}</button></div> : null}
       {state.loading ? <p role="status" aria-live="polite">Loading activity…</p> : null}
@@ -107,7 +166,10 @@ export default function ActivityPage({ session }) {
       {state.results.length > 0 ? (
         <>
           <ol className="activity-list ledger-list">
-            {state.results.map((notification) => (
+            {state.results.map((notification) => {
+              const requestAction = requestActions[notification.id];
+              const actionable = notification.type === "follow_request" && pendingRequestKeys.has(followRequestKey(notification));
+              return (
                 <li className="activity-item" key={notification.id}>
                   <Link className={`activity-row ${notification.read_at ? "read" : "unread"}`} to={activityNotificationPath(notification)}>
                     <ProfileAvatar profile={notification.actor} small className="activity-avatar" />
@@ -116,8 +178,16 @@ export default function ActivityPage({ session }) {
                       <span className="activity-meta">@{notification.actor.username} · <time dateTime={notification.created_at}>{compactRelativeTime(notification.created_at)}</time></span>
                     </span>
                   </Link>
+                  {actionable ? (
+                    <span className="activity-request-actions" aria-label={`Follow request from ${notification.actor.display_name}`}>
+                      <button className="activity-request-approve mobile-target" type="button" disabled={requestAction?.pending} aria-busy={requestAction?.pending && requestAction.action === "accept"} onClick={() => decideRequest(notification, "accept")}>Approve</button>
+                      <button className="activity-request-delete mobile-target" type="button" disabled={requestAction?.pending} aria-busy={requestAction?.pending && requestAction.action === "decline"} onClick={() => decideRequest(notification, "decline")}>Delete</button>
+                    </span>
+                  ) : requestAction?.result ? <span className="activity-request-result" role="status">{requestAction.result}</span> : null}
+                  {requestAction?.error ? <p className="activity-request-error" role="alert">Request could not be updated. Try again.</p> : null}
                 </li>
-            ))}
+              );
+            })}
           </ol>
           {state.nextCursor ? (
             <button className="pagination-action" type="button" disabled={loadingMore} onClick={loadMore}>
