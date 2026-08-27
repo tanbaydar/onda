@@ -35,12 +35,16 @@ The expanded browser matrix also found that `.event-list-error button { min-heig
 
 ## Release evidence
 
-The implementation commit, dependency lock hash, build command, generated asset hashes, CI result, deployment result, and exact live asset parity are recorded below after the release artifact is finalized.
+The implementation commit, dependency lock hash, build command, generated asset hashes, CI result, deployment result, and exact live asset parity are recorded below.
 
-- Implementation commit: pending final implementation commit
-- Dependency lock: pending final build
+- Implementation commit: `78dc1d2cdfd8f220379e08f84d31404044400fce`
+- Dependency lock: `frontend/package-lock.json` SHA-256 `e6b76cdd5472eab7482b283c2506bf84d7109b9596af903ced912796bffd76a7`
 - Build command: `cd frontend && npm run build`
-- Generated assets: pending final build
-- Source validation: pending final run
+- Generated source assets:
+  - `dist/index.html`: SHA-256 `d2b9cf0849c24db3afbef4e095d2c8def796ac51a95f2a119f303ef59e052f63`
+  - `dist/assets/index-cl5s7p3a.css`: SHA-256 `1e8b383a3d46395366c92432b1fff9d47ff53a54b4efec349c600dcf88b642cf`
+  - `dist/assets/index-DrcFxRPc.js`: SHA-256 `833eabc57dcc1dc9a4bb85a29493c6b3f6ad134f1c1c73a848a9238046758c10`
+- Source validation: 139/139 Node tests passed; production build passed; Playwright ran 84 project cases across six widths with 48 applicable passes, 36 expected not-applicable skips, and zero failures.
+- CI: pending push
 - Production deployment: pending merge and deployment
 - Live asset parity: pending deployment
