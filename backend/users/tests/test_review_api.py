@@ -136,6 +136,12 @@ class ReviewApiContractTests(TestCase):
         self.assertEqual(created.status_code, 201)
         self.assertEqual(edited.status_code, 200)
         self.assertEqual(
+            created.json()["review"]["id"], edited.json()["review"]["id"]
+        )
+        Review = apps.get_model("users", "Review")
+        self.assertEqual(Review.objects.filter(entry=entry).count(), 1)
+        self.assertEqual(Review.objects.get(entry=entry).body, "Edited body")
+        self.assertEqual(
             created.json()["review"]["published_at"],
             edited.json()["review"]["published_at"],
         )
@@ -242,6 +248,31 @@ class ReviewApiContractTests(TestCase):
         self.assertNotIn(
             "Private body",
             list(Review.objects.visible_to(None).values_list("body", flat=True)),
+        )
+
+    def test_public_section_excludes_the_viewers_review_only_for_that_viewer(self):
+        self.make_entry(self.public_owner)
+        own_review = self.put_review(self.public_owner, "Owner copy").json()["review"]
+        self.make_entry(self.other)
+        other_review = self.put_review(self.other, "Other copy").json()["review"]
+
+        owner_results = self.auth_client(self.public_owner).get(
+            f"/api/events/{self.event.id}/reviews/"
+        ).json()["results"]
+        other_results = self.auth_client(self.other).get(
+            f"/api/events/{self.event.id}/reviews/"
+        ).json()["results"]
+        guest_results = self.public_reviews().json()["results"]
+
+        self.assertEqual(
+            [review["id"] for review in owner_results], [other_review["id"]]
+        )
+        self.assertEqual(
+            [review["id"] for review in other_results], [own_review["id"]]
+        )
+        self.assertEqual(
+            {review["id"] for review in guest_results},
+            {own_review["id"], other_review["id"]},
         )
 
     def test_hidden_review_suppressed_from_visibility_and_public_then_resurrects(self):
