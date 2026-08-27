@@ -1,6 +1,7 @@
 export const AUTHENTICATED_LANDING = "/home";
 export const GUEST_DISCOVER = "/discover";
 export const VERIFY_EMAIL = "/verify-email";
+export const LOGIN = "/login";
 
 export function postAuthDestination(user) {
   return user?.email_verified === false ? VERIFY_EMAIL : AUTHENTICATED_LANDING;
@@ -21,5 +22,5 @@ export function landingPathForSession(session, search = "") {
 }
 
 export function homeAccessRedirect(user) {
-  return user ? null : GUEST_DISCOVER;
+  return user ? null : LOGIN;
 }

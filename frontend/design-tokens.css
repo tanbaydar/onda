@@ -26,7 +26,7 @@
   /* ---- MEASURES & FIXED GEOMETRY (ruled) ---- */
   --measure-prose:640px;      /* reviews/reading; 680px ruled ceiling */
   --measure-rows:800px;       /* desktop ledgers */
-  --gutter-mobile:24px; --gutter-desktop:106px; --auth-col:360px;
+  --gutter-mobile:24px; --gutter-desktop:106px; --auth-col:360px; /* desktop gutter is a ceiling; runtime gutters grow fluidly to it */
   --thumb:56px; --thumb-h:70px;                  /* row flier slot 4:5; absent = slot stays EMPTY, text x holds */
   --flier-sm:80px; --flier-sm-h:100px;           /* mobile reduced flier 4:5 */
   --flier-md:160px; --flier-md-h:200px;          /* desktop identity-block flier */
@@ -151,6 +151,8 @@
 
    STATES — flier-absent = designed collapse (identity reflows to type).
    Empty lines are ui secondary or micro muted, in place, no illustration.
+   Initial loading/error/not-found states keep stable page identity; local
+   mutation and continuation failures keep successful content in place.
    Loading/error/Retry keep the same slot. Depth system: NONE — hairlines
    and the dialog backdrop are the only separation; no elevation shadows.
 

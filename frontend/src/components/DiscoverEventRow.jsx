@@ -7,7 +7,7 @@ import { recentRatingVisible } from "../polishPresentation.js";
 import ImageSlot from "./ImageSlot.jsx";
 import RatingStars from "./RatingStars.jsx";
 
-export default function DiscoverEventRow({ event, omittedArtistId = null, showVenue = true, onFocus, compact = false }) {
+export default function DiscoverEventRow({ event, omittedArtistId = null, showVenue = true, onFocus, compact = false, variant = "standard" }) {
   const lineup = compactLineup(event.artists, omittedArtistId);
   const venueName = event.venue?.name?.trim();
   const venueIsTba = !venueName || venueName.toUpperCase() === "TBA";
@@ -15,7 +15,7 @@ export default function DiscoverEventRow({ event, omittedArtistId = null, showVe
 
   return (
     <li>
-      <Link className={`discover-event-row${compact ? " discover-event-row-compact" : ""}`} to={eventPath(event)} onFocus={onFocus}>
+      <Link className={`discover-event-row${compact ? " discover-event-row-compact" : ""}${variant === "overlay" ? " discover-event-row-overlay" : ""}`} to={eventPath(event)} onFocus={onFocus}>
         <ImageSlot className={`discover-event-flier${compact ? " discover-event-flier-compact" : ""}`} name={event.title} src={event.cover_image_url} referrerPolicy="no-referrer" />
         <span className="discover-event-copy">
           <strong className="discover-event-title">{event.title}</strong>

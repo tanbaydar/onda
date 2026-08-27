@@ -50,7 +50,7 @@ export default function EventList({
     });
 
     if (ledger) onLedgerChange((current) => ({ ...current, requestKey }));
-    setState((current) => ({ loading: true, error: null, data: discover && page > 1 ? current.data : null }));
+    setState((current) => ({ loading: true, error: null, data: page > 1 ? current.data : null }));
     fetchJson(`/api/events/?${query}`, { signal: controller.signal })
       .then((data) => {
         setState((current) => ({ loading: false, error: null, data: discover && page > 1 && current.data ? { ...data, results: appendUniqueEvents(current.data.results, data.results) } : data }));
@@ -60,7 +60,7 @@ export default function EventList({
           setState((current) => ({
             loading: false,
             error,
-            data: discover && page > 1 ? current.data : null,
+            data: page > 1 ? current.data : null,
           }));
         }
       });
@@ -86,7 +86,7 @@ export default function EventList({
   const errorState = state.error ? (
     <div className="event-list-error" role="alert">
       <p>{state.data ? "More events could not be loaded." : "Events could not be loaded."}</p>
-      <button type="button" onClick={() => setRetry((value) => value + 1)}>
+      <button className="recovery-action" type="button" onClick={() => setRetry((value) => value + 1)}>
         Retry
       </button>
     </div>
@@ -94,7 +94,7 @@ export default function EventList({
 
   return (
     <section className={`event-list ${discover ? "discover-event-list" : "detail-event-list"}`} aria-busy={state.loading}>
-      <h2 className={quietHeading ? "sr-only" : undefined}>{heading}</h2>
+      <h2 className={quietHeading ? "sr-only" : "section-heading"}>{heading}</h2>
       {state.loading && !state.data ? <p className="event-list-status" role="status">Loading events…</p> : null}
       {state.error && !state.data ? errorState : null}
       {state.data && state.data.results.length === 0 ? (
@@ -102,7 +102,7 @@ export default function EventList({
       ) : null}
       {state.data && state.data.results.length > 0 ? (
         <>
-          <ul className="discover-event-ledger">
+          <ul className="discover-event-ledger ledger-list">
             {state.data.results.map((event) => (
               <DiscoverEventRow
                 key={event.id}
@@ -116,7 +116,7 @@ export default function EventList({
           {state.error ? errorState : null}
           {discover ? (state.data.pagination.next_page ? <div className="discover-scroll-sentinel" ref={loadMoreRef} role="status" aria-live="polite">{state.loading ? "Loading more events…" : ""}</div> : null) : state.data.pagination.total_pages > 1 ? <nav className="ledger-pagination" aria-label={`${heading} pagination`}>
             <button
-              className="quiet-control"
+              className="quiet-control pagination-action"
               type="button"
               disabled={state.data.pagination.previous_page === null}
               onClick={() => setPage(state.data.pagination.previous_page)}
@@ -129,7 +129,7 @@ export default function EventList({
               {state.data.pagination.total_pages}{" "}
             </span>
             <button
-              className="quiet-control"
+              className="quiet-control pagination-action"
               type="button"
               disabled={state.data.pagination.next_page === null}
               onClick={() => setPage(state.data.pagination.next_page)}

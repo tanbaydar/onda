@@ -6,7 +6,7 @@ import { profilePath } from "../profileRoutes.js";
 import ProfileAvatar from "./ProfileAvatar.jsx";
 
 
-export default function WillBeThereAttendees({ eventId, scope, user, version, activeCount = null }) {
+export default function WillBeThereAttendees({ eventId, scope, user, version, activeCount = null, returnTo = null }) {
   const [page, setPage] = useState(1);
   const [retry, setRetry] = useState(0);
   const [state, setState] = useState({ loading: true, error: null, data: null });
@@ -33,9 +33,7 @@ export default function WillBeThereAttendees({ eventId, scope, user, version, ac
       .then((data) => setState({ loading: false, error: null, data }))
       .catch((error) => {
         if (error.name !== "AbortError") {
-          setState((current) => current.data
-            ? { ...current, loading: false, error }
-            : { loading: false, error, data: null });
+          setState((current) => ({ loading: false, error, data: current.data }));
         }
       });
     return () => controller.abort();
@@ -44,30 +42,29 @@ export default function WillBeThereAttendees({ eventId, scope, user, version, ac
   const heading = isCircle ? "Your Circle" : "Public";
   if (isCircle && !user) {
     return (
-      <section>
-        <h2>{heading}</h2>
-        <p>Sign in to see which people in your Circle will be there.</p>
+      <section className="authentication-boundary">
+        <p><Link to="/login" state={returnTo ? { from: returnTo } : undefined}>Sign in</Link> to see who in your Circle will be there.</p>
       </section>
     );
   }
   return (
-    <section>
-      <h2>{heading}</h2>
-      {state.loading ? <p>Loading attendees…</p> : null}
+    <section aria-busy={state.loading}>
+      <h2 className="section-heading">{heading}</h2>
+      {state.loading ? <p role="status" aria-live="polite">Loading attendees…</p> : null}
       {state.error ? (
-        <>
+        <div role="alert">
           <p>Attendees could not be loaded.</p>
-          <button type="button" onClick={() => setRetry((value) => value + 1)}>
+          <button className="recovery-action" type="button" onClick={() => setRetry((value) => value + 1)}>
             Retry
           </button>
-        </>
+        </div>
       ) : null}
       {state.data && state.data.results.length === 0 ? (
         <p>{isCircle ? "No one in your Circle has marked Will Be There." : activeCount === 0 ? "No active marks yet." : "No public marks are visible."}</p>
       ) : null}
       {state.data && state.data.results.length > 0 ? (
         <>
-          <ol className="event-attendee-list">
+          <ol className="event-attendee-list ledger-list">
             {state.data.results.map((attendee) => (
               <li key={attendee.user.id}>
                 <Link className="event-attendee-row" to={profilePath(attendee.user.username)}>
@@ -79,6 +76,7 @@ export default function WillBeThereAttendees({ eventId, scope, user, version, ac
           </ol>
           {state.data.pagination.total_pages > 1 ? <nav aria-label={`${heading} pagination`}>
             <button
+              className="pagination-action"
               type="button"
               disabled={state.data.pagination.previous_page === null}
               onClick={() => setPage(state.data.pagination.previous_page)}
@@ -89,6 +87,7 @@ export default function WillBeThereAttendees({ eventId, scope, user, version, ac
               {" "}Page {state.data.pagination.page} of {state.data.pagination.total_pages}{" "}
             </span>
             <button
+              className="pagination-action"
               type="button"
               disabled={state.data.pagination.next_page === null}
               onClick={() => setPage(state.data.pagination.next_page)}

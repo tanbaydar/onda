@@ -36,9 +36,7 @@ export default function PublicReviews({
       .then((data) => setState({ loading: false, error: null, data }))
       .catch((error) => {
         if (error.name !== "AbortError") {
-          setState((current) => current.data
-            ? { ...current, loading: false, error }
-            : { loading: false, error, data: null });
+          setState((current) => ({ loading: false, error, data: current.data }));
         }
       });
     return () => controller.abort();
@@ -84,25 +82,25 @@ export default function PublicReviews({
   }
 
   return (
-    <section className="event-public-reviews">
-      <h2>Public</h2>
-      <SortMenu value={sort} options={EVENT_REVIEW_SORTS} onChange={(value) => { setSort(value); setPage(1); }} />
-      {actionError ? <p>{actionError}</p> : null}
-      {state.loading ? <p>Loading public reviews…</p> : null}
+    <section className="event-public-reviews" aria-busy={state.loading}>
+      <h2 className="section-heading">Public</h2>
+      {state.data?.results.length ? <SortMenu value={sort} options={EVENT_REVIEW_SORTS} onChange={(value) => { setSort(value); setPage(1); }} /> : null}
+      {actionError ? <p className="favorite-notice" role="alert">{actionError}</p> : null}
+      {state.loading ? <p role="status" aria-live="polite">Loading public reviews…</p> : null}
       {state.error ? (
-        <>
+        <div role="alert">
           <p>Public reviews could not be loaded.</p>
-          <button type="button" onClick={() => setRetry((value) => value + 1)}>
+          <button className="recovery-action" type="button" onClick={() => setRetry((value) => value + 1)}>
             Retry
           </button>
-        </>
+        </div>
       ) : null}
       {state.data && state.data.results.length === 0 ? (
         <p>No public reviews yet.</p>
       ) : null}
       {state.data && state.data.results.length > 0 ? (
         <>
-          <ol>
+          <ol className="review-ledger ledger-list">
             {state.data.results.map((review) => (
               <li key={review.id}>
                 <EventReviewRow person={review.author} rating={review.rating} review={review} onLike={!user || review.author.id !== user.id ? () => changeLike(review) : null} likePending={pendingLikes.has(review.id)} />
@@ -111,6 +109,7 @@ export default function PublicReviews({
           </ol>
           {state.data.pagination.total_pages > 1 ? <nav aria-label="Public reviews pagination">
             <button
+              className="pagination-action"
               type="button"
               disabled={state.data.pagination.previous_page === null}
               onClick={() => setPage(state.data.pagination.previous_page)}
@@ -123,6 +122,7 @@ export default function PublicReviews({
               {state.data.pagination.total_pages}{" "}
             </span>
             <button
+              className="pagination-action"
               type="button"
               disabled={state.data.pagination.next_page === null}
               onClick={() => setPage(state.data.pagination.next_page)}

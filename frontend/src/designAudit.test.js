@@ -19,7 +19,7 @@ test("Discover advances through an observed sentinel and preserves loaded rows o
   const list = read("./components/EventList.jsx");
   assert.match(list, /new IntersectionObserver/);
   assert.match(list, /className="discover-scroll-sentinel" ref=\{loadMoreRef\}/);
-  assert.match(list, /data: discover && page > 1 \? current\.data : null/);
+  assert.match(list, /data: page > 1 \? current\.data : null/);
   assert.doesNotMatch(list, />Load more</);
   assert.match(list, /appendUniqueEvents\(current\.data\.results, data\.results\)/);
 });

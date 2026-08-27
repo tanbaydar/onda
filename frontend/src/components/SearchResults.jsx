@@ -1,7 +1,6 @@
 import { useEffect, useRef } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import DiscoverEventRow from "./DiscoverEventRow.jsx";
-import { formatEventDateTime } from "../formatEventDateTime.js";
 import { entityResultPath } from "../entityRoutes.js";
 import ImageSlot from "./ImageSlot.jsx";
 import ProfileAvatar from "./ProfileAvatar.jsx";
@@ -34,36 +33,21 @@ function ResultRow({ type, item, onFocus }) {
   );
 }
 
-function CompactEventResultRow({ item, onFocus }) {
-  const navigate = useNavigate();
-  return (
-    <li>
-      <button className="compact-event-result-row" type="button" onFocus={onFocus} onClick={() => navigate(resultPath("events", item))}>
-        <ImageSlot className="compact-event-thumb" name={item.title} src={item.cover_image_url} referrerPolicy="no-referrer" />
-        <span className="search-result-copy">
-          <strong>{item.title}</strong>
-          <small>{formatEventDateTime(item.event_date, item.start_time)} · {item.venue.name}</small>
-        </span>
-      </button>
-    </li>
-  );
-}
-
 export default function SearchResults({ data, scope = "all", activeIndex, onActiveIndex, onViewAll, onResultOpen = () => {}, compact = false }) {
   const rootRef = useRef(null);
   useEffect(() => {
-    if (activeIndex >= 0) rootRef.current?.querySelectorAll(".discover-event-row,.search-result-row,.compact-event-result-row")[activeIndex]?.focus();
+    if (activeIndex >= 0) rootRef.current?.querySelectorAll(".discover-event-row,.search-result-row")[activeIndex]?.focus();
   }, [activeIndex]);
   let rowIndex = -1;
   if (scope !== "all") {
-    return <ul ref={rootRef} className={`search-results ${scope === "events" && !compact ? "discover-event-ledger" : ""}`} onClickCapture={onResultOpen}>{data.results.map((item) => { rowIndex += 1; const index = rowIndex; return scope === "events" ? (compact ? <CompactEventResultRow key={item.id} item={item} onFocus={() => onActiveIndex(index)} /> : <DiscoverEventRow key={item.id} event={item} compact onFocus={() => onActiveIndex(index)} />) : <ResultRow key={item.id} type={scope} item={item} onFocus={() => onActiveIndex(index)} />; })}</ul>;
+    return <ul ref={rootRef} className={`search-results ${scope === "events" && !compact ? "discover-event-ledger" : ""}`} onClickCapture={onResultOpen}>{data.results.map((item) => { rowIndex += 1; const index = rowIndex; return scope === "events" ? <DiscoverEventRow key={item.id} event={item} compact variant={compact ? "overlay" : "standard"} onFocus={() => onActiveIndex(index)} /> : <ResultRow key={item.id} type={scope} item={item} onFocus={() => onActiveIndex(index)} />; })}</ul>;
   }
   return (
     <div className="search-groups" ref={rootRef}>
       {GROUPS.map(([type, label]) => {
         const group = data.groups[type];
         if (!group?.results.length) return null;
-        return <section key={type}><h2>{label}</h2><ul className={`search-results ${type === "events" && !compact ? "discover-event-ledger" : ""}`} onClickCapture={onResultOpen}>{group.results.map((item) => { rowIndex += 1; const index = rowIndex; return type === "events" ? (compact ? <CompactEventResultRow key={item.id} item={item} onFocus={() => onActiveIndex(index)} /> : <DiscoverEventRow key={item.id} event={item} compact onFocus={() => onActiveIndex(index)} />) : <ResultRow key={item.id} type={type} item={item} onFocus={() => onActiveIndex(index)} />; })}</ul>{group.total > 5 ? <button className="quiet-action" type="button" onClick={() => onViewAll(type)}>View all ({group.total})</button> : null}</section>;
+        return <section key={type}><h2 className="section-heading">{label}</h2><ul className={`search-results ${type === "events" && !compact ? "discover-event-ledger" : ""}`} onClickCapture={onResultOpen}>{group.results.map((item) => { rowIndex += 1; const index = rowIndex; return type === "events" ? <DiscoverEventRow key={item.id} event={item} compact variant={compact ? "overlay" : "standard"} onFocus={() => onActiveIndex(index)} /> : <ResultRow key={item.id} type={type} item={item} onFocus={() => onActiveIndex(index)} />; })}</ul>{group.total > 5 ? <button className="quiet-action" type="button" onClick={() => onViewAll(type)}>View all ({group.total})</button> : null}</section>;
       })}
     </div>
   );

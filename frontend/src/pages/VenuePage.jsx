@@ -7,6 +7,7 @@ import FavoriteControl from "../components/FavoriteControl.jsx";
 import { venuePath } from "../entityRoutes.js";
 import useCanonicalEntityRoute from "../useCanonicalEntityRoute.js";
 import { formatVenueLocation } from "../venuePresentation.js";
+import SystemStatePage from "../components/SystemStatePage.jsx";
 
 export default function VenuePage({ user, sessionReady }) {
   const { venueKey } = useParams();
@@ -38,7 +39,7 @@ export default function VenuePage({ user, sessionReady }) {
           return;
         }
         setState((current) => current.venue?.id === venueId && error.status !== 404
-          ? { ...current, loading: false, error: null, notFound: false }
+          ? { ...current, loading: false, error, notFound: false }
           : {
               loading: false,
               error: error.status === 404 ? null : error,
@@ -60,32 +61,26 @@ export default function VenuePage({ user, sessionReady }) {
     } : current);
   }
 
-  if (state.loading) {
+  if (state.loading && !state.venue) {
     return (
-      <main>
-        <p>Loading venue…</p>
-      </main>
+      <SystemStatePage title="Venue" actionTo={null} busy><p>Loading venue…</p></SystemStatePage>
     );
   }
   if (state.notFound) {
     return (
-      <main>
-        <h1>Venue not found</h1>
+      <SystemStatePage title="Venue not found">
         <p>The venue does not exist.</p>
-        <p>
-          <Link to="/discover">Return to Discover</Link>
-        </p>
-      </main>
+      </SystemStatePage>
     );
   }
-  if (state.error) {
+  if (state.error && !state.venue) {
     return (
-      <main>
+      <SystemStatePage title="Venue" actionTo={null}>
         <p>The venue could not be loaded.</p>
-        <button type="button" onClick={() => setRetry((value) => value + 1)}>
+        <button className="recovery-action" type="button" onClick={() => setRetry((value) => value + 1)}>
           Retry
         </button>
-      </main>
+      </SystemStatePage>
     );
   }
 
@@ -93,8 +88,9 @@ export default function VenuePage({ user, sessionReady }) {
   const location = formatVenueLocation(venue.city);
   return (
     <main className="detail-page venue-page">
+      {state.error ? <div className="action-feedback" role="alert"><p>Venue status could not be refreshed.</p><button className="recovery-action" type="button" onClick={() => setRetry((value) => value + 1)}>Retry</button></div> : null}
       <article className="venue-identity">
-        <h1>{venue.name}</h1>
+        <h1 className="identity-title">{venue.name}</h1>
         {location ? (
           <p className="venue-location">
             <Link to={`/discover?city_id=${venue.city.id}`}>{location}</Link>

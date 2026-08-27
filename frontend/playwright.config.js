@@ -26,8 +26,20 @@ export default defineConfig({
   },
   projects: [
     {
+      name: "mobile-chrome-320",
+      use: { viewport: { width: 320, height: 720 } },
+    },
+    {
       name: "mobile-chrome-390",
       use: { viewport: { width: 390, height: 844 } },
+    },
+    {
+      name: "mobile-chrome-767",
+      use: { viewport: { width: 767, height: 900 } },
+    },
+    {
+      name: "desktop-chrome-768",
+      use: { viewport: { width: 768, height: 900 } },
     },
     {
       name: "desktop-chrome-1280",

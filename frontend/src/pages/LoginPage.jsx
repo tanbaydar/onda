@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
 import { fetchWithCsrf } from "../api.js";
 import { postAuthDestination } from "../landing.js";
@@ -7,6 +7,7 @@ import { INVALID_LOGIN_MESSAGE } from "../authPresentation.js";
 
 export default function LoginPage({ onAuthenticated }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -41,7 +42,8 @@ export default function LoginPage({ onAuthenticated }) {
         body: JSON.stringify({ email: identifier.trim(), password }),
       });
       onAuthenticated(data.user);
-      navigate(postAuthDestination(data.user));
+      const requestedDestination = typeof location.state?.from === "string" && location.state.from.startsWith("/") && !location.state.from.startsWith("//") ? location.state.from : null;
+      navigate(requestedDestination ?? postAuthDestination(data.user), { replace: true });
     } catch (requestError) {
       const serverErrors = requestError.data?.errors ?? {};
       setErrors({
@@ -55,7 +57,7 @@ export default function LoginPage({ onAuthenticated }) {
 
   return (
     <main className="auth-page">
-      <h1>Log in</h1>
+      <h1 className="functional-title">Log in</h1>
       <form onSubmit={handleSubmit} noValidate>
         <div className="auth-field">
           <label htmlFor="login-identifier">Username or email</label>

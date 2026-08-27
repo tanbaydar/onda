@@ -43,7 +43,7 @@ test("search scope and dynamic statuses expose accessible state", () => {
 
 test("compact search exposes retryable failures without clearing the query", () => {
   const search = read("./components/DiscoverSearch.jsx");
-  assert.match(search, /Search failed\. <button type="button" onClick=\{\(\) => setRetry/);
-  assert.match(search, /\[cityId, retry, trimmed\]/);
+  assert.match(search, /Search could not be loaded\.[\s\S]*className="recovery-action"[\s\S]*setRetry/);
+  assert.match(search, /\[cityId, retry, searchReady, trimmed\]/);
   assert.doesNotMatch(search, /catch\(\(error\) => \{ if \(error\.name !== "AbortError"\) setData\(null\); \}\)/);
 });

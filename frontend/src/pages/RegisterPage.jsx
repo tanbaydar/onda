@@ -65,7 +65,7 @@ export default function RegisterPage({ onAuthenticated }) {
   const privacyDescription = [privacyCopy ? "register-privacy-description" : null, privacyError ? "register-privacy-error" : null].filter(Boolean).join(" ") || undefined;
   return (
     <main className="auth-page">
-      <h1>Register</h1>
+      <h1 className="functional-title">Register</h1>
       <form onSubmit={handleSubmit} noValidate>
         {renderInput("username", "Username", { autoComplete: "username", minLength: 3, maxLength: 30, required: true })}
         {renderInput("email", "Email", { type: "email", autoComplete: "email", required: true })}

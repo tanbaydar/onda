@@ -57,6 +57,6 @@ test("Edit Profile initial-load failure has a working retry state", () => {
 test("Event Lineup renders calm copy instead of an empty list", () => {
   const source = read("./pages/EventPage.jsx");
 
-  assert.match(source, /event\.artists\.length \? <ol>/);
+  assert.match(source, /artists\.length \? <ol className="inline-list">/);
   assert.match(source, /No lineup has been listed\./);
 });

@@ -16,8 +16,8 @@ function DiscoverLedgers({ city }) {
   const [ledgers, setLedgers] = useState({ upcoming: emptyLedger(), recent: emptyLedger() });
   return <>
     <nav className="section-tabs" aria-label="Event timeframe">
-      <button type="button" className={view === "upcoming" ? "active" : ""} aria-pressed={view === "upcoming"} onClick={() => setView("upcoming")}>Upcoming</button>
-      <button type="button" className={view === "recent" ? "active" : ""} aria-pressed={view === "recent"} onClick={() => setView("recent")}>Recent</button>
+      <button type="button" className={`tab-action${view === "upcoming" ? " active" : ""}`} aria-pressed={view === "upcoming"} onClick={() => setView("upcoming")}>Upcoming</button>
+      <button type="button" className={`tab-action${view === "recent" ? " active" : ""}`} aria-pressed={view === "recent"} onClick={() => setView("recent")}>Recent</button>
     </nav>
     {view === "upcoming" ? <EventList
       heading={`Upcoming events in ${city.name}`}
@@ -81,15 +81,16 @@ export default function DiscoverPage() {
   }, [requestedCityId, selectedCity, setSearchParams]);
 
   return (
-    <main className="discover-page">
-      {state.loading ? <p>Loading cities…</p> : null}
+    <main className="discover-page" aria-busy={state.loading}>
+      {!selectedCity ? <div className="discover-header-band"><h1 className="functional-title">Discover</h1></div> : null}
+      {state.loading ? <p role="status" aria-live="polite">Loading cities…</p> : null}
       {state.error ? (
-        <>
+        <div className="event-list-error" role="alert">
           <p>Cities could not be loaded.</p>
-          <button type="button" onClick={() => setRetry((value) => value + 1)}>
+          <button className="recovery-action" type="button" onClick={() => setRetry((value) => value + 1)}>
             Retry
           </button>
-        </>
+        </div>
       ) : null}
       {state.cities && state.cities.length === 0 ? (
         <p>No cities are available.</p>
@@ -97,7 +98,7 @@ export default function DiscoverPage() {
       {selectedCity ? (
         <>
           <div className="discover-header-band">
-            <h1>{selectedCity.name}</h1>
+            <h1 className="identity-title">{selectedCity.name}</h1>
             <div className="discover-control-pair">
               <CityDropdown cities={state.cities} selectedCity={selectedCity} label="City" hideLabel onSelect={(cityId) => setSearchParams({ city_id: String(cityId) })} />
               <DiscoverSearch cityId={String(selectedCity.id)} cityName={selectedCity.name} />

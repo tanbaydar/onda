@@ -7,6 +7,7 @@ import FavoriteControl from "../components/FavoriteControl.jsx";
 import ArtistAvatar from "../components/ArtistAvatar.jsx";
 import { artistPath } from "../entityRoutes.js";
 import useCanonicalEntityRoute from "../useCanonicalEntityRoute.js";
+import SystemStatePage from "../components/SystemStatePage.jsx";
 
 export default function ArtistPage({ user, sessionReady }) {
   const { artistKey } = useParams();
@@ -38,7 +39,7 @@ export default function ArtistPage({ user, sessionReady }) {
           return;
         }
         setState((current) => current.artist?.id === artistId && error.status !== 404
-          ? { ...current, loading: false, error: null, notFound: false }
+          ? { ...current, loading: false, error, notFound: false }
           : {
               loading: false,
               error: error.status === 404 ? null : error,
@@ -60,42 +61,37 @@ export default function ArtistPage({ user, sessionReady }) {
     } : current);
   }
 
-  if (state.loading) {
+  if (state.loading && !state.artist) {
     return (
-      <main>
-        <p>Loading artist…</p>
-      </main>
+      <SystemStatePage title="Artist" actionTo={null} busy><p>Loading artist…</p></SystemStatePage>
     );
   }
   if (state.notFound) {
     return (
-      <main>
-        <h1>Artist not found</h1>
+      <SystemStatePage title="Artist not found">
         <p>The artist does not exist.</p>
-        <p>
-          <Link to="/discover">Return to Discover</Link>
-        </p>
-      </main>
+      </SystemStatePage>
     );
   }
-  if (state.error) {
+  if (state.error && !state.artist) {
     return (
-      <main>
+      <SystemStatePage title="Artist" actionTo={null}>
         <p>The artist could not be loaded.</p>
-        <button type="button" onClick={() => setRetry((value) => value + 1)}>
+        <button className="recovery-action" type="button" onClick={() => setRetry((value) => value + 1)}>
           Retry
         </button>
-      </main>
+      </SystemStatePage>
     );
   }
 
   const artist = state.artist;
   return (
     <main className="detail-page artist-page">
+      {state.error ? <div className="action-feedback" role="alert"><p>Artist status could not be refreshed.</p><button className="recovery-action" type="button" onClick={() => setRetry((value) => value + 1)}>Retry</button></div> : null}
       <article className="catalog-identity artist-identity">
         <ArtistAvatar artist={artist} loading="eager" />
         <div className="catalog-identity-copy">
-          <h1>{artist.name}</h1>
+          <h1 className="identity-title">{artist.name}</h1>
           {user ? <FavoriteControl compact path={`/api/artists/${artist.id}/favorite/`} state={artist.viewer_favorite} onChanged={changeFavorite} /> : null}
         </div>
       </article>

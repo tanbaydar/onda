@@ -41,14 +41,14 @@ export default function VerifyEmailPage({ email }) {
 
   if (complete) {
     return <main className="auth-page">
-      <h1>Email verified</h1>
+      <h1 className="functional-title">Email verified</h1>
       <p className="auth-intro" role="status">Your email is verified.</p>
       <button className="auth-primary" type="button" onClick={() => globalThis.location.assign("/")}>Continue</button>
     </main>;
   }
 
   return <main className="auth-page auth-code-page">
-    <h1>Check your email</h1>
+    <h1 className="functional-title">Check your email</h1>
     <p className="auth-intro">We sent a six-digit code to {email ?? "your email"}.</p>
     <p className="auth-expiry">{CODE_EXPIRY_NOTICE}</p>
     <form onSubmit={verify} noValidate>

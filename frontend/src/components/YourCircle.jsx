@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { fetchJson, fetchWithCsrf } from "../api.js";
 import { pluralize } from "../lib/plural.js";
 import EventReviewRow from "./EventReviewRow.jsx";
+import { Link } from "react-router-dom";
 
 
 export default function YourCircle({
@@ -10,6 +11,7 @@ export default function YourCircle({
   version,
   onSocialChanged,
   onAuthenticationRequired,
+  returnTo = null,
 }) {
   const [page, setPage] = useState(1);
   const [retry, setRetry] = useState(0);
@@ -40,9 +42,7 @@ export default function YourCircle({
       .then((data) => { setState((current) => ({ loading: false, error: null, data: page === 1 || !current.data ? data : { ...data, results: [...current.data.results.filter((existing) => !data.results.some((item) => item.id === existing.id)), ...data.results] } })); setLoadingMore(false); })
       .catch((error) => {
         if (error.name !== "AbortError") {
-          setState((current) => current.data
-            ? { ...current, loading: false, error }
-            : { loading: false, error, data: null });
+          setState((current) => ({ loading: false, error, data: current.data }));
         }
       })
       .finally(() => setLoadingMore(false));
@@ -90,25 +90,24 @@ export default function YourCircle({
 
   if (!user) {
     return (
-      <section>
-        <h2>Your Circle</h2>
-        <p>Sign in to see friends&apos; ratings.</p>
+      <section className="authentication-boundary">
+        <p><Link to="/login" state={returnTo ? { from: returnTo } : undefined}>Sign in</Link> to see ratings from Your Circle.</p>
       </section>
     );
   }
 
   return (
-    <section>
-      <h2>Your Circle</h2>
-      {actionError ? <p>{actionError}</p> : null}
-      {state.loading ? <p>Loading Your Circle…</p> : null}
+    <section aria-busy={state.loading}>
+      <h2 className="section-heading">Your Circle</h2>
+      {actionError ? <p className="favorite-notice" role="alert">{actionError}</p> : null}
+      {state.loading ? <p role="status" aria-live="polite">Loading Your Circle…</p> : null}
       {state.error ? (
-        <>
+        <div role="alert">
           <p>Your Circle could not be loaded.</p>
-          <button type="button" onClick={() => setRetry((value) => value + 1)}>
+          <button className="recovery-action" type="button" onClick={() => setRetry((value) => value + 1)}>
             Retry
           </button>
-        </>
+        </div>
       ) : null}
       {state.data ? (
         <>
@@ -123,7 +122,7 @@ export default function YourCircle({
           {state.data.results.length === 0 ? (
             <p>No followed users have rated this event.</p>
           ) : (
-            <ol>
+            <ol className="review-ledger ledger-list">
               {state.data.results.map((entry) => (
                 <li key={entry.id}>
                   <EventReviewRow person={entry.user} rating={entry.rating} review={entry.review} ratedAt={entry.rated_at} onLike={entry.review ? () => changeLike(entry.review) : null} likePending={pendingLikes.has(entry.review?.id)} />
@@ -131,7 +130,7 @@ export default function YourCircle({
               ))}
             </ol>
           )}
-          {state.data.pagination.next_page ? <button className="quiet-action" type="button" disabled={loadingMore} onClick={() => setPage(state.data.pagination.next_page)}>{loadingMore ? "Loading more Circle entries…" : `Show ${state.data.pagination.total_results - state.data.results.length} more Circle entries`}</button> : null}
+          {state.data.pagination.next_page ? <button className="pagination-action quiet-action" type="button" disabled={loadingMore} onClick={() => setPage(state.data.pagination.next_page)}>{loadingMore ? "Loading more Circle entries…" : `Show ${state.data.pagination.total_results - state.data.results.length} more Circle entries`}</button> : null}
         </>
       ) : null}
     </section>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useLocation, useParams } from "react-router-dom";
 
 import { ApiError, fetchJson, fetchWithCsrf } from "../api.js";
 import PublicReviews from "../components/PublicReviews.jsx";
@@ -17,9 +17,22 @@ import { artistPath, eventPath, venuePath } from "../entityRoutes.js";
 import EventReviewRow from "../components/EventReviewRow.jsx";
 import useCanonicalEntityRoute from "../useCanonicalEntityRoute.js";
 import "../eventReviews.css";
+import SystemStatePage from "../components/SystemStatePage.jsx";
+
+function EventLineup({ artists }) {
+  return (
+    <section className="event-lineup">
+      <h2 className="section-heading">Lineup</h2>
+      {artists.length ? <ol className="inline-list">
+        {artists.map((artist) => <li key={artist.id}><Link to={artistPath(artist)}>{artist.name}</Link></li>)}
+      </ol> : <p>No lineup has been listed.</p>}
+    </section>
+  );
+}
 
 
 export default function EventPage({ user, sessionReady, onAuthenticationRequired }) {
+  const location = useLocation();
   const { eventKey } = useParams();
   const [retry, setRetry] = useState(0);
   const [rating, setRating] = useState("");
@@ -65,7 +78,7 @@ export default function EventPage({ user, sessionReady, onAuthenticationRequired
           return;
         }
         setState((current) => current.event?.id === eventId && error.status !== 404
-          ? { ...current, loading: false, error: null, notFound: false }
+          ? { ...current, loading: false, error, notFound: false }
           : {
               loading: false,
               error: error.status === 404 ? null : error,
@@ -193,32 +206,26 @@ export default function EventPage({ user, sessionReady, onAuthenticationRequired
     }
   }
 
-  if (state.loading) {
+  if (state.loading && !state.event) {
     return (
-      <main>
-        <p>Loading event…</p>
-      </main>
+      <SystemStatePage title="Event" actionTo={null} busy><p>Loading event…</p></SystemStatePage>
     );
   }
   if (state.notFound) {
     return (
-      <main>
-        <h1>Event not found</h1>
+      <SystemStatePage title="Event not found">
         <p>The event does not exist or is no longer publicly visible.</p>
-        <p>
-          <Link to="/discover">Return to Discover</Link>
-        </p>
-      </main>
+      </SystemStatePage>
     );
   }
-  if (state.error) {
+  if (state.error && !state.event) {
     return (
-      <main>
+      <SystemStatePage title="Event" actionTo={null}>
         <p>The event could not be loaded.</p>
-        <button type="button" onClick={() => setRetry((value) => value + 1)}>
+        <button className="recovery-action" type="button" onClick={() => setRetry((value) => value + 1)}>
           Retry
         </button>
-      </main>
+      </SystemStatePage>
     );
   }
 
@@ -229,9 +236,10 @@ export default function EventPage({ user, sessionReady, onAuthenticationRequired
   const viewerHasRating = event.viewer_entry?.rating !== null && event.viewer_entry?.rating !== undefined;
   const trimmedReviewLength = reviewBody.trim().length;
   return (
-    <main className={hasIdentityArtwork ? "event-page" : "event-page event-page-no-artwork"}>
+    <main className={`event-page${hasIdentityArtwork ? " has-event-art" : " event-page-no-artwork"}`}>
+      {state.error ? <div className="action-feedback" role="alert"><p>Event status could not be refreshed.</p><button className="recovery-action" type="button" onClick={() => setRetry((value) => value + 1)}>Retry</button></div> : null}
       <article className={`identity event-identity ${isPast ? "event-identity-past" : "event-identity-upcoming"}`}>
-        <h1>{event.title}</h1>
+        <h1 className="identity-title">{event.title}</h1>
         {hasIdentityArtwork ? <ImageSlot name={event.title} src={event.cover_image_url} alt={event.title} loading="eager" referrerPolicy="no-referrer" /> : null}
         <div className={`event-meta-stack ${isPast ? "event-meta-past" : "event-meta-upcoming"}`}>
         {!isPast ? <p><Link to={venuePath(event.venue)}>{event.venue.name}</Link></p> : null}
@@ -249,16 +257,7 @@ export default function EventPage({ user, sessionReady, onAuthenticationRequired
         {isPast ? <p><Link to={venuePath(event.venue)}>{event.venue.name}</Link></p> : null}
         <p><Link to={`/discover?city_id=${event.venue.city.id}`}>{event.venue.city.name}</Link></p>
         </div>
-        <section className="event-lineup">
-          <h2>Lineup</h2>
-          {event.artists.length ? <ol>
-            {event.artists.map((artist) => (
-              <li key={artist.id}>
-                <Link to={artistPath(artist)}>{artist.name}</Link>
-              </li>
-            ))}
-          </ol> : <p>No lineup has been listed.</p>}
-        </section>
+        {!isPast ? <EventLineup artists={event.artists} /> : null}
         {!isPast && wbtCount > 0 ? <div className="wbt-count"><span>{wbtCount}</span><p>{pluralize(wbtCount, "active mark")}</p></div> : null}
         {isPast ? <div className="event-rating-block">
           {event.rating_summary.state === "available" ? (
@@ -270,7 +269,7 @@ export default function EventPage({ user, sessionReady, onAuthenticationRequired
         {user ? <div className="event-owner-block">
             {isPast && !viewerHasRating ? <StarInput value={rating} disabled={saving} onChange={(value) => setRating(String(value))} onCommit={saveRating} /> : null}
             {!isPast ? <>
-            {willBeThereError ? <p>{willBeThereError}</p> : null}
+            {willBeThereError ? <p className="favorite-notice" role="alert">{willBeThereError}</p> : null}
             {event.viewer_will_be_there.can_mark ? (
               <button className="wbt-action" type="button" disabled={saving} onClick={changeWillBeThere}>
                 {event.viewer_will_be_there.is_marked
@@ -280,10 +279,10 @@ export default function EventPage({ user, sessionReady, onAuthenticationRequired
             ) : null}</> : null}
             {isPast ? <FavoriteControl compact path={`/api/events/${event.id}/favorite/`} state={event.viewer_favorite} onChanged={changeFavorite} /> : null}
             {isPast && event.viewer_will_be_there.was_marked ? <p className="dormant-wbt">Will Be There · marked</p> : null}
-            {actionError ? <p role="alert">{actionError}</p> : null}
+            {actionError ? <p className="favorite-notice" role="alert">{actionError}</p> : null}
         </div> : null}
       </article>
-      {!isPast ? <><WillBeThereAttendees
+      {!isPast && user ? <><WillBeThereAttendees
         eventId={event.id}
         scope="circle"
         user={user}
@@ -296,7 +295,8 @@ export default function EventPage({ user, sessionReady, onAuthenticationRequired
         version={willBeThereVersion}
         activeCount={wbtCount}
       /></> : null}
-      {isPast ? <YourCircle
+      {!isPast && !user ? <><WillBeThereAttendees eventId={event.id} scope="public" user={user} version={willBeThereVersion} activeCount={wbtCount} /><WillBeThereAttendees eventId={event.id} scope="circle" user={user} version={willBeThereVersion} returnTo={`${location.pathname}${location.search}`} /></> : null}
+      {isPast && user ? <YourCircle
         eventId={event.id}
         user={user}
         version={socialVersion}
@@ -311,6 +311,8 @@ export default function EventPage({ user, sessionReady, onAuthenticationRequired
         onSocialChanged={() => setSocialVersion((value) => value + 1)}
         onAuthenticationRequired={onAuthenticationRequired}
       /> : null}
+      {isPast && !user ? <YourCircle eventId={event.id} user={user} version={socialVersion} onSocialChanged={() => {}} onAuthenticationRequired={onAuthenticationRequired} returnTo={`${location.pathname}${location.search}`} /> : null}
+      {isPast ? <EventLineup artists={event.artists} /> : null}
       <ConfirmDialog open={Boolean(confirmation)} title={confirmation?.title ?? ""} consequence={confirmation?.consequence ?? ""} confirmLabel={confirmation?.label ?? "Confirm"} onCancel={() => setConfirmation(null)} onConfirm={() => { const action = confirmation?.action; setConfirmation(null); action?.(); }} />
     </main>
   );

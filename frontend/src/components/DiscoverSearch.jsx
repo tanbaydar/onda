@@ -14,9 +14,10 @@ export default function DiscoverSearch({ cityId, cityName = "this city" }) {
   const [loading, setLoading] = useState(false);
   const [retry, setRetry] = useState(0);
   const trimmed = query.trim();
+  const searchReady = Boolean(trimmed);
 
   useEffect(() => {
-    if (!trimmed) { setData(null); setError(null); setLoading(false); return undefined; }
+    if (!searchReady) { setData(null); setError(null); setLoading(false); return undefined; }
     const controller = new AbortController();
     setError(null);
     setLoading(true);
@@ -24,10 +25,10 @@ export default function DiscoverSearch({ cityId, cityName = "this city" }) {
       const params = new URLSearchParams({ q: trimmed, scope: "events", city_id: cityId });
       fetchJson(`/api/search/?${params}`, { signal: controller.signal })
         .then((nextData) => { setData(nextData); setLoading(false); })
-        .catch((nextError) => { if (nextError.name !== "AbortError") { setData(null); setError(nextError); setLoading(false); } });
+        .catch((nextError) => { if (nextError.name !== "AbortError") { setError(nextError); setLoading(false); } });
     }, 250);
     return () => { clearTimeout(timer); controller.abort(); };
-  }, [cityId, retry, trimmed]);
+  }, [cityId, retry, searchReady, trimmed]);
 
   useEffect(() => {
     function close(event) { if (!rootRef.current?.contains(event.target)) { setQuery(""); setData(null); } }
@@ -45,14 +46,14 @@ export default function DiscoverSearch({ cityId, cityName = "this city" }) {
     <div className="discover-search" ref={rootRef}>
       <div className="discover-search-input-wrap">
         <input type="text" value={query} aria-label={`Search events in ${cityName}`} placeholder={`Search events in ${cityName}`} onChange={(event) => setQuery(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") openSearch(); if (event.key === "Escape") { setQuery(""); setData(null); } }} />
-        {query ? <button className="discover-search-clear" type="button" aria-label="Clear search" onClick={() => { setQuery(""); setData(null); }}>×</button> : null}
+        {query ? <button className="discover-search-clear mobile-target" type="button" aria-label="Clear search" onClick={() => { setQuery(""); setData(null); }}>×</button> : null}
       </div>
       {trimmed && (data || error || loading) ? (
         <div className="search-panel">
           {loading ? <p className="search-status" role="status" aria-live="polite">Searching…</p> : null}
-          {error ? <p className="search-error" role="alert">Search failed. <button type="button" onClick={() => setRetry((value) => value + 1)}>Try again.</button></p> : null}
+          {error ? <div className="search-error" role="alert"><p>Search could not be loaded.</p><button className="recovery-action" type="button" onClick={() => setRetry((value) => value + 1)}>Retry</button></div> : null}
           {data?.results.length ? <SearchResults compact data={data} scope="events" activeIndex={-1} onActiveIndex={() => {}} onResultOpen={() => recordRecentSearch(query)} onViewAll={openSearch} /> : data ? <p className="search-empty" role="status" aria-live="polite">No results for &quot;{trimmed}&quot;.</p> : null}
-          {data && data.total < 3 ? <button className="search-all-cities" type="button" onClick={openSearch}>Search all cities →</button> : null}
+          {data && data.total < 3 ? <button className="search-all-cities mobile-target" type="button" onClick={openSearch}>Search all cities →</button> : null}
         </div>
       ) : null}
     </div>

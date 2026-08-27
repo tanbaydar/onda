@@ -18,6 +18,7 @@ import RegisterPage from "./pages/RegisterPage.jsx";
 import VenuePage from "./pages/VenuePage.jsx";
 import VerifyEmailPage from "./pages/VerifyEmailPage.jsx";
 import SearchPage from "./pages/SearchPage.jsx";
+import SystemStatePage from "./components/SystemStatePage.jsx";
 import { GUEST_DISCOVER, landingPathForSession } from "./landing.js";
 import { primaryNavigationItems } from "./primaryNavigation.js";
 
@@ -30,24 +31,22 @@ function LandingPage({ session }) {
 
 function NotFoundPage() {
   return (
-    <main>
-      <h1>Page not found</h1>
+    <SystemStatePage title="Page not found">
       <p>The page you requested does not exist.</p>
-      <p>
-        <Link to="/discover">Return to Discover</Link>
-      </p>
-    </main>
+    </SystemStatePage>
   );
 }
 
 export default function App() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [retry, setRetry] = useState(0);
   const [session, setSession] = useState({
     loading: true,
     error: null,
     user: null,
   });
+  const [logoutState, setLogoutState] = useState({ pending: false, error: null });
 
   useEffect(() => {
     const controller = new AbortController();
@@ -65,6 +64,8 @@ export default function App() {
   }, [retry]);
 
   async function handleLogout() {
+    if (logoutState.pending) return;
+    setLogoutState({ pending: true, error: null });
     try {
       await fetchWithCsrf("/api/auth/logout/", {
         method: "POST",
@@ -72,11 +73,14 @@ export default function App() {
         headers: { "Content-Type": "application/json" },
       });
       setSession({ loading: false, error: null, user: null });
+      setLogoutState({ pending: false, error: null });
       navigate(GUEST_DISCOVER, { replace: true });
     } catch (error) {
-      setSession((current) => ({ ...current, error }));
+      setLogoutState({ pending: false, error });
     }
   }
+
+  const isAuthRoute = ["/register", "/login", "/verify-email", "/reset-password", "/reset-password/confirm"].includes(location.pathname);
 
   return (
     <>
@@ -86,22 +90,21 @@ export default function App() {
         </Link>
         <nav aria-label="Primary navigation">
           <ul>
-            {primaryNavigationItems(session.user).map((item) => <li key={item.label}><NavLink to={item.to}>{item.label}</NavLink></li>)}
+            {primaryNavigationItems(session.user).map((item) => <li key={item.label}><NavLink className="navigation-action" to={item.to}>{item.label}</NavLink></li>)}
           </ul>
         </nav>
         <section aria-label="Account controls">
           {session.user ? (
-            <AccountMenu user={session.user} onLogout={handleLogout} />
+            <AccountMenu user={session.user} onLogout={handleLogout} logoutState={logoutState} />
           ) : (
-            <p className="guest-auth-controls"><Link className="guest-register" to="/register">Register</Link><Link to="/login">Log in</Link></p>
+            <p className="guest-auth-controls"><Link className="guest-register account-action" to="/register">Register</Link><Link className="account-action" to="/login">Log in</Link></p>
           )}
         </section>
-        {session.loading ? <p>Checking session…</p> : null}
       </header>
       {session.error ? (
         <div className="session-error-slot" role="alert">
           <span>Account status could not be loaded.</span>
-          <button type="button" onClick={() => setRetry((value) => value + 1)}>Retry</button>
+          <button className="recovery-action" type="button" onClick={() => setRetry((value) => value + 1)}>Retry</button>
         </div>
       ) : null}
       <Routes>
@@ -156,12 +159,12 @@ export default function App() {
         <Route path="/artists/:artistKey" element={<ArtistPage user={session.user} sessionReady={!session.loading} />} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
-      <footer>
+      {!isAuthRoute ? <footer>
         <p>
           Event data sourced from{" "}
           <a href="https://ra.co">Resident Advisor</a>.
         </p>
-      </footer>
+      </footer> : null}
     </>
   );
 }

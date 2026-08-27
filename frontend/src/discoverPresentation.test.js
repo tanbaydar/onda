@@ -10,9 +10,9 @@ const eventList = readFileSync(new URL("./components/EventList.jsx", import.meta
 const eventRow = readFileSync(new URL("./components/DiscoverEventRow.jsx", import.meta.url), "utf8");
 const styles = readFileSync(new URL("./discover.css", import.meta.url), "utf8");
 
-test("DiscoverPage source binds the city name as its only h1", () => {
-  assert.match(page, /<h1>\{selectedCity\.name\}<\/h1>/);
-  assert.doesNotMatch(page, /<h1>Discover<\/h1>/);
+test("DiscoverPage uses the city as its successful identity and a functional initial-state title", () => {
+  assert.match(page, /<h1 className="identity-title">\{selectedCity\.name\}<\/h1>/);
+  assert.match(page, /<h1 className="functional-title">Discover<\/h1>/);
 });
 
 test("Discover lineup keeps listing order and collapses after two names", () => {

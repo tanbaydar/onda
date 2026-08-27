@@ -71,7 +71,7 @@ test("auth submissions have local completion gates and field-owned errors", () =
 test("verification success replaces the form with a terminal completion state", () => {
   const verify = readFileSync(new URL("./pages/VerifyEmailPage.jsx", import.meta.url), "utf8");
   assert.match(verify, /setCode\(""\);[\s\S]*setComplete\(true\)/);
-  assert.match(verify, /if \(complete\)[\s\S]*<h1>Email verified<\/h1>[\s\S]*>Continue<\/button>/);
+  assert.match(verify, /if \(complete\)[\s\S]*<h1 className="functional-title">Email verified<\/h1>[\s\S]*>Continue<\/button>/);
   assert.match(verify, /globalThis\.location\.assign\("\/"\)/);
 });
 
