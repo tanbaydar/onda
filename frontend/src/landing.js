@@ -15,6 +15,11 @@ export function landingPath(user, search = "") {
   return user ? AUTHENTICATED_LANDING : GUEST_DISCOVER;
 }
 
+export function landingPathForSession(session, search = "") {
+  if (session.loading) return null;
+  return landingPath(session.user ?? null, search);
+}
+
 export function homeAccessRedirect(user) {
   return user ? null : GUEST_DISCOVER;
 }

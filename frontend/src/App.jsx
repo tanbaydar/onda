@@ -18,14 +18,14 @@ import RegisterPage from "./pages/RegisterPage.jsx";
 import VenuePage from "./pages/VenuePage.jsx";
 import VerifyEmailPage from "./pages/VerifyEmailPage.jsx";
 import SearchPage from "./pages/SearchPage.jsx";
-import { GUEST_DISCOVER, landingPath } from "./landing.js";
+import { GUEST_DISCOVER, landingPathForSession } from "./landing.js";
 import { primaryNavigationItems } from "./primaryNavigation.js";
 
 function LandingPage({ session }) {
   const location = useLocation();
-  if (session.loading) return <main><p>Checking session.</p></main>;
-  if (session.error) return <main><p>Landing page could not be resolved.</p></main>;
-  return <Navigate to={landingPath(session.user, location.search)} replace />;
+  const destination = landingPathForSession(session, location.search);
+  if (!destination) return <main><p>Checking session…</p></main>;
+  return <Navigate to={destination} replace />;
 }
 
 function NotFoundPage() {
@@ -96,7 +96,7 @@ export default function App() {
             <p className="guest-auth-controls"><Link className="guest-register" to="/register">Register</Link><Link to="/login">Log in</Link></p>
           )}
         </section>
-        {session.loading ? <p>Checking session.</p> : null}
+        {session.loading ? <p>Checking session…</p> : null}
       </header>
       {session.error ? (
         <div className="session-error-slot" role="alert">

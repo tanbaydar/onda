@@ -11,6 +11,7 @@ export default function ActivityPage({ session }) {
   const [retry, setRetry] = useState(0);
   const [loadingMore, setLoadingMore] = useState(false);
   const [actionError, setActionError] = useState(null);
+  const [markReadState, setMarkReadState] = useState({ loading: false, error: null });
   const [pendingRequestKeys, setPendingRequestKeys] = useState(() => new Set());
   const [requestActions, setRequestActions] = useState({});
   const [state, setState] = useState({
@@ -27,10 +28,10 @@ export default function ActivityPage({ session }) {
     }
     const controller = new AbortController();
     setState({ loading: true, error: null, results: [], nextCursor: null });
+    setMarkReadState({ loading: false, error: null });
     Promise.all([
       fetchJson("/api/me/notifications/", { signal: controller.signal }),
       fetchJson("/api/me/follow-requests/?page_size=100", { signal: controller.signal, cache: "no-store" }),
-      fetchWithCsrf("/api/me/notifications/read-all/", { method: "POST", signal: controller.signal }),
     ])
       .then(([data, requests]) => {
         setPendingRequestKeys(new Set(requests.results.map(followRequestKey)));
@@ -41,6 +42,7 @@ export default function ActivityPage({ session }) {
           results: data.results,
           nextCursor: data.next_cursor,
         });
+        markAllRead(controller.signal);
       })
       .catch((error) => {
         if (error.name !== "AbortError") {
@@ -49,6 +51,16 @@ export default function ActivityPage({ session }) {
       });
     return () => controller.abort();
   }, [retry, session.loading, session.user]);
+
+  async function markAllRead(signal) {
+    setMarkReadState({ loading: true, error: null });
+    try {
+      await fetchWithCsrf("/api/me/notifications/read-all/", { method: "POST", ...(signal ? { signal } : {}) });
+      if (!signal?.aborted) setMarkReadState({ loading: false, error: null });
+    } catch (error) {
+      if (error.name !== "AbortError") setMarkReadState({ loading: false, error });
+    }
+  }
 
   async function loadMore() {
     setLoadingMore(true);
@@ -110,7 +122,7 @@ export default function ActivityPage({ session }) {
   }
 
   if (session.loading) {
-    return <main><p>Checking session.</p></main>;
+    return <main><p>Checking session…</p></main>;
   }
   if (!session.user) {
     return <main><h1>Activity</h1><p>Sign in to view your activity.</p></main>;
@@ -120,7 +132,8 @@ export default function ActivityPage({ session }) {
     <main className="activity-page">
       <h1>Activity</h1>
       {actionError ? <p>{actionError}</p> : null}
-      {state.loading ? <p>Loading activity.</p> : null}
+      {markReadState.error ? <div className="activity-action-error" role="alert"><p>Activity is visible, but it could not be marked as read.</p><button type="button" disabled={markReadState.loading} onClick={() => markAllRead()}>{markReadState.loading ? "Retrying…" : "Retry marking as read"}</button></div> : null}
+      {state.loading ? <p>Loading activity…</p> : null}
       {state.error ? (
         <>
           <p>Activity could not be loaded.</p>
@@ -160,7 +173,7 @@ export default function ActivityPage({ session }) {
           </ol>
           {state.nextCursor ? (
             <button type="button" disabled={loadingMore} onClick={loadMore}>
-              {loadingMore ? "Loading more." : "Load more"}
+              {loadingMore ? "Loading more…" : "Load more"}
             </button>
           ) : null}
         </>

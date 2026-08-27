@@ -53,7 +53,7 @@ export default function WillBeThereAttendees({ eventId, scope, user, version, ac
   return (
     <section>
       <h2>{heading}</h2>
-      {state.loading ? <p>Loading attendees.</p> : null}
+      {state.loading ? <p>Loading attendees…</p> : null}
       {state.error ? (
         <>
           <p>Attendees could not be loaded.</p>

@@ -82,7 +82,7 @@ export default function DiscoverPage() {
 
   return (
     <main className="discover-page">
-      {state.loading ? <p>Loading cities.</p> : null}
+      {state.loading ? <p>Loading cities…</p> : null}
       {state.error ? (
         <>
           <p>Cities could not be loaded.</p>

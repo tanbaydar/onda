@@ -63,7 +63,7 @@ export default function ArtistPage({ user, sessionReady }) {
   if (state.loading) {
     return (
       <main>
-        <p>Loading artist.</p>
+        <p>Loading artist…</p>
       </main>
     );
   }

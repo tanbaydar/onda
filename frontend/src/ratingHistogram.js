@@ -6,6 +6,15 @@ export function ratingTooltip(bucket) {
   return `${bucket.count} · ${bucket.rating.toFixed(1)}★`;
 }
 
+export function ratingBucketLabel(bucket) {
+  const unit = bucket.count === 1 ? "rating" : "ratings";
+  return `${bucket.rating.toFixed(1)} stars: ${bucket.count} ${unit}`;
+}
+
+export function ratingDistributionDescription(buckets) {
+  return `${buckets.map(ratingBucketLabel).join(". ")}.`;
+}
+
 export function profileRatingBuckets(distribution) {
   if (distribution?.state === "available" && Array.isArray(distribution.buckets)) return distribution.buckets;
   return Array.from({ length: 10 }, (_, index) => ({

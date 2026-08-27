@@ -196,7 +196,7 @@ export default function EventPage({ user, sessionReady, onAuthenticationRequired
   if (state.loading) {
     return (
       <main>
-        <p>Loading event.</p>
+        <p>Loading event…</p>
       </main>
     );
   }
@@ -251,13 +251,13 @@ export default function EventPage({ user, sessionReady, onAuthenticationRequired
         </div>
         <section className="event-lineup">
           <h2>Lineup</h2>
-          <ol>
+          {event.artists.length ? <ol>
             {event.artists.map((artist) => (
               <li key={artist.id}>
                 <Link to={artistPath(artist)}>{artist.name}</Link>
               </li>
             ))}
-          </ol>
+          </ol> : <p>No lineup has been listed.</p>}
         </section>
         {!isPast && wbtCount > 0 ? <div className="wbt-count"><span>{wbtCount}</span><p>{pluralize(wbtCount, "active mark")}</p></div> : null}
         {isPast ? <div className="event-rating-block">
