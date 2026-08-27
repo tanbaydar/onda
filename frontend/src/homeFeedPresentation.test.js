@@ -41,9 +41,9 @@ test("empty Home fixture and HomePage source contain the ruled empty affordance"
   assert.match(pageSource, /to="\/discover">Discover events<\/Link>/);
 });
 
-test("FeedReviewExcerpt and CSS sources gate an inline more marker on measurement", () => {
+test("FeedReviewExcerpt and CSS sources gate a clear inline Read more marker on measurement", () => {
   assert.match(excerptSource, /probe\.scrollHeight <= maxHeight/);
-  assert.match(excerptSource, /rendered\.truncated \? <>… <small>more<\/small><\/> : null/);
+  assert.match(excerptSource, /rendered\.truncated \? <>… <small>Read more<\/small><\/> : null/);
   assert.doesNotMatch(styles, /\.home-feed-review small\{[^}]*position:/);
   assert.match(styles, /\.home-feed-review small\{display:inline/);
 });

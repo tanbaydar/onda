@@ -7,20 +7,47 @@ import { INVALID_LOGIN_MESSAGE } from "../authPresentation.js";
 
 export default function LoginPage({ onAuthenticated }) {
   const navigate = useNavigate();
+  const [identifier, setIdentifier] = useState("");
+  const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState(null);
+  const [errors, setErrors] = useState({});
+
+  function changeIdentifier(event) {
+    setIdentifier(event.target.value);
+    setErrors((current) => ({ ...current, identifier: undefined }));
+  }
+
+  function changePassword(event) {
+    setPassword(event.target.value);
+    setErrors((current) => ({ ...current, password: undefined }));
+  }
 
   async function handleSubmit(event) {
     event.preventDefault();
-    const form = new FormData(event.currentTarget);
+    const localErrors = {};
+    if (!identifier.trim()) localErrors.identifier = "Enter your username or email.";
+    if (!password) localErrors.password = "Enter your password.";
+    if (Object.keys(localErrors).length) {
+      setErrors(localErrors);
+      return;
+    }
+
     setSubmitting(true);
-    setError(null);
+    setErrors({});
     try {
-      const data = await fetchWithCsrf("/api/auth/login/", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: form.get("identifier"), password: form.get("password") }) });
+      const data = await fetchWithCsrf("/api/auth/login/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: identifier.trim(), password }),
+      });
       onAuthenticated(data.user);
       navigate(postAuthDestination(data.user));
     } catch (requestError) {
-      setError(requestError.data?.errors?.credentials?.[0] ?? INVALID_LOGIN_MESSAGE);
+      const serverErrors = requestError.data?.errors ?? {};
+      setErrors({
+        identifier: serverErrors.email?.[0],
+        password: serverErrors.password?.[0] ?? serverErrors.credentials?.[0] ?? INVALID_LOGIN_MESSAGE,
+      });
     } finally {
       setSubmitting(false);
     }
@@ -32,12 +59,13 @@ export default function LoginPage({ onAuthenticated }) {
       <form onSubmit={handleSubmit} noValidate>
         <div className="auth-field">
           <label htmlFor="login-identifier">Username or email</label>
-          <input id="login-identifier" name="identifier" autoComplete="username" required />
+          <input id="login-identifier" name="identifier" autoComplete="username" value={identifier} onChange={changeIdentifier} required aria-invalid={errors.identifier ? "true" : undefined} aria-describedby={errors.identifier ? "login-identifier-error" : undefined} />
+          {errors.identifier ? <p id="login-identifier-error" className="auth-error" role="alert">{errors.identifier}</p> : null}
         </div>
         <div className="auth-field">
           <label htmlFor="login-password">Password</label>
-          <input id="login-password" name="password" type="password" autoComplete="current-password" required aria-invalid={error ? "true" : undefined} aria-describedby={error ? "login-error" : undefined} />
-          {error ? <p id="login-error" className="auth-error" role="alert">That username or email and password don&apos;t match. Try again or <Link to="/reset-password">reset your password</Link>.</p> : null}
+          <input id="login-password" name="password" type="password" autoComplete="current-password" value={password} onChange={changePassword} required aria-invalid={errors.password ? "true" : undefined} aria-describedby={errors.password ? "login-password-error" : undefined} />
+          {errors.password ? <p id="login-password-error" className="auth-error" role="alert">{errors.password}</p> : null}
         </div>
         <button className="auth-primary" type="submit" disabled={submitting}>{submitting ? "Logging in…" : "Log in"}</button>
       </form>

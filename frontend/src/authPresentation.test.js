@@ -31,19 +31,55 @@ test("auth CSS and page sources contain the danger register and one code field p
   assert.equal((reset.match(/auth-code-input/g) ?? []).length, 1);
 });
 
-test("password reset request opens the code form without an intermediate action", () => {
+test("password reset request stays on the request screen until the explicit code action", () => {
   const request = readFileSync(new URL("./pages/PasswordResetRequestPage.jsx", import.meta.url), "utf8");
-  assert.match(request, /await fetchWithCsrf[\s\S]*savePasswordResetEmail\(email\)[\s\S]*navigate\("\/reset-password\/confirm", \{ state: \{ email: resetEmail \} \}\)/);
-  assert.doesNotMatch(request, />Enter code</);
-  assert.doesNotMatch(request, /setAccepted/);
+  assert.match(request, /await fetchWithCsrf[\s\S]*savePasswordResetEmail\(resetEmail\);[\s\S]*setAcceptedEmail\(resetEmail\)/);
+  assert.match(request, /resetConfirmation\(acceptedEmail\)/);
+  assert.match(request, />Enter code<\/button>/);
+  assert.match(request, /onClick=\{\(\) => navigate\("\/reset-password\/confirm", \{ state: \{ email: acceptedEmail \} \}\)\}/);
 });
 
-test("password reset confirmation supports refresh, safe email re-entry, resend, and cleanup", () => {
+test("password reset confirmation preserves context, validates locally, and cleans up", () => {
   const reset = readFileSync(new URL("./pages/PasswordResetFormPage.jsx", import.meta.url), "utf8");
   assert.match(reset, /location\.state\?\.email \|\| readPasswordResetEmail\(\)/);
   assert.match(reset, /if \(!resetEmail\)[\s\S]*Enter your email\./);
   assert.match(reset, /if \(!email\)[\s\S]*onSubmit=\{enterEmail\}/);
   assert.match(reset, /onClick=\{resendCode\}[\s\S]*>Resend code</);
-  assert.match(reset, /If an account exists, a code is on its way\./);
+  assert.match(reset, /We sent a six-digit code to \{email\}\./);
+  assert.match(reset, /if \(!codeIsComplete\)[\s\S]*Enter a 6-digit code\./);
+  assert.match(reset, /password\.length < 8[\s\S]*At least 8 characters\./);
+  assert.match(reset, /password !== confirmation[\s\S]*Passwords must match\./);
+  assert.match(reset, /serverErrors\.password\.join\(" "\)/);
   assert.match(reset, /await fetchWithCsrf\("\/api\/auth\/password-reset\/confirm\/[\s\S]*clearPasswordResetEmail\(\)/);
+});
+
+test("auth submissions have local completion gates and field-owned errors", () => {
+  const login = readFileSync(new URL("./pages/LoginPage.jsx", import.meta.url), "utf8");
+  const verify = readFileSync(new URL("./pages/VerifyEmailPage.jsx", import.meta.url), "utf8");
+  const reset = readFileSync(new URL("./pages/PasswordResetFormPage.jsx", import.meta.url), "utf8");
+
+  assert.match(login, /if \(!identifier\.trim\(\)\)[\s\S]*if \(!password\)[\s\S]*Object\.keys\(localErrors\)\.length/);
+  assert.match(login, /aria-describedby=\{errors\.identifier \? "login-identifier-error"/);
+  assert.match(login, /aria-describedby=\{errors\.password \? "login-password-error"/);
+  assert.match(verify, /const codeIsComplete = \/\^\\d\{6\}\$\//);
+  assert.match(verify, /disabled=\{submitting \|\| !codeIsComplete\}/);
+  assert.match(verify, /aria-describedby=\{error \? "verification-code-error"/);
+  assert.match(reset, /disabled=\{submitting \|\| !codeIsComplete\}/);
+  assert.match(reset, /aria-describedby=\{errors\.confirmation \? "reset-confirm-password-error"/);
+});
+
+test("verification success replaces the form with a terminal completion state", () => {
+  const verify = readFileSync(new URL("./pages/VerifyEmailPage.jsx", import.meta.url), "utf8");
+  assert.match(verify, /setCode\(""\);[\s\S]*setComplete\(true\)/);
+  assert.match(verify, /if \(complete\)[\s\S]*<h1>Email verified<\/h1>[\s\S]*>Continue<\/button>/);
+  assert.match(verify, /globalThis\.location\.assign\("\/"\)/);
+});
+
+test("registration privacy consequence appears only for the selected choice", () => {
+  const register = readFileSync(new URL("./pages/RegisterPage.jsx", import.meta.url), "utf8");
+  assert.match(register, /form\.privacy === "private"[\s\S]*form\.privacy === "public"[\s\S]*: null/);
+  assert.match(register, /\{privacyCopy \? <p id="register-privacy-description">\{privacyCopy\}<\/p> : null\}/);
+  assert.match(register, /aria-describedby=\{privacyDescription\}/);
+  assert.match(register, /id="register-privacy-error"/);
+  assert.match(register, /if \(!form\.username\.trim\(\)\)[\s\S]*if \(!form\.email\.trim\(\)\)[\s\S]*form\.password\.length < 8[\s\S]*if \(!form\.display_name\.trim\(\)\)/);
 });

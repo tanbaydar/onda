@@ -63,7 +63,7 @@ export default function VenuePage({ user, sessionReady }) {
   if (state.loading) {
     return (
       <main>
-        <p>Loading venue.</p>
+        <p>Loading venue…</p>
       </main>
     );
   }

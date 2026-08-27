@@ -60,7 +60,7 @@ function BeenTab({ onReviewDeleted, owner, username }) {
 
   return (
     <section className="profile-tab-panel" aria-label="Been">
-      {state.loading ? <p>Loading Been history.</p> : null}
+      {state.loading ? <p>Loading Been history…</p> : null}
       {state.error ? <><p>Been history could not be loaded.</p><button className="quiet-control" type="button" onClick={() => setRetry((value) => value + 1)}>Retry</button></> : null}
       {state.data?.results.length === 0 ? <p className="profile-tab-empty">{PROFILE_EMPTY_STATES.been}</p> : null}
       {actionError ? <p role="alert">{actionError}</p> : null}
@@ -83,7 +83,7 @@ function ReviewsTab({ username, sort }) {
   }, [page, retry, sort, username]);
   return (
     <section className="profile-tab-panel" aria-label="Reviews">
-      {state.loading ? <p>Loading reviews.</p> : null}
+      {state.loading ? <p>Loading reviews…</p> : null}
       {state.error ? <><p>Reviews could not be loaded.</p><button className="quiet-control" type="button" onClick={() => setRetry((value) => value + 1)}>Retry</button></> : null}
       {state.data?.results.length === 0 ? <p className="profile-tab-empty">{PROFILE_EMPTY_STATES.reviews}</p> : null}
       {state.data?.results.length ? <><ol className="profile-diary-list">{state.data.results.map((review) => <ProfileDiaryRow key={review.id} event={review.event} rating={review.rating} hasReview />)}</ol><Pagination pagination={state.data.pagination} onPage={setPage} /></> : null}
@@ -100,7 +100,7 @@ function ProfileStatistics({ username, version = 0 }) {
     fetchJson(`/api/users/${encodeURIComponent(username)}/stats/`, { signal: controller.signal, cache: "no-store" }).then((data) => setState({ loading: false, error: null, data })).catch((error) => { if (error.name !== "AbortError") setState({ loading: false, error, data: null }); });
     return () => controller.abort();
   }, [retry, username, version]);
-  if (state.loading) return <section className="profile-statistics"><h2>Statistics</h2><p>Loading statistics.</p></section>;
+  if (state.loading) return <section className="profile-statistics"><h2>Statistics</h2><p>Loading statistics…</p></section>;
   if (state.error) return <section className="profile-statistics"><h2>Statistics</h2><p>Statistics could not be loaded.</p><button className="quiet-control" type="button" onClick={() => setRetry((value) => value + 1)}>Retry</button></section>;
   const statistics = state.data.statistics;
   const distribution = state.data.rating_distribution;
@@ -139,7 +139,7 @@ function ProfileFavorites({ username, owner }) {
     fetchJson(`/api/users/${encodeURIComponent(username)}/favorites/`, { signal: controller.signal, cache: "no-store" }).then((favorites) => setState({ loading: false, error: null, favorites })).catch((error) => { if (error.name !== "AbortError") setState((current) => current.favorites ? { ...current, loading: false, error } : { loading: false, error, favorites: null }); });
     return () => controller.abort();
   }, [owner, retry, username]);
-  if (state.loading) return <section className="profile-favorites"><h2>Favorites</h2><p>Loading favorites.</p></section>;
+  if (state.loading) return <section className="profile-favorites"><h2>Favorites</h2><p>Loading favorites…</p></section>;
   if (state.error && !state.favorites) return <section className="profile-favorites"><h2>Favorites</h2><p>Favorites could not be loaded.</p><button className="quiet-control" type="button" onClick={() => setRetry((value) => value + 1)}>Retry</button></section>;
   const groups = [
     { key: "events", label: "Events", items: state.favorites.events.map(({ event }) => ({ key: `event-${event.id}`, collection: "events", id: event.id, to: eventPath(event), name: event.title, meta: `${formatEventDateTime(event.event_date, event.start_time)} · ${event.venue.name}`, image: event.cover_image_url, favoritePath: `/api/events/${event.id}/favorite/` })) },
@@ -200,7 +200,16 @@ export default function ProfilePage({ session, tab = "been" }) {
     }
   }
 
-  if (state.loading) return <main><p>Loading profile.</p></main>;
+  function retryFollow() {
+    if (followError === "The latest follow state could not be confirmed.") {
+      setFollowError(null);
+      setRetry((value) => value + 1);
+      return;
+    }
+    changeFollow();
+  }
+
+  if (state.loading) return <main><p>Loading profile…</p></main>;
   if (state.error?.status === 404) return <main><h1>Profile not found</h1><p>This profile does not exist.</p></main>;
   if (state.error) return <main><p>Profile could not be loaded.</p><button type="button" onClick={() => setRetry((value) => value + 1)}>Retry</button></main>;
   const data = state.data;
@@ -214,7 +223,7 @@ export default function ProfilePage({ session, tab = "been" }) {
           <h1>{profile.display_name}</h1>
           <p className="profile-handle-line">@{profile.username}{profile.home_city ? ` · ${profile.home_city.name}` : ""}{data.relationship?.follows_you ? " · Follows you" : ""}{data.relationship?.outgoing_status === "approved" ? " · Following" : ""}</p>
           <div className="profile-social-counts"><button type="button" aria-haspopup="dialog" onClick={() => setConnections("followers")}><strong>{profile.follower_count}</strong><small>Followers</small></button><button type="button" aria-haspopup="dialog" onClick={() => setConnections("following")}><strong>{profile.following_count}</strong><small>Following</small></button></div>
-          {owner ? <Link className="profile-edit-link" to="/settings/profile">Edit profile</Link> : <><FollowControl relationship={data.relationship} pending={followPending} onChange={changeFollow} />{followError ? <p className="profile-follow-error" role="alert">{followError}</p> : null}</>}
+          {owner ? <Link className="profile-edit-link" to="/settings/profile">Edit profile</Link> : <><FollowControl relationship={data.relationship} pending={followPending} onChange={changeFollow} />{followError ? <div className="profile-follow-error" role="alert"><p>{followError}</p><button type="button" disabled={followPending} onClick={retryFollow}>{followPending ? "Retrying…" : "Retry"}</button></div> : null}</>}
           {profile.bio ? <p className="profile-bio">{profile.bio}</p> : null}
         </div>
       </header>

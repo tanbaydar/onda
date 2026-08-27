@@ -31,6 +31,7 @@
   --flier-sm:80px; --flier-sm-h:100px;           /* mobile reduced flier 4:5 */
   --flier-md:160px; --flier-md-h:200px;          /* desktop identity-block flier */
   --radius:0; --hairline:1px; --breakpoint-desktop:768px;
+  --focus-width:2px; --target-min:24px; --target-mobile:44px;
 
   /* ---- TYPE ---- */
   --font-display:"Rozha One",serif;      /* 400 only (native didone mass) */
@@ -55,8 +56,8 @@
   --bg:#FFFFFF; --bg-subtle:#F1F1F1;              /* bg-subtle: unverified banner only */
   --backdrop:rgba(27,27,27,.4);                   /* ConfirmDialog dim */
   --text:#1B1B1B;                                 /* ink; never #000 */
-  --text-secondary:#4F4F4F; --text-muted:#8A8A8A; /* muted = floor for text */
-  --border-strong:#C4C4C4;                        /* inputs, quiet controls */
+  --text-secondary:#4F4F4F; --text-muted:#6E6E6E; /* muted = floor for text */
+  --border-strong:#949494;                        /* inputs, quiet controls */
   --border:#E6E6E6;                               /* the ledger hairline */
   --border-muted:#F1F1F1;                         /* quiet-row hairline */
   --image-slot:#ECECEC; --avatar:#DEDEDE;

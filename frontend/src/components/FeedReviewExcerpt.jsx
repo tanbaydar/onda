@@ -44,7 +44,7 @@ export default function FeedReviewExcerpt({ children }) {
       let high = body.length;
       while (low < high) {
         const middle = Math.ceil((low + high) / 2);
-        probe.textContent = `${body.slice(0, middle).trimEnd()}… more`;
+        probe.textContent = `${body.slice(0, middle).trimEnd()}… Read more`;
         if (probe.scrollHeight <= maxHeight) low = middle;
         else high = middle - 1;
       }
@@ -64,7 +64,7 @@ export default function FeedReviewExcerpt({ children }) {
 
   return (
     <span className="home-feed-review" ref={rootRef}>
-      {rendered.text}{rendered.truncated ? <>… <small>more</small></> : null}
+      {rendered.text}{rendered.truncated ? <>… <small>Read more</small></> : null}
     </span>
   );
 }
