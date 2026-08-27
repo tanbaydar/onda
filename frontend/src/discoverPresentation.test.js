@@ -32,6 +32,9 @@ test("EventRowPresenter uses compact dates and contains no prose labels", () => 
   assert.doesNotMatch(eventRow, /Venue:|Artists:/);
   assert.match(eventRow, /discover-event-row/);
   assert.match(eventList, /<EventRowPresenter/);
+  assert.match(eventList, /venueFirst=\{discover\}/);
+  assert.match(eventRow, /const visibleStartTime = past \? null : event\.start_time/);
+  assert.match(eventRow, /venueFirst && venue \? <>\{venue\}<span aria-hidden="true"> · <\/span>\{date\}/);
 });
 
 test("event identity date and time stay compact without dropping the year", () => {

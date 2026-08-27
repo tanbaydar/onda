@@ -225,26 +225,21 @@ export default function EventPage({ user, sessionReady, onAuthenticationRequired
 
   const event = state.event;
   const isPast = eventIsPast(event);
-  const hasIdentityArtwork = Boolean(event.cover_image_url || isPast);
   const wbtCount = event.will_be_there_summary.active_count;
   const viewerHasRating = event.viewer_entry?.rating !== null && event.viewer_entry?.rating !== undefined;
   const trimmedReviewLength = reviewBody.trim().length;
   return (
-    <main className={`event-page${hasIdentityArtwork ? " has-event-art" : " event-page-no-artwork"}`}>
+    <main className="event-page has-event-art">
       {state.error ? <div className="action-feedback" role="alert"><p>Event status could not be refreshed.</p><button className="recovery-action" type="button" onClick={() => setRetry((value) => value + 1)}>Retry</button></div> : null}
       <article className={`identity event-identity ${isPast ? "event-identity-past" : "event-identity-upcoming"}`}>
         <h1 className="identity-title">{event.title}</h1>
-        {hasIdentityArtwork ? <ImageSlot name={event.title} src={event.cover_image_url} alt={event.title} loading="eager" referrerPolicy="no-referrer" /> : null}
+        <ImageSlot name={event.title} src={event.cover_image_url} alt={event.title} loading="eager" referrerPolicy="no-referrer" />
         <div className={`event-meta-stack ${isPast ? "event-meta-past" : "event-meta-upcoming"}`}>
         {isPast ? <p>
           <time
-            dateTime={
-              event.start_time
-                ? `${event.event_date}T${event.start_time}`
-                : event.event_date
-            }
+            dateTime={event.event_date}
           >
-            {formatEventIdentityDateTime(event.event_date, event.start_time)}
+            {formatEventIdentityDateTime(event.event_date, null)}
           </time>
         </p> : null}
         <p className="event-location-line"><Link to={venuePath(event.venue)}>{event.venue.name}</Link><span aria-hidden="true"> · </span><Link to={`/discover?city_id=${event.venue.city.id}`}>{event.venue.city.name}</Link></p>

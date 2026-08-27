@@ -62,6 +62,8 @@ test("approved hierarchy and availability decisions are represented directly", (
   assert.match(event, /!isPast && !user \? <><WillBeThereAttendees eventId=\{event\.id\} scope="public"[\s\S]*scope="circle"/);
   assert.match(publicReviews, /state\.data\?\.results\.length \? <SortMenu/);
   assert.match(profile, /state\.data\?\.results\.length \? <div className="profile-review-sort"><SortMenu/);
+  assert.match(profile, />Avg\. Rating<\/span>/);
+  assert.match(profile, /reviewBody=\{review\.body\} likeCount=\{review\.like_count\}/);
 });
 
 test("all four governed event-row variants remain in one presenter family", () => {

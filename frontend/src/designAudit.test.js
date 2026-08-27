@@ -87,11 +87,12 @@ test("event attendee lists use the shared profile-row identity grammar", () => {
   assert.match(attendees, /className="event-attendee-row"/);
 });
 
-test("sparse upcoming events keep one hierarchy, withhold a zero WBT numeral, and omit Favorite", () => {
+test("sparse upcoming events keep one standardized artwork hierarchy, withhold a zero WBT numeral, and omit Favorite", () => {
   const eventPage = read("./pages/EventPage.jsx");
   const attendees = read("./components/WillBeThereAttendees.jsx");
   const css = read("./styles.css");
-  assert.match(eventPage, /event-page-no-artwork/);
+  assert.match(eventPage, /<main className="event-page has-event-art">/);
+  assert.match(eventPage, /<ImageSlot name=\{event\.title\} src=\{event\.cover_image_url\}/);
   assert.match(eventPage, /<div className="event-attendance">/);
   assert.match(eventPage, /wbtCount > 0 \? <p className="wbt-count">/);
   assert.equal((eventPage.match(/<FavoriteControl compact/g) ?? []).length, 1);
@@ -100,8 +101,7 @@ test("sparse upcoming events keep one hierarchy, withhold a zero WBT numeral, an
   assert.match(eventPage, /activeCount=\{wbtCount\}/);
   assert.match(attendees, /"No active marks yet\."/);
   assert.match(attendees, /"No public marks are visible\."/);
-  assert.match(css, /\.event-page-no-artwork>\.event-identity,\.event-page-no-artwork>section\{max-width:var\(--measure-prose\)\}/);
-  assert.match(css, /\.event-page\.event-page-no-artwork>section\{margin-left:0\}/);
+  assert.doesNotMatch(eventPage, /event-page-no-artwork/);
 });
 
 test("event lineup gives every artist one subordinate functional-text treatment", () => {
@@ -116,6 +116,7 @@ test("event identity uses one information recipe and keeps the attendance decisi
   const css = read("./styles.css");
   assert.match(eventPage, /className="event-location-line"/);
   assert.match(eventPage, /formatEventIdentityDateTime/);
+  assert.match(eventPage, /isPast \? <p>[\s\S]*dateTime=\{event\.event_date\}[\s\S]*formatEventIdentityDateTime\(event\.event_date, null\)/);
   assert.match(css, /\.event-meta-stack\{[^}]*color:var\(--text-secondary\);[^}]*font-size:var\(--text-ui\);font-weight:400/);
   assert.doesNotMatch(css, /\.wbt-count>span|\.wbt-count p/);
   assert.match(eventPage, /wbt-action\$\{event\.viewer_will_be_there\.is_marked \? " is-marked" : ""\}/);

@@ -55,3 +55,8 @@ This operator-approved override supersedes the earlier three-step event metadata
 - `Lineup` uses the existing UI size in semibold primary ink and sentence case. It is separated from artist information by the shared 8px step; artists remain a semantic ordered list with 6px internal rhythm.
 - Upcoming attendance is one compact group after Lineup: the active-mark sentence and owner action share a row when capacity permits and wrap as a unit when constrained. The display-font numeral is removed.
 - `Will Be There` is a decision action, not metadata. It uses the existing judgment-green action boundary in both unmarked and marked states; the label and `aria-pressed` state communicate whether the decision is committed. The active-mark count remains judgment green because it represents committed social activity.
+
+## Dated operator override — 2026-08-27 past time and artwork standardization
+
+- A past event never displays its stored start time. Its identity retains the event date, venue, and city; upcoming events continue to display date and time.
+- Every event detail identity reserves the governed artwork slot. When no flyer URL exists, `ImageSlot` renders the standard initial placeholder at the same 4:5 dimensions; event pages never collapse into a no-artwork layout.
