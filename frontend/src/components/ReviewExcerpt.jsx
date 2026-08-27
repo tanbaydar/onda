@@ -10,7 +10,7 @@ export default function ReviewExcerpt({ children }) {
   return (
     <div className={`event-review-excerpt${expanded ? " expanded" : ""}`}>
       <p ref={bodyRef}>{children}</p>
-      {truncated || expanded ? <button className="event-review-more" type="button" aria-expanded={expanded} onClick={() => setExpanded((value) => !value)}>{expanded ? "Show less" : "Read more"}</button> : null}
+      {truncated || expanded ? <button className="event-review-more mobile-target" type="button" aria-expanded={expanded} onClick={() => setExpanded((value) => !value)}>{expanded ? "Show less" : "Read more"}</button> : null}
     </div>
   );
 }

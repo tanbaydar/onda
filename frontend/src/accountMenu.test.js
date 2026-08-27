@@ -10,9 +10,9 @@ test("AccountMenu source wires disclosure, Escape, outside-click, and selection 
   assert.match(component, /setOpen\(\(current\) => !current\)/);
   assert.match(component, /event\.key === "Escape"/);
   assert.match(component, /!rootRef\.current\?\.contains\(event\.target\)/);
-  assert.match(component, /to="\/settings\/profile" onClick=\{\(\) => setOpen\(false\)\}/);
+  assert.match(component, /role="menuitem" to="\/settings\/profile" onClick=\{\(\) => setOpen\(false\)\}/);
   assert.equal((component.match(/>Edit profile<\/Link>/g) ?? []).length, 1);
-  assert.equal((component.match(/>Log out<\/button>/g) ?? []).length, 1);
+  assert.match(component, /logoutState\.pending \? "Logging out…" : "Log out"/);
   assert.equal((component.match(/role="menuitem"/g) ?? []).length, 2);
 });
 
@@ -25,6 +25,6 @@ test("App source wires logout to the shipped endpoint, session clear, and guest 
 test("App source gates AccountMenu to signed-in sessions and exposes guest auth links", () => {
   assert.match(app, /session\.user \? \(\s*<AccountMenu/);
   assert.doesNotMatch(component, /Register|Log in/);
-  assert.match(app, /className="guest-register" to="\/register">Register<\/Link>/);
-  assert.match(app, /<Link to="\/login">Log in<\/Link>/);
+  assert.match(app, /className="guest-register account-action" to="\/register">Register<\/Link>/);
+  assert.match(app, /className="account-action" to="\/login">Log in<\/Link>/);
 });

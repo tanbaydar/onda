@@ -68,6 +68,7 @@ async function expectChromeClearsMain(page, isMobile) {
     const rootStyle = getComputedStyle(root);
     const rect = (element) => element?.getBoundingClientRect().toJSON();
     return {
+      viewportHeight: window.innerHeight,
       rootPaddingTop: Number.parseFloat(rootStyle.paddingTop),
       rootPaddingBottom: Number.parseFloat(rootStyle.paddingBottom),
       header: rect(header),
@@ -79,7 +80,7 @@ async function expectChromeClearsMain(page, isMobile) {
   expect(geometry.header).toBeTruthy();
   expect(geometry.main).toBeTruthy();
   if (isMobile) {
-    expect(geometry.header.y + geometry.header.height).toBeCloseTo(844, 0);
+    expect(geometry.header.y + geometry.header.height).toBeCloseTo(geometry.viewportHeight, 0);
     expect(geometry.rootPaddingBottom).toBeGreaterThanOrEqual(geometry.header.height);
     expect(geometry.account).toBeTruthy();
     expect(geometry.rootPaddingTop).toBeGreaterThanOrEqual(geometry.account.height);
@@ -183,5 +184,42 @@ test.describe("public-beta visual contract", () => {
     test.skip(!testInfo.project.name.startsWith("mobile"), "The 44px product target is a mobile contract.");
     await openRoute(page, PUBLIC_ROUTES[1], { authenticated: true });
     await expectMinimumTargets(page.locator(".account-menu-trigger"));
+  });
+
+  test("the 767 to 768 shell transition preserves usable content capacity", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "desktop-chrome-1280", "Measured once because this test controls its own viewport.");
+    await mockPublicApi(page);
+    await page.setViewportSize({ width: 767, height: 900 });
+    await page.goto("/discover");
+    await expect(page.getByRole("heading", { level: 1, name: "Boston" })).toBeVisible();
+    const narrow = await page.locator("main").evaluate((element) => {
+      const style = getComputedStyle(element);
+      return element.clientWidth - Number.parseFloat(style.paddingLeft) - Number.parseFloat(style.paddingRight);
+    });
+    await page.setViewportSize({ width: 768, height: 900 });
+    const desktop = await page.locator("main").evaluate((element) => {
+      const style = getComputedStyle(element);
+      return element.clientWidth - Number.parseFloat(style.paddingLeft) - Number.parseFloat(style.paddingRight);
+    });
+    expect(desktop).toBeGreaterThanOrEqual(narrow);
+  });
+
+  test("the 320px Search scope rail discloses and scrolls every scope into view", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "mobile-chrome-320", "The local rail is the approved 320px composition.");
+    await openRoute(page, PUBLIC_ROUTES[1]);
+    const rail = page.locator(".search-scopes");
+    const overflow = await rail.evaluate((element) => ({ client: element.clientWidth, scroll: element.scrollWidth }));
+    expect(overflow.scroll).toBeGreaterThan(overflow.client);
+    await expect(page.locator(".search-scopes-cue")).toBeVisible();
+    await page.getByRole("button", { name: "People" }).focus();
+    await expect(page.getByRole("button", { name: "People" })).toBeFocused();
+    const geometry = await page.getByRole("button", { name: "People" }).evaluate((element) => {
+      const button = element.getBoundingClientRect();
+      const railRect = element.parentElement.getBoundingClientRect();
+      return { buttonLeft: button.left, buttonRight: button.right, railLeft: railRect.left, railRight: railRect.right };
+    });
+    expect(geometry.buttonLeft).toBeGreaterThanOrEqual(geometry.railLeft);
+    expect(geometry.buttonRight).toBeLessThanOrEqual(geometry.railRight);
+    await expect(page.locator(".search-scopes-cue")).toBeHidden();
   });
 });

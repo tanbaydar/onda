@@ -31,12 +31,12 @@ export default function PasswordResetRequestPage() {
 
   if (acceptedEmail) {
     return <main className="auth-page">
-      <h1>Check your email</h1>
+      <h1 className="functional-title">Check your email</h1>
       <p className="auth-intro" role="status">{resetConfirmation(acceptedEmail)}</p>
       <button className="auth-primary" type="button" onClick={() => navigate("/reset-password/confirm", { state: { email: acceptedEmail } })}>Enter code</button>
       <div className="auth-links"><button className="auth-link-button" type="button" onClick={() => { clearPasswordResetEmail(); setAcceptedEmail(""); setEmail(""); }}>Use a different email</button></div>
     </main>;
   }
 
-  return <main className="auth-page"><h1>Reset your password</h1><form onSubmit={submit} noValidate><div className="auth-field"><label htmlFor="reset-email">Email</label><input id="reset-email" name="email" type="email" autoComplete="email" value={email} onChange={(event) => { setEmail(event.target.value); setError(null); }} required aria-invalid={error ? "true" : undefined} aria-describedby={error ? "reset-email-error" : undefined} />{error ? <p id="reset-email-error" className="auth-error" role="alert">{error}</p> : null}</div><button className="auth-primary" type="submit" disabled={submitting}>{submitting ? "Sending…" : "Send code"}</button></form><div className="auth-links"><p>Remembered it? <Link to="/login">Log in</Link></p></div></main>;
+  return <main className="auth-page"><h1 className="functional-title">Reset your password</h1><form onSubmit={submit} noValidate><div className="auth-field"><label htmlFor="reset-email">Email</label><input id="reset-email" name="email" type="email" autoComplete="email" value={email} onChange={(event) => { setEmail(event.target.value); setError(null); }} required aria-invalid={error ? "true" : undefined} aria-describedby={error ? "reset-email-error" : undefined} />{error ? <p id="reset-email-error" className="auth-error" role="alert">{error}</p> : null}</div><button className="auth-primary" type="submit" disabled={submitting}>{submitting ? "Sending…" : "Send code"}</button></form><div className="auth-links"><p>Remembered it? <Link to="/login">Log in</Link></p></div></main>;
 }

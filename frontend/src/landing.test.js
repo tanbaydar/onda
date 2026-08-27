@@ -16,9 +16,9 @@ test("guests land on Discover and signed-in users land on Home", () => {
   assert.equal(landingPath({ id: 1 }), "/home");
 });
 
-test("auth success targets Home and direct guest Home access targets Discover", () => {
+test("auth success targets Home and direct guest Home access targets Login", () => {
   assert.equal(AUTHENTICATED_LANDING, "/home");
-  assert.equal(homeAccessRedirect(null), GUEST_DISCOVER);
+  assert.equal(homeAccessRedirect(null), "/login");
   assert.equal(homeAccessRedirect({ id: 1 }), null);
 });
 

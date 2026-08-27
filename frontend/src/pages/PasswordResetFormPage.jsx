@@ -123,7 +123,7 @@ export default function PasswordResetFormPage() {
 
   if (!email) {
     return <main className="auth-page">
-      <h1>Enter your email</h1>
+      <h1 className="functional-title">Enter your email</h1>
       <form onSubmit={enterEmail} noValidate>
         <div className="auth-field">
           <label htmlFor="reset-email-entry">Email</label>
@@ -138,7 +138,7 @@ export default function PasswordResetFormPage() {
 
   if (step === "complete") {
     return <main className="auth-page">
-      <h1>Password changed</h1>
+      <h1 className="functional-title">Password changed</h1>
       <p className="auth-intro" role="status">Your password has been reset.</p>
       <Link className="auth-primary auth-standalone-primary" to="/login">Log in</Link>
     </main>;
@@ -146,7 +146,7 @@ export default function PasswordResetFormPage() {
 
   if (step === "code") {
     return <main className="auth-page auth-code-page">
-      <h1>Enter your code</h1>
+      <h1 className="functional-title">Enter your code</h1>
       <p className="auth-intro">We sent a six-digit code to {email}.</p>
       <p className="auth-expiry">{CODE_EXPIRY_NOTICE}</p>
       <form onSubmit={acceptCode} noValidate>
@@ -166,7 +166,7 @@ export default function PasswordResetFormPage() {
   }
 
   return <main className="auth-page">
-    <h1>Set a new password</h1>
+    <h1 className="functional-title">Set a new password</h1>
     <form onSubmit={reset} noValidate>
       <div className="auth-field">
         <label htmlFor="reset-password">New password</label>

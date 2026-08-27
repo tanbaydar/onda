@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, Navigate, useLocation } from "react-router-dom";
 
 import { fetchJson, fetchWithCsrf } from "../api.js";
 import ProfileAvatar from "../components/ProfileAvatar.jsx";
@@ -8,6 +8,7 @@ import { compactRelativeTime } from "../homeFeedPresentation.js";
 
 
 export default function ActivityPage({ session }) {
+  const location = useLocation();
   const [retry, setRetry] = useState(0);
   const [loadingMore, setLoadingMore] = useState(false);
   const [actionError, setActionError] = useState(null);
@@ -56,7 +57,11 @@ export default function ActivityPage({ session }) {
     setMarkReadState({ loading: true, error: null });
     try {
       await fetchWithCsrf("/api/me/notifications/read-all/", { method: "POST", ...(signal ? { signal } : {}) });
-      if (!signal?.aborted) setMarkReadState({ loading: false, error: null });
+      if (!signal?.aborted) {
+        const readAt = new Date().toISOString();
+        setState((current) => ({ ...current, results: current.results.map((notification) => ({ ...notification, read_at: notification.read_at ?? readAt })) }));
+        setMarkReadState({ loading: false, error: null });
+      }
     } catch (error) {
       if (error.name !== "AbortError") setMarkReadState({ loading: false, error });
     }
@@ -125,29 +130,29 @@ export default function ActivityPage({ session }) {
     return <main><p>Checking session…</p></main>;
   }
   if (!session.user) {
-    return <main><h1>Activity</h1><p>Sign in to view your activity.</p></main>;
+    return <Navigate to="/login" replace state={{ from: `${location.pathname}${location.search}` }} />;
   }
 
   return (
-    <main className="activity-page">
-      <h1>Activity</h1>
-      {actionError ? <p>{actionError}</p> : null}
-      {markReadState.error ? <div className="activity-action-error" role="alert"><p>Activity is visible, but it could not be marked as read.</p><button type="button" disabled={markReadState.loading} onClick={() => markAllRead()}>{markReadState.loading ? "Retrying…" : "Retry marking as read"}</button></div> : null}
-      {state.loading ? <p>Loading activity…</p> : null}
+    <main className="activity-page" aria-busy={state.loading}>
+      <h1 className="functional-title">Activity</h1>
+      {actionError ? <div className="continuation-feedback" role="alert"><p>{actionError}</p><button className="recovery-action" type="button" disabled={loadingMore} onClick={loadMore}>{loadingMore ? "Retrying…" : "Retry"}</button></div> : null}
+      {markReadState.error ? <div className="activity-action-error" role="alert"><p>Activity is visible, but it could not be marked as read.</p><button className="recovery-action" type="button" disabled={markReadState.loading} onClick={() => markAllRead()}>{markReadState.loading ? "Retrying…" : "Retry marking as read"}</button></div> : null}
+      {state.loading ? <p role="status" aria-live="polite">Loading activity…</p> : null}
       {state.error ? (
-        <>
+        <div role="alert">
           <p>Activity could not be loaded.</p>
-          <button type="button" onClick={() => setRetry((value) => value + 1)}>
+          <button className="recovery-action" type="button" onClick={() => setRetry((value) => value + 1)}>
             Retry
           </button>
-        </>
+        </div>
       ) : null}
       {!state.loading && !state.error && state.results.length === 0 ? (
         <p>No activity yet.</p>
       ) : null}
       {state.results.length > 0 ? (
         <>
-          <ol className="activity-list">
+          <ol className="activity-list ledger-list">
             {state.results.map((notification) => {
               const requestAction = requestActions[notification.id];
               const actionable = notification.type === "follow_request" && pendingRequestKeys.has(followRequestKey(notification));
@@ -156,23 +161,23 @@ export default function ActivityPage({ session }) {
                   <Link className={`activity-row ${notification.read_at ? "read" : "unread"}`} to={activityNotificationPath(notification)}>
                     <ProfileAvatar profile={notification.actor} small className="activity-avatar" />
                     <span className="activity-row-copy">
-                      <span className="activity-message"><strong>{notification.actor.display_name}</strong> {activityNotificationVerb(notification)}</span>
+                      <span className="activity-message"><strong className="activity-actor">{notification.actor.display_name}</strong> <span className="activity-verb">{activityNotificationVerb(notification)}</span></span>
                       <span className="activity-meta">@{notification.actor.username} · <time dateTime={notification.created_at}>{compactRelativeTime(notification.created_at)}</time></span>
                     </span>
                   </Link>
                   {actionable ? (
                     <span className="activity-request-actions" aria-label={`Follow request from ${notification.actor.display_name}`}>
-                      <button className="activity-request-approve" type="button" disabled={requestAction?.pending} aria-busy={requestAction?.pending && requestAction.action === "accept"} onClick={() => decideRequest(notification, "accept")}>Approve</button>
-                      <button className="activity-request-delete" type="button" disabled={requestAction?.pending} aria-busy={requestAction?.pending && requestAction.action === "decline"} onClick={() => decideRequest(notification, "decline")}>Delete</button>
+                      <button className="activity-request-approve mobile-target" type="button" disabled={requestAction?.pending} aria-busy={requestAction?.pending && requestAction.action === "accept"} onClick={() => decideRequest(notification, "accept")}>Approve</button>
+                      <button className="activity-request-delete mobile-target" type="button" disabled={requestAction?.pending} aria-busy={requestAction?.pending && requestAction.action === "decline"} onClick={() => decideRequest(notification, "decline")}>Delete</button>
                     </span>
                   ) : requestAction?.result ? <span className="activity-request-result" role="status">{requestAction.result}</span> : null}
-                  {requestAction?.error ? <p className="activity-request-error" role="alert">{requestAction.error}</p> : null}
+                  {requestAction?.error ? <p className="activity-request-error" role="alert">Request could not be updated.</p> : null}
                 </li>
               );
             })}
           </ol>
           {state.nextCursor ? (
-            <button type="button" disabled={loadingMore} onClick={loadMore}>
+            <button className="pagination-action" type="button" disabled={loadingMore} onClick={loadMore}>
               {loadingMore ? "Loading more…" : "Load more"}
             </button>
           ) : null}

@@ -26,11 +26,11 @@ export default function ConfirmDialog({ open, title, consequence, confirmLabel, 
         if (reason === "cancel") onCancel();
       }}
     >
-      <h2>{title}</h2>
+      <h2 className="dialog-title">{title}</h2>
       <p>{consequence}</p>
       <form method="dialog" onSubmit={(event) => { closingReason.current = event.nativeEvent.submitter?.value === "confirm" ? "confirm" : "cancel"; }}>
-        <button type="submit" value="cancel">Cancel</button>
-        <button className="destructive" type="submit" value="confirm">{confirmLabel}</button>
+        <button className="dialog-action" type="submit" value="cancel">Cancel</button>
+        <button className="destructive dialog-action" type="submit" value="confirm">{confirmLabel}</button>
       </form>
     </dialog>
   );

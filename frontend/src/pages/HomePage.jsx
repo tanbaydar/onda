@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, Navigate } from "react-router-dom";
+import { Link, Navigate, useLocation } from "react-router-dom";
 
 import { fetchJson } from "../api.js";
 import { formatEventDateTime } from "../formatEventDateTime.js";
@@ -51,14 +51,17 @@ function FeedItem({ item }) {
 
 
 export default function HomePage({ session }) {
+  const location = useLocation();
   const [retry, setRetry] = useState(0);
   const [state, setState] = useState({ loading: true, error: null, results: [], next: null });
   const [loadingMore, setLoadingMore] = useState(false);
+  const [loadMoreError, setLoadMoreError] = useState(null);
 
   useEffect(() => {
     if (!session.user) return undefined;
     const controller = new AbortController();
     setState({ loading: true, error: null, results: [], next: null });
+    setLoadMoreError(null);
     fetchJson("/api/me/home/", { signal: controller.signal, cache: "no-store" })
       .then((data) => setState({ loading: false, error: null, results: data.results, next: data.next_cursor }))
       .catch((error) => {
@@ -69,20 +72,20 @@ export default function HomePage({ session }) {
 
   async function loadMore() {
     setLoadingMore(true);
+    setLoadMoreError(null);
     try {
       const data = await fetchJson(`/api/me/home/?cursor=${encodeURIComponent(state.next)}`, { cache: "no-store" });
       setState((current) => ({ ...current, results: [...current.results, ...data.results], next: data.next_cursor }));
     } catch (error) {
-      setState((current) => ({ ...current, error }));
+      setLoadMoreError(error);
     } finally {
       setLoadingMore(false);
     }
   }
 
   if (session.loading) return <main><p>Checking session…</p></main>;
-  if (session.error) return <main><p>Home could not be loaded.</p></main>;
   const redirect = homeAccessRedirect(session.user);
-  if (redirect) return <Navigate to={redirect} replace />;
+  if (redirect) return <Navigate to={redirect} replace state={{ from: `${location.pathname}${location.search}` }} />;
   return (
     <main className="feed-page">
       {state.loading ? <p className="home-feed-status">Loading activity…</p> : null}
@@ -92,8 +95,9 @@ export default function HomePage({ session }) {
       {!state.loading && !state.error && state.results.length === 0 ? (
         <div className="home-feed-empty"><p>{HOME_EMPTY_COPY}</p><Link to="/discover">Discover events</Link></div>
       ) : null}
-      {state.results.length > 0 ? <ol className="home-feed-list">{groupFeedItems(state.results).map((item) => <li key={`${item.type}-${item.activity_at}-${item.actor.id}-${item.target.event?.id ?? item.target.user?.id ?? item.target.artist?.id}`}><FeedItem item={item} /></li>)}</ol> : null}
-      {state.next && !state.error ? <button className="home-feed-load-more" type="button" disabled={loadingMore} onClick={loadMore}>{loadingMore ? "Loading more…" : "Load more"}</button> : null}
+      {state.results.length > 0 ? <ol className="home-feed-list ledger-list">{groupFeedItems(state.results).map((item) => <li key={`${item.type}-${item.activity_at}-${item.actor.id}-${item.target.event?.id ?? item.target.user?.id ?? item.target.artist?.id}`}><FeedItem item={item} /></li>)}</ol> : null}
+      {loadMoreError ? <div className="continuation-feedback home-feed-status" role="alert"><p>More home activity could not be loaded.</p><button className="recovery-action" type="button" disabled={loadingMore} onClick={loadMore}>{loadingMore ? "Retrying…" : "Retry"}</button></div> : null}
+      {state.next && !state.error && !loadMoreError ? <button className="pagination-action home-feed-load-more" type="button" disabled={loadingMore} onClick={loadMore}>{loadingMore ? "Loading more…" : "Load more"}</button> : null}
     </main>
   );
 }
