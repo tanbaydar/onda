@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { fetchJson, fetchWithCsrf } from "../api.js";
 import { pluralize } from "../lib/plural.js";
 import EventReviewRow from "./EventReviewRow.jsx";
-import RatingStars from "./RatingStars.jsx";
 import { Link } from "react-router-dom";
 
 
@@ -115,17 +114,14 @@ export default function YourCircle({
           {state.data.rating_summary.state === "available" ? (
             <div
               className="circle-rating-summary"
-              aria-label={`${state.data.rating_summary.average.toFixed(1)} average from ${pluralize(state.data.rating_summary.count, "rating")} from Your Circle, including yours.`}
+              aria-label={`${state.data.rating_summary.average.toFixed(1)} average from ${pluralize(state.data.rating_summary.count, "rating")} from Your Circle.`}
             >
-              <div className="circle-rating-score" aria-hidden="true">
-                <strong>{state.data.rating_summary.average.toFixed(1)}</strong>
-                <span>Average</span>
-              </div>
-              <div className="circle-rating-context" aria-hidden="true">
-                <RatingStars className="circle-rating-stars" value={state.data.rating_summary.average} />
-                <p>{pluralize(state.data.rating_summary.count, "rating")}</p>
-                <small>Including yours</small>
-              </div>
+              <strong className="circle-rating-score" aria-hidden="true">
+                {state.data.rating_summary.average.toFixed(1)}
+              </strong>
+              <p className="circle-rating-context" aria-hidden="true">
+                Average from {pluralize(state.data.rating_summary.count, "rating")}
+              </p>
             </div>
           ) : (
             <p>No ratings from Your Circle yet.</p>
