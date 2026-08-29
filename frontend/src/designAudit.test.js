@@ -75,6 +75,14 @@ test("only Profile Favourites artwork uses the corrected visible scale", () => {
   assert.match(css, /\.profile-header\{grid-template-columns:var\(--profile-avatar-desktop\) minmax\(0,1fr\);gap:var\(--sp-24\) var\(--sp-32\)\}/);
 });
 
+test("Home and Discover rows use the live-review compact spacing", () => {
+  const discover = read("./discover.css");
+  const css = read("./styles.css");
+  assert.match(discover, /\.discover-event-row\{[^}]*padding:var\(--sp-8\) 0/);
+  assert.match(css, /\.home-feed-item\{[^}]*padding:var\(--sp-8\) 0/);
+  assert.match(css, /\.home-feed-item\.home-feed-rich\{padding-top:var\(--sp-12\);padding-bottom:var\(--sp-12\)\}/);
+});
+
 test("event Been and Favourite controls pair outline prompts with filled committed states", () => {
   const event = read("./pages/EventPage.jsx");
   const been = read("./components/BeenControl.jsx");
