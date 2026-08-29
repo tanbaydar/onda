@@ -92,3 +92,10 @@ Judgment color: Been-row stars + the strip's judgment unit ONLY. Display face: n
 
 - Favourites item titles use the existing row-title scale: 18px mobile and 20px desktop. This replaces the undersized 14px item-title treatment and restores proportion against the enlarged artwork without introducing a new type token.
 - Events, Artists, and Venues group headings remain 14px functional text. Secondary item metadata remains 12px. Copy, artwork size, alignment, truncation, and layout remain unchanged.
+
+## Dated operator override — 2026-08-29 compact mobile profile
+
+- Mobile Profile returns to the attached Instagram reference scale: the identity avatar is 80×80, superseding the later 120×120 mobile image-scale correction. Desktop remains 160×160.
+- Mobile identity internals use an 8px vertical rhythm for social counts, handle metadata, and bio; the full-width profile action follows the identity cluster after a 16px grid row gap. Existing 44px mobile targets remain unchanged.
+- Mobile Statistics begins 16px after the profile header action, uses a 16px row gap, and renders every statistic numeral at the existing 24px profile-numeral scale. The tab register follows Statistics after 16px. These values supersede the mobile portion of the 48px statistics-centering ruling; desktop retains both 48px intervals and its existing numeral hierarchy.
+- Tab order, content order, copy, profile actions, diary and Favourites artwork, and all non-Profile surfaces remain unchanged.

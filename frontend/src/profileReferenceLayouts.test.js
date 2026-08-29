@@ -16,6 +16,19 @@ test("profile identity applies the governed Instagram-derived spacing without ne
   assert.doesNotMatch(profile, /View archive|New story|Share photos/);
 });
 
+test("mobile profile uses the compact Instagram-scale rhythm without changing desktop", () => {
+  const tokens = read("../design-tokens.css");
+  const css = read("./styles.css");
+
+  assert.match(tokens, /--profile-avatar-mobile:80px; --profile-avatar-desktop:160px/);
+  assert.match(css, /@media \(max-width:767px\)\{[\s\S]*\.profile-header\{row-gap:var\(--sp-16\)\}/);
+  assert.match(css, /@media \(max-width:767px\)\{[\s\S]*\.profile-statistics\{margin-top:var\(--sp-16\)\}/);
+  assert.match(css, /@media \(max-width:767px\)\{[\s\S]*\.profile-statistics-strip\{row-gap:var\(--sp-16\)\}/);
+  assert.match(css, /@media \(max-width:767px\)\{[\s\S]*\.profile-stat\.stat-lead \.stat-value\{font-size:var\(--text-numeral-md\)\}/);
+  assert.match(css, /@media \(max-width:767px\)\{[\s\S]*\.profile-tabs\{margin-top:var\(--sp-16\)\}/);
+  assert.match(css, /@media \(min-width:768px\)[\s\S]*\.profile-header\{grid-template-columns:var\(--profile-avatar-desktop\)/);
+});
+
 test("profile diary applies the governed Letterboxd-derived placement and omits past start time", () => {
   const profile = read("./pages/ProfilePage.jsx");
   const presenter = read("./components/EventRowPresenter.jsx");

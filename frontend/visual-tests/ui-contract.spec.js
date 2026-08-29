@@ -546,7 +546,8 @@ test.describe("public-beta visual contract", () => {
       const avatar = main.querySelector(".profile-header > .profile-avatar").getBoundingClientRect();
       const action = main.querySelector(".profile-header-action").getBoundingClientRect();
       const statisticsHeading = main.querySelector(".profile-statistics > .section-heading").getBoundingClientRect();
-      const statisticsStrip = main.querySelector(".profile-statistics-strip").getBoundingClientRect();
+      const statisticsStripElement = main.querySelector(".profile-statistics-strip");
+      const statisticsStrip = statisticsStripElement.getBoundingClientRect();
       const tabs = main.querySelector(".profile-tabs").getBoundingClientRect();
       const cellSelectors = [".stat-lead", ".stat-venues", ".stat-cities", ".stat-reviews", ".stat-average", ".profile-histogram-group"];
       const statisticCells = cellSelectors.map((selector) => main.querySelector(selector).getBoundingClientRect());
@@ -563,6 +564,7 @@ test.describe("public-beta visual contract", () => {
         actionBelowAvatar: action.top >= avatar.bottom,
         statisticsGapAbove: statisticsHeading.top - action.bottom,
         statisticsGapBelow: tabs.top - statisticsStrip.bottom,
+        statisticsRowGap: Number.parseFloat(getComputedStyle(statisticsStripElement).rowGap),
         statisticCells: statisticCells.map(({ bottom, left, top }) => ({ bottom, left, top })),
         ratingValueTop: ratingValue.top,
         ratingLabelTop: ratingLabel.top,
@@ -573,11 +575,13 @@ test.describe("public-beta visual contract", () => {
         order: [top(".profile-diary-title-line"), top(".profile-diary-venue"), top(".profile-diary-judgment"), top(".profile-diary-review"), top(".profile-diary-likes")],
       };
     });
+    const isMobile = page.viewportSize().width < 768;
+    const expectedSectionGap = isMobile ? 16 : 48;
     expect(geometry.headerWidth).toBeLessThanOrEqual(800);
-    expect(geometry.avatarWidth).toBe(page.viewportSize().width < 768 ? 120 : 240);
+    expect(geometry.avatarWidth).toBe(isMobile ? 80 : 240);
     expect(geometry.actionBelowAvatar).toBe(true);
-    expect(Math.abs(geometry.statisticsGapAbove - 48)).toBeLessThanOrEqual(1);
-    expect(Math.abs(geometry.statisticsGapBelow - 48)).toBeLessThanOrEqual(1);
+    expect(Math.abs(geometry.statisticsGapAbove - expectedSectionGap)).toBeLessThanOrEqual(1);
+    expect(Math.abs(geometry.statisticsGapBelow - expectedSectionGap)).toBeLessThanOrEqual(1);
     expect(Math.abs(geometry.statisticsGapAbove - geometry.statisticsGapBelow)).toBeLessThanOrEqual(1);
     const expectSameLine = (values, tolerance = 1) => {
       for (const value of values.slice(1)) expect(Math.abs(value - values[0])).toBeLessThanOrEqual(tolerance);
@@ -600,6 +604,7 @@ test.describe("public-beta visual contract", () => {
       expectIncreasing(firstRow.map(({ left }) => left));
       expectIncreasing(secondRow.map(({ left }) => left));
       expect(Math.max(...firstRow.map(({ bottom }) => bottom))).toBeLessThan(Math.min(...secondRow.map(({ top }) => top)));
+      expect(Math.abs(geometry.statisticsRowGap - 16)).toBeLessThanOrEqual(1);
       expect(Math.abs(geometry.ratingLabelTop - geometry.histogramAxisTop)).toBeLessThanOrEqual(2);
     }
     expect(geometry.order).toEqual([...geometry.order].sort((left, right) => left - right));

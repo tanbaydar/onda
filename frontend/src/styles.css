@@ -482,6 +482,13 @@ dialog .destructive{border-color:var(--action);background:var(--action);color:va
 @media (max-width:767px){
  .navigation-action.navigation-action,.account-action.account-action,.menu-action.menu-action,.tab-action.tab-action,.recovery-action.recovery-action,.pagination-action.pagination-action,.mobile-target.mobile-target,.row-removal-action.row-removal-action,.dialog-action.dialog-action,.quiet-action.quiet-action,.auth-action.auth-action{display:inline-flex;min-width:44px;min-height:var(--target-mobile);align-items:center;justify-content:center}
  .auth-links a,.auth-link-button{min-width:44px;min-height:var(--target-mobile)}
+ .profile-header{row-gap:var(--sp-16)}
+ .profile-social-counts{margin-top:var(--sp-8)}
+ .profile-handle-line,.profile-bio{margin-top:var(--sp-8)}
+ .profile-statistics{margin-top:var(--sp-16)}
+ .profile-statistics-strip{row-gap:var(--sp-16)}
+ .profile-stat.stat-lead .stat-value{font-size:var(--text-numeral-md)}
+ .profile-tabs{margin-top:var(--sp-16)}
 }
 @media (prefers-reduced-motion:reduce){
  .favorite-heart.just-filled>img{animation:none}
