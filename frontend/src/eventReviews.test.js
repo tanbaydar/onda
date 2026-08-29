@@ -35,3 +35,15 @@ test("PublicReviews source composes SortMenu with the two-option event contract"
   assert.match(publicReviews, /value: "newest", label: "Newest"/);
   assert.doesNotMatch(page + circle + publicReviews, /<select/);
 });
+
+test("owner review editing keeps review actions separate from the Been control", () => {
+  const beenControl = readFileSync(new URL("./components/BeenControl.jsx", import.meta.url), "utf8");
+  const reviewActions = readFileSync(new URL("./components/ReviewActionsMenu.jsx", import.meta.url), "utf8");
+  assert.match(page, /<BeenControl disabled=\{saving\} onRemove=\{removeEntry\}/);
+  assert.match(page, /\{event\.viewer_entry\.review \? "Edit review" : "Publish review"\}/);
+  assert.match(reviewActions, /Edit review/);
+  assert.match(reviewActions, /Delete review/);
+  assert.doesNotMatch(reviewActions, /onRemoveFromBeen/);
+  assert.doesNotMatch(reviewActions, /Remove from Been/);
+  assert.match(beenControl, /<small>Been<\/small>/);
+});

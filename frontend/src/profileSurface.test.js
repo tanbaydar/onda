@@ -49,3 +49,10 @@ test("ProfilePage gives empty favorites purposeful owner and viewer states", () 
   assert.match(profile, /owner \? <Link to="\/discover">Discover events<\/Link> : null/);
   assert.match(profile, /hasFavorites \? <div className="profile-favorite-groups">/);
 });
+
+test("Been loads in three-row increments with an additive show-more control", () => {
+  const profile = readFileSync(new URL("./pages/ProfilePage.jsx", import.meta.url), "utf8");
+  assert.match(profile, /been\/\?page=\$\{page\}&page_size=3/);
+  assert.match(profile, /results: \[\.\.\.\(current\.data\?\.results \?\? \[\]\), \.\.\.data\.results\]/);
+  assert.match(profile, /profile-show-more/);
+});

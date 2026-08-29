@@ -7,6 +7,7 @@ import YourCircle from "../components/YourCircle.jsx";
 import WillBeThereAttendees from "../components/WillBeThereAttendees.jsx";
 import { formatEventIdentityDateTime } from "../formatEventDateTime.js";
 import FavoriteControl from "../components/FavoriteControl.jsx";
+import BeenControl from "../components/BeenControl.jsx";
 import { pluralize } from "../lib/plural.js";
 import ConfirmDialog from "../components/ConfirmDialog.jsx";
 import RatingHistogram from "../components/RatingHistogram.jsx";
@@ -279,6 +280,7 @@ export default function EventPage({ user, sessionReady, onAuthenticationRequired
         {user ? <div className="event-owner-block">
             {!viewerHasRating ? <StarInput value={rating} disabled={saving} onChange={(value) => setRating(String(value))} onCommit={saveRating} /> : null}
             <FavoriteControl compact path={`/api/events/${event.id}/favorite/`} state={event.viewer_favorite} onChanged={changeFavorite} />
+            {viewerHasRating ? <BeenControl disabled={saving} onRemove={removeEntry} /> : null}
             {event.viewer_will_be_there.was_marked ? <p className="dormant-wbt">Will Be There · marked</p> : null}
             {actionError ? <p className="favorite-notice" role="alert">{actionError}</p> : null}
         </div> : null}
@@ -305,7 +307,7 @@ export default function EventPage({ user, sessionReady, onAuthenticationRequired
         onSocialChanged={() => setSocialVersion((value) => value + 1)}
         onAuthenticationRequired={onAuthenticationRequired}
       /> : null}
-      {user && isPast && viewerHasRating ? <section className="owner-entry"><EventReviewRow person={user} rating={event.viewer_entry.rating} review={event.viewer_entry.review} ratedAt={event.viewer_entry.rated_at} yours ownerActions={<ReviewActionsMenu disabled={saving} hasReview={Boolean(event.viewer_entry.review)} onEditReview={() => setEditingEntry(true)} onRemoveReview={deleteReview} onRemoveFromBeen={removeEntry} />}>{editingEntry ? <div className="owner-entry-editor"><StarInput value={rating} disabled={saving} onChange={(value) => setRating(String(value))} onCommit={saveRating} /><form onSubmit={saveReview}><label htmlFor="review-body">Written review</label><textarea id="review-body" value={reviewBody} required rows={8} onChange={(changeEvent) => setReviewBody(changeEvent.target.value)} /><p>{trimmedReviewLength} of 1,000 stored characters</p><div className="owner-entry-form-actions"><button type="submit" disabled={saving || trimmedReviewLength < 1 || trimmedReviewLength > 1000}>{event.viewer_entry.review ? "Save review changes" : "Publish review"}</button><button className="quiet-action" type="button" disabled={saving} onClick={() => setEditingEntry(false)}>Cancel</button></div></form></div> : null}</EventReviewRow></section> : null}
+      {user && isPast && viewerHasRating ? <section className="owner-entry"><EventReviewRow person={user} rating={event.viewer_entry.rating} review={event.viewer_entry.review} ratedAt={event.viewer_entry.rated_at} yours ownerActions={<ReviewActionsMenu disabled={saving} hasReview={Boolean(event.viewer_entry.review)} onEditReview={() => setEditingEntry(true)} onRemoveReview={deleteReview} />}>{editingEntry ? <div className="owner-entry-editor"><StarInput value={rating} disabled={saving} onChange={(value) => setRating(String(value))} onCommit={saveRating} /><form onSubmit={saveReview}><label htmlFor="review-body">Written review</label><textarea id="review-body" value={reviewBody} required rows={8} onChange={(changeEvent) => setReviewBody(changeEvent.target.value)} /><p>{trimmedReviewLength} of 1,000 stored characters</p><div className="owner-entry-form-actions"><button type="submit" disabled={saving || trimmedReviewLength < 1 || trimmedReviewLength > 1000}>{event.viewer_entry.review ? "Edit review" : "Publish review"}</button><button className="quiet-action" type="button" disabled={saving} onClick={() => setEditingEntry(false)}>Cancel</button></div></form></div> : null}</EventReviewRow></section> : null}
       {isPast ? <PublicReviews
         eventId={event.id}
         user={user}

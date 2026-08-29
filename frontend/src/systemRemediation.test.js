@@ -54,7 +54,8 @@ test("approved hierarchy and availability decisions are represented directly", (
   const profile = read("./pages/ProfilePage.jsx");
   assert.ok(event.indexOf("<EventLineup") < event.indexOf("<PublicReviews"));
   assert.equal(event.indexOf("<EventLineup"), event.lastIndexOf("<EventLineup"));
-  assert.match(reviewActions, />Edit review<\/button>[\s\S]*>Remove review<\/button>[\s\S]*>Remove from Been<\/button>/);
+  assert.match(reviewActions, />Edit review<\/button>[\s\S]*>Delete review<\/button>/);
+  assert.doesNotMatch(reviewActions, /Remove from Been/);
   assert.doesNotMatch(event, /Remove rating|removeRating/);
   assert.ok(activity.indexOf("<ActivityFollowRequests") < activity.indexOf('<ol className="activity-list ledger-list">'));
   assert.match(activity, /notification\.type === "follow_request"[\s\S]*className="activity-request-actions"/);
