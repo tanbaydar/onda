@@ -323,7 +323,7 @@ General Sans 12/500, uppercase, `0.05em` tracking, muted. Use 32–48px above an
 ### 5.8 Rating summary and histogram
 
 - Event average: large green display numeral, ten uniform green vertical bars, then “average from N ratings.”
-- Fewer than three event ratings: withhold the numeral/chart and use “Not enough ratings for an average yet.”
+- Zero event ratings: withhold the numeral/chart and use “Not enough ratings for an average yet.”
 - Histogram order is ½★ to 5★, left to right.
 - All bars share one color. Zero buckets use a baseline stub, never disappear.
 - Permanent labels are only `½` and `5`; tooltip copy is `N · X★`.

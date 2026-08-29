@@ -55,24 +55,30 @@ class EventRatingDistributionTests(TestCase):
             {"state": "not_enough_ratings"},
         )
 
-    def test_single_private_rating_is_suppressed(self):
+    def test_single_private_rating_is_available_anonymously(self):
         self.rate("single-private", "1.0", private=True)
 
+        distribution = self.detail_distribution()
+
+        self.assertEqual(distribution["state"], "available")
         self.assertEqual(
-            self.detail_distribution(),
-            {"state": "not_enough_ratings"},
+            sum(bucket["count"] for bucket in distribution["buckets"]),
+            1,
         )
 
-    def test_two_ratings_are_still_suppressed(self):
+    def test_two_ratings_are_available(self):
         self.rate("two-a", "1.0")
         self.rate("two-private", "4.0", private=True)
 
+        distribution = self.detail_distribution()
+
+        self.assertEqual(distribution["state"], "available")
         self.assertEqual(
-            self.detail_distribution(),
-            {"state": "not_enough_ratings"},
+            sum(bucket["count"] for bucket in distribution["buckets"]),
+            2,
         )
 
-    def test_three_mixed_public_private_ratings_render_at_exact_threshold(self):
+    def test_three_mixed_public_private_ratings_render(self):
         self.rate("thr-a", "1.0")
         self.rate("thr-private", "4.0", private=True)
         self.rate("thr-b", "5.0")

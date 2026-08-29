@@ -10,9 +10,9 @@ test("placeholder initials preserve the first rendered character", () => {
   assert.equal(imageSlotInitial("#Afterhours"), "#");
 });
 
-test("Discover Recent judgment renders only at the three-rating gate", () => {
-  assert.equal(recentRatingVisible({ state: "not_enough_ratings", count: 2 }), false);
-  assert.equal(recentRatingVisible({ state: "available", count: 3, average: 4 }), true);
+test("Discover Recent judgment renders when at least one rating is available", () => {
+  assert.equal(recentRatingVisible({ state: "not_enough_ratings", count: 0 }), false);
+  assert.equal(recentRatingVisible({ state: "available", count: 1, average: 4 }), true);
 });
 
 test("named surface sources compose the shared image, heart, and rating-star implementations", () => {

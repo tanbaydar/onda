@@ -100,8 +100,8 @@
    RATING BLOCK (event-past primary) — numeral --text-numeral-lg display
    --judgment; histogram beside at numeral base: 10 bars, gap 2, h 26, w 120,
    bars --chart; count line "average from N ratings." micro text-secondary.
-   not_enough (<3): numeral block withheld; the line "Not enough ratings for
-   an average yet." ui text-secondary takes the slot; no layout jump at 3rd.
+   not_enough (0): numeral block withheld; the line "Not enough ratings for
+   an average yet." ui text-secondary takes the slot; no layout jump at 1st.
 
    WBT — count numeral: display, --judgment, ALWAYS accent (others' judgment).
    Toggle: ink resting ("Mark Will Be There"), accent border+text when marked
