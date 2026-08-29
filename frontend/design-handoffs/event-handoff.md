@@ -60,3 +60,9 @@ This operator-approved override supersedes the earlier three-step event metadata
 
 - A past event never displays its stored start time. Its identity retains the event date, venue, and city; upcoming events continue to display date and time.
 - Every event detail identity reserves the governed artwork slot. When no flyer URL exists, `ImageSlot` renders the standard initial placeholder at the same 4:5 dimensions; event pages never collapse into a no-artwork layout.
+
+## Dated operator override — 2026-08-29 compact event rhythm
+
+- Event detail adopts Home's compact rhythm without changing its detail-page hierarchy: content begins at 24px on mobile and 32px on desktop, major event modules use the existing 24px step, and identity groups use the existing 16px step.
+- The event rating histogram uses the governed 120×26 compact register. Its disclosure keeps the essential target size and the rating numeral/count remain in their existing positions.
+- Event review rows use 12px vertical padding, matching Home's rich activity density while preserving ledger hairlines and readable prose leading.
