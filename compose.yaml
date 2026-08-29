@@ -36,6 +36,27 @@ services:
     networks:
       - database
 
+  media-init:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/backend.Dockerfile
+    user: "0:0"
+    entrypoint:
+      - /bin/sh
+      - -c
+    command:
+      - chown -R 10001:10001 /app/media
+    volumes:
+      - media_data:/app/media
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+    network_mode: none
+
   web:
     build:
       context: .
@@ -70,6 +91,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      media-init:
+        condition: service_completed_successfully
     volumes:
       - django_static:/app/staticfiles
       - media_data:/app/media
@@ -80,6 +103,7 @@ services:
         - -c
         - >-
           import os, urllib.request;
+          assert os.access('/app/media', os.W_OK), '/app/media is not writable';
           request = urllib.request.Request('http://127.0.0.1:8000/api/cities/',
           headers={'Host': os.environ['ONDA_DOMAIN'], 'X-Forwarded-Proto': 'https'});
           urllib.request.urlopen(request, timeout=5)
