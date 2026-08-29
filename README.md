@@ -14,40 +14,6 @@
   <a href="docs/README.md"><strong>Documentation</strong></a>
 </p>
 
-## Screens
-
-<table>
-  <tr>
-    <td align="center" valign="top" width="33.33%">
-      <img src="assets/screens/home.png" alt="Onda Home screen" width="100%">
-      <br><b>Home</b>
-      <br><sub>See what your friends are up to</sub>
-    </td>
-    <td align="center" valign="top" width="33.33%">
-      <img src="assets/screens/discover.png" alt="Onda Discover screen" width="100%">
-      <br><b>Discover</b>
-      <br><sub>Find events in your city</sub>
-    </td>
-    <td align="center" valign="top" width="33.33%">
-      <img src="assets/screens/event.png" alt="Onda Event screen" width="100%">
-      <br><b>Event</b>
-      <br><sub>Hear it from people who were there</sub>
-    </td>
-  </tr>
-  <tr>
-    <td align="center" valign="top" width="33.33%">
-      <img src="assets/screens/profile.png" alt="Onda Profile screen" width="100%">
-      <br><b>Profile</b>
-      <br><sub>Who you are, based on what you do</sub>
-    </td>
-    <td align="center" valign="top" width="33.33%">
-      <img src="assets/screens/favourites.png" alt="Onda Favourites screen" width="100%">
-      <br><b>Favourites</b>
-      <br><sub>Let your taste speak</sub>
-    </td>
-  </tr>
-</table>
-
 Onda lets people browse live-music events in New York City and Boston, mark plans, log attendance with half-star ratings, publish reviews, follow public or private profiles, and save favorite events, artists, and venues.
 
 The interface is the visible product. The harder engineering problem is underneath it: live music does not have one complete, trusted catalog that Onda can treat as permanent truth. Listings change, disappear, arrive malformed, and use identities owned by an external provider. Onda has to turn those observations into stable product data without allowing a bad response to corrupt the catalog or erase a user's history.
