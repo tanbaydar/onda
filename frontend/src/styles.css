@@ -217,7 +217,7 @@ meter{accent-color:var(--chart);width:120px}
 .activity-actor{font-weight:600}
 .activity-verb{font-weight:400}
 .activity-meta{overflow:hidden;color:var(--text-muted);font-size:var(--text-micro);text-overflow:ellipsis;white-space:nowrap}
-.activity-row.read{color:var(--text-muted)}
+.activity-row.read{color:var(--text)}
 .activity-row.read strong{font-weight:500}
 .activity-row.unread strong{font-weight:600}
 .activity-action-error{display:flex;flex-wrap:wrap;align-items:center;gap:var(--sp-8) var(--sp-12);color:var(--danger-text);font-size:var(--text-micro)}
