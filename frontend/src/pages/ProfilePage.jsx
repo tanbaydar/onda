@@ -35,7 +35,7 @@ function BeenTab({ onReviewDeleted, owner, username }) {
   useEffect(() => {
     const controller = new AbortController();
     setState((current) => ({ loading: true, error: null, data: page > 1 ? current.data : null }));
-    fetchJson(`/api/users/${encodeURIComponent(username)}/been/?page=${page}`, { signal: controller.signal, cache: "no-store" }).then((data) => setState({ loading: false, error: null, data })).catch((error) => { if (error.name !== "AbortError") setState((current) => ({ loading: false, error, data: current.data })); });
+    fetchJson(`/api/users/${encodeURIComponent(username)}/been/?page=${page}&page_size=3`, { signal: controller.signal, cache: "no-store" }).then((data) => setState((current) => ({ loading: false, error: null, data: page === 1 ? data : { ...data, results: [...(current.data?.results ?? []), ...data.results] } }))).catch((error) => { if (error.name !== "AbortError") setState((current) => ({ loading: false, error, data: current.data })); });
     return () => controller.abort();
   }, [page, retry, username]);
 
@@ -62,11 +62,11 @@ function BeenTab({ onReviewDeleted, owner, username }) {
 
   return (
     <section className="profile-tab-panel" aria-label="Been">
-      {state.loading ? <p>Loading Been history…</p> : null}
-      {state.error ? <><p>Been history could not be loaded.</p><button className="recovery-action quiet-control" type="button" onClick={() => setRetry((value) => value + 1)}>Retry</button></> : null}
+      {state.loading && !state.data ? <p>Loading Been history…</p> : null}
+      {state.error ? <><p>{state.data ? "More Been history could not be loaded." : "Been history could not be loaded."}</p><button className="recovery-action quiet-control" type="button" onClick={() => setRetry((value) => value + 1)}>Retry</button></> : null}
       {state.data?.results.length === 0 ? <p className="profile-tab-empty">{PROFILE_EMPTY_STATES.been}</p> : null}
       {actionError ? <p role="alert">{actionError}</p> : null}
-      {state.data?.results.length ? <><ol className="profile-diary-list ledger-list">{state.data.results.map((entry) => <EventRowPresenter key={entry.id} variant="profile-diary" event={entry.event} rating={entry.rating} hasReview={entry.has_review} onDeleteReview={owner && entry.has_review ? () => setReviewToDelete(entry.event) : null} reviewPending={deletingReviewId === entry.event.id} />)}</ol><Pagination pagination={state.data.pagination} onPage={setPage} /></> : null}
+      {state.data?.results.length ? <><ol className="profile-diary-list ledger-list">{state.data.results.map((entry) => <EventRowPresenter key={entry.id} variant="profile-diary" event={entry.event} rating={entry.rating} hasReview={entry.has_review} onDeleteReview={owner && entry.has_review ? () => setReviewToDelete(entry.event) : null} reviewPending={deletingReviewId === entry.event.id} />)}</ol>{state.data.pagination.next_page ? <button className="quiet-control profile-show-more" type="button" disabled={state.loading} onClick={() => setPage(state.data.pagination.next_page)}>{state.loading ? "Loading…" : "Show more"}</button> : null}</> : null}
       <ConfirmDialog open={reviewToDelete !== null} title="Delete your written review?" consequence="Its likes will be permanently deleted. Your rating and Been entry will remain." confirmLabel="Delete review" onCancel={() => setReviewToDelete(null)} onConfirm={() => { const event = reviewToDelete; setReviewToDelete(null); if (event) deleteReview(event); }} />
     </section>
   );
