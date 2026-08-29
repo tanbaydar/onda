@@ -13,8 +13,8 @@ test("profile paths use the collision-safe canonical username namespace", () => 
   assert.equal(profilePath("Mixed.Case"), "/u/mixed.case");
 });
 
-test("legacy Been redirects owners to Profile and guests to login", () => {
-  assert.equal(legacyBeenRedirect({ username: "tan" }), "/u/tan");
+test("legacy Been redirects owners to the Been tab and guests to login", () => {
+  assert.equal(legacyBeenRedirect({ username: "tan" }), "/u/tan/been");
   assert.equal(legacyBeenRedirect(null), "/login");
 });
 

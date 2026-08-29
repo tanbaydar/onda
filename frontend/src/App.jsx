@@ -160,7 +160,8 @@ export default function App() {
         />
         <Route path="/events/:eventKey" element={<EventPage user={session.user} sessionReady={!session.loading} onAuthenticationRequired={() => setSession({ loading: false, error: null, user: null })} />} />
         <Route path="/been" element={<LegacyBeenPage session={session} />} />
-        <Route path="/u/:username" element={<ProfilePage session={session} tab="been" />} />
+        <Route path="/u/:username" element={<ProfilePage session={session} tab="favourites" />} />
+        <Route path="/u/:username/been" element={<ProfilePage session={session} tab="been" />} />
         <Route path="/u/:username/reviews" element={<ProfilePage session={session} tab="reviews" />} />
         <Route path="/settings/profile" element={<EditProfilePage session={session} onProfileUpdated={handleProfileUpdated} />} />
         <Route path="/activity" element={<ActivityPage session={session} />} />

@@ -70,3 +70,9 @@ Judgment color: Been-row stars + the strip's judgment unit ONLY. Display face: n
 ## Dated operator override — 2026-08-29 statistics vertical centering
 
 - The Statistics block sits at an equal 48px interval between the profile header action and the tab register. Its section heading adds no second top margin. Statistics, tabs, and all content below them therefore move upward together while the identity header remains fixed.
+
+## Dated operator override — 2026-08-29 Favourites-first profile tabs
+
+- The profile tab register is `Favourites | Been | Reviews`, in that order. Favourites is the default active tab at `/u/:username`; Been lives at `/u/:username/been`, and Reviews remains at `/u/:username/reviews`.
+- Favourites is tab content, not a persistent section below Been or Reviews. Exactly one of Favourites, Been, or Reviews renders beneath the shared tab hairline.
+- The legacy `/been` entry point continues to open the signed-in user's Been tab rather than the new Favourites default.

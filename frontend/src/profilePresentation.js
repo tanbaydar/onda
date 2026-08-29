@@ -1,4 +1,5 @@
 export const PROFILE_EMPTY_STATES = {
+  favourites: "No favourites yet.",
   been: "No events in Been yet.",
   reviews: "No reviews yet.",
 };
@@ -22,5 +23,7 @@ export function profileBioCount(value) {
 
 export function profileTabPath(username, tab) {
   const root = `/u/${String(username).toLowerCase()}`;
-  return tab === "reviews" ? `${root}/reviews` : root;
+  if (tab === "been") return `${root}/been`;
+  if (tab === "reviews") return `${root}/reviews`;
+  return root;
 }
