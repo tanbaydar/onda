@@ -17,13 +17,14 @@ test("follow changes keep the loaded profile mounted until silent reconciliation
 });
 
 
-test("favorites commit locally and owner removals delete only the changed row", () => {
+test("favorites commit locally on detail pages while the collection remains display-only", () => {
   const favorite = read("./components/FavoriteControl.jsx");
   const profile = read("./pages/ProfilePage.jsx");
   const detailPages = ["ArtistPage.jsx", "VenuePage.jsx", "EventPage.jsx"].map((name) => read(`./pages/${name}`));
 
   assert.match(favorite, /setFavorite\(nextFavorite\);[\s\S]*onChanged\(nextFavorite\)/);
-  assert.match(profile, /filter\(\(favorite\) => favorite\[entityKey\]\.id !== item\.id\)/);
+  assert.doesNotMatch(profile, /FavoriteControl/);
+  assert.doesNotMatch(profile, /favoritePath/);
   for (const page of detailPages) assert.match(page, /viewer_favorite: nextFavorite/);
 });
 

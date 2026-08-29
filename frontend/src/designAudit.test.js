@@ -46,7 +46,6 @@ test("artist detail and search rows share a circular failed-image placeholder", 
 
 test("profile favorites keep their existing artwork and labels while arranging each group side by side", () => {
   const profile = read("./pages/ProfilePage.jsx");
-  const favorite = read("./components/FavoriteControl.jsx");
   const css = read("./styles.css");
   assert.match(profile, /key: "events", label: "Events"/);
   assert.match(profile, /key: "artists", label: "Artists"/);
@@ -54,12 +53,12 @@ test("profile favorites keep their existing artwork and labels while arranging e
   assert.match(profile, /<ProfileFavoriteGroup key=\{group\.key\}/);
   assert.match(profile, /className="profile-favorite-link"/);
   assert.match(profile, /className="profile-favorite-copy"/);
-  assert.match(favorite, /if \(row\) return <div className="profile-favorite-control">/);
-  assert.match(favorite, /"\/assets\/favorite-heart-filled\.svg" : "\/assets\/favorite-heart\.svg"/);
+  assert.doesNotMatch(profile, /FavoriteControl/);
   assert.match(css, /\.profile-favorite-groups\{display:grid;gap:var\(--sp-32\)\}/);
   assert.match(css, /\.profile-favorite-list\{display:grid;grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
   assert.match(css, /\.profile-favorite-list \.artist-avatar\{width:var\(--thumb\);height:var\(--thumb\)\}/);
-  assert.match(css, /\.profile-favorite-link\{[^}]*min-height:var\(--collection-flier-h\)[^}]*flex-direction:column/);
+  assert.match(css, /\.profile-favorite-link\{[^}]*min-height:var\(--collection-flier-h\)[^}]*flex-direction:column[^}]*align-items:center[^}]*text-align:center/);
+  assert.match(css, /\.profile-favorite-copy\{[^}]*width:100%[^}]*align-items:center[^}]*text-align:center/);
 });
 
 test("Events, Been, and Favorites share the ordered 68 by 85 flyer size", () => {

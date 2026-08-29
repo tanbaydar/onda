@@ -8,7 +8,6 @@ import EventRowPresenter from "../components/EventRowPresenter.jsx";
 import SortMenu from "../components/SortMenu.jsx";
 import RatingHistogram from "../components/RatingHistogram.jsx";
 import ImageSlot from "../components/ImageSlot.jsx";
-import FavoriteControl from "../components/FavoriteControl.jsx";
 import ArtistAvatar from "../components/ArtistAvatar.jsx";
 import ProfileConnectionsDialog from "../components/ProfileConnectionsDialog.jsx";
 import ConfirmDialog from "../components/ConfirmDialog.jsx";
@@ -113,7 +112,7 @@ function ProfileStatistics({ username, version = 0 }) {
   return <section className="profile-statistics"><h2 className="section-heading">Statistics</h2>{state.error ? <div className="action-feedback" role="alert"><p>Statistics could not be refreshed.</p><button className="recovery-action quiet-control" type="button" onClick={() => setRetry((value) => value + 1)}>Retry</button></div> : null}<div className="profile-statistics-strip"><div className="profile-stat stat-lead"><span className="stat-value">{statistics.events_in_been}</span><span className="stat-label">Events</span></div><div className="profile-stat stat-venues"><span className="stat-value">{statistics.venues_visited}</span><span className="stat-label">Venues</span></div><div className="profile-stat stat-cities"><span className="stat-value">{statistics.cities_visited}</span><span className="stat-label">Cities</span></div><div className="profile-stat stat-reviews"><span className="stat-value">{statistics.written_reviews}</span><span className="stat-label">Reviews</span></div><div className={`profile-stat stat-average${statistics.average_rating_given.state === "available" ? " is-available" : ""}`}><span className="stat-value">{statistics.average_rating_given.state === "available" ? statistics.average_rating_given.value.toFixed(1) : "—"}</span><span className="stat-label">Avg. Rating</span></div><div className={`profile-histogram-group${ratingCount === 0 ? " is-empty" : ""}`}><RatingHistogram className="profile-stat-histogram" buckets={ratingBuckets} staticLabel={ratingCount === 0 ? "Rating distribution: no ratings given yet." : null} /></div></div></section>;
 }
 
-function ProfileFavoriteGroup({ group, owner, onRemove, onReconcile }) {
+function ProfileFavoriteGroup({ group }) {
   if (!group.items.length) return null;
   const headingId = `profile-favorite-${group.key}`;
   return (
@@ -121,12 +120,11 @@ function ProfileFavoriteGroup({ group, owner, onRemove, onReconcile }) {
       <h2 className="section-heading" id={headingId}>{group.label}</h2>
       <ul className="profile-favorite-list ledger-list">
         {group.items.map((item) => (
-          <li className={`profile-favorite-item${owner ? " is-owner has-action" : ""}`} key={item.key}>
+          <li className="profile-favorite-item" key={item.key}>
             <Link className="profile-favorite-link" to={item.to}>
               {item.artist ? <ArtistAvatar artist={item.artist} small className="profile-favorite-thumb" /> : <ImageSlot className="profile-favorite-thumb" name={item.name} src={item.image} />}
               <span className="profile-favorite-copy"><strong>{item.name}</strong>{item.meta ? <small>{item.meta}</small> : null}</span>
             </Link>
-            {owner ? <FavoriteControl row path={item.favoritePath} state={{ is_favorite: true }} onChanged={(nextFavorite) => nextFavorite?.is_favorite === false ? onRemove(item) : onReconcile()} /> : null}
           </li>
         ))}
       </ul>
@@ -145,22 +143,12 @@ function ProfileFavorites({ username, owner }) {
   if (state.loading && !state.favorites) return <section className="profile-tab-panel profile-favorites" aria-label="Favourites"><p>Loading favourites…</p></section>;
   if (state.error && !state.favorites) return <section className="profile-tab-panel profile-favorites" aria-label="Favourites"><p>Favourites could not be loaded.</p><button className="recovery-action quiet-control" type="button" onClick={() => setRetry((value) => value + 1)}>Retry</button></section>;
   const groups = [
-    { key: "events", label: "Events", items: state.favorites.events.map(({ event }) => ({ key: `event-${event.id}`, collection: "events", id: event.id, to: eventPath(event), name: event.title, meta: `${formatEventDateTime(event.event_date, eventIsPast(event) ? null : event.start_time)} · ${event.venue.name}`, image: event.cover_image_url, favoritePath: `/api/events/${event.id}/favorite/` })) },
-    { key: "artists", label: "Artists", items: state.favorites.artists.map(({ artist }) => ({ key: `artist-${artist.id}`, collection: "artists", id: artist.id, to: artistPath(artist), name: artist.name, artist, favoritePath: `/api/artists/${artist.id}/favorite/` })) },
-    { key: "venues", label: "Venues", items: state.favorites.venues.map(({ venue }) => ({ key: `venue-${venue.id}`, collection: "venues", id: venue.id, to: venuePath(venue), name: venue.name, meta: venue.city.name, favoritePath: `/api/venues/${venue.id}/favorite/` })) },
+    { key: "events", label: "Events", items: state.favorites.events.map(({ event }) => ({ key: `event-${event.id}`, to: eventPath(event), name: event.title, meta: `${formatEventDateTime(event.event_date, eventIsPast(event) ? null : event.start_time)} · ${event.venue.name}`, image: event.cover_image_url })) },
+    { key: "artists", label: "Artists", items: state.favorites.artists.map(({ artist }) => ({ key: `artist-${artist.id}`, to: artistPath(artist), name: artist.name, artist })) },
+    { key: "venues", label: "Venues", items: state.favorites.venues.map(({ venue }) => ({ key: `venue-${venue.id}`, to: venuePath(venue), name: venue.name, meta: venue.city.name })) },
   ];
   const hasFavorites = groups.some((group) => group.items.length > 0);
-  function removeFavorite(item) {
-    const entityKey = item.collection.slice(0, -1);
-    setState((current) => current.favorites ? {
-      ...current,
-      favorites: {
-        ...current.favorites,
-        [item.collection]: current.favorites[item.collection].filter((favorite) => favorite[entityKey].id !== item.id),
-      },
-    } : current);
-  }
-  return <section className="profile-tab-panel profile-favorites" aria-label="Favourites">{state.error ? <div className="action-feedback" role="alert"><p>Favourites could not be refreshed.</p><button className="recovery-action quiet-control" type="button" onClick={() => setRetry((value) => value + 1)}>Retry</button></div> : null}{hasFavorites ? <div className="profile-favorite-groups">{groups.map((group) => <ProfileFavoriteGroup key={group.key} group={group} owner={owner} onRemove={removeFavorite} onReconcile={() => setRetry((value) => value + 1)} />)}</div> : <div className="profile-favorites-empty"><p>{PROFILE_EMPTY_STATES.favourites}</p>{owner ? <Link to="/discover">Discover events</Link> : null}</div>}</section>;
+  return <section className="profile-tab-panel profile-favorites" aria-label="Favourites">{state.error ? <div className="action-feedback" role="alert"><p>Favourites could not be refreshed.</p><button className="recovery-action quiet-control" type="button" onClick={() => setRetry((value) => value + 1)}>Retry</button></div> : null}{hasFavorites ? <div className="profile-favorite-groups">{groups.map((group) => <ProfileFavoriteGroup key={group.key} group={group} />)}</div> : <div className="profile-favorites-empty"><p>{PROFILE_EMPTY_STATES.favourites}</p>{owner ? <Link to="/discover">Discover events</Link> : null}</div>}</section>;
 }
 
 export default function ProfilePage({ session, tab = "favourites" }) {

@@ -82,3 +82,8 @@ Replaces the "Add favorite" quiet micro link everywhere favoriting exists (event
 - The 120ms commit-only favorite pulse is ratified as the system's sole optional state-feedback motion. It is disabled under reduced-motion preference; un-favorite remains instant.
 - The upcoming full-bleed hero exclusion remains: the initial placeholder does not expand to poster scale.
 - Client-side avatar cropping remains outside the current design boundary. Display cropping in the circular mask is the complete current requirement.
+
+## Dated delta — 2026-08-29 Favorites collection ruling
+
+- Per current operator ruling, the Favorites collection does not render a favorite heart or an in-list removal action: presence in the collection already communicates favorite state. Detail-page favorite controls remain unchanged.
+- Within each three-column Events, Artists, and Venues row, every flyer's existing artwork and text are centered together. Existing artwork size, typography, copy, and spacing tokens remain unchanged.
