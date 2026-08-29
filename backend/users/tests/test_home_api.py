@@ -130,6 +130,20 @@ class HomeFeedContractTests(TestCase):
             1,
         )
         self.assertNotIn("review", [item["type"] for item in results])
+        liked_review = next(item for item in results if item["type"] == "review_like")
+        self.assertEqual(
+            liked_review["target"]["review"],
+            {
+                "id": review.id,
+                "body": "Visible liked review",
+                "rating": 4.0,
+                "author": {
+                    "id": self.target.id,
+                    "username": self.target.username,
+                    "display_name": self.target.display_name,
+                },
+            },
+        )
         favorite_without_cover = next(item for item in results if item["type"] == "favorite_event")
         self.assertIsNone(favorite_without_cover["target"]["event"]["cover_image_url"])
         # Two fixed session/auth lookups, one bounded city-boundary lookup,

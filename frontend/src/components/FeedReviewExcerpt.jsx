@@ -1,9 +1,7 @@
 import { useLayoutEffect, useRef, useState } from "react";
 
 
-const LINE_LIMIT = 4;
-
-export default function FeedReviewExcerpt({ children }) {
+export default function FeedReviewExcerpt({ children, lineLimit = 4 }) {
   const body = String(children ?? "");
   const rootRef = useRef(null);
   const [rendered, setRendered] = useState({ text: body, truncated: false });
@@ -32,7 +30,7 @@ export default function FeedReviewExcerpt({ children }) {
         whiteSpace: "normal",
       });
       document.body.append(probe);
-      const maxHeight = Number.parseFloat(styles.lineHeight) * LINE_LIMIT;
+      const maxHeight = Math.ceil(Number.parseFloat(styles.lineHeight) * lineLimit);
       probe.textContent = body;
       if (probe.scrollHeight <= maxHeight) {
         setRendered({ text: body, truncated: false });
@@ -60,7 +58,7 @@ export default function FeedReviewExcerpt({ children }) {
       active = false;
       observer.disconnect();
     };
-  }, [body]);
+  }, [body, lineLimit]);
 
   return (
     <span className="home-feed-review" ref={rootRef}>

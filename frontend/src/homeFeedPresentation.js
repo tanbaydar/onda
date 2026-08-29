@@ -5,7 +5,7 @@ export const HOME_EMPTY_COPY = "No activity from people you follow yet.";
 export const HOME_FEED_VERBS = {
   rated_been: "rated",
   will_be_there: "will be at",
-  review_like: "liked a review of",
+  review_like: "liked a review from",
   favorite_event: "favorited",
   favorite_artist: "favorited",
 };

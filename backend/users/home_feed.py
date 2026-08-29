@@ -155,7 +155,7 @@ def home_feed_rows(viewer, *, at, cursor=None, limit=21):
     for key in (
         "event_id", "event_title", "event_date", "event_start_time",
         "event_cover_image_url", "event_venue_name", "event_city_name",
-        "review_id", "review_body", "review_author_id",
+        "rating", "review_id", "review_body", "review_author_id",
         "review_author_username", "review_author_display_name",
     ):
         like_nulls.pop(key)
@@ -179,6 +179,7 @@ def home_feed_rows(viewer, *, at, cursor=None, limit=21):
         event_cover_image_url=F("review__entry__event__cover_image_url"),
         event_venue_name=F("review__entry__event__venue__name"),
         event_city_name=F("review__entry__event__venue__city__name"),
+        rating=F("review__entry__rating"),
         review_body=F("review__body"),
         review_author_id=F("review__entry__user_id"),
         review_author_username=F("review__entry__user__username"),
@@ -300,6 +301,7 @@ def serialize_feed_row(row):
         item["target"]["review"] = {
             "id": row["review_id"],
             "body": row["review_body"],
+            "rating": float(row["rating"]) if row["rating"] is not None else None,
             "author": {
                 "id": row["review_author_id"],
                 "username": row["review_author_username"],
