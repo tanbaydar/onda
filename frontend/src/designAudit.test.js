@@ -62,15 +62,16 @@ test("profile favorites keep their existing artwork and labels while arranging e
   assert.match(css, /\.profile-favorite-list strong\{[^}]*font-size:var\(--text-ui\)/);
 });
 
-test("Discover and Profile flyers use the corrected visible scale", () => {
+test("Discover and Profile flyers retain their scale while the desktop identity stays compact", () => {
   const tokens = read("../design-tokens.css");
   const discover = read("./discover.css");
   const css = read("./styles.css");
   assert.match(tokens, /--surface-flier:153px; --surface-flier-h:191\.25px/);
-  assert.match(tokens, /--profile-avatar-mobile:120px; --profile-avatar-desktop:240px/);
+  assert.match(tokens, /--profile-avatar-mobile:120px; --profile-avatar-desktop:160px/);
   assert.match(discover, /\.discover-event-flier\{[^}]*width:var\(--surface-flier\);height:var\(--surface-flier-h\)/);
   assert.match(css, /\.profile-diary-thumb\{[^}]*width:var\(--surface-flier\);height:var\(--surface-flier-h\)/);
   assert.match(css, /\.profile-favorite-thumb\{[^}]*width:min\(100%,var\(--surface-flier\)\)[^}]*aspect-ratio:4\/5/);
+  assert.match(css, /\.profile-header\{grid-template-columns:var\(--profile-avatar-desktop\) minmax\(0,1fr\);gap:var\(--sp-24\) var\(--sp-32\)\}/);
 });
 
 test("event Been and Favourite controls pair outline prompts with filled committed states", () => {
