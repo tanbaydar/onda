@@ -1,8 +1,8 @@
 # DELTA — Discover redesign
 Date: 2026-08-02 · Scope: full Discover page, both widths, guest + signed-in. Replaces all pre-system markup. Authority: this file.
 
-## Header band (kills BROWSE CITY overline + "Discover" H1)
-- City name IS the page title: display face, 30px desktop / 24px mobile, ink.
+## Header band (kills BROWSE CITY overline; title revised per operator ruling on 2026-08-29)
+- "Discover Events" IS the page title: display face, 30px desktop / 24px mobile, ink. The selected city remains visible in the city dropdown and is not repeated in the title.
 - Control pair, visually matched (1px `--border-strong`, padding 9×12, fn 14, radius 0):
   - City dropdown (existing custom component restyles to this register), value ink, chevron `--text-muted`. 220px desktop.
   - DiscoverSearch field (built), placeholder "Search events in {city}", `--text-muted`. 260px desktop.
