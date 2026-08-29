@@ -495,9 +495,12 @@ dialog .destructive{border-color:var(--action);background:var(--action);color:va
 }
 @container (min-width:680px){
  .profile-statistics-strip{grid-template-areas:"lead reviews venues cities judgment";grid-template-columns:repeat(4,minmax(0,1fr)) 224px;align-items:end;gap:var(--sp-24)}
+ .profile-statistics-strip:has(.profile-histogram-note){padding-bottom:var(--sp-24)}
  .profile-judgment-unit{width:224px;align-items:flex-start}
  .profile-judgment-unit .profile-stat{width:108px;max-width:none;flex:0 0 108px}
  .profile-judgment-unit .stat-label{max-width:none;white-space:nowrap}
+ .profile-histogram-group{position:relative}
+ .profile-histogram-note{position:absolute;top:100%;left:0}
  .profile-stat-histogram .hist-axis{margin-top:var(--sp-4)}
 }
 @media (min-width:768px){

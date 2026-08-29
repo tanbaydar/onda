@@ -26,8 +26,11 @@ test("profile histogram CSS source declares one contextualized placement size ou
 
 test("desktop rating and histogram occupy one aligned judgment unit", () => {
   assert.match(css, /@container \(min-width:680px\)\{[\s\S]*grid-template-columns:repeat\(4,minmax\(0,1fr\)\) 224px/);
+  assert.match(css, /\.profile-statistics-strip:has\(\.profile-histogram-note\)\{padding-bottom:var\(--sp-24\)\}/);
   assert.match(css, /\.profile-judgment-unit\{width:224px;align-items:flex-start\}/);
   assert.match(css, /\.profile-judgment-unit \.profile-stat\{width:108px;max-width:none;flex:0 0 108px\}/);
   assert.match(css, /\.profile-judgment-unit \.stat-label\{max-width:none;white-space:nowrap\}/);
+  assert.match(css, /\.profile-histogram-group\{position:relative\}/);
+  assert.match(css, /\.profile-histogram-note\{position:absolute;top:100%;left:0\}/);
   assert.match(css, /\.profile-stat-histogram \.hist-axis\{margin-top:var\(--sp-4\)\}/);
 });

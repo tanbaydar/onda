@@ -98,7 +98,7 @@ const PROFILE_STATS_FIXTURE = {
   },
   rating_distribution: {
     state: "available",
-    buckets: Array.from({ length: 10 }, (_, index) => ({ rating: (index + 1) / 2, count: index === 8 ? 5 : 0, relative_value: index === 8 ? 1 : 0 })),
+    buckets: Array.from({ length: 10 }, (_, index) => ({ rating: (index + 1) / 2, count: index === 8 ? 3 : 0, relative_value: index === 8 ? 1 : 0 })),
   },
 };
 
@@ -511,6 +511,7 @@ test.describe("public-beta visual contract", () => {
       const ratingLabel = main.querySelector(".profile-judgment-unit .stat-label").getBoundingClientRect();
       const histogramBars = main.querySelector(".profile-stat-histogram .hist-bars").getBoundingClientRect();
       const histogramAxis = main.querySelector(".profile-stat-histogram .hist-axis").getBoundingClientRect();
+      const statisticLabelTops = [...main.querySelectorAll(".profile-statistics-strip > .profile-stat .stat-label")].map((label) => label.getBoundingClientRect().top);
       const row = main.querySelector(".profile-diary-row");
       const top = (selector) => row.querySelector(selector).getBoundingClientRect().top;
       return {
@@ -523,6 +524,7 @@ test.describe("public-beta visual contract", () => {
         ratingLabelHeight: ratingLabel.height,
         histogramBarsTop: histogramBars.top,
         histogramAxisTop: histogramAxis.top,
+        statisticLabelTops,
         order: [top(".profile-diary-title-line"), top(".profile-diary-venue"), top(".profile-diary-judgment"), top(".profile-diary-review"), top(".profile-diary-likes")],
       };
     });
@@ -533,6 +535,9 @@ test.describe("public-beta visual contract", () => {
       expect(geometry.ratingUnitWidth).toBe(224);
       expect(Math.abs(geometry.ratingValueTop - geometry.histogramBarsTop)).toBeLessThanOrEqual(1);
       expect(Math.abs(geometry.ratingLabelTop - geometry.histogramAxisTop)).toBeLessThanOrEqual(2);
+      for (const statisticLabelTop of geometry.statisticLabelTops) {
+        expect(Math.abs(geometry.ratingLabelTop - statisticLabelTop)).toBeLessThanOrEqual(1);
+      }
       expect(geometry.ratingLabelHeight).toBeLessThanOrEqual(18);
     }
     expect(geometry.order).toEqual([...geometry.order].sort((left, right) => left - right));
