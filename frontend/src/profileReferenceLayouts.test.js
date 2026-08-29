@@ -30,6 +30,6 @@ test("profile diary applies the governed Letterboxd-derived placement and omits 
   assert.match(presenter, /const visibleStartTime = hasHappened\(event\) \? null : event\.start_time/);
   assert.match(profile, /reviewBody=\{review\.body\} likeCount=\{review\.like_count\}/);
   assert.match(profile, />Avg\. Rating<\/span>/);
-  assert.match(css, /\.profile-diary-row\{[^}]*grid-template-columns:var\(--flier-sm\) minmax\(0,1fr\)/);
+  assert.match(css, /\.profile-diary-row\{[^}]*grid-template-columns:var\(--collection-flier\) minmax\(0,1fr\)/);
   assert.match(css, /\.profile-diary-review\{[^}]*font-family:var\(--font-prose\)/);
 });

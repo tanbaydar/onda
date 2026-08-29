@@ -46,3 +46,9 @@ Ruled 2026-08-27 by the current operator. Scope: the cross-system frontend remed
 - Owner review mutations live under the single `Edit ▾` disclosure: Edit review, Remove review when present, and Remove from Been. Remove rating is not an event-page menu item.
 - Follow requests are an independently loaded disclosure module at the top of Activity and are absent from Edit Profile. Dated operator correction: a matching request notification also carries Approve/Delete while the request is pending, intentionally duplicating Instagram's two access points; resolving either instance removes the action controls from both while preserving the historical notification.
 - Past event start times remain stored but are not rendered. Discover metadata is venue-first. Event detail always reserves the governed flyer/placeholder slot. Profile identity spacing follows the attached Instagram reference, while Been/Reviews placement follows the attached Letterboxd reference and retains Onda's existing tokens and product data.
+
+## Dated operator override — 2026-08-29 collection flyers and owner controls
+
+- This override supersedes the earlier 56×70 and 80×100 row-flyer sizes for the three named collections. Events, Profile Been, and Favorites all use one 68×85 flyer slot: the exact average of 80×100 and 56×70. Detail-page identity flyers, Search, and Home retain their existing sizes.
+- The supplied `/assets/favorite-heart.svg` and `/assets/been-hand.svg` are repository assets and are the required artwork for the adjacent Favorite and Been controls on a rated past event.
+- `Remove from Been` is owned only by the Been control beside Favorite. The owner review disclosure contains exactly `Edit review` and `Delete review`.
