@@ -41,7 +41,7 @@ Upcoming/Recent in the ruled tab register: active ink 600 + 2px ink indicator ov
 - FLAG: "Recent" tab content anatomy unruled (same row minus lineup? with avg rating?) — rendered structure assumes identical rows; ratings would introduce judgment color and need a ruling.
 - FLAG: dropdown open-state styling inherits the DiscoverSearch dropdown register — assumed, not re-ruled.
 
-## Dated operator override — 2026-08-29 image scale (corrected after live review)
+## Dated operator override — 2026-08-29 image scale
 
-- Discover event artwork is 153×191.25 at both mobile and desktop widths, exactly 1.5× the live 102×127.5 slot that remained visually too small. This correction supersedes the earlier 102×127.5 ruling. The main ledger and Discover's compact event results use the same enlarged slot.
+- Discover event artwork is 102×127.5 at both mobile and desktop widths, exactly 1.5× the prior shipped 68×85 slot. The main ledger and Discover's compact event results use the same enlarged slot.
 - Aspect ratio, fallback behavior, typography, information order, gaps, and row navigation remain unchanged.
