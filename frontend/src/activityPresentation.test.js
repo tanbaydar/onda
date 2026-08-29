@@ -24,6 +24,11 @@ test("activity copy and destinations preserve notification hierarchy", () => {
     activityNotificationPath({ actor: { username: "critic" }, review: { event_id: 12, event_title: "Night Shift" } }),
     "/e/night-shift-12",
   );
+  assert.equal(activityNotificationVerb({ type: "will_be_there" }), "will be at");
+  assert.equal(
+    activityNotificationPath({ actor: { username: "dancer" }, event: { id: 42, title: "Open Air" } }),
+    "/e/open-air-42",
+  );
 });
 
 test("follow-request decisions use the existing endpoints in both Activity locations", () => {

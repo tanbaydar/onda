@@ -58,3 +58,8 @@ This ruling supersedes the earlier statistics order, attached judgment-unit trea
 - Desktop renders those six cells in one row.
 - Mobile renders an exact 3×2 grid: Events in Been · Venues Visited · Cities Visited on row one; Written Reviews · Avg. Rating · histogram on row two.
 - The average numeral remains `--judgment`; the histogram retains its governed 104×30 placement, axis, static marks, accessible description, and empty-distribution treatment.
+
+## Dated operator override — 2026-08-29 concise statistic labels
+
+- The first four visible statistic labels are exactly `Events`, `Venues`, `Cities`, and `Reviews`.
+- Their underlying statistic definitions and values are unchanged.

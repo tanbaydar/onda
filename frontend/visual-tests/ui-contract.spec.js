@@ -500,6 +500,13 @@ test.describe("public-beta visual contract", () => {
     await page.goto("/u/onda_test/reviews");
     await expect(page.getByRole("heading", { level: 1, name: "Onda Test" })).toBeVisible();
     await expect(page.getByText("Avg. Rating", { exact: true })).toBeVisible();
+    const statisticLabels = page.locator(".profile-statistics .stat-label");
+    for (const label of ["Events", "Venues", "Cities", "Reviews"]) {
+      await expect(statisticLabels.getByText(label, { exact: true })).toBeVisible();
+    }
+    for (const oldLabel of ["Events in Been", "Venues visited", "Cities visited", "Written reviews"]) {
+      await expect(page.getByText(oldLabel, { exact: true })).toHaveCount(0);
+    }
     await expect(page.getByText("3 ratings given", { exact: true })).toHaveCount(0);
     await expect(page.getByText("The room, the sound, and the crowd all landed at once.")).toBeVisible();
     await expect(page.locator(".profile-diary-likes")).toContainText("No likes yet");
@@ -612,6 +619,25 @@ test.describe("public-beta visual contract", () => {
     await page.locator(".activity-follow-request-actions").getByRole("button", { name: "Approve" }).first().click();
     await expect(page.locator(".activity-item .activity-request-actions")).toHaveCount(0);
     await expectNoHorizontalOverflow(page);
+  });
+
+  test("Will Be There activity names and opens its event", async ({ page }) => {
+    const notification = {
+      id: 26,
+      type: "will_be_there",
+      actor: { id: 8, username: "onda.friend", display_name: "Onda Friend", avatar: null },
+      event: { id: 468, title: "Franky Rizardo - Flow" },
+      created_at: "2026-08-29T12:00:00Z",
+      read_at: null,
+      review: null,
+    };
+    await mockPublicApi(page, { authenticated: true, notifications: [notification] });
+    await page.goto("/activity");
+    const row = page.locator(".activity-item .activity-row");
+    await expect(row).toContainText("Onda Friend will be at Franky Rizardo - Flow.");
+    await expect(row).toHaveAttribute("href", "/e/franky-rizardo-flow-468");
+    await row.click();
+    await expect(page).toHaveURL(/\/e\/franky-rizardo-flow-468$/);
   });
 
   test("the 767 to 768 shell transition preserves usable content capacity", async ({ page }, testInfo) => {

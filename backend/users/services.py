@@ -237,16 +237,35 @@ def will_be_there_is_active(event, *, at=None):
     return local_today <= event.event_date
 
 
+@transaction.atomic
 def save_will_be_there(*, user, event):
     require_account_action(user)
     now = timezone_now()
     if not will_be_there_is_active(event, at=now):
         raise WillBeThereExpired
-    return WillBeThere.objects.get_or_create(
+    entry, created = WillBeThere.objects.get_or_create(
         user=user,
         event=event,
         defaults={"created_at": now},
     )
+    if created:
+        follower_ids = Follow.objects.filter(
+            followee=user,
+            status=FollowStatus.APPROVED,
+        ).values_list("follower_id", flat=True)
+        Notification.objects.bulk_create(
+            [
+                Notification(
+                    recipient_id=follower_id,
+                    actor=user,
+                    type=NotificationType.WILL_BE_THERE,
+                    event=event,
+                    created_at=now,
+                )
+                for follower_id in follower_ids
+            ]
+        )
+    return entry, created
 
 
 def remove_will_be_there(*, user, event):
