@@ -119,7 +119,7 @@ function ProfileFavoriteGroup({ group, owner, onRemove, onReconcile }) {
   return (
     <section className="profile-favorite-group" aria-labelledby={headingId}>
       <h3 className="section-heading" id={headingId}>{group.label}</h3>
-      <ul className="profile-favorite-list ledger-list">
+      <ul className="profile-favorite-list">
         {group.items.map((item) => (
           <li className={`profile-favorite-item${owner ? " is-owner has-action" : ""}`} key={item.key}>
             <Link className="profile-favorite-link" to={item.to}>

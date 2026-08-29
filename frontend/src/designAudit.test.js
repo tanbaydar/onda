@@ -44,7 +44,7 @@ test("artist detail and search rows share a circular failed-image placeholder", 
   assert.match(css, /\.artist-avatar\{[^}]*border-radius:50%/);
 });
 
-test("profile favorites separate entity types while keeping row-scale artwork and a heart-only owner control", () => {
+test("profile favorites separate entity types into three-column flyer groups with a heart-only owner control", () => {
   const profile = read("./pages/ProfilePage.jsx");
   const favorite = read("./components/FavoriteControl.jsx");
   const css = read("./styles.css");
@@ -56,8 +56,9 @@ test("profile favorites separate entity types while keeping row-scale artwork an
   assert.match(profile, /className="profile-favorite-copy"/);
   assert.match(favorite, /if \(row\) return <div className="profile-favorite-control">/);
   assert.match(css, /\.profile-favorite-groups\{display:grid;gap:var\(--sp-32\)\}/);
-  assert.match(css, /\.profile-favorite-list \.artist-avatar\{width:var\(--thumb\);height:var\(--thumb\)\}/);
-  assert.match(css, /\.profile-favorite-link\{[^}]*min-height:var\(--thumb-h\)/);
+  assert.match(css, /\.profile-favorite-list\{display:grid;grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
+  assert.match(css, /\.profile-favorite-thumb\{[^}]*width:100%;aspect-ratio:4\/5/);
+  assert.match(css, /\.profile-favorite-control\{position:absolute;top:0;right:0/);
 });
 
 test("profile social counts open a responsive, infinitely scrolling people list", () => {
