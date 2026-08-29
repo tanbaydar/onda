@@ -4,8 +4,8 @@ export const HOME_EMPTY_COPY = "No activity from people you follow yet.";
 
 export const HOME_FEED_VERBS = {
   rated_been: "rated",
+  review: "wrote a review of",
   will_be_there: "will be at",
-  follow: "followed",
   review_like: "liked a review of",
   favorite_event: "favorited",
   favorite_artist: "favorited",
@@ -26,10 +26,10 @@ export function feedItemPath(item) {
   if (item.grouped) return `/u/${item.actor.username}`;
   if (item.target.event) return eventPath(item.target.event);
   if (item.target.artist) return artistPath(item.target.artist);
-  return `/u/${item.target.user.username}`;
+  return `/u/${item.actor.username}`;
 }
 
-const GROUPABLE = new Set(["favorite_event", "favorite_artist", "follow"]);
+const GROUPABLE = new Set(["favorite_event", "favorite_artist"]);
 export function groupFeedItems(items) {
   const grouped = [];
   for (const item of items) {

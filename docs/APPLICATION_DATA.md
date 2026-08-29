@@ -148,15 +148,15 @@ Onda does not copy every social action into a fan-out feed table. `GET /api/me/h
 flowchart LR
     Follows[Approved followees] --> WBT[Visible active Will Be There]
     Follows --> Likes[Visible review likes]
+    Follows --> Reviews[Visible written reviews]
     Follows --> Ratings[Visible rated Been]
-    Follows --> FollowActivity[Approved new follows]
     Follows --> FavEvent[Visible favorite events]
     Follows --> FavArtist[Visible favorite artists]
 
     WBT --> Union[(UNION ALL)]
     Likes --> Union
+    Reviews --> Union
     Ratings --> Union
-    FollowActivity --> Union
     FavEvent --> Union
     FavArtist --> Union
     Union --> Cursor[Order by activity_at,<br/>activity_type, source_key]

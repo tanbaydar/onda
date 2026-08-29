@@ -28,7 +28,7 @@ from .models import (
 )
 
 
-ACTIVITY_TYPES = ("will_be_there", "review_like", "rated_been", "follow", "favorite_event", "favorite_artist")
+ACTIVITY_TYPES = ("will_be_there", "review_like", "review", "rated_been", "favorite_event", "favorite_artist")
 SOURCE_KEY_RE = re.compile(r"^\d{20}(?::\d{20})?$")
 MAX_CURSOR_LENGTH = 512
 
@@ -147,27 +147,33 @@ def home_feed_rows(viewer, *, at, cursor=None, limit=21):
         **been_nulls,
     ).values(*FEED_FIELDS)
 
-    follow_nulls = _nulls()
-    for key in ("target_user_id", "target_username", "target_display_name"):
-        follow_nulls.pop(key)
-    follows = Follow.objects.filter(
-        follower_id__in=followees,
-        status=FollowStatus.APPROVED,
-        approved_at__isnull=False,
+    review_nulls = _nulls()
+    for key in (
+        "event_id", "event_title", "event_date", "event_start_time",
+        "event_cover_image_url", "event_venue_name", "event_city_name",
+        "review_id", "review_body",
+    ):
+        review_nulls.pop(key)
+    reviews = Review.objects.visible_to(viewer).filter(
+        entry__user_id__in=followees,
     ).annotate(
-        activity_type=Value("follow", output_field=CharField()),
-        activity_at=F("approved_at"),
-        source_key=Concat(
-            _source_part(F("follower_id")), Value(":"), _source_part(F("followee_id"))
-        ),
-        actor_id=F("follower_id"),
-        actor_username=F("follower__username"),
-        actor_display_name=F("follower__display_name"),
-        actor_avatar=F("follower__avatar"),
-        target_user_id=F("followee_id"),
-        target_username=F("followee__username"),
-        target_display_name=F("followee__display_name"),
-        **follow_nulls,
+        activity_type=Value("review", output_field=CharField()),
+        activity_at=F("published_at"),
+        source_key=_source_part(F("id")),
+        actor_id=F("entry__user_id"),
+        actor_username=F("entry__user__username"),
+        actor_display_name=F("entry__user__display_name"),
+        actor_avatar=F("entry__user__avatar"),
+        event_id=F("entry__event_id"),
+        event_title=F("entry__event__title"),
+        event_date=F("entry__event__event_date"),
+        event_start_time=F("entry__event__start_time"),
+        event_cover_image_url=F("entry__event__cover_image_url"),
+        event_venue_name=F("entry__event__venue__name"),
+        event_city_name=F("entry__event__venue__city__name"),
+        review_id=F("id"),
+        review_body=F("body"),
+        **review_nulls,
     ).values(*FEED_FIELDS)
 
     visible_reviews = Review.objects.visible_to(viewer).values("id")
@@ -266,8 +272,8 @@ def home_feed_rows(viewer, *, at, cursor=None, limit=21):
     ).values(*FEED_FIELDS)
 
     combined = _after_cursor(been, cursor).union(
+        _after_cursor(reviews, cursor),
         _after_cursor(likes, cursor),
-        _after_cursor(follows, cursor),
         _after_cursor(will_be_there, cursor),
         _after_cursor(favorite_events, cursor),
         _after_cursor(favorite_artists, cursor),
@@ -289,13 +295,6 @@ def serialize_feed_row(row):
         "target": {},
         "context": None,
     }
-    if row["activity_type"] == "follow":
-        item["target"]["user"] = {
-            "id": row["target_user_id"],
-            "username": row["target_username"],
-            "display_name": row["target_display_name"],
-        }
-        return item
     if row["activity_type"] == "favorite_artist":
         item["target"]["artist"] = {
             "id": row["artist_id"], "name": row["artist_name"],
@@ -323,6 +322,10 @@ def serialize_feed_row(row):
                 {"id": row["review_id"], "body": row["review_body"]}
                 if row["review_id"] is not None else None
             ),
+        }
+    elif row["activity_type"] == "review":
+        item["context"] = {
+            "review": {"id": row["review_id"], "body": row["review_body"]},
         }
     else:
         item["target"]["review"] = {

@@ -75,9 +75,11 @@ function ProfileDiaryEventRow({ event, rating, hasReview = false, reviewBody = n
 function FeedEventRow({ item }) {
   const event = item.target.event;
   const isRated = item.type === "rated_been";
+  const isReview = item.type === "review";
+  const isRich = isRated || isReview;
   const visibleStartTime = hasHappened(event) ? null : event.start_time;
   return (
-    <Link className={`home-feed-item home-feed-event${isRated ? " home-feed-rich" : ""}`} to={feedItemPath(item)}>
+    <Link className={`home-feed-item home-feed-event${isRich ? " home-feed-rich" : ""}`} to={feedItemPath(item)}>
       <ImageSlot className="home-feed-flier" name={event.title} src={event.cover_image_url} />
       <span className="home-feed-copy">
         <span className="home-feed-actor-line">
@@ -89,7 +91,7 @@ function FeedEventRow({ item }) {
         <strong className="home-feed-object">{event.title}</strong>
         {isRated ? <RatingStars className="home-feed-stars" value={item.context.rating} /> : null}
         {item.type === "will_be_there" ? <span className="home-feed-meta">{formatEventDateTime(event.event_date, visibleStartTime)} · {event.venue.name}</span> : null}
-        {isRated && item.context.review ? <FeedReviewExcerpt>{item.context.review.body}</FeedReviewExcerpt> : null}
+        {isRich && item.context.review ? <FeedReviewExcerpt>{item.context.review.body}</FeedReviewExcerpt> : null}
       </span>
     </Link>
   );

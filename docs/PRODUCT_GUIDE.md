@@ -107,8 +107,8 @@ Home is assembled from current database truth. It can contain six activity types
 
 1. Will Be There
 2. review like
-3. rated Been entry
-4. new follow
+3. written review
+4. rated Been entry
 5. favorite event
 6. favorite artist
 
