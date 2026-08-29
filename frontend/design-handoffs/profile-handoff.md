@@ -66,3 +66,7 @@ Judgment color: Been-row stars + the strip's judgment unit ONLY. Display face: n
 - Statistics, tabs, active diary ledger, and Favorites share the same centered measure. The statistic label is `Avg. Rating`.
 - Been and Reviews rows follow the attached Letterboxd placement using Onda tokens: 80×100 flyer at left; title plus event year at top; venue below; judgment plus `Been` date below that; written review prose and like count continue vertically when supplied. Rows use existing hairlines and functional/prose/display roles only.
 - Past diary rows display the event date without its stored start time. Been may show the existing `Written review` marker because its shipped payload does not include review prose. Reviews renders the shipped body and like count; this ruling does not expand the API contract.
+
+## Dated operator override — 2026-08-29 statistics vertical centering
+
+- The Statistics block sits at an equal 48px interval between the profile header action and the tab register. Its section heading adds no second top margin. Statistics, tabs, and all content below them therefore move upward together while the identity header remains fixed.

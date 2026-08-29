@@ -545,6 +545,9 @@ test.describe("public-beta visual contract", () => {
       const header = main.querySelector(".profile-header").getBoundingClientRect();
       const avatar = main.querySelector(".profile-header > .profile-avatar").getBoundingClientRect();
       const action = main.querySelector(".profile-header-action").getBoundingClientRect();
+      const statisticsHeading = main.querySelector(".profile-statistics > .section-heading").getBoundingClientRect();
+      const statisticsStrip = main.querySelector(".profile-statistics-strip").getBoundingClientRect();
+      const tabs = main.querySelector(".profile-tabs").getBoundingClientRect();
       const cellSelectors = [".stat-lead", ".stat-venues", ".stat-cities", ".stat-reviews", ".stat-average", ".profile-histogram-group"];
       const statisticCells = cellSelectors.map((selector) => main.querySelector(selector).getBoundingClientRect());
       const ratingValue = main.querySelector(".stat-average .stat-value").getBoundingClientRect();
@@ -558,6 +561,8 @@ test.describe("public-beta visual contract", () => {
         headerWidth: header.width,
         avatarWidth: avatar.width,
         actionBelowAvatar: action.top >= avatar.bottom,
+        statisticsGapAbove: statisticsHeading.top - action.bottom,
+        statisticsGapBelow: tabs.top - statisticsStrip.bottom,
         statisticCells: statisticCells.map(({ bottom, left, top }) => ({ bottom, left, top })),
         ratingValueTop: ratingValue.top,
         ratingLabelTop: ratingLabel.top,
@@ -571,6 +576,9 @@ test.describe("public-beta visual contract", () => {
     expect(geometry.headerWidth).toBeLessThanOrEqual(800);
     expect(geometry.avatarWidth).toBe(page.viewportSize().width < 768 ? 80 : 160);
     expect(geometry.actionBelowAvatar).toBe(true);
+    expect(Math.abs(geometry.statisticsGapAbove - 48)).toBeLessThanOrEqual(1);
+    expect(Math.abs(geometry.statisticsGapBelow - 48)).toBeLessThanOrEqual(1);
+    expect(Math.abs(geometry.statisticsGapAbove - geometry.statisticsGapBelow)).toBeLessThanOrEqual(1);
     const expectSameLine = (values, tolerance = 1) => {
       for (const value of values.slice(1)) expect(Math.abs(value - values[0])).toBeLessThanOrEqual(tolerance);
     };
