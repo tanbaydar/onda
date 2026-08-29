@@ -91,7 +91,7 @@ main nav button+span,main nav span+button{margin-left:var(--sp-8)}
 .search-result-row:hover,.search-result-row:focus{background:var(--bg-subtle)}
 .search-result-row:focus-visible{outline:2px solid var(--action);outline-offset:-2px}
 .search-result-row>img,.search-result-row>.image-slot{width:var(--thumb);height:var(--thumb-h);flex:0 0 var(--thumb)}
-.search-result-row>img.search-avatar{width:26px;height:26px;border-radius:50%;background:var(--avatar)}
+.search-result-row>img.search-avatar{width:26px;height:26px;flex:0 0 26px;border-radius:50%;background:var(--avatar)}
 .search-result-row>.artist-avatar{width:var(--thumb);height:var(--thumb);flex:0 0 var(--thumb)}
 .search-result-copy{display:flex;min-width:0;flex-direction:column;gap:var(--sp-4)}
 .search-result-copy strong{font-family:var(--font-display);font-size:var(--text-row-title);font-weight:400;line-height:1.2}

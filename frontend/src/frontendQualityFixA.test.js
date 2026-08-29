@@ -14,9 +14,11 @@ test("App and CSS sources place session failure controls outside hidden header c
 test("ProfileAvatar and People-search sources use one null and failed-image fallback", () => {
   const avatar = read("./components/ProfileAvatar.jsx");
   const search = read("./components/SearchResults.jsx");
+  const styles = read("./styles.css");
   assert.match(avatar, /onError=\{\(\) => setFailedSource\(profile\.avatar\)\}/);
   assert.match(avatar, /profileInitials\(profile\.display_name\)/);
   assert.match(search, /<ProfileAvatar profile=\{item\} small className="search-avatar"/);
+  assert.match(styles, /\.search-result-row>img\.search-avatar\{[^}]*width:26px;[^}]*height:26px;[^}]*flex:0 0 26px/);
 });
 
 test("ConfirmDialog source dispatches confirm and cancel only from onClose", () => {
