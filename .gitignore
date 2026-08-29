@@ -29,6 +29,7 @@ notes/
 docs/private/
 frontend/DESIGN_BRIEF.md
 frontend/design-handoffs/
+refactoring-ui-for-agents/
 
 # User uploads and local databases
 media/
