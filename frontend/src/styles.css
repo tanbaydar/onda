@@ -172,7 +172,8 @@ meter{accent-color:var(--chart);width:120px}
 .profile-histogram-group.is-empty .hist-fill{background:var(--border-strong)}
 .event-rating-block{display:grid;grid-template-columns:auto 160px;align-items:end;gap:var(--sp-8) var(--sp-16);margin-top:var(--sp-32);max-width:var(--measure-rows)}
 .event-rating-block .rating-value{margin:0}
-.event-rating-block>p:last-child{grid-column:1/-1;margin:0;color:var(--text-secondary);font-size:var(--text-micro)}
+.event-rating-block>.event-rating-label,.event-rating-block>.event-rating-empty{margin:0;color:var(--text-secondary);font-size:var(--text-micro)}
+.event-rating-block>.event-rating-empty{grid-column:1/-1}
 .event-attendance{display:flex;flex-wrap:wrap;align-items:center;gap:var(--sp-8) var(--sp-16);margin-top:var(--sp-24)}
 .wbt-count{margin:0;color:var(--judgment);font-family:var(--font-fn);font-size:var(--text-ui);font-weight:500}
 .event-owner-block{display:flex;flex-wrap:wrap;align-items:center;gap:var(--sp-8) var(--sp-16);margin-top:var(--sp-32);padding-top:var(--sp-16);border-top:var(--hairline) solid var(--border)}
