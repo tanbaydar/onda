@@ -277,9 +277,9 @@ export default function EventPage({ user, sessionReady, onAuthenticationRequired
         </div> : <>
         <div className="event-rating-block">
           {event.rating_summary.state === "available" ? (
-            <><p className="rating-value">{event.rating_summary.average.toFixed(1)}</p><RatingHistogram buckets={event.rating_distribution.buckets} /><p>{`Average from ${pluralize(event.rating_summary.count, "rating")}.`}</p></>
+            <><p className="rating-value">{event.rating_summary.average.toFixed(1)}</p><RatingHistogram buckets={event.rating_distribution.buckets} /><p className="event-rating-label">Avg. Rating</p><p className="event-rating-label">rating distribution</p></>
           ) : (
-            <p>Not enough ratings for an average yet.</p>
+            <p className="event-rating-empty">Not enough ratings for an average yet.</p>
           )}
         </div>
         {user ? <div className="event-owner-block">
