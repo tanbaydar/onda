@@ -28,7 +28,7 @@
   --measure-rows:800px;       /* desktop ledgers */
   --gutter-mobile:24px; --gutter-desktop:106px; --auth-col:360px; /* desktop gutter is a ceiling; runtime gutters grow fluidly to it */
   --thumb:56px; --thumb-h:70px;                  /* compact utility flier slot 4:5 */
-  --collection-flier:68px; --collection-flier-h:85px; /* Events and Been: average of 80×100 and 56×70 */
+  --collection-flier:68px; --collection-flier-h:85px; /* Events, Been, and Favorites rectangular artwork */
   --flier-sm:80px; --flier-sm-h:100px;           /* mobile reduced flier 4:5 */
   --flier-md:160px; --flier-md-h:200px;          /* desktop identity-block flier */
   --radius:0; --hairline:1px; --breakpoint-desktop:768px;

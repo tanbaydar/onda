@@ -70,3 +70,8 @@ Ruled 2026-08-27 by the current operator. Scope: the cross-system frontend remed
 
 - This correction supersedes the Favorites portion of the earlier collection-flyer override. Favorites return to the prior compact 56×70 flyer size. Events and Profile Been remain 68×85.
 - The three-column Favorites layout, centered item alignment, existing typography, and detail-page flyer sizes remain unchanged.
+
+## Dated operator adjustment — 2026-08-29 Favorites image and text balance
+
+- This adjustment supersedes the immediately preceding Favorites flyer-size correction. Rectangular event and venue artwork in Favorites is 68×85; circular Artist artwork is 68×68.
+- All Favorites item titles use the 14px UI text token. Existing metadata remains at the governed 12px micro token. The three-column centered composition, heart removal, copy, and spacing remain unchanged.

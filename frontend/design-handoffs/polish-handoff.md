@@ -86,4 +86,4 @@ Replaces the "Add favorite" quiet micro link everywhere favoriting exists (event
 ## Dated delta — 2026-08-29 Favorites collection ruling
 
 - Per current operator ruling, the Favorites collection does not render a favorite heart or an in-list removal action: presence in the collection already communicates favorite state. Detail-page favorite controls remain unchanged.
-- Within each three-column Events, Artists, and Venues row, every flyer's artwork and existing text are centered together. Per the latest operator correction, Favorites restore the prior compact 56×70 flyer size; typography, copy, and spacing tokens remain unchanged.
+- Within each three-column Events, Artists, and Venues row, every item's artwork and existing text are centered together. Per the latest operator adjustment, rectangular Favorites artwork is 68×85, Artist artwork is 68×68, and every item title uses the 14px UI text token. Copy and spacing remain unchanged.
