@@ -154,7 +154,8 @@ meter{accent-color:var(--chart);width:120px}
 .rating-histogram-details>summary{display:inline-flex;min-height:44px;align-items:center;color:var(--text-secondary);cursor:pointer;font-weight:500}
 .rating-histogram-values{margin:0;padding:0;list-style:none}
 .rating-histogram-values li{display:flex;justify-content:space-between;gap:var(--sp-16);padding:var(--sp-6) 0;border-top:var(--hairline) solid var(--border-muted);color:var(--text-secondary);font-size:var(--text-micro)}
-.profile-statistics{container-type:inline-size}
+.profile-statistics{margin-top:var(--sp-48);container-type:inline-size}
+.profile-statistics>.section-heading{margin-top:0}
 .profile-statistics-strip{display:grid;grid-template-areas:"lead venues cities" "reviews average histogram";grid-template-columns:minmax(0,1fr) minmax(0,1fr) 104px;align-items:end;gap:var(--sp-24) var(--sp-12);width:100%;overflow:visible}
 .profile-stat{display:flex;min-width:0;flex-direction:column;gap:var(--sp-4)}
 .profile-stat .stat-value{font-family:var(--font-display);font-size:var(--text-numeral-md);font-weight:400;line-height:1}
