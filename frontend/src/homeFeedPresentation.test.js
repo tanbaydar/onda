@@ -7,6 +7,7 @@ import { compactRelativeTime, groupFeedItems, homeFeedVerb, HOME_EMPTY_COPY, HOM
 const dense = JSON.parse(readFileSync(new URL("../design-fixtures/home-feed-dense.json", import.meta.url)));
 const empty = JSON.parse(readFileSync(new URL("../design-fixtures/home-feed-empty.json", import.meta.url)));
 const pageSource = readFileSync(new URL("./pages/HomePage.jsx", import.meta.url), "utf8");
+const presenterSource = readFileSync(new URL("./components/EventRowPresenter.jsx", import.meta.url), "utf8");
 const excerptSource = readFileSync(new URL("./components/FeedReviewExcerpt.jsx", import.meta.url), "utf8");
 const styles = readFileSync(new URL("./styles.css", import.meta.url), "utf8");
 
@@ -18,12 +19,17 @@ test("dense Home fixture and HomePage source cover the five supported activity t
   assert.ok(dense.results.some(({ target }) => target.event?.cover_image_url === null));
 });
 
-test("Home feed CSS source keeps verbs inflexible beside truncating names", () => {
+test("Home feed identity metadata uses one functional-font line with bold actors and objects", () => {
   assert.deepEqual(Object.values(HOME_FEED_VERBS), ["rated", "will be at", "liked a review of", "favorited", "favorited"]);
   assert.ok(dense.results.some(({ actor }) => actor.display_name.length > 35));
   assert.ok(dense.results.some(({ target }) => (target.event?.title ?? target.artist?.name ?? "").length > 60));
   assert.match(styles, /\.home-feed-verb\{[^}]*flex:none[^}]*white-space:nowrap/);
   assert.match(styles, /\.home-feed-actor-name\{[^}]*text-overflow:ellipsis/);
+  assert.match(styles, /\.home-feed-actor-line\{[^}]*font-family:var\(--font-fn\)[^}]*font-size:var\(--text-ui\)/);
+  assert.match(styles, /\.home-feed-object\{[^}]*flex:1 1 auto[^}]*font:inherit[^}]*font-weight:600/);
+  assert.match(styles, /\.home-feed-actor-line time\{[^}]*font:inherit/);
+  assert.match(presenterSource, /home-feed-verb[\s\S]{0,300}home-feed-object[\s\S]{0,300}<time/);
+  assert.match(pageSource, /home-feed-verb[\s\S]{0,300}home-feed-object[\s\S]{0,300}<time/);
 });
 
 test("a rating and its written review are presented as one atomic activity", () => {

@@ -53,3 +53,10 @@ One quiet line ui `--text-secondary`: "No activity from people you follow yet." 
 
 - Home feed row spacing is halved after live review: standard rows use 8px vertical padding and `rated_been` rows use 12px vertical padding.
 - Artwork, internal gaps, typography, payloads, separators, and navigation remain unchanged.
+
+## Dated delta — 2026-08-29 one-line identity metadata
+
+- Per operator ruling, this supersedes the separate actor/object lines and display-face object typography in §1.
+- Username, action phrase, event or artist name, and relative timestamp share one horizontal metadata line in the functional face at the UI-size register. Username and event or artist name are weight 600; the action phrase remains regular.
+- The event or artist name consumes the available horizontal space and truncates when necessary. The action phrase and relative timestamp remain visible. Grouped favorite names use the same inline treatment.
+- Stars, review excerpts, and the will-be-there date/venue payload retain their existing treatment below this identity line.
