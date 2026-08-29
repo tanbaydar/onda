@@ -63,3 +63,9 @@ This ruling supersedes the earlier statistics order, attached judgment-unit trea
 
 - The first four visible statistic labels are exactly `Events`, `Venues`, `Cities`, and `Reviews`.
 - Their underlying statistic definitions and values are unchanged.
+
+## Dated operator override — 2026-08-29 compact mobile spacing
+
+- The mobile six-cell register keeps its exact 3×2 order but reduces the row gap from 24px to 16px.
+- Every mobile statistic numeral, including Events, uses the existing 24px profile-numeral scale. Desktop retains the established lead-value hierarchy.
+- The Statistics block sits 16px below the profile header action and 16px above the tab register on mobile. Desktop retains both 48px intervals.

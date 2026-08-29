@@ -92,3 +92,41 @@ Judgment color: Been-row stars + the strip's judgment unit ONLY. Display face: n
 
 - Favourites item titles use the existing row-title scale: 18px mobile and 20px desktop. This replaces the undersized 14px item-title treatment and restores proportion against the enlarged artwork without introducing a new type token.
 - Events, Artists, and Venues group headings remain 14px functional text. Secondary item metadata remains 12px. Copy, artwork size, alignment, truncation, and layout remain unchanged.
+
+## Dated operator override — 2026-08-29 compact mobile profile
+
+- Mobile Profile returns to the attached Instagram reference scale: the identity avatar is 80×80, superseding the later 120×120 mobile image-scale correction. Desktop remains 160×160.
+- Mobile identity internals use an 8px vertical rhythm for social counts, handle metadata, and bio; the full-width profile action follows the identity cluster after a 16px grid row gap. Existing 44px mobile targets remain unchanged.
+- Mobile Statistics begins 16px after the profile header action, uses a 16px row gap, and renders every statistic numeral at the existing 24px profile-numeral scale. The tab register follows Statistics after 16px. These values supersede the mobile portion of the 48px statistics-centering ruling; desktop retains both 48px intervals and its existing numeral hierarchy.
+- Tab order, content order, copy, profile actions, diary and Favourites artwork, and all non-Profile surfaces remain unchanged.
+
+## Dated operator ruling — 2026-08-29 compact identity order and controls
+
+- The profile identity order is display name → `@handle · city` → follower/following counts → bio. This supersedes the 2026-08-27 Instagram-spacing order for those identity lines.
+- Follow, Unfollow, Request to follow, Requested, and Edit profile render as compact 150×32px controls instead of spanning the profile measure. All follow states retain identical dimensions.
+- The compact control aligns with the identity column when that column can contain 150px. At the 320px minimum viewport it centers beneath the full identity cluster so it does not overflow.
+- The handle sits 4px below the display name and the follower counts sit 8px below the handle. These values supersede the preceding compact-mobile ruling's 8px handle rhythm and full-width action, while its 80px mobile avatar and compact Statistics/tab spacing remain unchanged.
+
+## Dated operator ruling — 2026-08-29 full-width bio and compact social row
+
+- The follower/following row sits 4px below the handle. On mobile its two pairs remain on one line with an 8px pair gap; the visible row contributes only the text line height while each connection button retains a 44px hit area extending downward without increasing layout height.
+- The bio leaves the right identity column and spans the full profile-header width in its own row beneath the avatar/identity cluster. The compact 150×32px Edit/Follow action remains below the bio.
+- This supersedes only the preceding 8px handle-to-counts gap and bio placement. Avatar sizes, control dimensions, Statistics/tab spacing, content order, and all non-Profile surfaces remain unchanged.
+
+## Dated operator ruling — 2026-08-29 full-width mobile profile actions
+
+- On mobile only, the Edit profile control and every FollowControl state span the full available profile-header width. Desktop retains the compact 150×32px control.
+- The mobile control remains 32px high and keeps its existing quiet typography and exact labels: Edit profile, Follow, Unfollow, Request to follow, and Requested.
+- The mobile rectangle and text use `--judgment` green. This is an explicit scoped exception to the profile allocation audit and the product-wide judgment-only green rule; it does not change any other action, control, state, copy, or surface.
+
+## Dated operator ruling — 2026-08-29 relationship copy
+
+- Remove the `Follows you` and approved-state `Following` relationship markers from the profile metadata line. The handle and home city remain.
+- Rename the approved FollowControl label from `Unfollow` to `Following`. Activating `Following` retains the existing unfollow behavior.
+- This ruling supersedes the approved-state label named in the full-width mobile profile actions ruling above; all other dimensions, colors, and states remain unchanged.
+
+## Dated operator ruling — 2026-08-29 full-width profile actions at every breakpoint
+
+- The profile-header action row spans the full available profile measure on both desktop and mobile. Edit profile and every FollowControl state occupy that full horizontal space.
+- The controls remain 32px high and retain their existing breakpoint-specific color treatment: mobile remains `--judgment` green and desktop remains in the quiet bordered-control register.
+- This supersedes only the compact 150px desktop width from the compact identity controls ruling and the mobile-only width scope from the full-width mobile profile actions ruling. Labels, behavior, placement after the bio, and all other profile geometry remain unchanged.

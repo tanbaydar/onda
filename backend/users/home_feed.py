@@ -3,16 +3,19 @@ import json
 import re
 
 from django.db.models import (
+    Case,
     CharField,
     DateField,
+    DateTimeField,
     DecimalField,
     F,
     IntegerField,
     Q,
     TimeField,
     Value,
+    When,
 )
-from django.db.models.functions import Cast, Coalesce, Concat, LPad
+from django.db.models.functions import Cast, Concat, LPad
 from django.utils.dateparse import parse_datetime
 
 from .models import (
@@ -28,8 +31,16 @@ from .models import (
 )
 
 
-ACTIVITY_TYPES = ("will_be_there", "review_like", "rated_been", "favorite_event", "favorite_artist")
-CURSOR_ACTIVITY_TYPES = (*ACTIVITY_TYPES, "review")
+ACTIVITY_TYPES = (
+    "will_be_there",
+    "review_like",
+    "review",
+    "rated_been",
+    "favorite_event",
+    "favorite_artist",
+    "been",
+)
+CURSOR_ACTIVITY_TYPES = ACTIVITY_TYPES
 SOURCE_KEY_RE = re.compile(r"^\d{20}(?::\d{20})?$")
 MAX_CURSOR_LENGTH = 512
 
@@ -91,8 +102,6 @@ def decode_cursor(value):
         activity_type, source_key = decoded[1:]
         if (
             timestamp is None or timestamp.tzinfo is None
-            # Accept cursors issued before written reviews were folded back into
-            # their rated Been activity. No new `review` rows are emitted.
             or activity_type not in CURSOR_ACTIVITY_TYPES
             or not isinstance(source_key, str)
             or SOURCE_KEY_RE.fullmatch(source_key) is None
@@ -124,16 +133,24 @@ def home_feed_rows(viewer, *, at, cursor=None, limit=21):
         status=FollowStatus.APPROVED,
     ).values("followee_id")
 
-    been_nulls = _nulls()
+    diary_nulls = _nulls()
     for key in ("event_id", "event_title", "event_date", "event_start_time", "event_cover_image_url", "event_venue_name", "event_city_name", "rating", "review_id", "review_body"):
-        been_nulls.pop(key)
-    been = DiaryEntry.objects.visible_to(viewer).filter(
+        diary_nulls.pop(key)
+    diary = DiaryEntry.objects.visible_to(viewer).filter(
         user_id__in=followees,
-        rating__isnull=False,
-        rated_at__isnull=False,
     ).annotate(
-        activity_type=Value("rated_been", output_field=CharField()),
-        activity_at=Coalesce(F("review__published_at"), F("rated_at")),
+        activity_type=Case(
+            When(review__isnull=False, then=Value("review")),
+            When(rating__isnull=False, then=Value("rated_been")),
+            default=Value("been"),
+            output_field=CharField(),
+        ),
+        activity_at=Case(
+            When(review__isnull=False, then=F("review__published_at")),
+            When(rating__isnull=False, then=F("rated_at")),
+            default=F("created_at"),
+            output_field=DateTimeField(),
+        ),
         source_key=_source_part(F("id")),
         actor_id=F("user_id"),
         actor_username=F("user__username"),
@@ -147,7 +164,7 @@ def home_feed_rows(viewer, *, at, cursor=None, limit=21):
         event_city_name=F("event__venue__city__name"),
         review_id=F("review__id"),
         review_body=F("review__body"),
-        **been_nulls,
+        **diary_nulls,
     ).values(*FEED_FIELDS)
 
     visible_reviews = Review.objects.visible_to(viewer).values("id")
@@ -155,7 +172,7 @@ def home_feed_rows(viewer, *, at, cursor=None, limit=21):
     for key in (
         "event_id", "event_title", "event_date", "event_start_time",
         "event_cover_image_url", "event_venue_name", "event_city_name",
-        "review_id", "review_body", "review_author_id",
+        "rating", "review_id", "review_body", "review_author_id",
         "review_author_username", "review_author_display_name",
     ):
         like_nulls.pop(key)
@@ -179,6 +196,7 @@ def home_feed_rows(viewer, *, at, cursor=None, limit=21):
         event_cover_image_url=F("review__entry__event__cover_image_url"),
         event_venue_name=F("review__entry__event__venue__name"),
         event_city_name=F("review__entry__event__venue__city__name"),
+        rating=F("review__entry__rating"),
         review_body=F("review__body"),
         review_author_id=F("review__entry__user_id"),
         review_author_username=F("review__entry__user__username"),
@@ -245,7 +263,7 @@ def home_feed_rows(viewer, *, at, cursor=None, limit=21):
         **favorite_artist_nulls,
     ).values(*FEED_FIELDS)
 
-    combined = _after_cursor(been, cursor).union(
+    combined = _after_cursor(diary, cursor).union(
         _after_cursor(likes, cursor),
         _after_cursor(will_be_there, cursor),
         _after_cursor(favorite_events, cursor),
@@ -286,9 +304,9 @@ def serialize_feed_row(row):
         },
     }
     item["target"]["event"] = event
-    if row["activity_type"] in ("will_be_there", "favorite_event"):
+    if row["activity_type"] in ("will_be_there", "favorite_event", "been"):
         return item
-    if row["activity_type"] == "rated_been":
+    if row["activity_type"] in ("rated_been", "review"):
         item["context"] = {
             "rating": float(row["rating"]),
             "review": (
@@ -300,6 +318,7 @@ def serialize_feed_row(row):
         item["target"]["review"] = {
             "id": row["review_id"],
             "body": row["review_body"],
+            "rating": float(row["rating"]) if row["rating"] is not None else None,
             "author": {
                 "id": row["review_author_id"],
                 "username": row["review_author_username"],

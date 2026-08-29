@@ -19,7 +19,7 @@ class HomeFeedContractTests(TestCase):
         venue = Venue.objects.create(name="Home Feed Venue", city=city)
         artist = Artist.objects.create(name="Home Feed Artist")
         cls.events = []
-        for index in range(5):
+        for index in range(6):
             event = Event.objects.create(
                 title=f"Home Feed Event {index}",
                 event_date="2026-07-01",
@@ -75,7 +75,7 @@ class HomeFeedContractTests(TestCase):
             user=user, event=event, rating=rating, rated_at=at
         )
 
-    def test_five_type_identical_timestamp_order_and_source_key_tiebreak_are_fixed(self):
+    def test_seven_type_identical_timestamp_order_and_source_key_tiebreak_are_fixed(self):
         self.approved(self.viewer, self.actor, at=NOW - timedelta(days=1))
         self.entry(self.actor, self.events[0], at=NOW)
         self.events[0].cover_image_url = "https://images.example.test/home-event.jpg"
@@ -96,6 +96,8 @@ class HomeFeedContractTests(TestCase):
         FavoriteEvent.objects.create(user=self.actor, event=self.events[3], added_at=NOW)
         FavoriteEvent.objects.create(user=self.actor, event=self.events[4], added_at=NOW)
         FavoriteArtist.objects.create(user=self.actor, artist=Artist.objects.get(name="Home Feed Artist"), added_at=NOW)
+        unrated = DiaryEntry.objects.create(user=self.actor, event=self.events[5])
+        DiaryEntry.objects.filter(pk=unrated.pk).update(created_at=NOW)
 
         client = self.client_for(self.viewer)
         with CaptureQueriesContext(connection) as queries:
@@ -103,8 +105,8 @@ class HomeFeedContractTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
-            [item["type"] for item in response.json()["results"][:7]],
-            ["will_be_there", "review_like", "rated_been", "rated_been", "favorite_event", "favorite_event", "favorite_artist"],
+            [item["type"] for item in response.json()["results"][:8]],
+            ["will_be_there", "review_like", "review", "rated_been", "favorite_event", "favorite_event", "favorite_artist", "been"],
         )
         favorite_event_ids = [
             item["target"]["event"]["id"]
@@ -121,7 +123,7 @@ class HomeFeedContractTests(TestCase):
         self.assertEqual(rated["target"]["event"]["cover_image_url"], self.events[0].cover_image_url)
         self.assertEqual(rated["target"]["event"]["venue"], {"name": "Home Feed Venue", "city": {"name": "Boston"}})
         written_review = next(item for item in results if item["target"]["event"]["id"] == self.events[1].id)
-        self.assertEqual(written_review["type"], "rated_been")
+        self.assertEqual(written_review["type"], "review")
         self.assertEqual(written_review["activity_at"], NOW.isoformat().replace("+00:00", "Z"))
         self.assertEqual(written_review["context"]["rating"], 4.0)
         self.assertEqual(written_review["context"]["review"]["body"], "Written review")
@@ -129,7 +131,23 @@ class HomeFeedContractTests(TestCase):
             sum(item["target"].get("event", {}).get("id") == self.events[1].id for item in results),
             1,
         )
-        self.assertNotIn("review", [item["type"] for item in results])
+        been = next(item for item in results if item["type"] == "been")
+        self.assertEqual(been["target"]["event"]["id"], self.events[5].id)
+        self.assertIsNone(been["context"])
+        liked_review = next(item for item in results if item["type"] == "review_like")
+        self.assertEqual(
+            liked_review["target"]["review"],
+            {
+                "id": review.id,
+                "body": "Visible liked review",
+                "rating": 4.0,
+                "author": {
+                    "id": self.target.id,
+                    "username": self.target.username,
+                    "display_name": self.target.display_name,
+                },
+            },
+        )
         favorite_without_cover = next(item for item in results if item["type"] == "favorite_event")
         self.assertIsNone(favorite_without_cover["target"]["event"]["cover_image_url"])
         # Two fixed session/auth lookups, one bounded city-boundary lookup,
@@ -195,9 +213,10 @@ class HomeFeedContractTests(TestCase):
         self.assertEqual(hidden["results"], [])
         self.assertEqual(restored["results"][0]["target"]["event"]["id"], self.hidden_event.id)
 
-    def test_rating_removal_disappears_and_rerating_repositions(self):
+    def test_rating_removal_relabels_as_been_and_rerating_repositions(self):
         self.approved(self.viewer, self.actor)
         old = self.entry(self.actor, self.events[0], at=NOW - timedelta(days=2))
+        DiaryEntry.objects.filter(pk=old.pk).update(created_at=NOW - timedelta(days=3))
         self.entry(self.actor, self.events[1], at=NOW - timedelta(days=1))
         old.rating = None
         old.rated_at = None
@@ -207,8 +226,12 @@ class HomeFeedContractTests(TestCase):
         old.rated_at = NOW + timedelta(days=1)
         old.save(update_fields=("rating", "rated_at"))
         rerated = self.client_for(self.viewer).get("/api/me/home/").json()
-        self.assertEqual(len(removed["results"]), 1)
+        self.assertEqual(
+            [item["type"] for item in removed["results"]],
+            ["rated_been", "been"],
+        )
         self.assertEqual(rerated["results"][0]["target"]["event"]["id"], self.events[0].id)
+        self.assertEqual(rerated["results"][0]["type"], "rated_been")
 
     def test_follow_activity_is_not_in_home(self):
         self.approved(self.viewer, self.actor)

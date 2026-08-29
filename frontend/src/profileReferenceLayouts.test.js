@@ -8,12 +8,33 @@ test("profile identity applies the governed Instagram-derived spacing without ne
   const profile = read("./pages/ProfilePage.jsx");
   const css = read("./styles.css");
 
-  assert.match(profile, /className="profile-header"[\s\S]*<ProfileAvatar[\s\S]*className="profile-identity-copy"[\s\S]*className="profile-header-action"/);
+  assert.match(profile, /className="profile-header"[\s\S]*<ProfileAvatar[\s\S]*className="profile-identity-copy"[\s\S]*className="profile-bio"[\s\S]*className="profile-header-action"/);
+  assert.match(profile, /className="identity-title"[\s\S]*className="profile-handle-line"[\s\S]*className="profile-social-counts"/);
+  assert.match(profile, /className="profile-handle-line">@\{profile\.username\}\{profile\.home_city \? ` · \$\{profile\.home_city\.name\}` : ""\}<\/p>/);
+  assert.doesNotMatch(profile, /Follows you/);
   assert.match(css, /\.profile-header\{[^}]*max-width:var\(--measure-rows\);[^}]*grid-template-columns:var\(--profile-avatar-mobile\) minmax\(0,1fr\)/);
   assert.match(css, /@media \(min-width:768px\)[\s\S]*\.profile-header\{grid-template-columns:var\(--profile-avatar-desktop\) minmax\(0,1fr\)/);
-  assert.match(css, /\.profile-header-action\{grid-column:1\/-1;width:100%\}/);
-  assert.match(css, /\.profile-edit-link\{display:flex;width:100%/);
+  assert.match(css, /\.profile-header-action\{width:100%;grid-column:1\/-1;justify-self:stretch\}/);
+  assert.match(css, /\.profile-header-action \.profile-follow-control\{width:100%;height:32px;min-height:32px/);
+  assert.match(css, /\.profile-edit-link\{display:flex;width:100%;height:32px;min-height:32px/);
+  assert.match(css, /\.profile-bio\{width:100%;max-width:none;grid-column:1\/-1;margin:0/);
   assert.doesNotMatch(profile, /View archive|New story|Share photos/);
+});
+
+test("mobile profile uses the compact Instagram-scale rhythm without changing desktop", () => {
+  const tokens = read("../design-tokens.css");
+  const css = read("./styles.css");
+
+  assert.match(tokens, /--profile-avatar-mobile:80px; --profile-avatar-desktop:160px/);
+  assert.match(css, /@media \(max-width:767px\)\{[\s\S]*\.profile-header\{row-gap:var\(--sp-16\)\}/);
+  assert.match(css, /@media \(max-width:767px\)\{[\s\S]*\.profile-social-counts\{flex-wrap:nowrap;gap:var\(--sp-8\);margin-top:var\(--sp-4\)\}/);
+  assert.match(css, /@media \(max-width:767px\)\{[\s\S]*\.profile-social-counts>button\.mobile-target\{min-height:44px;[^}]*margin-bottom:-24px\}/);
+  assert.match(css, /@media \(max-width:767px\)\{[\s\S]*\.profile-statistics\{margin-top:var\(--sp-16\)\}/);
+  assert.match(css, /@media \(max-width:767px\)\{[\s\S]*\.profile-statistics-strip\{row-gap:var\(--sp-16\)\}/);
+  assert.match(css, /@media \(max-width:767px\)\{[\s\S]*\.profile-stat\.stat-lead \.stat-value\{font-size:var\(--text-numeral-md\)\}/);
+  assert.match(css, /@media \(max-width:767px\)\{[\s\S]*\.profile-tabs\{margin-top:var\(--sp-16\)\}/);
+  assert.match(css, /@media \(max-width:767px\)\{[\s\S]*\.profile-header-action \.profile-follow-control,\.profile-header-action \.profile-edit-link\{min-height:32px;border-color:var\(--judgment\);color:var\(--judgment\)\}/);
+  assert.match(css, /@media \(min-width:768px\)[\s\S]*\.profile-header\{grid-template-columns:var\(--profile-avatar-desktop\)/);
 });
 
 test("profile diary applies the governed Letterboxd-derived placement and omits past start time", () => {

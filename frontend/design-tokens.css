@@ -31,7 +31,7 @@
   --collection-flier:68px; --collection-flier-h:85px; /* Events, Been, and Favorites rectangular artwork */
   --surface-flier:102px; --surface-flier-h:127.5px;   /* Discover and Profile diary artwork */
   --favorite-flier:153px; --favorite-flier-h:191.25px; /* Profile Favourites artwork only */
-  --profile-avatar-mobile:120px; --profile-avatar-desktop:160px; /* compact desktop Profile identity artwork */
+  --profile-avatar-mobile:80px; --profile-avatar-desktop:160px; /* Instagram-scale mobile and compact desktop Profile identity artwork */
   --flier-sm:80px; --flier-sm-h:100px;           /* mobile reduced flier 4:5 */
   --flier-md:160px; --flier-md-h:200px;          /* desktop identity-block flier */
   --radius:0; --hairline:1px; --breakpoint-desktop:768px;
@@ -139,7 +139,7 @@
    (event ·) time". Zero action chrome; whole row routes. Read = recession
    only: all text drops to muted, names 500.
 
-   FEED (three scales, chronology kept) — rated_been LARGE: actor line micro
+   FEED (three scales, chronology kept) — rated/reviewed diary LARGE: actor line micro
    muted → event title row-title display → stars 20px → body clamp 4 → meta
    micro muted. will_be_there = row scale. favorite/follow = one quiet micro
    line each (grouping legal), --border-muted hairlines.

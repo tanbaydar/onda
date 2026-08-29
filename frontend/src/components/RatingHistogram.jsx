@@ -2,13 +2,11 @@ import { useId } from "react";
 
 import {
   histogramBarHeight,
-  ratingBucketLabel,
   ratingDistributionDescription,
 } from "../ratingHistogram.js";
 
 export default function RatingHistogram({ buckets, className = "", staticLabel = null }) {
   const descriptionId = useId();
-  const isCompact = className.split(/\s+/).includes("profile-stat-histogram");
   const description = [staticLabel, ratingDistributionDescription(buckets)].filter(Boolean).join(" ");
 
   return (
@@ -28,14 +26,6 @@ export default function RatingHistogram({ buckets, className = "", staticLabel =
         <div className="hist-axis" aria-hidden="true"><span>½</span><span>5</span></div>
       </div>
       <p className="sr-only" id={descriptionId}>{description}</p>
-      {!isCompact ? (
-        <details className="rating-histogram-details">
-          <summary>View distribution</summary>
-          <ul className="rating-histogram-values">
-            {buckets.map((bucket) => <li key={bucket.rating}>{ratingBucketLabel(bucket)}</li>)}
-          </ul>
-        </details>
-      ) : null}
     </div>
   );
 }

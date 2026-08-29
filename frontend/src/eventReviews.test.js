@@ -14,13 +14,20 @@ test("event review source files all compose EventReviewRow", () => {
   assert.match(publicReviews, /<EventReviewRow/);
   assert.match(row, /<ProfileAvatar profile=\{person\} small/);
   assert.match(row, /event-review-name/);
-  assert.match(row, /event-review-handle/);
+  assert.match(row, /event-review-avatar/);
 });
 
 test("EventReviewRow source composes RatingStars and omits rating prose", () => {
   assert.match(row, /<RatingStars className="event-review-stars" value=\{rating\}/);
   assert.doesNotMatch(row + circle + publicReviews, /Rating:\s*\{/);
   assert.match(row, /event-review-stars/);
+});
+
+test("review likes use the Instagram-style heart presentation without visible Like or Unlike copy", () => {
+  assert.match(row, /event-review-like-button/);
+  assert.match(row, /aria-pressed=\{review\.viewer_has_liked\}/);
+  assert.match(row, /aria-label=\{review\.viewer_has_liked \? "Unlike review" : "Like review"\}/);
+  assert.doesNotMatch(row, />\{review\.viewer_has_liked \? "Unlike" : "Like"\}<\/button>/);
 });
 
 test("event review fixtures cover image and initials avatar paths", () => {
@@ -49,4 +56,10 @@ test("owner review editing keeps review actions separate from the Been control",
   assert.match(beenControl, /"\/assets\/been-hand-filled\.svg" : "\/assets\/been-hand\.svg"/);
   assert.match(beenControl, /marked \? "Been" : "Mark Been"/);
   assert.match(page, /ratingComposerRef\.current\?\.querySelector\('\[role="slider"\]'\)\?\.focus\(\)/);
+});
+
+test("destructive owner actions reconcile every affected review surface", () => {
+  assert.match(page, /function removeEntry\(\)[\s\S]*?been\/`, \{ method: "DELETE" \}, \{ reviewsChanged: true \}/);
+  assert.match(page, /function deleteReview\(\)[\s\S]*?reviewsChanged: true, onSuccess: \(\) => setEditingEntry\(false\)/);
+  assert.match(page, /await fetchWithCsrf\(path, options\);\s*onSuccess\?\.\(\);/);
 });

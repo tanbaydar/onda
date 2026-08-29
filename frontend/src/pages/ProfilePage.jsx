@@ -212,10 +212,10 @@ export default function ProfilePage({ session, tab = "favourites" }) {
         <ProfileAvatar profile={profile} />
         <div className="profile-identity-copy">
           <div className="profile-title-row"><h1 className="identity-title">{profile.display_name}</h1></div>
+          <p className="profile-handle-line">@{profile.username}{profile.home_city ? ` · ${profile.home_city.name}` : ""}</p>
           <div className="profile-social-counts"><button className="mobile-target" type="button" aria-haspopup="dialog" onClick={() => setConnections("followers")}><strong>{profile.follower_count}</strong><small>Followers</small></button><button className="mobile-target" type="button" aria-haspopup="dialog" onClick={() => setConnections("following")}><strong>{profile.following_count}</strong><small>Following</small></button></div>
-          <p className="profile-handle-line">@{profile.username}{profile.home_city ? ` · ${profile.home_city.name}` : ""}{data.relationship?.follows_you ? " · Follows you" : ""}{data.relationship?.outgoing_status === "approved" ? " · Following" : ""}</p>
-          {profile.bio ? <p className="profile-bio">{profile.bio}</p> : null}
         </div>
+        {profile.bio ? <p className="profile-bio">{profile.bio}</p> : null}
         <div className="profile-header-action">{owner ? <Link className="profile-edit-link mobile-target" to="/settings/profile">Edit profile</Link> : <><FollowControl relationship={data.relationship} pending={followPending} onChange={changeFollow} />{followError ? <div className="profile-follow-error" role="alert"><p>{followError}</p><button className="recovery-action quiet-control" type="button" disabled={followPending} onClick={retryFollow}>{followPending ? "Retrying…" : "Retry"}</button></div> : null}</>}</div>
       </header>
       {data.access !== "stub" ? <ProfileStatistics username={profile.username} version={profileVersion} /> : null}

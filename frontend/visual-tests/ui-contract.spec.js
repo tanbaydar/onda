@@ -524,6 +524,29 @@ test.describe("public-beta visual contract", () => {
     await expectNoHorizontalOverflow(page);
   });
 
+  test("profile actions span the profile measure at every viewport", async ({ page }) => {
+    await mockPublicApi(page, { authenticated: true });
+    await page.goto("/u/onda_test");
+    await expect(page.getByRole("link", { name: "Edit profile" })).toBeVisible();
+
+    const geometry = await page.locator("main.profile-page").evaluate((main) => {
+      const header = main.querySelector(".profile-header").getBoundingClientRect();
+      const action = main.querySelector(".profile-header-action").getBoundingClientRect();
+      const control = main.querySelector(".profile-edit-link").getBoundingClientRect();
+      return {
+        headerWidth: header.width,
+        actionWidth: action.width,
+        controlWidth: control.width,
+        controlHeight: control.height,
+      };
+    });
+
+    expect(Math.abs(geometry.actionWidth - geometry.headerWidth)).toBeLessThanOrEqual(1);
+    expect(Math.abs(geometry.controlWidth - geometry.headerWidth)).toBeLessThanOrEqual(1);
+    expect(geometry.controlHeight).toBe(32);
+    await expectNoHorizontalOverflow(page);
+  });
+
   test("profile applies Instagram spacing and Letterboxd review placement", async ({ page }) => {
     await mockPublicApi(page, { authenticated: true });
     await page.goto("/u/onda_test/reviews");
@@ -545,8 +568,15 @@ test.describe("public-beta visual contract", () => {
       const header = main.querySelector(".profile-header").getBoundingClientRect();
       const avatar = main.querySelector(".profile-header > .profile-avatar").getBoundingClientRect();
       const action = main.querySelector(".profile-header-action").getBoundingClientRect();
+      const actionControlStyles = getComputedStyle(main.querySelector(".profile-edit-link, .profile-follow-control"));
+      const title = main.querySelector(".profile-title-row").getBoundingClientRect();
+      const handle = main.querySelector(".profile-handle-line").getBoundingClientRect();
+      const socialCounts = main.querySelector(".profile-social-counts").getBoundingClientRect();
+      const socialTarget = main.querySelector(".profile-social-counts > button").getBoundingClientRect();
+      const bio = main.querySelector(".profile-bio").getBoundingClientRect();
       const statisticsHeading = main.querySelector(".profile-statistics > .section-heading").getBoundingClientRect();
-      const statisticsStrip = main.querySelector(".profile-statistics-strip").getBoundingClientRect();
+      const statisticsStripElement = main.querySelector(".profile-statistics-strip");
+      const statisticsStrip = statisticsStripElement.getBoundingClientRect();
       const tabs = main.querySelector(".profile-tabs").getBoundingClientRect();
       const cellSelectors = [".stat-lead", ".stat-venues", ".stat-cities", ".stat-reviews", ".stat-average", ".profile-histogram-group"];
       const statisticCells = cellSelectors.map((selector) => main.querySelector(selector).getBoundingClientRect());
@@ -559,10 +589,25 @@ test.describe("public-beta visual contract", () => {
       const top = (selector) => row.querySelector(selector).getBoundingClientRect().top;
       return {
         headerWidth: header.width,
+        headerLeft: header.left,
         avatarWidth: avatar.width,
+        actionWidth: action.width,
+        actionHeight: action.height,
+        actionColor: actionControlStyles.color,
+        actionBorderColor: actionControlStyles.borderColor,
         actionBelowAvatar: action.top >= avatar.bottom,
+        identityOrder: [title.top, handle.top, socialCounts.top],
+        titleToHandleGap: handle.top - title.bottom,
+        handleToCountsGap: socialCounts.top - handle.bottom,
+        socialRowHeight: socialCounts.height,
+        socialTargetHeight: socialTarget.height,
+        bioLeft: bio.left,
+        bioWidth: bio.width,
+        bioBelowIdentity: bio.top >= Math.max(avatar.bottom, socialCounts.bottom),
+        actionBelowBio: action.top >= bio.bottom,
         statisticsGapAbove: statisticsHeading.top - action.bottom,
         statisticsGapBelow: tabs.top - statisticsStrip.bottom,
+        statisticsRowGap: Number.parseFloat(getComputedStyle(statisticsStripElement).rowGap),
         statisticCells: statisticCells.map(({ bottom, left, top }) => ({ bottom, left, top })),
         ratingValueTop: ratingValue.top,
         ratingLabelTop: ratingLabel.top,
@@ -573,11 +618,28 @@ test.describe("public-beta visual contract", () => {
         order: [top(".profile-diary-title-line"), top(".profile-diary-venue"), top(".profile-diary-judgment"), top(".profile-diary-review"), top(".profile-diary-likes")],
       };
     });
+    const isMobile = page.viewportSize().width < 768;
+    const expectedSectionGap = isMobile ? 16 : 48;
     expect(geometry.headerWidth).toBeLessThanOrEqual(800);
-    expect(geometry.avatarWidth).toBe(page.viewportSize().width < 768 ? 120 : 240);
+    expect(geometry.avatarWidth).toBe(isMobile ? 80 : 240);
+    expect(Math.abs(geometry.actionWidth - geometry.headerWidth)).toBeLessThanOrEqual(1);
+    expect(geometry.actionHeight).toBe(32);
     expect(geometry.actionBelowAvatar).toBe(true);
-    expect(Math.abs(geometry.statisticsGapAbove - 48)).toBeLessThanOrEqual(1);
-    expect(Math.abs(geometry.statisticsGapBelow - 48)).toBeLessThanOrEqual(1);
+    expect(geometry.identityOrder).toEqual([...geometry.identityOrder].sort((left, right) => left - right));
+    expect(geometry.titleToHandleGap).toBeLessThanOrEqual(4);
+    expect(geometry.handleToCountsGap).toBeLessThanOrEqual(4);
+    expect(Math.abs(geometry.bioLeft - geometry.headerLeft)).toBeLessThanOrEqual(1);
+    expect(Math.abs(geometry.bioWidth - geometry.headerWidth)).toBeLessThanOrEqual(1);
+    expect(geometry.bioBelowIdentity).toBe(true);
+    expect(geometry.actionBelowBio).toBe(true);
+    if (isMobile) {
+      expect(geometry.actionColor).toBe("rgb(29, 109, 72)");
+      expect(geometry.actionBorderColor).toBe("rgb(29, 109, 72)");
+      expect(geometry.socialRowHeight).toBeLessThanOrEqual(20);
+      expect(geometry.socialTargetHeight).toBe(44);
+    }
+    expect(Math.abs(geometry.statisticsGapAbove - expectedSectionGap)).toBeLessThanOrEqual(1);
+    expect(Math.abs(geometry.statisticsGapBelow - expectedSectionGap)).toBeLessThanOrEqual(1);
     expect(Math.abs(geometry.statisticsGapAbove - geometry.statisticsGapBelow)).toBeLessThanOrEqual(1);
     const expectSameLine = (values, tolerance = 1) => {
       for (const value of values.slice(1)) expect(Math.abs(value - values[0])).toBeLessThanOrEqual(tolerance);
@@ -600,6 +662,7 @@ test.describe("public-beta visual contract", () => {
       expectIncreasing(firstRow.map(({ left }) => left));
       expectIncreasing(secondRow.map(({ left }) => left));
       expect(Math.max(...firstRow.map(({ bottom }) => bottom))).toBeLessThan(Math.min(...secondRow.map(({ top }) => top)));
+      expect(Math.abs(geometry.statisticsRowGap - 16)).toBeLessThanOrEqual(1);
       expect(Math.abs(geometry.ratingLabelTop - geometry.histogramAxisTop)).toBeLessThanOrEqual(2);
     }
     expect(geometry.order).toEqual([...geometry.order].sort((left, right) => left - right));

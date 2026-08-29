@@ -74,8 +74,10 @@ function ProfileDiaryEventRow({ event, rating, hasReview = false, reviewBody = n
 
 function FeedEventRow({ item }) {
   const event = item.target.event;
-  const isRated = item.type === "rated_been";
-  const isRich = isRated;
+  const isDiaryJudgment = item.type === "rated_been" || item.type === "review";
+  const isReviewLike = item.type === "review_like";
+  const isRich = isDiaryJudgment || isReviewLike;
+  const likedReview = isReviewLike ? item.target.review : null;
   const visibleStartTime = hasHappened(event) ? null : event.start_time;
   return (
     <Link className={`home-feed-item home-feed-event${isRich ? " home-feed-rich" : ""}`} to={feedItemPath(item)}>
@@ -88,9 +90,12 @@ function FeedEventRow({ item }) {
           <strong className="home-feed-object">{event.title}</strong>
           <time dateTime={item.activity_at}>{compactRelativeTime(item.activity_at)}</time>
         </span>
-        {isRated ? <RatingStars className="home-feed-stars" value={item.context.rating} /> : null}
+        {likedReview ? <span className="home-feed-review-byline">Review by <strong>{likedReview.author.display_name}</strong></span> : null}
+        {isDiaryJudgment ? <RatingStars className="home-feed-stars" value={item.context.rating} /> : null}
+        {likedReview?.rating != null ? <RatingStars className="home-feed-stars" value={likedReview.rating} /> : null}
         {item.type === "will_be_there" ? <span className="home-feed-meta">{formatEventDateTime(event.event_date, visibleStartTime)} · {event.venue.name}</span> : null}
-        {isRich && item.context.review ? <FeedReviewExcerpt>{item.context.review.body}</FeedReviewExcerpt> : null}
+        {isDiaryJudgment && item.context.review ? <FeedReviewExcerpt>{item.context.review.body}</FeedReviewExcerpt> : null}
+        {likedReview ? <FeedReviewExcerpt lineLimit={3}>{likedReview.body}</FeedReviewExcerpt> : null}
       </span>
     </Link>
   );

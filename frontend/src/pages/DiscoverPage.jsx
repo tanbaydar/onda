@@ -82,7 +82,7 @@ export default function DiscoverPage() {
 
   return (
     <main className="discover-page" aria-busy={state.loading}>
-      {!selectedCity ? <div className="discover-header-band"><h1 className="functional-title">Discover</h1></div> : null}
+      {!selectedCity ? <div className="discover-header-band"><h1 className="functional-title">Discover Events</h1></div> : null}
       {state.loading ? <p role="status" aria-live="polite">Loading cities…</p> : null}
       {state.error ? (
         <div className="event-list-error" role="alert">
@@ -98,7 +98,7 @@ export default function DiscoverPage() {
       {selectedCity ? (
         <>
           <div className="discover-header-band">
-            <h1 className="identity-title">{selectedCity.name}</h1>
+            <h1 className="identity-title">Discover Events</h1>
             <div className="discover-control-pair">
               <CityDropdown cities={state.cities} selectedCity={selectedCity} label="City" hideLabel onSelect={(cityId) => setSearchParams({ city_id: String(cityId) })} />
               <DiscoverSearch cityId={String(selectedCity.id)} cityName={selectedCity.name} />

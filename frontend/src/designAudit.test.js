@@ -54,12 +54,14 @@ test("profile favorites keep their existing artwork and labels while arranging e
   assert.match(profile, /className="profile-favorite-link"/);
   assert.match(profile, /className="profile-favorite-copy"/);
   assert.doesNotMatch(profile, /FavoriteControl/);
-  assert.match(css, /\.profile-favorite-groups\{display:grid;gap:var\(--sp-32\)\}/);
+  assert.match(css, /\.profile-favorite-groups\{display:grid;gap:var\(--sp-16\)\}/);
   assert.match(css, /\.profile-favorite-list\{display:grid;grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
   assert.match(css, /\.profile-favorite-list \.artist-avatar\{width:min\(100%,var\(--favorite-flier\)\)[^}]*aspect-ratio:1/);
-  assert.match(css, /\.profile-favorite-link\{[^}]*min-height:var\(--favorite-flier-h\)[^}]*flex-direction:column[^}]*align-items:center[^}]*text-align:center/);
+  assert.match(css, /\.profile-favorite-link\{[^}]*flex-direction:column[^}]*align-items:center[^}]*text-align:center/);
+  assert.doesNotMatch(css, /\.profile-favorite-link\{[^}]*min-height/);
   assert.match(css, /\.profile-favorite-copy\{[^}]*width:100%[^}]*align-items:center[^}]*text-align:center/);
-  assert.match(css, /\.profile-favorite-list strong\{[^}]*font-size:var\(--text-row-title\)/);
+  assert.match(css, /\.profile-favorite-list strong\{[^}]*display:-webkit-box[^}]*font-size:var\(--text-row-title\)[^}]*-webkit-box-orient:vertical[^}]*-webkit-line-clamp:2/);
+  assert.doesNotMatch(css, /\.profile-favorite-list strong\{[^}]*(?:white-space:nowrap|text-overflow:ellipsis)/);
 });
 
 test("only Profile Favourites artwork uses the corrected visible scale", () => {
@@ -68,7 +70,7 @@ test("only Profile Favourites artwork uses the corrected visible scale", () => {
   const css = read("./styles.css");
   assert.match(tokens, /--surface-flier:102px; --surface-flier-h:127\.5px/);
   assert.match(tokens, /--favorite-flier:153px; --favorite-flier-h:191\.25px/);
-  assert.match(tokens, /--profile-avatar-mobile:120px; --profile-avatar-desktop:160px/);
+  assert.match(tokens, /--profile-avatar-mobile:80px; --profile-avatar-desktop:160px/);
   assert.match(discover, /\.discover-event-flier\{[^}]*width:var\(--surface-flier\);height:var\(--surface-flier-h\)/);
   assert.match(css, /\.profile-diary-thumb\{[^}]*width:var\(--surface-flier\);height:var\(--surface-flier-h\)/);
   assert.match(css, /\.profile-favorite-thumb\{[^}]*width:min\(100%,var\(--favorite-flier\)\)[^}]*aspect-ratio:4\/5/);
