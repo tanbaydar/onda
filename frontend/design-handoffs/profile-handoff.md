@@ -112,3 +112,15 @@ Judgment color: Been-row stars + the strip's judgment unit ONLY. Display face: n
 - The follower/following row sits 4px below the handle. On mobile its two pairs remain on one line with an 8px pair gap; the visible row contributes only the text line height while each connection button retains a 44px hit area extending downward without increasing layout height.
 - The bio leaves the right identity column and spans the full profile-header width in its own row beneath the avatar/identity cluster. The compact 150×32px Edit/Follow action remains below the bio.
 - This supersedes only the preceding 8px handle-to-counts gap and bio placement. Avatar sizes, control dimensions, Statistics/tab spacing, content order, and all non-Profile surfaces remain unchanged.
+
+## Dated operator ruling — 2026-08-29 full-width mobile profile actions
+
+- On mobile only, the Edit profile control and every FollowControl state span the full available profile-header width. Desktop retains the compact 150×32px control.
+- The mobile control remains 32px high and keeps its existing quiet typography and exact labels: Edit profile, Follow, Unfollow, Request to follow, and Requested.
+- The mobile rectangle and text use `--judgment` green. This is an explicit scoped exception to the profile allocation audit and the product-wide judgment-only green rule; it does not change any other action, control, state, copy, or surface.
+
+## Dated operator ruling — 2026-08-29 relationship copy
+
+- Remove the `Follows you` and approved-state `Following` relationship markers from the profile metadata line. The handle and home city remain.
+- Rename the approved FollowControl label from `Unfollow` to `Following`. Activating `Following` retains the existing unfollow behavior.
+- This ruling supersedes the approved-state label named in the full-width mobile profile actions ruling above; all other dimensions, colors, and states remain unchanged.

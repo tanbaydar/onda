@@ -492,7 +492,8 @@ dialog .destructive{border-color:var(--action);background:var(--action);color:va
  .profile-statistics-strip{row-gap:var(--sp-16)}
  .profile-stat.stat-lead .stat-value{font-size:var(--text-numeral-md)}
  .profile-tabs{margin-top:var(--sp-16)}
- .profile-header-action .profile-follow-control,.profile-header-action .profile-edit-link{min-height:32px}
+ .profile-header-action{width:100%;grid-column:1/-1;justify-self:stretch}
+ .profile-header-action .profile-follow-control,.profile-header-action .profile-edit-link{width:100%;min-height:32px;border-color:var(--judgment);color:var(--judgment)}
 }
 @media (prefers-reduced-motion:reduce){
  .favorite-heart.just-filled>img{animation:none}
