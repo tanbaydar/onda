@@ -22,7 +22,7 @@ No "Home" page title, no overline. Wordmark/tab chrome carries orientation; firs
 Relative compact form: `18h`, `2d`, `3w` (existing "18h" ruling extended). Register: micro 12 `--text-muted`. Placement: right-aligned on the actor line, flex space-between — identical at both widths and on every item type; Activity adopts the same treatment. Absolute dates stay on reviews/diary entries only (existing rule). Timestamps never take accent (register 13, closed).
 
 ## 5. Rhythm & pagination
-- Items separated by 1px `--border-muted` hairlines (ledger idiom — repeating siblings), padding 16 vertical; rated_been items (the large scale) take 24.
+- Items separated by 1px `--border-muted` hairlines (ledger idiom — repeating siblings), padding 8 vertical; `rated_been` items (the large scale, with or without review context) take 12.
 - Desktop: single ledger at 800, **CENTERED in the content width** (dated override, Home only — the landing surface has no identity block to anchor a left edge; detail pages keep the shared left edge). Excerpt measure ≤640; timestamp stays on the actor line.
 - Cursor "Load more": existing micro-link grammar at the ledger end; absent when exhausted.
 
@@ -48,3 +48,8 @@ One quiet line ui `--text-secondary`: "No activity from people you follow yet." 
 
 - A rated Been entry and its written review are one Home activity at all times. The backend emits one `rated_been` row containing both rating and review context; it never emits an independent written-review row.
 - When review context exists, the action phrase is "liked and reviewed", rating stars and the review excerpt both render, and the activity uses the review's original publication time. Rating-only entries remain "rated" at `rated_at`.
+
+## Dated operator override — 2026-08-29 feed density
+
+- Home feed row spacing is halved after live review: standard rows use 8px vertical padding and `rated_been` rows use 12px vertical padding.
+- Artwork, internal gaps, typography, payloads, separators, and navigation remain unchanged.

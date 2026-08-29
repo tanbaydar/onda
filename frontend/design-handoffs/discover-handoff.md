@@ -16,7 +16,7 @@ Upcoming/Recent in the ruled tab register: active ink 600 + 2px ink indicator ov
 - Event name: display face 20px desktop / 18px mobile, line-height 1.25, max 2 lines (`-webkit-line-clamp:2`), never underlined.
 - Information uses one existing functional recipe at both widths: General Sans `--text-ui` (14px), weight 400, `--text-secondary`. Date, venue, and lineup may remain separate semantic elements or lines, but none receives a different family, size, weight, or neutral color. Date stays compact per product grammar ("Thu 6 Aug, 10:00 pm"). No "Venue:" or "Artists:" labels. Venue TBA remains the governed muted unavailable-data exception.
 - Lineup keeps listing order, 2–3 names then "+N" ("System Failure, Echotheism +1"). It remains one line with no links inside the row.
-- Whole row navigates; hover bg none (hairline register); separators `--border-muted`; padding 16 vertical, gap 16.
+- Whole row navigates; hover bg none (hairline register); separators `--border-muted`; padding 8 vertical, gap 16.
 - Desktop measure: centered 800 ledger (per Home centering ruling).
 - Pagination: existing "Load more" grammar.
 
@@ -45,3 +45,8 @@ Upcoming/Recent in the ruled tab register: active ink 600 + 2px ink indicator ov
 
 - Discover event artwork is 102×127.5 at both mobile and desktop widths, exactly 1.5× the prior shipped 68×85 slot. The main ledger and Discover's compact event results use the same enlarged slot.
 - Aspect ratio, fallback behavior, typography, information order, gaps, and row navigation remain unchanged.
+
+## Dated operator override — 2026-08-29 row density
+
+- Discover ledger row spacing is halved after live review: rows use 8px vertical padding.
+- Artwork, column gap, typography, information order, separators, and row navigation remain unchanged.
