@@ -26,7 +26,7 @@ p[role="alert"],ul[role="alert"],section[aria-label$="errors"]{color:var(--dange
 time{color:var(--text-muted);font-size:var(--text-micro)}
 main{width:100%;max-width:1012px;flex:1;margin:0 auto;padding:var(--sp-32) var(--gutter-mobile) var(--sp-64)}
 main>section,main>article+section,main>nav+section{margin-top:var(--sp-32)}
-.ledger-list,.search-results,.rating-histogram-values,.inline-list{margin:0;padding:0;list-style:none}
+.ledger-list,.search-results,.inline-list{margin:0;padding:0;list-style:none}
 .ledger-list>li+li{border-top:var(--hairline) solid var(--border-muted)}
 .ledger-list>li{padding:var(--sp-16) 0}
 main article p{margin-bottom:var(--sp-6)}
@@ -150,10 +150,6 @@ meter{accent-color:var(--chart);width:120px}
 .hist-bar{position:relative;display:flex;align-items:flex-end;min-width:0;height:100%;flex:1}
 .hist-fill{display:block;width:100%;height:var(--bar-height);background:var(--judgment)}
 .hist-axis{display:flex;justify-content:space-between;color:var(--text-muted);font-size:11px}
-.rating-histogram-details{margin-top:var(--sp-8);font-size:var(--text-micro)}
-.rating-histogram-details>summary{display:inline-flex;min-height:44px;align-items:center;color:var(--text-secondary);cursor:pointer;font-weight:500}
-.rating-histogram-values{margin:0;padding:0;list-style:none}
-.rating-histogram-values li{display:flex;justify-content:space-between;gap:var(--sp-16);padding:var(--sp-6) 0;border-top:var(--hairline) solid var(--border-muted);color:var(--text-secondary);font-size:var(--text-micro)}
 .profile-statistics{margin-top:var(--sp-48);container-type:inline-size}
 .profile-statistics>.section-heading{margin-top:0}
 .profile-statistics-strip{display:grid;grid-template-areas:"lead venues cities" "reviews average histogram";grid-template-columns:minmax(0,1fr) minmax(0,1fr) 104px;align-items:end;gap:var(--sp-24) var(--sp-12);width:100%;overflow:visible}
@@ -192,12 +188,8 @@ meter{accent-color:var(--chart);width:120px}
 .event-page>section,.event-page>article+section{margin-top:var(--sp-24)}
 .event-page .section-heading{margin-top:0}
 .event-page .event-lineup,.event-page .event-rating-block,.event-page .event-owner-block{margin-top:var(--sp-16)}
-.event-page .event-rating-block{width:max-content;max-width:100%;grid-template-columns:auto 120px;align-items:start}
-.event-page .event-rating-block>.rating-histogram{display:contents}
-.event-page .event-rating-block>.rating-histogram>[role=img]{grid-column:2;grid-row:1;align-self:center;width:120px}
-.event-page .event-rating-block>.rating-histogram>.rating-histogram-details{grid-column:2;grid-row:2;margin-top:0}
-.event-page .event-rating-block>.rating-histogram>.rating-histogram-details>summary{align-items:flex-start}
-.event-page .event-rating-block>p:last-child{grid-column:1;grid-row:2;align-self:start}
+.event-page .event-rating-block{width:max-content;max-width:100%;grid-template-columns:auto 120px;align-items:end}
+.event-page .event-rating-block .rating-histogram{width:120px}
 .event-page .event-rating-block .hist-bars{height:26px}
 .star-input-wrap{display:flex;align-items:center;gap:var(--sp-12)}
 .star-input{display:flex;gap:var(--sp-6);touch-action:none}
