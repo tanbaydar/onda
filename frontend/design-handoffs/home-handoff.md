@@ -1,17 +1,17 @@
 # HOME FEED — incremental handoff (delta; markdown is sole authority)
-Ruled 2026-08-02 · APPROVED as rendered + two dispatch amendments (§1 actor-line truncation, §5 desktop centering). Zero new tokens; scoped styles. Covers all six activity types (spec Q153) with ONE anatomy.
+Ruled 2026-08-02 · APPROVED as rendered + two dispatch amendments (§1 actor-line truncation, §5 desktop centering). Zero new tokens; scoped styles. Covers all six activity types with ONE anatomy.
 
 ## 1. Item anatomy (one grammar, amplitude varies — never six layouts)
 Every item = [flier slot]? + [actor line] + [object line]? + [payload]? — timestamp always on the actor line.
-- **Actor line**: avatar 26 circle + name fn **600** ink + action phrase ui 14 `--text-secondary` + relative timestamp right-aligned (see §4). TRUNCATION RULING: the NAME truncates (ellipsis, flex min-width:0); the VERB always survives — verb span is flex-none, nowrap, never truncation-eligible. A feed item may lose the name's tail, never its meaning. Object may complete the sentence for follows ("followed **Review Public Test**" — person names fn 600; the followed name may truncate, the verb may not).
+- **Actor line**: avatar 26 circle + name fn **600** ink + action phrase ui 14 `--text-secondary` + relative timestamp right-aligned (see §4). TRUNCATION RULING: the NAME truncates (ellipsis, flex min-width:0); the VERB always survives — verb span is flex-none, nowrap, never truncation-eligible. A feed item may lose the name's tail, never its meaning.
 - **Object line** (event/artist items): the object name in **display face**, row-title token — the item's identity per the skeleton rule.
-- **Flier slot**: event items (rated_been, WBT, favorited event, review like) carry the event flier at **56×70** left of object line + payload (EventListRow slot); flier-null = empty slot holds x (ruled). Non-event items (follows, favorited artists) have NO slot — text at page x; the two starting edges deliberately separate event activity from social activity.
+- **Flier slot**: event items (rated_been, written review, WBT, favorited event, review like) carry the event flier at **56×70** left of object line + payload (EventListRow slot); flier-null = empty slot holds x (ruled). Favorited artists have NO slot — text at page x.
 - **Payload** by type:
   · rated_been: stars 14px `--judgment` (halves) directly under the object line; review excerpt when present — quiet prose 16/1.6 `--text-secondary`?  no: `--text` prose at measure ≤640, clamped 4 lines, ending with a quiet micro "more" affordance (DATED OVERRIDE of "feed clamp stays navigational-only") routing to the event page. Whole item remains a tap target → event.
+  · written review: action phrase "wrote a review of"; object line + slot + the same review excerpt treatment as rated_been, without stars.
   · will_be_there: event meta line micro `--text-secondary` (date · venue) under the object line. No judgment color (the mark is the actor's state, count lives on the event page).
   · review like: action phrase "liked a review of"; object line + slot; no excerpt.
   · favorited event / artist: actor line + object line (+ slot for events). Nothing else — one-liner presence.
-  · follow: actor line only.
 
 ## 2. Judgment allocation
 Stars 14 `--judgment` on rated items; like counts keep their existing grammar where rendered. NOTHING else in the feed takes green. Never rating-as-text ("4.0 stars" is dead).
@@ -33,9 +33,14 @@ One quiet line ui `--text-secondary`: "No activity from people you follow yet." 
 ## FLAGS (unruled)
 1. review_like items have no fixture — rendered from a flagged stand-in; confirm the serializer shape (actor, review author, event) before wiring.
 2. "more" affordance copy ("more" vs "Read more") — rendered lowercase "more"; veto if you want parity with the event page's "Read more".
-3. Grouping ("Kim and 2 others followed…") stays legal per the locked spec but is undesigned — flag for a later pass; current anatomy renders one actor per item.
+3. Grouping of consecutive favorites remains legal but undesigned — flag for a later pass; current anatomy renders one actor per item.
 
 ## Dated delta — 2026-08-27 review continuation copy
 
 - The truncated feed marker is `Read more`, not lowercase `more`. It remains inside the whole event-target row.
 - Expanded event-page review copy is `Show less`; collapsed copy is `Read more`. The control meets the essential mobile target rule without gaining button chrome.
+
+## Dated delta — 2026-08-29 operator ruling
+
+- Home includes published written-review activity: "wrote a review of" + event object and the existing excerpt treatment, without rating stars.
+- Follow relationships are Activity-only notifications and do not appear in Home.

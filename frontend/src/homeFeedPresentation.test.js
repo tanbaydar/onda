@@ -10,7 +10,7 @@ const pageSource = readFileSync(new URL("./pages/HomePage.jsx", import.meta.url)
 const excerptSource = readFileSync(new URL("./components/FeedReviewExcerpt.jsx", import.meta.url), "utf8");
 const styles = readFileSync(new URL("./styles.css", import.meta.url), "utf8");
 
-test("dense Home fixture and HomePage source cover all six feed activity types", () => {
+test("dense Home fixture and HomePage source cover the six supported activity types", () => {
   const types = [...new Set(dense.results.map(({ type }) => type))].sort();
   assert.deepEqual(types, Object.keys(HOME_FEED_VERBS).sort());
   for (const type of types) assert.match(pageSource, /HOME_FEED_VERBS\[item\.type\]/);
@@ -19,11 +19,11 @@ test("dense Home fixture and HomePage source cover all six feed activity types",
 });
 
 test("Home feed CSS source keeps verbs inflexible beside truncating names", () => {
-  assert.deepEqual(Object.values(HOME_FEED_VERBS), ["rated", "will be at", "followed", "liked a review of", "favorited", "favorited"]);
+  assert.deepEqual(Object.values(HOME_FEED_VERBS), ["rated", "wrote a review of", "will be at", "liked a review of", "favorited", "favorited"]);
   assert.ok(dense.results.some(({ actor }) => actor.display_name.length > 35));
   assert.ok(dense.results.some(({ target }) => (target.event?.title ?? target.artist?.name ?? "").length > 60));
   assert.match(styles, /\.home-feed-verb\{[^}]*flex:none[^}]*white-space:nowrap/);
-  assert.match(styles, /\.home-feed-actor-name,[^{]+\{[^}]*text-overflow:ellipsis/);
+  assert.match(styles, /\.home-feed-actor-name\{[^}]*text-overflow:ellipsis/);
 });
 
 test("compact timestamps use the shared feed register", () => {
@@ -48,10 +48,10 @@ test("FeedReviewExcerpt and CSS sources gate a clear inline Read more marker on 
   assert.match(styles, /\.home-feed-review small\{display:inline/);
 });
 
-test("grouping applies only to one-liners and never rated or WBT rows", () => {
+test("grouping applies only to favorites and never rated, reviewed, or WBT rows", () => {
   const actor = { id: 1, username: "actor" };
   const make = (type, id) => ({ type, actor, activity_at: `2026-08-02T12:00:0${id}Z`, target: { event: { id, title: `${type} ${id}` } } });
-  const results = groupFeedItems([make("favorite_event", 1), make("favorite_event", 2), make("rated_been", 3), make("rated_been", 4), make("will_be_there", 5), make("will_be_there", 6)]);
+  const results = groupFeedItems([make("favorite_event", 1), make("favorite_event", 2), make("rated_been", 3), make("review", 4), make("will_be_there", 5), make("will_be_there", 6)]);
   assert.equal(results[0].grouped.length, 2);
   assert.equal(results.length, 5);
   assert.equal(results.filter((item) => item.grouped).length, 1);

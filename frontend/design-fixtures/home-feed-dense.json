@@ -687,7 +687,7 @@
       }
     },
     {
-      "type": "follow",
+      "type": "review",
       "activity_at": "2026-07-31T23:40:18.293029Z",
       "actor": {
         "id": 15,
@@ -696,13 +696,24 @@
         "avatar": null
       },
       "target": {
-        "user": {
+        "event": {
           "id": 3,
-          "username": "review.public.test",
-          "display_name": "Review Public Test"
+          "title": "Review Fixture Event",
+          "event_date": "2026-08-01",
+          "start_time": "22:00:00",
+          "cover_image_url": null,
+          "venue": {
+            "name": "Fixture Venue",
+            "city": {"name": "Boston"}
+          }
         }
       },
-      "context": null
+      "context": {
+        "review": {
+          "id": 3,
+          "body": "A written review should appear as its own Home activity."
+        }
+      }
     }
   ],
   "next_cursor": "WyIyMDI2LTA3LTMxVDIzOjQ2OjExLjI3NjExOSswMDowMCIsICJyZXZpZXdfbGlrZSIsICIwMDAwMDAwMDAwMDAwMDAwMDAyODowMDAwMDAwMDAwMDAwMDAwMDAwNCJd"

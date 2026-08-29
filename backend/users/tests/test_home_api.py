@@ -80,16 +80,19 @@ class HomeFeedContractTests(TestCase):
         self.entry(self.actor, self.events[0], at=NOW)
         self.events[0].cover_image_url = "https://images.example.test/home-event.jpg"
         self.events[0].save(update_fields=("cover_image_url",))
-        self.approved(self.actor, self.target, at=NOW)
-        author_entry = self.entry(self.target, self.events[1], at=NOW - timedelta(days=2))
+        review_entry = self.entry(self.actor, self.events[1], at=NOW - timedelta(days=2))
+        Review.objects.create(
+            entry=review_entry, body="Written review", published_at=NOW
+        )
+        author_entry = self.entry(self.target, self.events[2], at=NOW - timedelta(days=2))
         review = Review.objects.create(
             entry=author_entry, body="Visible liked review", published_at=NOW
         )
         like = ReviewLike.objects.create(user=self.actor, review=review)
         ReviewLike.objects.filter(pk=like.pk).update(created_at=NOW)
-        self.events[2].event_date = "2099-01-01"
-        self.events[2].save(update_fields=("event_date",))
-        WillBeThere.objects.create(user=self.actor, event=self.events[2], created_at=NOW)
+        self.events[3].event_date = "2099-01-01"
+        self.events[3].save(update_fields=("event_date",))
+        WillBeThere.objects.create(user=self.actor, event=self.events[3], created_at=NOW)
         FavoriteEvent.objects.create(user=self.actor, event=self.events[3], added_at=NOW)
         FavoriteEvent.objects.create(user=self.actor, event=self.events[4], added_at=NOW)
         FavoriteArtist.objects.create(user=self.actor, artist=Artist.objects.get(name="Home Feed Artist"), added_at=NOW)
@@ -101,7 +104,7 @@ class HomeFeedContractTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
             [item["type"] for item in response.json()["results"][:7]],
-            ["will_be_there", "review_like", "rated_been", "follow", "favorite_event", "favorite_event", "favorite_artist"],
+            ["will_be_there", "review_like", "review", "rated_been", "favorite_event", "favorite_event", "favorite_artist"],
         )
         favorite_event_ids = [
             item["target"]["event"]["id"]
@@ -117,6 +120,9 @@ class HomeFeedContractTests(TestCase):
         rated = next(item for item in results if item["type"] == "rated_been")
         self.assertEqual(rated["target"]["event"]["cover_image_url"], self.events[0].cover_image_url)
         self.assertEqual(rated["target"]["event"]["venue"], {"name": "Home Feed Venue", "city": {"name": "Boston"}})
+        written_review = next(item for item in results if item["type"] == "review")
+        self.assertEqual(written_review["activity_at"], NOW.isoformat().replace("+00:00", "Z"))
+        self.assertEqual(written_review["context"]["review"]["body"], "Written review")
         favorite_without_cover = next(item for item in results if item["type"] == "favorite_event")
         self.assertIsNone(favorite_without_cover["target"]["event"]["cover_image_url"])
         # Two fixed session/auth lookups, one bounded city-boundary lookup,
@@ -197,21 +203,13 @@ class HomeFeedContractTests(TestCase):
         self.assertEqual(len(removed["results"]), 1)
         self.assertEqual(rerated["results"][0]["target"]["event"]["id"], self.events[0].id)
 
-    def test_follow_activity_uses_approval_time_and_composite_source_key(self):
+    def test_follow_activity_is_not_in_home(self):
         self.approved(self.viewer, self.actor)
         self.approved(self.viewer, self.actor_two)
-        delayed = self.approved(
-            self.actor, self.target, at=NOW, created_at=NOW - timedelta(days=30)
-        )
-        self.entry(self.actor, self.events[0], at=NOW - timedelta(days=1))
-        same_time = self.approved(self.actor_two, self.target, at=NOW)
+        self.approved(self.actor, self.target, at=NOW)
+        self.approved(self.actor_two, self.target, at=NOW)
         results = self.client_for(self.viewer).get("/api/me/home/").json()["results"]
-        follows = [item for item in results if item["type"] == "follow"]
-        self.assertEqual(results[0]["activity_at"], delayed.approved_at.isoformat().replace("+00:00", "Z"))
-        self.assertEqual(
-            [item["actor"]["id"] for item in follows],
-            sorted([delayed.follower_id, same_time.follower_id], reverse=True),
-        )
+        self.assertEqual(results, [])
 
     def test_guest_and_invalid_cursor_errors_are_field_keyed(self):
         self.assertEqual(self.client_for().get("/api/me/home/").status_code, 401)

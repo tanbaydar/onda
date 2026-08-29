@@ -133,15 +133,15 @@ Onda does not copy each action into a fan-out feed table. Home is assembled when
 flowchart LR
     Followees[Approved followees] --> Plans[Will Be There]
     Followees --> Likes[Review likes]
+    Followees --> Reviews[Written reviews]
     Followees --> Ratings[Ratings]
-    Followees --> Follows[New follows]
     Followees --> Events[Favorite events]
     Followees --> Artists[Favorite artists]
 
     Plans --> Union[(UNION ALL)]
     Likes --> Union
+    Reviews --> Union
     Ratings --> Union
-    Follows --> Union
     Events --> Union
     Artists --> Union
 
