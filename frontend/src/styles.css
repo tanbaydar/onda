@@ -350,7 +350,7 @@ meter{accent-color:var(--chart);width:120px}
 .profile-favorites-empty a{display:inline-block;padding:var(--sp-8) var(--sp-16);border:1.5px solid var(--action);font-size:var(--text-ui);font-weight:500;text-decoration:none}
 .profile-favorites-empty a:hover{text-decoration:underline}
 .profile-favorites-empty a:focus-visible{outline:2px solid var(--action);outline-offset:var(--sp-2)}
-.profile-favorite-groups{display:grid;gap:var(--sp-32)}
+.profile-favorite-groups{display:grid;gap:var(--sp-16)}
 .profile-favorite-group>h2{margin:0 0 var(--sp-8);color:var(--text-secondary);font-family:var(--font-fn);font-size:var(--text-ui);font-weight:600;letter-spacing:0;line-height:1.4}
 .profile-favorite-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--sp-24) var(--sp-16);margin:0}
 .profile-favorite-list>li{position:relative;min-width:0;padding:0}
