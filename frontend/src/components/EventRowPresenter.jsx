@@ -85,9 +85,9 @@ function FeedEventRow({ item }) {
           <ProfileAvatar profile={item.actor} small />
           <strong className="home-feed-actor-name">{item.actor.display_name}</strong>
           <span className="home-feed-verb">{homeFeedVerb(item)}</span>
+          <strong className="home-feed-object">{event.title}</strong>
           <time dateTime={item.activity_at}>{compactRelativeTime(item.activity_at)}</time>
         </span>
-        <strong className="home-feed-object">{event.title}</strong>
         {isRated ? <RatingStars className="home-feed-stars" value={item.context.rating} /> : null}
         {item.type === "will_be_there" ? <span className="home-feed-meta">{formatEventDateTime(event.event_date, visibleStartTime)} · {event.venue.name}</span> : null}
         {isRich && item.context.review ? <FeedReviewExcerpt>{item.context.review.body}</FeedReviewExcerpt> : null}
