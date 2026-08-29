@@ -4,7 +4,7 @@
 
 > **Video status:** coming soon. The finished walkthrough will be uploaded here as an MP4 and paired with short explanations of what is happening on screen.
 
-## Screens
+## Most used screens
 
 <table>
   <tr>
