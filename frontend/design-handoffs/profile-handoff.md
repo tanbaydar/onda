@@ -124,3 +124,9 @@ Judgment color: Been-row stars + the strip's judgment unit ONLY. Display face: n
 - Remove the `Follows you` and approved-state `Following` relationship markers from the profile metadata line. The handle and home city remain.
 - Rename the approved FollowControl label from `Unfollow` to `Following`. Activating `Following` retains the existing unfollow behavior.
 - This ruling supersedes the approved-state label named in the full-width mobile profile actions ruling above; all other dimensions, colors, and states remain unchanged.
+
+## Dated operator ruling — 2026-08-29 full-width profile actions at every breakpoint
+
+- The profile-header action row spans the full available profile measure on both desktop and mobile. Edit profile and every FollowControl state occupy that full horizontal space.
+- The controls remain 32px high and retain their existing breakpoint-specific color treatment: mobile remains `--judgment` green and desktop remains in the quiet bordered-control register.
+- This supersedes only the compact 150px desktop width from the compact identity controls ruling and the mobile-only width scope from the full-width mobile profile actions ruling. Labels, behavior, placement after the bio, and all other profile geometry remain unchanged.

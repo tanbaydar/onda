@@ -524,6 +524,29 @@ test.describe("public-beta visual contract", () => {
     await expectNoHorizontalOverflow(page);
   });
 
+  test("profile actions span the profile measure at every viewport", async ({ page }) => {
+    await mockPublicApi(page, { authenticated: true });
+    await page.goto("/u/onda_test");
+    await expect(page.getByRole("link", { name: "Edit profile" })).toBeVisible();
+
+    const geometry = await page.locator("main.profile-page").evaluate((main) => {
+      const header = main.querySelector(".profile-header").getBoundingClientRect();
+      const action = main.querySelector(".profile-header-action").getBoundingClientRect();
+      const control = main.querySelector(".profile-edit-link").getBoundingClientRect();
+      return {
+        headerWidth: header.width,
+        actionWidth: action.width,
+        controlWidth: control.width,
+        controlHeight: control.height,
+      };
+    });
+
+    expect(Math.abs(geometry.actionWidth - geometry.headerWidth)).toBeLessThanOrEqual(1);
+    expect(Math.abs(geometry.controlWidth - geometry.headerWidth)).toBeLessThanOrEqual(1);
+    expect(geometry.controlHeight).toBe(32);
+    await expectNoHorizontalOverflow(page);
+  });
+
   test("profile applies Instagram spacing and Letterboxd review placement", async ({ page }) => {
     await mockPublicApi(page, { authenticated: true });
     await page.goto("/u/onda_test/reviews");
@@ -599,7 +622,7 @@ test.describe("public-beta visual contract", () => {
     const expectedSectionGap = isMobile ? 16 : 48;
     expect(geometry.headerWidth).toBeLessThanOrEqual(800);
     expect(geometry.avatarWidth).toBe(isMobile ? 80 : 240);
-    expect(Math.abs(geometry.actionWidth - (isMobile ? geometry.headerWidth : 150))).toBeLessThanOrEqual(1);
+    expect(Math.abs(geometry.actionWidth - geometry.headerWidth)).toBeLessThanOrEqual(1);
     expect(geometry.actionHeight).toBe(32);
     expect(geometry.actionBelowAvatar).toBe(true);
     expect(geometry.identityOrder).toEqual([...geometry.identityOrder].sort((left, right) => left - right));
