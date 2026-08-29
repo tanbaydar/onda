@@ -606,16 +606,44 @@ test.describe("public-beta visual contract", () => {
     await expectNoHorizontalOverflow(page);
   });
 
+  test("profile defaults to Favourites and swaps exactly one tab panel", async ({ page }) => {
+    await mockPublicApi(page, { authenticated: true });
+    await page.goto("/u/onda_test");
+
+    const tabs = page.getByRole("navigation", { name: "Profile sections" });
+    await expect(tabs.getByRole("link")).toHaveText(["Favourites", "Been", "Reviews"]);
+    await expect(tabs.getByRole("link", { name: "Favourites" })).toHaveAttribute("aria-current", "page");
+    await expect(page.getByRole("region", { name: "Favourites" })).toBeVisible();
+    await expect(page.getByRole("region", { name: "Been" })).toHaveCount(0);
+    await expect(page.getByRole("region", { name: "Reviews" })).toHaveCount(0);
+
+    await tabs.getByRole("link", { name: "Been" }).click();
+    await expect(page).toHaveURL(/\/u\/onda_test\/been$/);
+    await expect(page.getByRole("region", { name: "Been" })).toBeVisible();
+    await expect(page.getByRole("region", { name: "Favourites" })).toHaveCount(0);
+
+    await tabs.getByRole("link", { name: "Reviews" }).click();
+    await expect(page).toHaveURL(/\/u\/onda_test\/reviews$/);
+    await expect(page.getByRole("region", { name: "Reviews" })).toBeVisible();
+    await expect(page.getByRole("region", { name: "Been" })).toHaveCount(0);
+    await expectNoHorizontalOverflow(page);
+  });
+
   test("Events, Been, and Favorites render one 68 by 85 flyer size", async ({ page }) => {
     await mockPublicApi(page, { authenticated: true, events: [EVENT_ROW_FIXTURE] });
     await page.goto("/u/onda_test");
-    await expect(page.locator(".profile-diary-thumb")).toBeVisible();
     await expect(page.locator(".profile-favorite-thumb")).toBeVisible();
-    const profileFlyers = await page.locator(".profile-diary-thumb, .profile-favorite-thumb").evaluateAll((elements) => elements.map((element) => {
+    expect(await page.locator(".profile-favorite-thumb").evaluate((element) => {
       const box = element.getBoundingClientRect();
       return { width: box.width, height: box.height };
-    }));
-    expect(profileFlyers).toEqual([{ width: 68, height: 85 }, { width: 68, height: 85 }]);
+    })).toEqual({ width: 68, height: 85 });
+
+    await page.goto("/u/onda_test/been");
+    await expect(page.locator(".profile-diary-thumb")).toBeVisible();
+    expect(await page.locator(".profile-diary-thumb").evaluate((element) => {
+      const box = element.getBoundingClientRect();
+      return { width: box.width, height: box.height };
+    })).toEqual({ width: 68, height: 85 });
 
     await page.goto("/discover");
     await expect(page.getByRole("heading", { level: 1, name: "Boston" })).toBeVisible();

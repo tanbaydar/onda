@@ -118,7 +118,7 @@ function ProfileFavoriteGroup({ group, owner, onRemove, onReconcile }) {
   const headingId = `profile-favorite-${group.key}`;
   return (
     <section className="profile-favorite-group" aria-labelledby={headingId}>
-      <h3 className="section-heading" id={headingId}>{group.label}</h3>
+      <h2 className="section-heading" id={headingId}>{group.label}</h2>
       <ul className="profile-favorite-list ledger-list">
         {group.items.map((item) => (
           <li className={`profile-favorite-item${owner ? " is-owner has-action" : ""}`} key={item.key}>
@@ -142,8 +142,8 @@ function ProfileFavorites({ username, owner }) {
     fetchJson(`/api/users/${encodeURIComponent(username)}/favorites/`, { signal: controller.signal, cache: "no-store" }).then((favorites) => setState({ loading: false, error: null, favorites })).catch((error) => { if (error.name !== "AbortError") setState((current) => current.favorites ? { ...current, loading: false, error } : { loading: false, error, favorites: null }); });
     return () => controller.abort();
   }, [owner, retry, username]);
-  if (state.loading && !state.favorites) return <section className="profile-favorites"><h2 className="section-heading">Favorites</h2><p>Loading favorites…</p></section>;
-  if (state.error && !state.favorites) return <section className="profile-favorites"><h2 className="section-heading">Favorites</h2><p>Favorites could not be loaded.</p><button className="recovery-action quiet-control" type="button" onClick={() => setRetry((value) => value + 1)}>Retry</button></section>;
+  if (state.loading && !state.favorites) return <section className="profile-tab-panel profile-favorites" aria-label="Favourites"><p>Loading favourites…</p></section>;
+  if (state.error && !state.favorites) return <section className="profile-tab-panel profile-favorites" aria-label="Favourites"><p>Favourites could not be loaded.</p><button className="recovery-action quiet-control" type="button" onClick={() => setRetry((value) => value + 1)}>Retry</button></section>;
   const groups = [
     { key: "events", label: "Events", items: state.favorites.events.map(({ event }) => ({ key: `event-${event.id}`, collection: "events", id: event.id, to: eventPath(event), name: event.title, meta: `${formatEventDateTime(event.event_date, eventIsPast(event) ? null : event.start_time)} · ${event.venue.name}`, image: event.cover_image_url, favoritePath: `/api/events/${event.id}/favorite/` })) },
     { key: "artists", label: "Artists", items: state.favorites.artists.map(({ artist }) => ({ key: `artist-${artist.id}`, collection: "artists", id: artist.id, to: artistPath(artist), name: artist.name, artist, favoritePath: `/api/artists/${artist.id}/favorite/` })) },
@@ -160,10 +160,10 @@ function ProfileFavorites({ username, owner }) {
       },
     } : current);
   }
-  return <section className="profile-favorites"><h2 className="section-heading">Favorites</h2>{state.error ? <div className="action-feedback" role="alert"><p>Favorites could not be refreshed.</p><button className="recovery-action quiet-control" type="button" onClick={() => setRetry((value) => value + 1)}>Retry</button></div> : null}{hasFavorites ? <div className="profile-favorite-groups">{groups.map((group) => <ProfileFavoriteGroup key={group.key} group={group} owner={owner} onRemove={removeFavorite} onReconcile={() => setRetry((value) => value + 1)} />)}</div> : <div className="profile-favorites-empty"><p>No favorites yet.</p>{owner ? <Link to="/discover">Discover events</Link> : null}</div>}</section>;
+  return <section className="profile-tab-panel profile-favorites" aria-label="Favourites">{state.error ? <div className="action-feedback" role="alert"><p>Favourites could not be refreshed.</p><button className="recovery-action quiet-control" type="button" onClick={() => setRetry((value) => value + 1)}>Retry</button></div> : null}{hasFavorites ? <div className="profile-favorite-groups">{groups.map((group) => <ProfileFavoriteGroup key={group.key} group={group} owner={owner} onRemove={removeFavorite} onReconcile={() => setRetry((value) => value + 1)} />)}</div> : <div className="profile-favorites-empty"><p>{PROFILE_EMPTY_STATES.favourites}</p>{owner ? <Link to="/discover">Discover events</Link> : null}</div>}</section>;
 }
 
-export default function ProfilePage({ session, tab = "been" }) {
+export default function ProfilePage({ session, tab = "favourites" }) {
   const { username } = useParams();
   const [retry, setRetry] = useState(0);
   const [followPending, setFollowPending] = useState(false);
@@ -231,9 +231,8 @@ export default function ProfilePage({ session, tab = "been" }) {
         <div className="profile-header-action">{owner ? <Link className="profile-edit-link mobile-target" to="/settings/profile">Edit profile</Link> : <><FollowControl relationship={data.relationship} pending={followPending} onChange={changeFollow} />{followError ? <div className="profile-follow-error" role="alert"><p>{followError}</p><button className="recovery-action quiet-control" type="button" disabled={followPending} onClick={retryFollow}>{followPending ? "Retrying…" : "Retry"}</button></div> : null}</>}</div>
       </header>
       {data.access !== "stub" ? <ProfileStatistics username={profile.username} version={profileVersion} /> : null}
-      {profileNavigationVisible(data.access) ? <nav className="profile-tabs" aria-label="Profile sections"><Link className={`tab-action${tab === "been" ? " active" : ""}`} aria-current={tab === "been" ? "page" : undefined} to={profileTabPath(profile.username, "been")}>Been</Link><Link className={`tab-action${tab === "reviews" ? " active" : ""}`} aria-current={tab === "reviews" ? "page" : undefined} to={profileTabPath(profile.username, "reviews")}>Reviews</Link></nav> : null}
-      {data.access === "stub" ? <p className="profile-private-stub">This account is private. Follow and receive approval to see its activity.</p> : tab === "reviews" ? <ReviewsTab username={profile.username} /> : <BeenTab username={profile.username} owner={owner} onReviewDeleted={() => setProfileVersion((value) => value + 1)} />}
-      {data.access !== "stub" ? <ProfileFavorites username={profile.username} owner={owner} /> : null}
+      {profileNavigationVisible(data.access) ? <nav className="profile-tabs" aria-label="Profile sections"><Link className={`tab-action${tab === "favourites" ? " active" : ""}`} aria-current={tab === "favourites" ? "page" : undefined} to={profileTabPath(profile.username, "favourites")}>Favourites</Link><Link className={`tab-action${tab === "been" ? " active" : ""}`} aria-current={tab === "been" ? "page" : undefined} to={profileTabPath(profile.username, "been")}>Been</Link><Link className={`tab-action${tab === "reviews" ? " active" : ""}`} aria-current={tab === "reviews" ? "page" : undefined} to={profileTabPath(profile.username, "reviews")}>Reviews</Link></nav> : null}
+      {data.access === "stub" ? <p className="profile-private-stub">This account is private. Follow and receive approval to see its activity.</p> : tab === "been" ? <BeenTab username={profile.username} owner={owner} onReviewDeleted={() => setProfileVersion((value) => value + 1)} /> : tab === "reviews" ? <ReviewsTab username={profile.username} /> : <ProfileFavorites username={profile.username} owner={owner} />}
       <ProfileConnectionsDialog open={connections !== null} initialKind={connections ?? "followers"} profile={profile} counts={{ followers: profile.follower_count, following: profile.following_count }} onClose={() => setConnections(null)} />
     </main>
   );

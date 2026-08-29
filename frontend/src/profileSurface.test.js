@@ -16,17 +16,24 @@ test("bio counter reports the live stored character count", () => {
 });
 
 test("profile tab empty states are the ruled single lines", () => {
+  assert.equal(PROFILE_EMPTY_STATES.favourites, "No favourites yet.");
   assert.equal(PROFILE_EMPTY_STATES.been, "No events in Been yet.");
   assert.equal(PROFILE_EMPTY_STATES.reviews, "No reviews yet.");
-  assert.doesNotMatch(PROFILE_EMPTY_STATES.been + PROFILE_EMPTY_STATES.reviews, /\n/);
+  assert.doesNotMatch(PROFILE_EMPTY_STATES.favourites + PROFILE_EMPTY_STATES.been + PROFILE_EMPTY_STATES.reviews, /\n/);
 });
 
 test("ProfilePage source places tab-selected content below the shared shell", () => {
-  assert.equal(profileTabPath("Listener", "been"), "/u/listener");
+  assert.equal(profileTabPath("Listener", "favourites"), "/u/listener");
+  assert.equal(profileTabPath("Listener", "been"), "/u/listener/been");
   assert.equal(profileTabPath("Listener", "reviews"), "/u/listener/reviews");
   const source = readFileSync(new URL("./pages/ProfilePage.jsx", import.meta.url), "utf8");
+  const app = readFileSync(new URL("./App.jsx", import.meta.url), "utf8");
   assert.ok(source.indexOf("<ProfileStatistics") < source.indexOf('className="profile-tabs"'));
-  assert.ok(source.indexOf('className="profile-tabs"') < source.indexOf('tab === "reviews" ? <ReviewsTab'));
+  assert.ok(source.indexOf('className="profile-tabs"') < source.indexOf('tab === "been" ? <BeenTab'));
+  assert.match(source, /Favourites<\/Link>[\s\S]*Been<\/Link>[\s\S]*Reviews<\/Link>/);
+  assert.match(source, /tab === "reviews" \? <ReviewsTab[\s\S]*: <ProfileFavorites/);
+  assert.match(app, /path="\/u\/:username" element=\{<ProfilePage session=\{session\} tab="favourites"/);
+  assert.match(app, /path="\/u\/:username\/been" element=\{<ProfilePage session=\{session\} tab="been"/);
 });
 
 test("profile page sources omit the retired default-avatar copy", () => {
@@ -42,10 +49,10 @@ test("ProfilePage source uses the four-option custom sort contract without selec
   assert.doesNotMatch(profile, /Sort reviews<\/label>/);
 });
 
-test("ProfilePage gives empty favorites purposeful owner and viewer states", () => {
+test("ProfilePage gives empty favourites purposeful owner and viewer states", () => {
   const profile = readFileSync(new URL("./pages/ProfilePage.jsx", import.meta.url), "utf8");
   assert.match(profile, /const hasFavorites = groups\.some\(\(group\) => group\.items\.length > 0\)/);
-  assert.match(profile, /className="profile-favorites-empty"><p>No favorites yet\.<\/p>/);
+  assert.match(profile, /className="profile-favorites-empty"><p>\{PROFILE_EMPTY_STATES\.favourites\}<\/p>/);
   assert.match(profile, /owner \? <Link to="\/discover">Discover events<\/Link> : null/);
   assert.match(profile, /hasFavorites \? <div className="profile-favorite-groups">/);
 });
