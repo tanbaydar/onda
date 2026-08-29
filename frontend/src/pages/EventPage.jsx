@@ -103,11 +103,12 @@ export default function EventPage({ user, sessionReady, onAuthenticationRequired
     } : current);
   }
 
-  async function mutate(path, options, { reviewsChanged = false } = {}) {
+  async function mutate(path, options, { reviewsChanged = false, onSuccess } = {}) {
     setSaving(true);
     setActionError(null);
     try {
       await fetchWithCsrf(path, options);
+      onSuccess?.();
       setRetry((value) => value + 1);
       if (reviewsChanged) {
         setSocialVersion((value) => value + 1);
@@ -136,7 +137,7 @@ export default function EventPage({ user, sessionReady, onAuthenticationRequired
   }
 
   function removeEntry() {
-    setConfirmation({ title: "Remove this event from Been?", consequence: state.event.viewer_entry?.review ? "This permanently deletes the entry, rating, written review, and all review likes." : "This permanently deletes its rating.", label: "Remove from Been", action: () => mutate(`/api/events/${eventId}/been/`, { method: "DELETE" }) });
+    setConfirmation({ title: "Remove this event from Been?", consequence: state.event.viewer_entry?.review ? "This permanently deletes the entry, rating, written review, and all review likes." : "This permanently deletes its rating.", label: "Remove from Been", action: () => mutate(`/api/events/${eventId}/been/`, { method: "DELETE" }, { reviewsChanged: true }) });
   }
 
   function markBeen() {
@@ -164,7 +165,7 @@ export default function EventPage({ user, sessionReady, onAuthenticationRequired
   }
 
   function deleteReview() {
-    setConfirmation({ title: "Delete your written review?", consequence: "Its likes will be permanently deleted. Your rating and Been entry will remain.", label: "Delete review", action: () => mutate(`/api/events/${eventId}/been/review/`, { method: "DELETE" }, { reviewsChanged: true }) });
+    setConfirmation({ title: "Delete your written review?", consequence: "Its likes will be permanently deleted. Your rating and Been entry will remain.", label: "Delete review", action: () => mutate(`/api/events/${eventId}/been/review/`, { method: "DELETE" }, { reviewsChanged: true, onSuccess: () => setEditingEntry(false) }) });
   }
 
   async function changeWillBeThere() {

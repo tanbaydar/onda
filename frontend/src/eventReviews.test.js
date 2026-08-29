@@ -50,3 +50,9 @@ test("owner review editing keeps review actions separate from the Been control",
   assert.match(beenControl, /marked \? "Been" : "Mark Been"/);
   assert.match(page, /ratingComposerRef\.current\?\.querySelector\('\[role="slider"\]'\)\?\.focus\(\)/);
 });
+
+test("destructive owner actions reconcile every affected review surface", () => {
+  assert.match(page, /function removeEntry\(\)[\s\S]*?been\/`, \{ method: "DELETE" \}, \{ reviewsChanged: true \}/);
+  assert.match(page, /function deleteReview\(\)[\s\S]*?reviewsChanged: true, onSuccess: \(\) => setEditingEntry\(false\)/);
+  assert.match(page, /await fetchWithCsrf\(path, options\);\s*onSuccess\?\.\(\);/);
+});
