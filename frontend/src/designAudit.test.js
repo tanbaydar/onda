@@ -57,18 +57,19 @@ test("profile favorites keep their existing artwork and labels while arranging e
   assert.match(css, /\.profile-favorite-groups\{display:grid;gap:var\(--sp-32\)\}/);
   assert.match(css, /\.profile-favorite-list\{display:grid;grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
   assert.match(css, /\.profile-favorite-list \.artist-avatar\{width:var\(--thumb\);height:var\(--thumb\)\}/);
-  assert.match(css, /\.profile-favorite-link\{[^}]*min-height:var\(--collection-flier-h\)[^}]*flex-direction:column[^}]*align-items:center[^}]*text-align:center/);
+  assert.match(css, /\.profile-favorite-link\{[^}]*min-height:var\(--thumb-h\)[^}]*flex-direction:column[^}]*align-items:center[^}]*text-align:center/);
   assert.match(css, /\.profile-favorite-copy\{[^}]*width:100%[^}]*align-items:center[^}]*text-align:center/);
 });
 
-test("Events, Been, and Favorites share the ordered 68 by 85 flyer size", () => {
+test("Favorites restore their old 56 by 70 flyer while Events and Been remain 68 by 85", () => {
   const tokens = read("../design-tokens.css");
   const discover = read("./discover.css");
   const css = read("./styles.css");
   assert.match(tokens, /--collection-flier:68px; --collection-flier-h:85px/);
   assert.match(discover, /\.discover-event-flier\{[^}]*width:var\(--collection-flier\);height:var\(--collection-flier-h\)/);
   assert.match(css, /\.profile-diary-thumb\{[^}]*width:var\(--collection-flier\);height:var\(--collection-flier-h\)/);
-  assert.match(css, /\.profile-favorite-thumb\{[^}]*width:var\(--collection-flier\);height:var\(--collection-flier-h\)/);
+  assert.match(tokens, /--thumb:56px; --thumb-h:70px/);
+  assert.match(css, /\.profile-favorite-thumb\{[^}]*width:var\(--thumb\);height:var\(--thumb-h\)/);
 });
 
 test("event Been and Favourite controls pair outline prompts with filled committed states", () => {

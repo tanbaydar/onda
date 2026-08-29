@@ -65,3 +65,8 @@ Ruled 2026-08-27 by the current operator. Scope: the cross-system frontend remed
 - A past event always exposes both event controls. Unmarked states render `Mark Been` and `Mark Favourite` with the existing outline assets. Marked states render `Been` and `Favourite` with the supplied filled assets.
 - `Mark Been` focuses the required rating control; committing a rating creates the Been entry and switches the control to its filled state. The existing rating requirement is unchanged.
 - Clicking a marked control retains the shipped removal behavior and confirmation where applicable.
+
+## Dated operator correction — 2026-08-29 Favorites flyer size
+
+- This correction supersedes the Favorites portion of the earlier collection-flyer override. Favorites return to the prior compact 56×70 flyer size. Events and Profile Been remain 68×85.
+- The three-column Favorites layout, centered item alignment, existing typography, and detail-page flyer sizes remain unchanged.

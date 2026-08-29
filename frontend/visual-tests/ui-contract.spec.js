@@ -629,14 +629,14 @@ test.describe("public-beta visual contract", () => {
     await expectNoHorizontalOverflow(page);
   });
 
-  test("Events, Been, and Favorites render one 68 by 85 flyer size", async ({ page }) => {
+  test("Favorites render their old 56 by 70 flyer while Events and Been remain 68 by 85", async ({ page }) => {
     await mockPublicApi(page, { authenticated: true, events: [EVENT_ROW_FIXTURE] });
     await page.goto("/u/onda_test");
     await expect(page.locator(".profile-favorite-thumb")).toBeVisible();
     expect(await page.locator(".profile-favorite-thumb").evaluate((element) => {
       const box = element.getBoundingClientRect();
       return { width: box.width, height: box.height };
-    })).toEqual({ width: 68, height: 85 });
+    })).toEqual({ width: 56, height: 70 });
 
     await page.goto("/u/onda_test/been");
     await expect(page.locator(".profile-diary-thumb")).toBeVisible();
