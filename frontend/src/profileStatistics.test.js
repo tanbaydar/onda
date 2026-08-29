@@ -4,6 +4,7 @@ import test from "node:test";
 
 const fixture = JSON.parse(readFileSync(new URL("../design-fixtures/profile-rating-dense.json", import.meta.url)));
 const css = readFileSync(new URL("./styles.css", import.meta.url), "utf8");
+const profilePage = readFileSync(new URL("./pages/ProfilePage.jsx", import.meta.url), "utf8");
 
 test("dense profile fixture carries four-digit identity and strip counts", () => {
   assert.ok(fixture.profile.follower_count >= 1000);
@@ -14,7 +15,7 @@ test("dense profile fixture carries four-digit identity and strip counts", () =>
 });
 
 test("profile histogram CSS source declares one contextualized placement size outside media overrides", () => {
-  const occurrences = css.match(/\.profile-histogram-group\{width:104px;flex:0 0 104px\}/g) ?? [];
+  const occurrences = css.match(/\.profile-histogram-group\{grid-area:histogram;width:104px;align-self:end\}/g) ?? [];
   assert.equal(occurrences.length, 1);
   assert.match(css, /\.rating-histogram\.profile-stat-histogram\{width:100%\}/);
   assert.match(css, /\.profile-stat-histogram \.hist-bars\{height:30px\}/);
@@ -24,13 +25,18 @@ test("profile histogram CSS source declares one contextualized placement size ou
   assert.doesNotMatch(css, /@media[^}]+(?:profile-histogram-group|profile-stat-histogram)[^}]+(?:width|height)/s);
 });
 
-test("desktop rating and histogram occupy one aligned judgment unit", () => {
-  assert.match(css, /@container \(min-width:680px\)\{[\s\S]*grid-template-columns:repeat\(4,minmax\(0,1fr\)\) 224px/);
-  assert.match(css, /\.profile-statistics-strip:has\(\.profile-histogram-note\)\{padding-bottom:var\(--sp-24\)\}/);
-  assert.match(css, /\.profile-judgment-unit\{width:224px;align-items:flex-start\}/);
-  assert.match(css, /\.profile-judgment-unit \.profile-stat\{width:108px;max-width:none;flex:0 0 108px\}/);
-  assert.match(css, /\.profile-judgment-unit \.stat-label\{max-width:none;white-space:nowrap\}/);
-  assert.match(css, /\.profile-histogram-group\{position:relative\}/);
-  assert.match(css, /\.profile-histogram-note\{position:absolute;top:100%;left:0\}/);
+test("statistics use the ruled six-cell desktop and mobile order", () => {
+  assert.match(css, /grid-template-areas:"lead venues cities" "reviews average histogram"/);
+  assert.match(css, /grid-template-columns:minmax\(0,1fr\) minmax\(0,1fr\) 104px/);
+  assert.match(css, /@media \(min-width:768px\)\{[\s\S]*grid-template-areas:"lead venues cities reviews average histogram"/);
+  assert.match(css, /\.profile-stat\.stat-average\{grid-area:average\}/);
+  assert.match(css, /\.profile-histogram-group\{grid-area:histogram;width:104px;align-self:end\}/);
   assert.match(css, /\.profile-stat-histogram \.hist-axis\{margin-top:var\(--sp-4\)\}/);
+  assert.doesNotMatch(css, /profile-histogram-note|profile-judgment-unit/);
+
+  const orderedClasses = ["stat-lead", "stat-venues", "stat-cities", "stat-reviews", "stat-average", "profile-histogram-group"];
+  for (let index = 1; index < orderedClasses.length; index += 1) {
+    assert.ok(profilePage.indexOf(orderedClasses[index - 1]) < profilePage.indexOf(orderedClasses[index]));
+  }
+  assert.doesNotMatch(profilePage, /profileRatingLowVolumeNote|profile-histogram-note/);
 });

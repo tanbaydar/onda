@@ -30,10 +30,3 @@ export function profileRatingCount(distribution) {
     0,
   );
 }
-
-export function profileRatingLowVolumeNote(distribution) {
-  const count = profileRatingCount(distribution);
-  if (count === 0) return "No ratings given yet.";
-  if (count < 5) return `${count} ${count === 1 ? "rating" : "ratings"} given`;
-  return null;
-}

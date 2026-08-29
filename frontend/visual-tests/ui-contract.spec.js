@@ -498,6 +498,7 @@ test.describe("public-beta visual contract", () => {
     await page.goto("/u/onda_test/reviews");
     await expect(page.getByRole("heading", { level: 1, name: "Onda Test" })).toBeVisible();
     await expect(page.getByText("Avg. Rating", { exact: true })).toBeVisible();
+    await expect(page.getByText("3 ratings given", { exact: true })).toHaveCount(0);
     await expect(page.getByText("The room, the sound, and the crowd all landed at once.")).toBeVisible();
     await expect(page.locator(".profile-diary-likes")).toContainText("No likes yet");
     await expect(page.locator(".profile-diary-attended")).not.toContainText("10:00");
@@ -506,9 +507,10 @@ test.describe("public-beta visual contract", () => {
       const header = main.querySelector(".profile-header").getBoundingClientRect();
       const avatar = main.querySelector(".profile-header > .profile-avatar").getBoundingClientRect();
       const action = main.querySelector(".profile-header-action").getBoundingClientRect();
-      const ratingUnit = main.querySelector(".profile-judgment-unit").getBoundingClientRect();
-      const ratingValue = main.querySelector(".profile-judgment-unit .stat-value").getBoundingClientRect();
-      const ratingLabel = main.querySelector(".profile-judgment-unit .stat-label").getBoundingClientRect();
+      const cellSelectors = [".stat-lead", ".stat-venues", ".stat-cities", ".stat-reviews", ".stat-average", ".profile-histogram-group"];
+      const statisticCells = cellSelectors.map((selector) => main.querySelector(selector).getBoundingClientRect());
+      const ratingValue = main.querySelector(".stat-average .stat-value").getBoundingClientRect();
+      const ratingLabel = main.querySelector(".stat-average .stat-label").getBoundingClientRect();
       const histogramBars = main.querySelector(".profile-stat-histogram .hist-bars").getBoundingClientRect();
       const histogramAxis = main.querySelector(".profile-stat-histogram .hist-axis").getBoundingClientRect();
       const statisticLabelTops = [...main.querySelectorAll(".profile-statistics-strip > .profile-stat .stat-label")].map((label) => label.getBoundingClientRect().top);
@@ -518,7 +520,7 @@ test.describe("public-beta visual contract", () => {
         headerWidth: header.width,
         avatarWidth: avatar.width,
         actionBelowAvatar: action.top >= avatar.bottom,
-        ratingUnitWidth: ratingUnit.width,
+        statisticCells: statisticCells.map(({ bottom, left, top }) => ({ bottom, left, top })),
         ratingValueTop: ratingValue.top,
         ratingLabelTop: ratingLabel.top,
         ratingLabelHeight: ratingLabel.height,
@@ -531,14 +533,28 @@ test.describe("public-beta visual contract", () => {
     expect(geometry.headerWidth).toBeLessThanOrEqual(800);
     expect(geometry.avatarWidth).toBe(page.viewportSize().width < 768 ? 80 : 160);
     expect(geometry.actionBelowAvatar).toBe(true);
+    const expectSameLine = (values, tolerance = 1) => {
+      for (const value of values.slice(1)) expect(Math.abs(value - values[0])).toBeLessThanOrEqual(tolerance);
+    };
+    const expectIncreasing = (values) => expect(values).toEqual([...values].sort((left, right) => left - right));
     if (page.viewportSize().width >= 768) {
-      expect(geometry.ratingUnitWidth).toBe(224);
+      expectSameLine(geometry.statisticCells.map(({ bottom }) => bottom));
+      expectIncreasing(geometry.statisticCells.map(({ left }) => left));
       expect(Math.abs(geometry.ratingValueTop - geometry.histogramBarsTop)).toBeLessThanOrEqual(1);
       expect(Math.abs(geometry.ratingLabelTop - geometry.histogramAxisTop)).toBeLessThanOrEqual(2);
       for (const statisticLabelTop of geometry.statisticLabelTops) {
         expect(Math.abs(geometry.ratingLabelTop - statisticLabelTop)).toBeLessThanOrEqual(1);
       }
       expect(geometry.ratingLabelHeight).toBeLessThanOrEqual(18);
+    } else {
+      const firstRow = geometry.statisticCells.slice(0, 3);
+      const secondRow = geometry.statisticCells.slice(3);
+      expectSameLine(firstRow.map(({ bottom }) => bottom));
+      expectSameLine(secondRow.map(({ bottom }) => bottom));
+      expectIncreasing(firstRow.map(({ left }) => left));
+      expectIncreasing(secondRow.map(({ left }) => left));
+      expect(Math.max(...firstRow.map(({ bottom }) => bottom))).toBeLessThan(Math.min(...secondRow.map(({ top }) => top)));
+      expect(Math.abs(geometry.ratingLabelTop - geometry.histogramAxisTop)).toBeLessThanOrEqual(2);
     }
     expect(geometry.order).toEqual([...geometry.order].sort((left, right) => left - right));
     await expectNoHorizontalOverflow(page);

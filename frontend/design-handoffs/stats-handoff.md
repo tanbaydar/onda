@@ -48,3 +48,13 @@ Correction pass 2026-08-01 — structure from v2 approved and unchanged (header 
 - The average owns 108px, the governed histogram remains 104×30, and their existing 12px gap is unchanged. `Avg. Rating` stays on one desktop line.
 - The average numeral and bar field share a top edge. The histogram axis shares the rating-label line, while the low-volume note remains directly beneath the histogram.
 - Mobile retains the governed stacked strip and two-line rating-label allowance. No type, color, or spacing token is added.
+
+## Operator ruling — 2026-08-29 six-cell statistics register
+
+This ruling supersedes the earlier statistics order, attached judgment-unit treatment, low-volume note, and mobile three-row composition.
+
+- The visible low-volume note (for example, `3 ratings given`) is removed. Rating counts remain available in the histogram's accessible description.
+- The statistics strip contains six ordered cells: Events in Been · Venues Visited · Cities Visited · Written Reviews · Avg. Rating · histogram.
+- Desktop renders those six cells in one row.
+- Mobile renders an exact 3×2 grid: Events in Been · Venues Visited · Cities Visited on row one; Written Reviews · Avg. Rating · histogram on row two.
+- The average numeral remains `--judgment`; the histogram retains its governed 104×30 placement, axis, static marks, accessible description, and empty-distribution treatment.
