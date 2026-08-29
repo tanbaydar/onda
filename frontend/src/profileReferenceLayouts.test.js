@@ -14,9 +14,9 @@ test("profile identity applies the governed Instagram-derived spacing without ne
   assert.doesNotMatch(profile, /Follows you/);
   assert.match(css, /\.profile-header\{[^}]*max-width:var\(--measure-rows\);[^}]*grid-template-columns:var\(--profile-avatar-mobile\) minmax\(0,1fr\)/);
   assert.match(css, /@media \(min-width:768px\)[\s\S]*\.profile-header\{grid-template-columns:var\(--profile-avatar-desktop\) minmax\(0,1fr\)/);
-  assert.match(css, /\.profile-header-action\{width:150px;grid-column:2;justify-self:start\}/);
-  assert.match(css, /\.profile-header-action \.profile-follow-control\{width:150px;height:32px;min-height:32px/);
-  assert.match(css, /\.profile-edit-link\{display:flex;width:150px;height:32px;min-height:32px/);
+  assert.match(css, /\.profile-header-action\{width:100%;grid-column:1\/-1;justify-self:stretch\}/);
+  assert.match(css, /\.profile-header-action \.profile-follow-control\{width:100%;height:32px;min-height:32px/);
+  assert.match(css, /\.profile-edit-link\{display:flex;width:100%;height:32px;min-height:32px/);
   assert.match(css, /\.profile-bio\{width:100%;max-width:none;grid-column:1\/-1;margin:0/);
   assert.doesNotMatch(profile, /View archive|New story|Share photos/);
 });
@@ -33,8 +33,7 @@ test("mobile profile uses the compact Instagram-scale rhythm without changing de
   assert.match(css, /@media \(max-width:767px\)\{[\s\S]*\.profile-statistics-strip\{row-gap:var\(--sp-16\)\}/);
   assert.match(css, /@media \(max-width:767px\)\{[\s\S]*\.profile-stat\.stat-lead \.stat-value\{font-size:var\(--text-numeral-md\)\}/);
   assert.match(css, /@media \(max-width:767px\)\{[\s\S]*\.profile-tabs\{margin-top:var\(--sp-16\)\}/);
-  assert.match(css, /@media \(max-width:767px\)\{[\s\S]*\.profile-header-action\{width:100%;grid-column:1\/-1;justify-self:stretch\}/);
-  assert.match(css, /@media \(max-width:767px\)\{[\s\S]*\.profile-header-action \.profile-follow-control,\.profile-header-action \.profile-edit-link\{width:100%;min-height:32px;border-color:var\(--judgment\);color:var\(--judgment\)\}/);
+  assert.match(css, /@media \(max-width:767px\)\{[\s\S]*\.profile-header-action \.profile-follow-control,\.profile-header-action \.profile-edit-link\{min-height:32px;border-color:var\(--judgment\);color:var\(--judgment\)\}/);
   assert.match(css, /@media \(min-width:768px\)[\s\S]*\.profile-header\{grid-template-columns:var\(--profile-avatar-desktop\)/);
 });
 
