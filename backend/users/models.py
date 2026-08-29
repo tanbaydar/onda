@@ -518,6 +518,7 @@ class NotificationType(models.TextChoices):
     FOLLOW = "follow", "Follow"
     FOLLOW_REQUEST = "follow_request", "Follow request"
     REQUEST_ACCEPTED = "request_accepted", "Request accepted"
+    WILL_BE_THERE = "will_be_there", "Will be there"
 
 
 class Notification(models.Model):
@@ -537,6 +538,14 @@ class Notification(models.Model):
     review = models.ForeignKey(
         Review,
         db_column="review_id",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="notifications",
+    )
+    event = models.ForeignKey(
+        "catalog.Event",
+        db_column="event_id",
         on_delete=models.CASCADE,
         null=True,
         blank=True,
@@ -564,12 +573,27 @@ class Notification(models.Model):
             ),
             models.CheckConstraint(
                 condition=(
-                    Q(type=NotificationType.REVIEW_LIKE, review__isnull=False)
+                    Q(
+                        type=NotificationType.REVIEW_LIKE,
+                        review__isnull=False,
+                        event__isnull=True,
+                    )
+                    | Q(
+                        type=NotificationType.WILL_BE_THERE,
+                        review__isnull=True,
+                        event__isnull=False,
+                    )
                     | (
-                        ~Q(type=NotificationType.REVIEW_LIKE)
+                        ~Q(
+                            type__in=(
+                                NotificationType.REVIEW_LIKE,
+                                NotificationType.WILL_BE_THERE,
+                            )
+                        )
                         & Q(review__isnull=True)
+                        & Q(event__isnull=True)
                     )
                 ),
-                name="ck_notification_type_review",
+                name="ck_notification_type_target",
             ),
         ]

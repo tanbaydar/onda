@@ -347,6 +347,14 @@ def _notification_payload(notification):
             if notification.review_id is not None
             else None
         ),
+        "event": (
+            {
+                "id": notification.event_id,
+                "title": notification.event.title,
+            }
+            if notification.event_id is not None
+            else None
+        ),
         "created_at": notification.created_at.isoformat().replace("+00:00", "Z"),
         "read_at": (
             notification.read_at.isoformat().replace("+00:00", "Z")
@@ -1370,7 +1378,7 @@ def notification_list(request):
             | Q(created_at=created_at, id__lt=identifier)
         )
     rows = list(
-        notifications.select_related("actor", "review__entry__event")
+        notifications.select_related("actor", "review__entry__event", "event")
         .order_by("-created_at", "-id")[: page_size + 1]
     )
     has_more = len(rows) > page_size

@@ -52,3 +52,9 @@ Ruled 2026-08-27 by the current operator. Scope: the cross-system frontend remed
 - This override supersedes the earlier 56×70 and 80×100 row-flyer sizes for the three named collections. Events, Profile Been, and Favorites all use one 68×85 flyer slot: the exact average of 80×100 and 56×70. Detail-page identity flyers, Search, and Home retain their existing sizes.
 - The supplied `/assets/favorite-heart.svg` and `/assets/been-hand.svg` are repository assets and are the required artwork for the adjacent Favorite and Been controls on a rated past event.
 - `Remove from Been` is owned only by the Been control beside Favorite. The owner review disclosure contains exactly `Edit review` and `Delete review`.
+
+## Dated operator override — 2026-08-29 Will Be There Activity
+
+- Marking an active event `Will Be There` creates one Activity notification for each approved follower of the actor.
+- The Activity sentence names the event and opens that event. Pending followers do not receive it.
+- An idempotent repeated mark creates no duplicate. Unmarking does not retract the historical Activity item.

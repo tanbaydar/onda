@@ -174,7 +174,7 @@ export default function ActivityPage({ session }) {
                   <Link className={`activity-row ${notification.read_at ? "read" : "unread"}`} to={activityNotificationPath(notification)}>
                     <ProfileAvatar profile={notification.actor} small className="activity-avatar" />
                     <span className="activity-row-copy">
-                      <span className="activity-message"><strong className="activity-actor">{notification.actor.display_name}</strong> <span className="activity-verb">{activityNotificationVerb(notification)}</span></span>
+                      <span className="activity-message"><strong className="activity-actor">{notification.actor.display_name}</strong> <span className="activity-verb">{activityNotificationVerb(notification)}</span>{notification.event ? <> <span className="activity-object">{notification.event.title}</span>.</> : null}</span>
                       <span className="activity-meta">@{notification.actor.username} · <time dateTime={notification.created_at}>{compactRelativeTime(notification.created_at)}</time></span>
                     </span>
                   </Link>

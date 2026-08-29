@@ -122,6 +122,56 @@ class WillBeThereApiContractTests(TestCase):
         self.assertEqual(expired.status_code, 409)
         self.assertIn("will_be_there", expired.json()["errors"])
 
+    def test_new_mark_notifies_approved_followers_once_with_event_target(self):
+        self.follow(self.viewer, self.public_user)
+        Follow.objects.create(
+            follower=self.other,
+            followee=self.public_user,
+            status=FollowStatus.PENDING,
+            created_at=EVENT_DAY,
+        )
+        first = self.mark(self.public_user)
+        repeated = self.mark(self.public_user, now=BEFORE_BOSTON_EXPIRY)
+        Notification = apps.get_model("users", "Notification")
+
+        self.assertEqual(first.status_code, 201)
+        self.assertEqual(repeated.status_code, 200)
+        self.assertEqual(
+            Notification.objects.filter(
+                recipient=self.viewer,
+                actor=self.public_user,
+                type="will_be_there",
+                event=self.event,
+            ).count(),
+            1,
+        )
+        self.assertFalse(Notification.objects.filter(recipient=self.other).exists())
+        payload = self.get(
+            self.client_for(self.viewer),
+            "/api/me/notifications/",
+        ).json()["results"][0]
+        self.assertEqual(payload["event"], {"id": self.event.id, "title": self.event.title})
+        self.assertIsNone(payload["review"])
+
+    def test_unmark_preserves_will_be_there_activity_history(self):
+        self.follow(self.viewer, self.public_user)
+        self.mark(self.public_user)
+        removed = self.request(
+            self.client_for(self.public_user),
+            "delete",
+            f"/api/events/{self.event.id}/will-be-there/",
+        )
+        Notification = apps.get_model("users", "Notification")
+
+        self.assertEqual(removed.status_code, 204)
+        self.assertTrue(
+            Notification.objects.filter(
+                recipient=self.viewer,
+                type="will_be_there",
+                event=self.event,
+            ).exists()
+        )
+
     def test_event_detail_viewer_state_and_guest_omission(self):
         self.mark(self.viewer)
         marked = self.get(self.client_for(self.viewer), f"/api/events/{self.event.id}/")

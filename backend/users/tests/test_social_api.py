@@ -456,6 +456,19 @@ class SocialApiContractTests(TestCase):
                 "type": "follow",
                 "review": review,
             },
+            {
+                "recipient": self.public_user,
+                "actor": self.viewer,
+                "type": "will_be_there",
+                "review": None,
+            },
+            {
+                "recipient": self.public_user,
+                "actor": self.viewer,
+                "type": "follow",
+                "review": None,
+                "event": self.event,
+            },
         ):
             with self.subTest(values=values), self.assertRaises(IntegrityError), transaction.atomic():
                 Notification.objects.create(created_at=NOW, **values)
