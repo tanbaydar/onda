@@ -574,7 +574,7 @@ test.describe("public-beta visual contract", () => {
       };
     });
     expect(geometry.headerWidth).toBeLessThanOrEqual(800);
-    expect(geometry.avatarWidth).toBe(page.viewportSize().width < 768 ? 80 : 160);
+    expect(geometry.avatarWidth).toBe(page.viewportSize().width < 768 ? 120 : 240);
     expect(geometry.actionBelowAvatar).toBe(true);
     expect(Math.abs(geometry.statisticsGapAbove - 48)).toBeLessThanOrEqual(1);
     expect(Math.abs(geometry.statisticsGapBelow - 48)).toBeLessThanOrEqual(1);
@@ -629,14 +629,15 @@ test.describe("public-beta visual contract", () => {
     await expectNoHorizontalOverflow(page);
   });
 
-  test("Favorites render larger artwork with smaller titles while Events and Been remain 68 by 85", async ({ page }) => {
+  test("Discover and Profile imagery render at one-and-a-half scale without overflow", async ({ page }) => {
     await mockPublicApi(page, { authenticated: true, events: [EVENT_ROW_FIXTURE] });
     await page.goto("/u/onda_test");
     await expect(page.locator(".profile-favorite-thumb")).toBeVisible();
-    expect(await page.locator(".profile-favorite-thumb").evaluate((element) => {
+    const favoriteSize = await page.locator(".profile-favorite-thumb").evaluate((element) => {
       const box = element.getBoundingClientRect();
       return { width: box.width, height: box.height };
-    })).toEqual({ width: 68, height: 85 });
+    });
+    expect(favoriteSize).toEqual(page.viewportSize().width === 320 ? { width: 80, height: 100 } : { width: 102, height: 127.5 });
     await expect(page.locator(".profile-favorite-list strong")).toHaveCSS("font-size", "14px");
 
     await page.goto("/u/onda_test/been");
@@ -644,7 +645,7 @@ test.describe("public-beta visual contract", () => {
     expect(await page.locator(".profile-diary-thumb").evaluate((element) => {
       const box = element.getBoundingClientRect();
       return { width: box.width, height: box.height };
-    })).toEqual({ width: 68, height: 85 });
+    })).toEqual({ width: 102, height: 127.5 });
 
     await page.goto("/discover");
     await expect(page.getByRole("heading", { level: 1, name: "Boston" })).toBeVisible();
@@ -653,7 +654,7 @@ test.describe("public-beta visual contract", () => {
     expect(await eventFlyer.evaluate((element) => {
       const box = element.getBoundingClientRect();
       return { width: box.width, height: box.height };
-    })).toEqual({ width: 68, height: 85 });
+    })).toEqual({ width: 102, height: 127.5 });
   });
 
   test("pending follow requests are actionable from both Activity locations", async ({ page }) => {

@@ -56,20 +56,21 @@ test("profile favorites keep their existing artwork and labels while arranging e
   assert.doesNotMatch(profile, /FavoriteControl/);
   assert.match(css, /\.profile-favorite-groups\{display:grid;gap:var\(--sp-32\)\}/);
   assert.match(css, /\.profile-favorite-list\{display:grid;grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
-  assert.match(css, /\.profile-favorite-list \.artist-avatar\{width:var\(--collection-flier\);height:var\(--collection-flier\)\}/);
-  assert.match(css, /\.profile-favorite-link\{[^}]*min-height:var\(--collection-flier-h\)[^}]*flex-direction:column[^}]*align-items:center[^}]*text-align:center/);
+  assert.match(css, /\.profile-favorite-list \.artist-avatar\{width:min\(100%,var\(--surface-flier\)\)[^}]*aspect-ratio:1/);
+  assert.match(css, /\.profile-favorite-link\{[^}]*min-height:var\(--surface-flier-h\)[^}]*flex-direction:column[^}]*align-items:center[^}]*text-align:center/);
   assert.match(css, /\.profile-favorite-copy\{[^}]*width:100%[^}]*align-items:center[^}]*text-align:center/);
   assert.match(css, /\.profile-favorite-list strong\{[^}]*font-size:var\(--text-ui\)/);
 });
 
-test("Favorites use larger artwork while Events and Been retain their 68 by 85 flyer size", () => {
+test("Discover and Profile primary artwork use the ordered one-and-a-half scale", () => {
   const tokens = read("../design-tokens.css");
   const discover = read("./discover.css");
   const css = read("./styles.css");
-  assert.match(tokens, /--collection-flier:68px; --collection-flier-h:85px/);
-  assert.match(discover, /\.discover-event-flier\{[^}]*width:var\(--collection-flier\);height:var\(--collection-flier-h\)/);
-  assert.match(css, /\.profile-diary-thumb\{[^}]*width:var\(--collection-flier\);height:var\(--collection-flier-h\)/);
-  assert.match(css, /\.profile-favorite-thumb\{[^}]*width:var\(--collection-flier\);height:var\(--collection-flier-h\)/);
+  assert.match(tokens, /--surface-flier:102px; --surface-flier-h:127\.5px/);
+  assert.match(tokens, /--profile-avatar-mobile:120px; --profile-avatar-desktop:240px/);
+  assert.match(discover, /\.discover-event-flier\{[^}]*width:var\(--surface-flier\);height:var\(--surface-flier-h\)/);
+  assert.match(css, /\.profile-diary-thumb\{[^}]*width:var\(--surface-flier\);height:var\(--surface-flier-h\)/);
+  assert.match(css, /\.profile-favorite-thumb\{[^}]*width:min\(100%,var\(--surface-flier\)\)[^}]*aspect-ratio:4\/5/);
 });
 
 test("event Been and Favourite controls pair outline prompts with filled committed states", () => {

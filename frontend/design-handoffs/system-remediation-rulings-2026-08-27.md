@@ -75,3 +75,8 @@ Ruled 2026-08-27 by the current operator. Scope: the cross-system frontend remed
 
 - This adjustment supersedes the immediately preceding Favorites flyer-size correction. Rectangular event and venue artwork in Favorites is 68×85; circular Artist artwork is 68×68.
 - All Favorites item titles use the 14px UI text token. Existing metadata remains at the governed 12px micro token. The three-column centered composition, heart removal, copy, and spacing remain unchanged.
+
+## Dated operator override — 2026-08-29 Discover and Profile image scale
+
+- Discover and Profile primary imagery is 1.5× the prior shipped dimensions: Discover, diary, and rectangular Favorites artwork is 102×127.5; Favorites artist artwork is 102×102; the Profile identity avatar is 120×120 mobile and 240×240 desktop.
+- The 320px three-column Favorites edge may constrain imagery to the available 80px columns. This is the only adaptive exception and prevents document overflow without changing the requested three-column composition.
