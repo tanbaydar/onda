@@ -75,7 +75,7 @@ class HomeFeedContractTests(TestCase):
             user=user, event=event, rating=rating, rated_at=at
         )
 
-    def test_six_type_identical_timestamp_order_and_source_key_tiebreak_are_fixed(self):
+    def test_five_type_identical_timestamp_order_and_source_key_tiebreak_are_fixed(self):
         self.approved(self.viewer, self.actor, at=NOW - timedelta(days=1))
         self.entry(self.actor, self.events[0], at=NOW)
         self.events[0].cover_image_url = "https://images.example.test/home-event.jpg"
@@ -104,7 +104,7 @@ class HomeFeedContractTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
             [item["type"] for item in response.json()["results"][:7]],
-            ["will_be_there", "review_like", "review", "rated_been", "favorite_event", "favorite_event", "favorite_artist"],
+            ["will_be_there", "review_like", "rated_been", "rated_been", "favorite_event", "favorite_event", "favorite_artist"],
         )
         favorite_event_ids = [
             item["target"]["event"]["id"]
@@ -117,16 +117,23 @@ class HomeFeedContractTests(TestCase):
         )
         results = response.json()["results"]
         self.assertTrue(all(item["actor"]["avatar"] == self.actor.avatar for item in results))
-        rated = next(item for item in results if item["type"] == "rated_been")
+        rated = next(item for item in results if item["target"]["event"]["id"] == self.events[0].id)
         self.assertEqual(rated["target"]["event"]["cover_image_url"], self.events[0].cover_image_url)
         self.assertEqual(rated["target"]["event"]["venue"], {"name": "Home Feed Venue", "city": {"name": "Boston"}})
-        written_review = next(item for item in results if item["type"] == "review")
+        written_review = next(item for item in results if item["target"]["event"]["id"] == self.events[1].id)
+        self.assertEqual(written_review["type"], "rated_been")
         self.assertEqual(written_review["activity_at"], NOW.isoformat().replace("+00:00", "Z"))
+        self.assertEqual(written_review["context"]["rating"], 4.0)
         self.assertEqual(written_review["context"]["review"]["body"], "Written review")
+        self.assertEqual(
+            sum(item["target"].get("event", {}).get("id") == self.events[1].id for item in results),
+            1,
+        )
+        self.assertNotIn("review", [item["type"] for item in results])
         favorite_without_cover = next(item for item in results if item["type"] == "favorite_event")
         self.assertIsNone(favorite_without_cover["target"]["event"]["cover_image_url"])
         # Two fixed session/auth lookups, one bounded city-boundary lookup,
-        # and exactly one six-branch feed UNION.
+        # and exactly one five-branch feed UNION.
         self.assertEqual(len(queries), 4)
         self.assertEqual(
             sum("UNION ALL" in query["sql"] for query in queries.captured_queries),

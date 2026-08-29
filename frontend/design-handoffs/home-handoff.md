@@ -1,14 +1,13 @@
 # HOME FEED — incremental handoff (delta; markdown is sole authority)
-Ruled 2026-08-02 · APPROVED as rendered + two dispatch amendments (§1 actor-line truncation, §5 desktop centering). Zero new tokens; scoped styles. Covers all six activity types with ONE anatomy.
+Ruled 2026-08-02 · APPROVED as rendered + two dispatch amendments (§1 actor-line truncation, §5 desktop centering). Zero new tokens; scoped styles. Covers all five activity types with ONE anatomy.
 
 ## 1. Item anatomy (one grammar, amplitude varies — never six layouts)
 Every item = [flier slot]? + [actor line] + [object line]? + [payload]? — timestamp always on the actor line.
 - **Actor line**: avatar 26 circle + name fn **600** ink + action phrase ui 14 `--text-secondary` + relative timestamp right-aligned (see §4). TRUNCATION RULING: the NAME truncates (ellipsis, flex min-width:0); the VERB always survives — verb span is flex-none, nowrap, never truncation-eligible. A feed item may lose the name's tail, never its meaning.
 - **Object line** (event/artist items): the object name in **display face**, row-title token — the item's identity per the skeleton rule.
-- **Flier slot**: event items (rated_been, written review, WBT, favorited event, review like) carry the event flier at **56×70** left of object line + payload (EventListRow slot); flier-null = empty slot holds x (ruled). Favorited artists have NO slot — text at page x.
+- **Flier slot**: event items (rated_been, WBT, favorited event, review like) carry the event flier at **56×70** left of object line + payload (EventListRow slot); flier-null = empty slot holds x (ruled). Favorited artists have NO slot — text at page x.
 - **Payload** by type:
-  · rated_been: stars 14px `--judgment` (halves) directly under the object line; review excerpt when present — quiet prose 16/1.6 `--text-secondary`?  no: `--text` prose at measure ≤640, clamped 4 lines, ending with a quiet micro "more" affordance (DATED OVERRIDE of "feed clamp stays navigational-only") routing to the event page. Whole item remains a tap target → event.
-  · written review: action phrase "wrote a review of"; object line + slot + the same review excerpt treatment as rated_been, without stars.
+  · rated_been: stars 14px `--judgment` (halves) directly under the object line; when its atomic Been record includes a written review, action phrase "liked and reviewed" plus the review excerpt — quiet prose 16/1.6 `--text-secondary`?  no: `--text` prose at measure ≤640, clamped 4 lines, ending with a quiet micro "more" affordance (DATED OVERRIDE of "feed clamp stays navigational-only") routing to the event page. Without a review, action phrase remains "rated". Whole item remains a tap target → event.
   · will_be_there: event meta line micro `--text-secondary` (date · venue) under the object line. No judgment color (the mark is the actor's state, count lives on the event page).
   · review like: action phrase "liked a review of"; object line + slot; no excerpt.
   · favorited event / artist: actor line + object line (+ slot for events). Nothing else — one-liner presence.
@@ -42,5 +41,10 @@ One quiet line ui `--text-secondary`: "No activity from people you follow yet." 
 
 ## Dated delta — 2026-08-29 operator ruling
 
-- Home includes published written-review activity: "wrote a review of" + event object and the existing excerpt treatment, without rating stars.
+- Superseded later on 2026-08-29: the separate written-review activity is not atomic with its rating and must not ship.
 - Follow relationships are Activity-only notifications and do not appear in Home.
+
+## Dated delta — 2026-08-29 atomic review correction
+
+- A rated Been entry and its written review are one Home activity at all times. The backend emits one `rated_been` row containing both rating and review context; it never emits an independent written-review row.
+- When review context exists, the action phrase is "liked and reviewed", rating stars and the review excerpt both render, and the activity uses the review's original publication time. Rating-only entries remain "rated" at `rated_at`.

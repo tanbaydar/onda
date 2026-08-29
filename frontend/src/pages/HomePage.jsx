@@ -4,7 +4,7 @@ import { Link, Navigate, useLocation } from "react-router-dom";
 import { fetchJson } from "../api.js";
 import EventRowPresenter from "../components/EventRowPresenter.jsx";
 import ProfileAvatar from "../components/ProfileAvatar.jsx";
-import { compactRelativeTime, feedItemPath, groupFeedItems, HOME_EMPTY_COPY, HOME_FEED_VERBS } from "../homeFeedPresentation.js";
+import { compactRelativeTime, feedItemPath, groupFeedItems, homeFeedVerb, HOME_EMPTY_COPY } from "../homeFeedPresentation.js";
 import { homeAccessRedirect } from "../landing.js";
 
 
@@ -13,7 +13,7 @@ function FeedItem({ item }) {
     const objects = item.grouped.map((entry) => entry.target.event?.title ?? entry.target.artist?.name);
     const visible = objects.slice(0, 3);
     const more = objects.length - visible.length;
-    return <Link className="home-feed-item home-feed-grouped" to={feedItemPath(item)}><span className="home-feed-actor-line"><ProfileAvatar profile={item.actor} small /><strong className="home-feed-actor-name">{item.actor.display_name}</strong><span className="home-feed-verb">{HOME_FEED_VERBS[item.type]}</span><time dateTime={item.activity_at}>{compactRelativeTime(item.activity_at)}</time></span><span className="home-feed-grouped-objects">{visible.map((name) => <strong key={name}>{name}</strong>)}{more ? <small>+{more} more</small> : null}</span></Link>;
+    return <Link className="home-feed-item home-feed-grouped" to={feedItemPath(item)}><span className="home-feed-actor-line"><ProfileAvatar profile={item.actor} small /><strong className="home-feed-actor-name">{item.actor.display_name}</strong><span className="home-feed-verb">{homeFeedVerb(item)}</span><time dateTime={item.activity_at}>{compactRelativeTime(item.activity_at)}</time></span><span className="home-feed-grouped-objects">{visible.map((name) => <strong key={name}>{name}</strong>)}{more ? <small>+{more} more</small> : null}</span></Link>;
   }
   const event = item.target.event;
   const artist = item.target.artist;
@@ -25,7 +25,7 @@ function FeedItem({ item }) {
         <span className="home-feed-actor-line">
           <ProfileAvatar profile={item.actor} small />
           <strong className="home-feed-actor-name">{item.actor.display_name}</strong>
-          <span className="home-feed-verb">{HOME_FEED_VERBS[item.type]}</span>
+          <span className="home-feed-verb">{homeFeedVerb(item)}</span>
           <time dateTime={item.activity_at}>{compactRelativeTime(item.activity_at)}</time>
         </span>
         {artist ? <strong className="home-feed-object">{objectName}</strong> : null}

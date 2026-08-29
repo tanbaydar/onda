@@ -459,7 +459,7 @@ The schema uses targeted indexes rather than indexing every foreign key twice:
 | `NOTIFICATION(recipient_id, read_at)` | unread counts and bulk read |
 | `REQUEST_THROTTLE(updated_at)` | expired rate-limit window cleanup |
 
-Composite primary/unique keys also provide useful access paths for relationship existence checks. Query-count and cursor behavior for the most complex read—the six-branch Home feed—are covered separately in [APPLICATION_DATA.md](APPLICATION_DATA.md#home-is-a-projection-not-a-ledger).
+Composite primary/unique keys also provide useful access paths for relationship existence checks. Query-count and cursor behavior for the most complex read—the five-branch Home feed—are covered separately in [APPLICATION_DATA.md](APPLICATION_DATA.md#home-is-a-projection-not-a-ledger).
 
 ## Source of truth
 

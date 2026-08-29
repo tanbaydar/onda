@@ -127,20 +127,18 @@ The API is intentionally described as a **first-party application boundary**, no
 
 ### 3. Build the social layer from current truth
 
-Onda does not copy each action into a fan-out feed table. Home is assembled when it is requested from six existing sources:
+Onda does not copy each action into a fan-out feed table. Home is assembled when it is requested from five existing sources:
 
 ```mermaid
 flowchart LR
     Followees[Approved followees] --> Plans[Will Be There]
     Followees --> Likes[Review likes]
-    Followees --> Reviews[Written reviews]
-    Followees --> Ratings[Ratings]
+    Followees --> Ratings[Ratings + optional reviews]
     Followees --> Events[Favorite events]
     Followees --> Artists[Favorite artists]
 
     Plans --> Union[(UNION ALL)]
     Likes --> Union
-    Reviews --> Union
     Ratings --> Union
     Events --> Union
     Artists --> Union
@@ -153,7 +151,7 @@ Each branch produces the same shape and applies profile privacy and event visibi
 
 The cursor uses `(activity time, activity type, source key)`, not time alone, so simultaneous actions still have a total, repeatable order. Because Home reads the source rows directly, an unlike, unfollow, privacy change, or hidden event is reflected on the next request without repairing copied feed records or sending writes to every follower.
 
-The tradeoff is a more complex read. Onda therefore includes a reproducible regression benchmark with 100,000 activity rows across all six branches. It measured 45.908 ms p95 for page 1 and 31.618 ms p95 for page 50 over 200 in-process requests after warm-up, with a test asserting four database queries. This is a local regression baseline—not a production traffic or capacity claim.
+The tradeoff is a more complex read. The committed benchmark records the preceding six-branch implementation with 100,000 source rows; it measured 45.908 ms p95 for page 1 and 31.618 ms p95 for page 50 over 200 in-process requests after warm-up. The current five-branch projection retains the four-query regression contract, but that historical timing baseline has not been rerun. It is not a production traffic or capacity claim.
 
 Time-sensitive behavior is evaluated in the event venue's IANA timezone. Whether an event is upcoming, whether it can be added to Been, and whether “Will Be There” is still active cannot change merely because the server or viewer is in another timezone.
 

@@ -44,7 +44,7 @@ The dated information-hierarchy override in `event-handoff.md` supersedes this s
 - The panel retains the two shipped rows, `Edit profile` and `Log out`, with the existing typography, boundary, wash, focus, target, logout, and recovery behavior. Remembered-account switching is explicitly outside this change.
 
 ## 7. Grouped feed activity (closes home-handoff flag 3)
-- Grouping is legal ONLY for the one-liner types (favorited event / favorited artist), same actor + same verb within a feed window; rated_been, written review, and WBT never group.
+- Grouping is legal ONLY for the one-liner types (favorited event / favorited artist), same actor + same verb within a feed window; rated_been (including its atomic written review) and WBT never group.
 - Anatomy stays §1-of-home: ONE actor line (avatar 26 + name 600 + verb pluralized, ui `--text-secondary` + timestamp of the latest action right-aligned), then:
   - favorited events/artists: objects STACKED, one per line, display face row-title mobile 18 (the object line register, unchanged), max 3, then "+N more" micro `--text-muted` as the last line. No fliers on grouped items — the stack is the payload; a flier column would re-inflate a deliberately quiet type.
 - Whole grouped item routes to the actor's profile (no single object to own the tap).

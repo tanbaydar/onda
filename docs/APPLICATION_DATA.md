@@ -142,20 +142,18 @@ Private ratings can contribute anonymously to an event-wide aggregate because th
 
 ## Home is a projection, not a ledger
 
-Onda does not copy every social action into a fan-out feed table. `GET /api/me/home/` constructs a viewer-specific projection from six existing sources:
+Onda does not copy every social action into a fan-out feed table. `GET /api/me/home/` constructs a viewer-specific projection from five existing sources:
 
 ```mermaid
 flowchart LR
     Follows[Approved followees] --> WBT[Visible active Will Be There]
     Follows --> Likes[Visible review likes]
-    Follows --> Reviews[Visible written reviews]
-    Follows --> Ratings[Visible rated Been]
+    Follows --> Ratings[Visible rated Been<br/>with optional review]
     Follows --> FavEvent[Visible favorite events]
     Follows --> FavArtist[Visible favorite artists]
 
     WBT --> Union[(UNION ALL)]
     Likes --> Union
-    Reviews --> Union
     Ratings --> Union
     FavEvent --> Union
     FavArtist --> Union
@@ -163,7 +161,7 @@ flowchart LR
     Cursor --> Page[20-item response + next cursor]
 ```
 
-Each branch emits the same projection shape. Privacy and event-lifecycle predicates are inside the branch, before union and pagination. This is important: filtering afterward could produce short pages, leak row existence, or make cursors inconsistent.
+Each branch emits the same projection shape. The rated Been branch joins its optional one-to-one review and uses the review's original publication time when present, so rating and review are always one activity. Privacy and event-lifecycle predicates are inside the branch, before union and pagination. This is important: filtering afterward could produce short pages, leak row existence, or make cursors inconsistent.
 
 The stable cursor key is `(activity_at, activity_type, source_key)`. Timestamp alone is insufficient because several activities can share the same time; the type and source key make ordering total and repeatable.
 
@@ -177,7 +175,7 @@ At Onda's current scale, it offers useful consistency properties:
 - there is no write amplification to every follower;
 - no worker queue or eventually consistent fan-out process is required.
 
-The tradeoff is read complexity. A committed regression benchmark therefore covers all six branches with 100,000 total activity rows. Through Django's in-process HTTP client and production middleware, page 1 measured 45.908 ms p95 and page 50 measured 31.618 ms p95 over 200 measured requests after 20 warm-ups. A contract test asserts four queries. The machine was an Apple M4 Pro with a dedicated local MySQL database; the result excludes deployed network and Gunicorn latency and is not a load-capacity claim.
+The tradeoff is read complexity. The committed regression benchmark records the preceding six-branch projection with 100,000 source rows. Through Django's in-process HTTP client and production middleware, page 1 measured 45.908 ms p95 and page 50 measured 31.618 ms p95 over 200 measured requests after 20 warm-ups. The current five-branch projection retains the four-query contract, but that historical timing baseline has not been rerun. The machine was an Apple M4 Pro with a dedicated local MySQL database; the result excludes deployed network and Gunicorn latency and is not a load-capacity claim.
 
 The complete methodology and seed distribution are in
 [`benchmarks/home-feed/results.yaml`](../benchmarks/home-feed/results.yaml).
@@ -207,7 +205,7 @@ Privacy changes are service operations, not a single flag flip. When a private a
 
 Event, artist, and venue favorites each use `(user_id, target_id)` as a composite primary key. The maximum of three per target type is enforced by locking the user's row while checking and inserting, so concurrent requests cannot both pass a stale count.
 
-Favorite event and artist actions contribute to Home. Favorite venue is used on profiles and personalized venue access but is not one of the six feed branches.
+Favorite event and artist actions contribute to Home. Favorite venue is used on profiles and personalized venue access but is not one of the five feed branches.
 
 ### Notifications
 
@@ -233,7 +231,7 @@ Django's `on_delete=models.CASCADE` controls ORM behavior but does not automatic
 | Will Be There | User/event pair + creation time | Whether the mark is still active |
 | Follow | Pair, status, timestamps | Whether content is visible to this viewer |
 | Community rating | Individual diary ratings | Count/average and minimum-count state |
-| Home | Source actions only | Unified six-type feed and cursor page |
+| Home | Source actions only | Unified five-type feed and cursor page |
 | Recent searches | Browser `localStorage` | Display order in that browser |
 
 The distinction prevents duplicated state where the source data already provides a stronger truth. In particular, there is no `FEED` table, stored Will-Be-There expiry, or shipped `RECENT_SEARCH` database table.

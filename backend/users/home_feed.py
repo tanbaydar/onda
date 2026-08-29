@@ -12,7 +12,7 @@ from django.db.models import (
     TimeField,
     Value,
 )
-from django.db.models.functions import Cast, Concat, LPad
+from django.db.models.functions import Cast, Coalesce, Concat, LPad
 from django.utils.dateparse import parse_datetime
 
 from .models import (
@@ -28,7 +28,8 @@ from .models import (
 )
 
 
-ACTIVITY_TYPES = ("will_be_there", "review_like", "review", "rated_been", "favorite_event", "favorite_artist")
+ACTIVITY_TYPES = ("will_be_there", "review_like", "rated_been", "favorite_event", "favorite_artist")
+CURSOR_ACTIVITY_TYPES = (*ACTIVITY_TYPES, "review")
 SOURCE_KEY_RE = re.compile(r"^\d{20}(?::\d{20})?$")
 MAX_CURSOR_LENGTH = 512
 
@@ -90,7 +91,9 @@ def decode_cursor(value):
         activity_type, source_key = decoded[1:]
         if (
             timestamp is None or timestamp.tzinfo is None
-            or activity_type not in ACTIVITY_TYPES
+            # Accept cursors issued before written reviews were folded back into
+            # their rated Been activity. No new `review` rows are emitted.
+            or activity_type not in CURSOR_ACTIVITY_TYPES
             or not isinstance(source_key, str)
             or SOURCE_KEY_RE.fullmatch(source_key) is None
         ):
@@ -130,7 +133,7 @@ def home_feed_rows(viewer, *, at, cursor=None, limit=21):
         rated_at__isnull=False,
     ).annotate(
         activity_type=Value("rated_been", output_field=CharField()),
-        activity_at=F("rated_at"),
+        activity_at=Coalesce(F("review__published_at"), F("rated_at")),
         source_key=_source_part(F("id")),
         actor_id=F("user_id"),
         actor_username=F("user__username"),
@@ -145,35 +148,6 @@ def home_feed_rows(viewer, *, at, cursor=None, limit=21):
         review_id=F("review__id"),
         review_body=F("review__body"),
         **been_nulls,
-    ).values(*FEED_FIELDS)
-
-    review_nulls = _nulls()
-    for key in (
-        "event_id", "event_title", "event_date", "event_start_time",
-        "event_cover_image_url", "event_venue_name", "event_city_name",
-        "review_id", "review_body",
-    ):
-        review_nulls.pop(key)
-    reviews = Review.objects.visible_to(viewer).filter(
-        entry__user_id__in=followees,
-    ).annotate(
-        activity_type=Value("review", output_field=CharField()),
-        activity_at=F("published_at"),
-        source_key=_source_part(F("id")),
-        actor_id=F("entry__user_id"),
-        actor_username=F("entry__user__username"),
-        actor_display_name=F("entry__user__display_name"),
-        actor_avatar=F("entry__user__avatar"),
-        event_id=F("entry__event_id"),
-        event_title=F("entry__event__title"),
-        event_date=F("entry__event__event_date"),
-        event_start_time=F("entry__event__start_time"),
-        event_cover_image_url=F("entry__event__cover_image_url"),
-        event_venue_name=F("entry__event__venue__name"),
-        event_city_name=F("entry__event__venue__city__name"),
-        review_id=F("id"),
-        review_body=F("body"),
-        **review_nulls,
     ).values(*FEED_FIELDS)
 
     visible_reviews = Review.objects.visible_to(viewer).values("id")
@@ -272,7 +246,6 @@ def home_feed_rows(viewer, *, at, cursor=None, limit=21):
     ).values(*FEED_FIELDS)
 
     combined = _after_cursor(been, cursor).union(
-        _after_cursor(reviews, cursor),
         _after_cursor(likes, cursor),
         _after_cursor(will_be_there, cursor),
         _after_cursor(favorite_events, cursor),
@@ -322,10 +295,6 @@ def serialize_feed_row(row):
                 {"id": row["review_id"], "body": row["review_body"]}
                 if row["review_id"] is not None else None
             ),
-        }
-    elif row["activity_type"] == "review":
-        item["context"] = {
-            "review": {"id": row["review_id"], "body": row["review_body"]},
         }
     else:
         item["target"]["review"] = {

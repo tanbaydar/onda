@@ -4,12 +4,16 @@ export const HOME_EMPTY_COPY = "No activity from people you follow yet.";
 
 export const HOME_FEED_VERBS = {
   rated_been: "rated",
-  review: "wrote a review of",
   will_be_there: "will be at",
   review_like: "liked a review of",
   favorite_event: "favorited",
   favorite_artist: "favorited",
 };
+
+export function homeFeedVerb(item) {
+  if (item.type === "rated_been" && item.context?.review) return "liked and reviewed";
+  return HOME_FEED_VERBS[item.type];
+}
 
 export function compactRelativeTime(value, now = new Date()) {
   const elapsed = Math.max(0, now.getTime() - new Date(value).getTime());
