@@ -364,7 +364,7 @@ def event_rating_summary(event):
         .filter(event=event)
         .aggregate(count=Count("id"), average=Avg("rating"))
     )
-    if aggregate["count"] < 3:
+    if aggregate["count"] < 1:
         return {
             "state": "not_enough_ratings",
             "count": aggregate["count"],

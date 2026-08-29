@@ -3,5 +3,5 @@ export function imageSlotInitial(name) {
 }
 
 export function recentRatingVisible(summary) {
-  return summary?.state === "available" && summary.count >= 3;
+  return summary?.state === "available" && summary.count >= 1;
 }

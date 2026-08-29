@@ -257,21 +257,13 @@ class BeenApiContractTests(TestCase):
             created.json()["entry"]["rated_at"],
         )
 
-    def test_aggregate_threshold_is_explicit_at_two_and_available_at_three(self):
+    def test_aggregate_is_available_with_one_rating(self):
         self.put_rating(self.auth_client(self.owner), self.started, 3.0)
-        self.put_rating(self.auth_client(self.other), self.started, 4.0)
-
-        at_two = self.client.get(f"/api/events/{self.started.id}/")
-        self.put_rating(self.auth_client(self.third), self.started, 5.0)
-        at_three = self.client.get(f"/api/events/{self.started.id}/")
+        at_one = self.client.get(f"/api/events/{self.started.id}/")
 
         self.assertEqual(
-            at_two.json()["rating_summary"],
-            {"state": "not_enough_ratings", "count": 2},
-        )
-        self.assertEqual(
-            at_three.json()["rating_summary"],
-            {"state": "available", "count": 3, "average": 4.0},
+            at_one.json()["rating_summary"],
+            {"state": "available", "count": 1, "average": 3.0},
         )
 
     def test_unrated_entries_are_excluded_and_edit_changes_average(self):
@@ -293,7 +285,7 @@ class BeenApiContractTests(TestCase):
 
         self.assertEqual(
             after_removal.json()["rating_summary"],
-            {"state": "not_enough_ratings", "count": 2},
+            {"state": "available", "count": 2, "average": 4.0},
         )
         self.assertEqual(after_rerate.json()["rating_summary"]["average"], 4.0)
         self.assertAlmostEqual(

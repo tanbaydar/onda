@@ -79,7 +79,7 @@ def _serialize_event(event):
     if hasattr(event, "recent_rating_count"):
         payload["rating_summary"] = (
             {"state": "available", "count": event.recent_rating_count, "average": float(event.recent_rating_average)}
-            if event.recent_rating_count >= 3
+            if event.recent_rating_count >= 1
             else {"state": "not_enough_ratings", "count": event.recent_rating_count}
         )
     return payload
@@ -325,7 +325,7 @@ def event_detail(request, event_id):
     payload["rating_summary"] = event_rating_summary(event)
     payload["rating_distribution"] = rating_distribution_payload(
         DiaryEntry.objects.for_aggregation().filter(event=event),
-        minimum_count=3,
+        minimum_count=1,
     )
     payload["been"] = {
         "loggable": loggable,

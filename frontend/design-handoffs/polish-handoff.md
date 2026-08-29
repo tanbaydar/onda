@@ -29,8 +29,8 @@ The dated information-hierarchy override in `event-handoff.md` supersedes this s
 - Lineup rows: headliner first — display face 20px, ink; supporting artists in listing order, fn 14 `--text-secondary`, one per row, padding 8 vertical, NO hairlines (a lineup is one group — whitespace rhythm only), full-width tap targets, whole row → artist page. No inline underlines; hover = text to ink.
 
 ## 5. Discover Recent rows — RULED (closes discover-handoff flag 1)
-- Same anatomy as Upcoming (flier 80×100, display name, meta, lineup) PLUS: when the event has an average (≥3 ratings), a compact judgment element ends the meta line — avg stars 12px `--judgment`, halves ("★★★" for 3.0). No numeral, no count on the row (they live on the event page).
-- not_enough (<3 ratings): meta line unchanged, no judgment element, no placeholder text — silence is the designed state.
+- Same anatomy as Upcoming (flier 80×100, display name, meta, lineup) PLUS: when the event has an average (≥1 rating), a compact judgment element ends the meta line — avg stars 12px `--judgment`, halves ("★★★" for 3.0). No numeral, no count on the row (they live on the event page).
+- not_enough (0 ratings): meta line unchanged, no judgment element, no placeholder text — silence is the designed state.
 - DATED OVERRIDE (scoped): "judgment color nowhere on Discover" narrows to "nowhere except Recent-row avg stars" — it is judgment data, the allocation rule is what's being obeyed.
 
 ## 6. Menu blessings
