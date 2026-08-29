@@ -5,7 +5,6 @@ import {
   histogramBarHeight,
   profileRatingBuckets,
   profileRatingCount,
-  profileRatingLowVolumeNote,
   ratingBucketLabel,
   ratingDistributionDescription,
 } from "./ratingHistogram.js";
@@ -18,7 +17,6 @@ test("an empty profile distribution renders a complete neutral frame with honest
     Array(10).fill("var(--sp-2)"),
   );
   assert.equal(profileRatingCount({ state: "empty" }), 0);
-  assert.equal(profileRatingLowVolumeNote({ state: "empty" }), "No ratings given yet.");
 });
 
 function distributionWithCount(count) {
@@ -32,18 +30,16 @@ function distributionWithCount(count) {
   };
 }
 
-test("one through four ratings retain the real distribution and disclose the sample size", () => {
-  for (const [count, note] of [[1, "1 rating given"], [4, "4 ratings given"]]) {
+test("one through four ratings retain the real distribution without a visible sample-size note", () => {
+  for (const count of [1, 4]) {
     const distribution = distributionWithCount(count);
     assert.equal(profileRatingCount(distribution), count);
-    assert.equal(profileRatingLowVolumeNote(distribution), note);
     assert.equal(profileRatingBuckets(distribution)[7].relative_value, 1);
   }
 });
 
-test("five or more ratings keep the established histogram without low-volume copy", () => {
+test("five or more ratings keep the established histogram", () => {
   assert.equal(profileRatingCount(distributionWithCount(5)), 5);
-  assert.equal(profileRatingLowVolumeNote(distributionWithCount(5)), null);
 });
 
 test("the profile rating count sums ratings across buckets", () => {
@@ -51,7 +47,6 @@ test("the profile rating count sums ratings across buckets", () => {
   distribution.buckets[0].count = 2;
   distribution.buckets[9].count = 3;
   assert.equal(profileRatingCount(distribution), 5);
-  assert.equal(profileRatingLowVolumeNote(distribution), null);
 });
 
 test("an available profile retains all ten histogram buckets", () => {
