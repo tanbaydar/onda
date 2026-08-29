@@ -106,6 +106,7 @@ test("profile social counts open a responsive, infinitely scrolling people list"
   assert.match(connections, /\/\$\{kind\}\/\?page=1/);
   assert.match(connections, /<ProfileAvatar profile=\{person\} small/);
   assert.match(css, /\.profile-connections-dialog\{width:100%;max-width:none;height:100dvh/);
+  assert.match(css, /\.profile-connection-list\{[^}]*list-style:none/);
   assert.match(css, /@media \(min-width:768px\)[\s\S]*\.profile-connections-dialog\{width:min\(calc\(100% - 48px\),480px\)/);
 });
 

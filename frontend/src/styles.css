@@ -460,7 +460,7 @@ dialog .destructive{border-color:var(--action);background:var(--action);color:va
 .profile-connections-shell>nav button[aria-selected="true"]{border-bottom-color:var(--action);color:var(--text)}
 .profile-connections-shell>nav span{color:inherit;font-size:var(--text-micro)}
 .profile-connection-panel{min-height:0;flex:1;overflow-y:auto;overscroll-behavior:contain}
-.profile-connection-list{margin:0;padding:0 var(--sp-16)}
+.profile-connection-list{margin:0;padding:0 var(--sp-16);list-style:none}
 .profile-connection-list>li{padding:0}
 .profile-connection-list a{display:flex;min-height:64px;gap:var(--sp-12);align-items:center;padding:var(--sp-12) 0;text-decoration:none}
 .profile-connection-list .profile-avatar{width:40px;height:40px;flex:0 0 40px;font-size:var(--text-micro)}
