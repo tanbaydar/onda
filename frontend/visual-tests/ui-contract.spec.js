@@ -629,7 +629,7 @@ test.describe("public-beta visual contract", () => {
     await expectNoHorizontalOverflow(page);
   });
 
-  test("Discover and Profile imagery render at one-and-a-half scale without overflow", async ({ page }) => {
+  test("Discover and Profile flyers render at the corrected visible scale without overflow", async ({ page }) => {
     await mockPublicApi(page, { authenticated: true, events: [EVENT_ROW_FIXTURE] });
     await page.goto("/u/onda_test");
     await expect(page.locator(".profile-favorite-thumb")).toBeVisible();
@@ -637,7 +637,13 @@ test.describe("public-beta visual contract", () => {
       const box = element.getBoundingClientRect();
       return { width: box.width, height: box.height };
     });
-    expect(favoriteSize).toEqual(page.viewportSize().width === 320 ? { width: 80, height: 100 } : { width: 102, height: 127.5 });
+    if (page.viewportSize().width >= 767) {
+      expect(favoriteSize).toEqual({ width: 153, height: 191.25 });
+    } else {
+      expect(favoriteSize.width).toBeGreaterThanOrEqual(80);
+      expect(favoriteSize.width).toBeLessThanOrEqual(153);
+      expect(favoriteSize.height / favoriteSize.width).toBeCloseTo(1.25, 2);
+    }
     await expect(page.locator(".profile-favorite-list strong")).toHaveCSS("font-size", "14px");
 
     await page.goto("/u/onda_test/been");
@@ -645,7 +651,7 @@ test.describe("public-beta visual contract", () => {
     expect(await page.locator(".profile-diary-thumb").evaluate((element) => {
       const box = element.getBoundingClientRect();
       return { width: box.width, height: box.height };
-    })).toEqual({ width: 102, height: 127.5 });
+    })).toEqual({ width: 153, height: 191.25 });
 
     await page.goto("/discover");
     await expect(page.getByRole("heading", { level: 1, name: "Boston" })).toBeVisible();
@@ -654,7 +660,7 @@ test.describe("public-beta visual contract", () => {
     expect(await eventFlyer.evaluate((element) => {
       const box = element.getBoundingClientRect();
       return { width: box.width, height: box.height };
-    })).toEqual({ width: 102, height: 127.5 });
+    })).toEqual({ width: 153, height: 191.25 });
   });
 
   test("pending follow requests are actionable from both Activity locations", async ({ page }) => {

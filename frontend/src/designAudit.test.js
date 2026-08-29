@@ -62,11 +62,11 @@ test("profile favorites keep their existing artwork and labels while arranging e
   assert.match(css, /\.profile-favorite-list strong\{[^}]*font-size:var\(--text-ui\)/);
 });
 
-test("Discover and Profile primary artwork use the ordered one-and-a-half scale", () => {
+test("Discover and Profile flyers use the corrected visible scale", () => {
   const tokens = read("../design-tokens.css");
   const discover = read("./discover.css");
   const css = read("./styles.css");
-  assert.match(tokens, /--surface-flier:102px; --surface-flier-h:127\.5px/);
+  assert.match(tokens, /--surface-flier:153px; --surface-flier-h:191\.25px/);
   assert.match(tokens, /--profile-avatar-mobile:120px; --profile-avatar-desktop:240px/);
   assert.match(discover, /\.discover-event-flier\{[^}]*width:var\(--surface-flier\);height:var\(--surface-flier-h\)/);
   assert.match(css, /\.profile-diary-thumb\{[^}]*width:var\(--surface-flier\);height:var\(--surface-flier-h\)/);
