@@ -106,3 +106,9 @@ Judgment color: Been-row stars + the strip's judgment unit ONLY. Display face: n
 - Follow, Unfollow, Request to follow, Requested, and Edit profile render as compact 150×32px controls instead of spanning the profile measure. All follow states retain identical dimensions.
 - The compact control aligns with the identity column when that column can contain 150px. At the 320px minimum viewport it centers beneath the full identity cluster so it does not overflow.
 - The handle sits 4px below the display name and the follower counts sit 8px below the handle. These values supersede the preceding compact-mobile ruling's 8px handle rhythm and full-width action, while its 80px mobile avatar and compact Statistics/tab spacing remain unchanged.
+
+## Dated operator ruling — 2026-08-29 full-width bio and compact social row
+
+- The follower/following row sits 4px below the handle. On mobile its two pairs remain on one line with an 8px pair gap; the visible row contributes only the text line height while each connection button retains a 44px hit area extending downward without increasing layout height.
+- The bio leaves the right identity column and spans the full profile-header width in its own row beneath the avatar/identity cluster. The compact 150×32px Edit/Follow action remains below the bio.
+- This supersedes only the preceding 8px handle-to-counts gap and bio placement. Avatar sizes, control dimensions, Statistics/tab spacing, content order, and all non-Profile surfaces remain unchanged.
