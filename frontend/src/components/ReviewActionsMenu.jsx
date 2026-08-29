@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
-export default function ReviewActionsMenu({ disabled = false, hasReview = false, onEditReview, onRemoveReview }) {
+export default function ReviewActionsMenu({ disabled = false, onEditReview, onRemoveReview }) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef(null);
   const triggerRef = useRef(null);
@@ -37,7 +37,7 @@ export default function ReviewActionsMenu({ disabled = false, hasReview = false,
       {open ? (
         <div className="review-actions-options" role="menu" aria-label="Review actions">
           <button className="menu-action" type="button" role="menuitem" onClick={() => choose(onEditReview)}>Edit review</button>
-          {hasReview ? <button className="menu-action" type="button" role="menuitem" onClick={() => choose(onRemoveReview)}>Delete review</button> : null}
+          <button className="menu-action" type="button" role="menuitem" onClick={() => choose(onRemoveReview)}>Delete review</button>
         </div>
       ) : null}
     </div>

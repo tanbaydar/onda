@@ -1,7 +1,7 @@
 export default function BeenControl({ disabled = false, onRemove }) {
   return (
     <button className="been-control" type="button" disabled={disabled} aria-label="Remove from Been" onClick={onRemove}>
-      <span aria-hidden="true">✓</span>
+      <img src="/assets/been-hand.svg" alt="" aria-hidden="true" />
       <small>Been</small>
     </button>
   );

@@ -37,7 +37,7 @@ export default function FavoriteControl({ path, state, onChanged, compact = fals
   }
 
   const label = favorite.is_favorite ? (hovered ? "Remove" : "Favorited") : "Favorite";
-  const contents = <><button className={`favorite-heart${row ? " favorite-heart-row" : ""}${favorite.is_favorite ? " is-favorite" : ""}${filled ? " just-filled" : ""}`} type="button" disabled={request.pending} aria-busy={request.pending} aria-label={row ? "Remove favorite" : label} onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)} onClick={change}><span aria-hidden="true">{favorite.is_favorite ? "♥" : "♡"}</span>{row ? null : <small>{label}</small>}</button>{request.message ? <p className="favorite-notice" role="alert">{request.message}</p> : null}</>;
+  const contents = <><button className={`favorite-heart${row ? " favorite-heart-row" : ""}${favorite.is_favorite ? " is-favorite" : ""}${filled ? " just-filled" : ""}`} type="button" disabled={request.pending} aria-busy={request.pending} aria-label={row ? "Remove favorite" : label} onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)} onClick={change}><img src="/assets/favorite-heart.svg" alt="" aria-hidden="true" />{row ? null : <small>{label}</small>}</button>{request.message ? <p className="favorite-notice" role="alert">{request.message}</p> : null}</>;
   if (row) return <div className="profile-favorite-control">{contents}</div>;
   return compact ? <div className="owner-favorite">{contents}</div> : <section><h2 className="section-heading">Favorite</h2>{contents}</section>;
 }

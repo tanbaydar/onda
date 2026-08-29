@@ -43,7 +43,9 @@ test("owner review editing keeps review actions separate from the Been control",
   assert.match(page, /\{event\.viewer_entry\.review \? "Edit review" : "Publish review"\}/);
   assert.match(reviewActions, /Edit review/);
   assert.match(reviewActions, /Delete review/);
+  assert.doesNotMatch(reviewActions, /hasReview/);
   assert.doesNotMatch(reviewActions, /onRemoveFromBeen/);
   assert.doesNotMatch(reviewActions, /Remove from Been/);
+  assert.match(beenControl, /src="\/assets\/been-hand\.svg"/);
   assert.match(beenControl, /<small>Been<\/small>/);
 });

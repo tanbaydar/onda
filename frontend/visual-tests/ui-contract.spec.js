@@ -172,7 +172,7 @@ async function mockPublicApi(page, { authenticated = false, events = [], continu
     } else if (url.pathname === "/api/users/onda_test/reviews/") {
       body = { results: [{ id: 1, event: PROFILE_EVENT_FIXTURE, rating: 4.5, body: "The room, the sound, and the crowd all landed at once.", published_at: "2026-08-20T12:00:00Z", like_count: 0 }], pagination: EMPTY_PAGINATION };
     } else if (url.pathname === "/api/users/onda_test/favorites/") {
-      body = { events: [], artists: [], venues: [] };
+      body = { events: [{ event: PROFILE_EVENT_FIXTURE }], artists: [], venues: [] };
     } else if (url.pathname === "/api/search/") {
       body = { results: [], next_cursor: null };
     } else {
@@ -474,11 +474,13 @@ test.describe("public-beta visual contract", () => {
     expect(positions.lineup).toBeLessThan(positions.rating);
     expect(positions.lineup).toBeLessThan(positions.ownerReview);
     expect(await page.locator(".event-lineup").count()).toBe(1);
+    await expect(page.locator('.favorite-heart img[src="/assets/favorite-heart.svg"]')).toBeVisible();
+    await expect(page.locator('.been-control img[src="/assets/been-hand.svg"]')).toBeVisible();
 
     await page.locator(".review-actions-trigger").click();
     await expect(page.getByRole("menuitem", { name: "Edit review" })).toBeVisible();
-    await expect(page.getByRole("menuitem", { name: "Remove review" })).toBeVisible();
-    await expect(page.getByRole("menuitem", { name: "Remove from Been" })).toBeVisible();
+    await expect(page.getByRole("menuitem", { name: "Delete review" })).toBeVisible();
+    await expect(page.getByRole("menuitem", { name: "Remove from Been" })).toHaveCount(0);
     await expect(page.getByText("Remove rating", { exact: true })).toHaveCount(0);
     await expectMinimumTargets(page.locator(".review-actions-options .menu-action"), page.viewportSize().width < 768 ? 44 : 24);
     await page.getByRole("menuitem", { name: "Edit review" }).click();
@@ -558,6 +560,27 @@ test.describe("public-beta visual contract", () => {
     }
     expect(geometry.order).toEqual([...geometry.order].sort((left, right) => left - right));
     await expectNoHorizontalOverflow(page);
+  });
+
+  test("Events, Been, and Favorites render one 68 by 85 flyer size", async ({ page }) => {
+    await mockPublicApi(page, { authenticated: true, events: [EVENT_ROW_FIXTURE] });
+    await page.goto("/u/onda_test");
+    await expect(page.locator(".profile-diary-thumb")).toBeVisible();
+    await expect(page.locator(".profile-favorite-thumb")).toBeVisible();
+    const profileFlyers = await page.locator(".profile-diary-thumb, .profile-favorite-thumb").evaluateAll((elements) => elements.map((element) => {
+      const box = element.getBoundingClientRect();
+      return { width: box.width, height: box.height };
+    }));
+    expect(profileFlyers).toEqual([{ width: 68, height: 85 }, { width: 68, height: 85 }]);
+
+    await page.goto("/discover");
+    await expect(page.getByRole("heading", { level: 1, name: "Boston" })).toBeVisible();
+    const eventFlyer = page.locator(".discover-event-flier").first();
+    await expect(eventFlyer).toBeVisible();
+    expect(await eventFlyer.evaluate((element) => {
+      const box = element.getBoundingClientRect();
+      return { width: box.width, height: box.height };
+    })).toEqual({ width: 68, height: 85 });
   });
 
   test("pending follow requests are actionable from both Activity locations", async ({ page }) => {

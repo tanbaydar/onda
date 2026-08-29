@@ -27,7 +27,8 @@
   --measure-prose:640px;      /* reviews/reading; 680px ruled ceiling */
   --measure-rows:800px;       /* desktop ledgers */
   --gutter-mobile:24px; --gutter-desktop:106px; --auth-col:360px; /* desktop gutter is a ceiling; runtime gutters grow fluidly to it */
-  --thumb:56px; --thumb-h:70px;                  /* row flier slot 4:5; absent = slot stays EMPTY, text x holds */
+  --thumb:56px; --thumb-h:70px;                  /* compact utility flier slot 4:5 */
+  --collection-flier:68px; --collection-flier-h:85px; /* Events, Been, and Favorites: average of 80×100 and 56×70 */
   --flier-sm:80px; --flier-sm-h:100px;           /* mobile reduced flier 4:5 */
   --flier-md:160px; --flier-md-h:200px;          /* desktop identity-block flier */
   --radius:0; --hairline:1px; --breakpoint-desktop:768px;
@@ -112,7 +113,7 @@
    Like link --judgment-text 500. Own entry: "· Yours" in sub, ONE quiet
    "Edit ▾" affordance, no like control on own.
 
-   ROWS (EventListRow/BeenRow) — thumb slot 56×70 left (EMPTY when flier
+   ROWS (EventListRow/BeenRow) — collection flier slot 68×85 left (EMPTY when flier
    absent — never a placeholder box; text x holds). Mobile stack: row-title
    (display) → date ui/500 → venue micro secondary → lineup micro muted,
    1-line clip. Desktop spread (ledger 800): [thumb | title+lineup] left,
