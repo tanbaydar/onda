@@ -31,7 +31,7 @@
   --collection-flier:68px; --collection-flier-h:85px; /* Events, Been, and Favorites rectangular artwork */
   --surface-flier:102px; --surface-flier-h:127.5px;   /* Discover and Profile diary artwork */
   --favorite-flier:153px; --favorite-flier-h:191.25px; /* Profile Favourites artwork only */
-  --profile-avatar-mobile:120px; --profile-avatar-desktop:160px; /* compact desktop Profile identity artwork */
+  --profile-avatar-mobile:80px; --profile-avatar-desktop:160px; /* Instagram-scale mobile and compact desktop Profile identity artwork */
   --flier-sm:80px; --flier-sm-h:100px;           /* mobile reduced flier 4:5 */
   --flier-md:160px; --flier-md-h:200px;          /* desktop identity-block flier */
   --radius:0; --hairline:1px; --breakpoint-desktop:768px;

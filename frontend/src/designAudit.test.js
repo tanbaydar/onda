@@ -68,7 +68,7 @@ test("only Profile Favourites artwork uses the corrected visible scale", () => {
   const css = read("./styles.css");
   assert.match(tokens, /--surface-flier:102px; --surface-flier-h:127\.5px/);
   assert.match(tokens, /--favorite-flier:153px; --favorite-flier-h:191\.25px/);
-  assert.match(tokens, /--profile-avatar-mobile:120px; --profile-avatar-desktop:160px/);
+  assert.match(tokens, /--profile-avatar-mobile:80px; --profile-avatar-desktop:160px/);
   assert.match(discover, /\.discover-event-flier\{[^}]*width:var\(--surface-flier\);height:var\(--surface-flier-h\)/);
   assert.match(css, /\.profile-diary-thumb\{[^}]*width:var\(--surface-flier\);height:var\(--surface-flier-h\)/);
   assert.match(css, /\.profile-favorite-thumb\{[^}]*width:min\(100%,var\(--favorite-flier\)\)[^}]*aspect-ratio:4\/5/);
