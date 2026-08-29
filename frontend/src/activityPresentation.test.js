@@ -44,3 +44,10 @@ test("follow-request decisions use the existing endpoints in both Activity locat
   assert.match(activity, />Approve<\/button>[\s\S]*>Delete<\/button>/);
   assert.doesNotMatch(source, /location\.(?:assign|reload)|window\.location/);
 });
+
+test("read Activity messages keep the standard ink color", () => {
+  const styles = readFileSync(new URL("./styles.css", import.meta.url), "utf8");
+
+  assert.match(styles, /\.activity-row\.read\{color:var\(--text\)\}/);
+  assert.doesNotMatch(styles, /\.activity-row\.read\{color:var\(--text-muted\)\}/);
+});
