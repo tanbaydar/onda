@@ -77,8 +77,13 @@ Judgment color: Been-row stars + the strip's judgment unit ONLY. Display face: n
 - Favourites is tab content, not a persistent section below Been or Reviews. Exactly one of Favourites, Been, or Reviews renders beneath the shared tab hairline.
 - The legacy `/been` entry point continues to open the signed-in user's Been tab rather than the new Favourites default.
 
-## Dated operator override — 2026-08-29 image scale
+## Dated operator override — 2026-08-29 image scale (corrected after live review)
 
-- Primary Profile imagery is exactly 1.5× its prior shipped size: the identity avatar is 120×120 mobile and 240×240 desktop; Been/Reviews flyers and rectangular Favorites artwork are 102×127.5; circular Favorites artist artwork is 102×102.
-- At the governed 320px edge, the three-column Favorites grid may constrain each 102px image to its available 80px column to prevent document overflow. From 390px upward the full 1.5× size renders.
+- The identity avatar remains 120×120 mobile and 240×240 desktop. Been/Reviews flyers and rectangular Favorites artwork are 153×191.25; circular Favorites artist artwork is 153×153. This flyer correction supersedes the earlier 102×127.5 / 102×102 ruling because that live result remained visually too small.
+- Below the width at which three 153px Favorites items fit, the governed three-column row constrains each image to its available column to prevent document overflow. Discover and Been/Reviews flyers retain the full corrected size at every width.
 - Existing aspect ratios, centered Favorites composition, typography, copy, gaps, and all non-Profile surfaces remain unchanged.
+
+## Dated operator override — 2026-08-29 compact desktop profile header
+
+- Desktop profile identity imagery is 160×160. Mobile remains 120×120. This supersedes only the 240×240 desktop avatar in the preceding image-scale override; the 153×191.25 Favorites and diary flyer scale remains unchanged.
+- The desktop identity grid uses a 32px column gap and a 24px row gap. The profile action remains below the identity cluster across the centered profile measure. Statistics and tab spacing remain unchanged, so the shorter identity band brings the next Favorites group into the initial desktop view without changing content order.

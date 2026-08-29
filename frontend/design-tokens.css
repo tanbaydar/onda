@@ -29,8 +29,8 @@
   --gutter-mobile:24px; --gutter-desktop:106px; --auth-col:360px; /* desktop gutter is a ceiling; runtime gutters grow fluidly to it */
   --thumb:56px; --thumb-h:70px;                  /* compact utility flier slot 4:5 */
   --collection-flier:68px; --collection-flier-h:85px; /* Events, Been, and Favorites rectangular artwork */
-  --surface-flier:102px; --surface-flier-h:127.5px;   /* Discover and Profile: 1.5× collection artwork */
-  --profile-avatar-mobile:120px; --profile-avatar-desktop:240px; /* 1.5× Profile identity artwork */
+  --surface-flier:153px; --surface-flier-h:191.25px;  /* Discover and Profile flyers: visibly enlarged from the live 102×127.5 slot */
+  --profile-avatar-mobile:120px; --profile-avatar-desktop:160px; /* compact desktop Profile identity artwork */
   --flier-sm:80px; --flier-sm-h:100px;           /* mobile reduced flier 4:5 */
   --flier-md:160px; --flier-md-h:200px;          /* desktop identity-block flier */
   --radius:0; --hairline:1px; --breakpoint-desktop:768px;
