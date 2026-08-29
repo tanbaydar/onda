@@ -276,6 +276,8 @@ meter{accent-color:var(--chart);width:120px}
 .home-feed-object{min-width:0;flex:1 1 auto;overflow:hidden;font:inherit;font-weight:600;text-overflow:ellipsis;white-space:nowrap}
 .home-feed-stars{color:var(--judgment);font-size:var(--text-ui);line-height:1}
 .home-feed-meta{color:var(--text-secondary);font-size:var(--text-micro)}
+.home-feed-review-byline{color:var(--text-secondary);font-size:var(--text-micro)}
+.home-feed-review-byline strong{font-weight:600}
 .home-feed-review{display:block;max-width:640px;overflow:hidden;color:var(--text);font-family:var(--font-prose);font-size:var(--text-body);line-height:1.6}
 .home-feed-review small{display:inline;color:var(--text-secondary);font-family:var(--font-fn);font-size:var(--text-micro)}
 .home-feed-group-count{flex:none;color:var(--text-muted);font:inherit}

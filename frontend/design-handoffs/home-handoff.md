@@ -60,3 +60,9 @@ One quiet line ui `--text-secondary`: "No activity from people you follow yet." 
 - Username, action phrase, event or artist name, and relative timestamp share one horizontal metadata line in the functional face at the UI-size register. Username and event or artist name are weight 600; the action phrase remains regular.
 - The event or artist name consumes the available horizontal space and truncates when necessary. The action phrase and relative timestamp remain visible. Grouped favorite names use the same inline treatment.
 - Stars, review excerpts, and the will-be-there date/venue payload retain their existing treatment below this identity line.
+
+## Dated delta — 2026-08-29 operator ruling: review-like visibility
+
+- Review-like Home items use the action phrase "liked a review from" and keep the event as the object and row destination.
+- The liked review is apparent beneath the event: show its author, rating stars when a rating exists, and review body.
+- The review body uses the existing feed excerpt treatment with a three-line limit. Overflow ends inline with `… Read more`; the whole row remains the event-target affordance.

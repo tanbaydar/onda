@@ -20,7 +20,7 @@ test("dense Home fixture and HomePage source cover the five supported activity t
 });
 
 test("Home feed identity metadata uses one functional-font line with bold actors and objects", () => {
-  assert.deepEqual(Object.values(HOME_FEED_VERBS), ["rated", "will be at", "liked a review of", "favorited", "favorited"]);
+  assert.deepEqual(Object.values(HOME_FEED_VERBS), ["rated", "will be at", "liked a review from", "favorited", "favorited"]);
   assert.ok(dense.results.some(({ actor }) => actor.display_name.length > 35));
   assert.ok(dense.results.some(({ target }) => (target.event?.title ?? target.artist?.name ?? "").length > 60));
   assert.match(styles, /\.home-feed-verb\{[^}]*flex:none[^}]*white-space:nowrap/);
@@ -61,8 +61,17 @@ test("empty Home fixture and HomePage source contain the ruled empty affordance"
 test("FeedReviewExcerpt and CSS sources gate a clear inline Read more marker on measurement", () => {
   assert.match(excerptSource, /probe\.scrollHeight <= maxHeight/);
   assert.match(excerptSource, /rendered\.truncated \? <>… <small>Read more<\/small><\/> : null/);
+  assert.match(excerptSource, /lineLimit = 4/);
+  assert.match(excerptSource, /Math\.ceil\(Number\.parseFloat\(styles\.lineHeight\) \* lineLimit\)/);
   assert.doesNotMatch(styles, /\.home-feed-review small\{[^}]*position:/);
   assert.match(styles, /\.home-feed-review small\{display:inline/);
+});
+
+test("review-like rows expose the review author, rating, and three-line excerpt", () => {
+  assert.match(presenterSource, /Review by <strong>\{likedReview\.author\.display_name\}<\/strong>/);
+  assert.match(presenterSource, /likedReview\?\.rating != null \? <RatingStars/);
+  assert.match(presenterSource, /isRated && item\.context\.review/);
+  assert.match(presenterSource, /<FeedReviewExcerpt lineLimit=\{3\}>\{likedReview\.body\}<\/FeedReviewExcerpt>/);
 });
 
 test("grouping applies only to favorites and never rated or WBT rows", () => {
