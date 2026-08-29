@@ -151,6 +151,8 @@ async function mockPublicApi(page, { authenticated = false, events = [], continu
       }
     } else if (url.pathname === "/api/events/468/") {
       body = eventDetail;
+    } else if (url.pathname === "/api/events/468/favorite/") {
+      body = { favorite: { is_favorite: true, added_at: "2026-08-29T12:00:00Z" } };
     } else if (url.pathname.startsWith("/api/events/468/will-be-there/")) {
       body = { results: [], pagination: EMPTY_PAGINATION };
     } else if (url.pathname === "/api/events/468/circle/") {
@@ -475,7 +477,9 @@ test.describe("public-beta visual contract", () => {
     expect(positions.lineup).toBeLessThan(positions.ownerReview);
     expect(await page.locator(".event-lineup").count()).toBe(1);
     await expect(page.locator('.favorite-heart img[src="/assets/favorite-heart.svg"]')).toBeVisible();
-    await expect(page.locator('.been-control img[src="/assets/been-hand.svg"]')).toBeVisible();
+    await expect(page.locator('.favorite-heart small')).toHaveText("Mark Favourite");
+    await expect(page.locator('.been-control img[src="/assets/been-hand-filled.svg"]')).toBeVisible();
+    await expect(page.locator('.been-control small')).toHaveText("Been");
 
     await page.locator(".review-actions-trigger").click();
     await expect(page.getByRole("menuitem", { name: "Edit review" })).toBeVisible();
@@ -485,6 +489,31 @@ test.describe("public-beta visual contract", () => {
     await expectMinimumTargets(page.locator(".review-actions-options .menu-action"), page.viewportSize().width < 768 ? 44 : 24);
     await page.getByRole("menuitem", { name: "Edit review" }).click();
     await expect(page.getByLabel("Written review")).toBeVisible();
+    await expectNoHorizontalOverflow(page);
+  });
+
+  test("past event controls transition from outline prompts to filled marks", async ({ page }) => {
+    await mockPublicApi(page, {
+      authenticated: true,
+      eventDetail: {
+        ...PAST_EVENT_DETAIL_FIXTURE,
+        viewer_entry: null,
+        viewer_favorite: { is_favorite: false, added_at: null },
+      },
+    });
+    await page.goto("/e/franky-rizardo-flow-468");
+
+    const markBeen = page.getByRole("button", { name: "Mark Been" });
+    await expect(markBeen.locator('img[src="/assets/been-hand.svg"]')).toBeVisible();
+    await markBeen.click();
+    await expect(page.getByRole("slider", { name: "Your rating" })).toBeFocused();
+
+    const markFavourite = page.getByRole("button", { name: "Mark Favourite" });
+    await expect(markFavourite.locator('img[src="/assets/favorite-heart.svg"]')).toBeVisible();
+    await markFavourite.click();
+    const favourite = page.getByRole("button", { name: "Remove Favourite" });
+    await expect(favourite.locator('img[src="/assets/favorite-heart-filled.svg"]')).toBeVisible();
+    await expect(favourite.locator("small")).toHaveText("Favourite");
     await expectNoHorizontalOverflow(page);
   });
 

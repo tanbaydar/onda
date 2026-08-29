@@ -55,7 +55,7 @@ test("profile favorites separate entity types while keeping row-scale artwork an
   assert.match(profile, /className="profile-favorite-link"/);
   assert.match(profile, /className="profile-favorite-copy"/);
   assert.match(favorite, /if \(row\) return <div className="profile-favorite-control">/);
-  assert.match(favorite, /src="\/assets\/favorite-heart\.svg"/);
+  assert.match(favorite, /"\/assets\/favorite-heart-filled\.svg" : "\/assets\/favorite-heart\.svg"/);
   assert.match(css, /\.profile-favorite-groups\{display:grid;gap:var\(--sp-32\)\}/);
   assert.match(css, /\.profile-favorite-list \.artist-avatar\{width:var\(--thumb\);height:var\(--thumb\)\}/);
   assert.match(css, /\.profile-favorite-link\{[^}]*min-height:var\(--collection-flier-h\)/);
@@ -69,6 +69,18 @@ test("Events, Been, and Favorites share the ordered 68 by 85 flyer size", () => 
   assert.match(discover, /\.discover-event-flier\{[^}]*width:var\(--collection-flier\);height:var\(--collection-flier-h\)/);
   assert.match(css, /\.profile-diary-thumb\{[^}]*width:var\(--collection-flier\);height:var\(--collection-flier-h\)/);
   assert.match(css, /\.profile-favorite-thumb\{[^}]*width:var\(--collection-flier\);height:var\(--collection-flier-h\)/);
+});
+
+test("event Been and Favourite controls pair outline prompts with filled committed states", () => {
+  const event = read("./pages/EventPage.jsx");
+  const been = read("./components/BeenControl.jsx");
+  const favorite = read("./components/FavoriteControl.jsx");
+  assert.match(event, /<FavoriteControl compact mode="event"/);
+  assert.match(event, /<BeenControl marked=\{viewerHasRating\}/);
+  assert.match(been, /marked \? "Been" : "Mark Been"/);
+  assert.match(been, /been-hand-filled\.svg/);
+  assert.match(favorite, /favorite\.is_favorite \? "Favourite" : "Mark Favourite"/);
+  assert.match(favorite, /favorite-heart-filled\.svg/);
 });
 
 test("profile social counts open a responsive, infinitely scrolling people list", () => {
