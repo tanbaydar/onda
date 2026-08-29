@@ -99,3 +99,10 @@ Judgment color: Been-row stars + the strip's judgment unit ONLY. Display face: n
 - Mobile identity internals use an 8px vertical rhythm for social counts, handle metadata, and bio; the full-width profile action follows the identity cluster after a 16px grid row gap. Existing 44px mobile targets remain unchanged.
 - Mobile Statistics begins 16px after the profile header action, uses a 16px row gap, and renders every statistic numeral at the existing 24px profile-numeral scale. The tab register follows Statistics after 16px. These values supersede the mobile portion of the 48px statistics-centering ruling; desktop retains both 48px intervals and its existing numeral hierarchy.
 - Tab order, content order, copy, profile actions, diary and Favourites artwork, and all non-Profile surfaces remain unchanged.
+
+## Dated operator ruling — 2026-08-29 compact identity order and controls
+
+- The profile identity order is display name → `@handle · city` → follower/following counts → bio. This supersedes the 2026-08-27 Instagram-spacing order for those identity lines.
+- Follow, Unfollow, Request to follow, Requested, and Edit profile render as compact 150×32px controls instead of spanning the profile measure. All follow states retain identical dimensions.
+- The compact control aligns with the identity column when that column can contain 150px. At the 320px minimum viewport it centers beneath the full identity cluster so it does not overflow.
+- The handle sits 4px below the display name and the follower counts sit 8px below the handle. These values supersede the preceding compact-mobile ruling's 8px handle rhythm and full-width action, while its 80px mobile avatar and compact Statistics/tab spacing remain unchanged.
