@@ -87,3 +87,8 @@ Judgment color: Been-row stars + the strip's judgment unit ONLY. Display face: n
 
 - Desktop profile identity imagery is 160×160. Mobile remains 120×120. This supersedes only the 240×240 desktop avatar in the preceding image-scale override; the Favourites-only scale and 102×127.5 diary flyer scale remain unchanged.
 - The desktop identity grid uses a 32px column gap and a 24px row gap. The profile action remains below the identity cluster across the centered profile measure. Statistics and tab spacing remain unchanged, so the shorter identity band brings the next Favorites group into the initial desktop view without changing content order.
+
+## Dated operator override — 2026-08-29 Favourites title scale
+
+- Favourites item titles use the existing row-title scale: 18px mobile and 20px desktop. This replaces the undersized 14px item-title treatment and restores proportion against the enlarged artwork without introducing a new type token.
+- Events, Artists, and Venues group headings remain 14px functional text. Secondary item metadata remains 12px. Copy, artwork size, alignment, truncation, and layout remain unchanged.

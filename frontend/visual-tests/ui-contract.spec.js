@@ -644,7 +644,8 @@ test.describe("public-beta visual contract", () => {
       expect(favoriteSize.width).toBeLessThanOrEqual(153);
       expect(favoriteSize.height / favoriteSize.width).toBeCloseTo(1.25, 2);
     }
-    await expect(page.locator(".profile-favorite-list strong")).toHaveCSS("font-size", "14px");
+    await expect(page.locator(".profile-favorite-list strong")).toHaveCSS("font-size", page.viewportSize().width < 768 ? "18px" : "20px");
+    await expect(page.locator(".profile-favorite-group > h2").first()).toHaveCSS("font-size", "14px");
 
     await page.goto("/u/onda_test/been");
     await expect(page.locator(".profile-diary-thumb")).toBeVisible();
