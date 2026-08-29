@@ -59,7 +59,8 @@ test("profile favorites keep their existing artwork and labels while arranging e
   assert.match(css, /\.profile-favorite-list \.artist-avatar\{width:min\(100%,var\(--favorite-flier\)\)[^}]*aspect-ratio:1/);
   assert.match(css, /\.profile-favorite-link\{[^}]*min-height:var\(--favorite-flier-h\)[^}]*flex-direction:column[^}]*align-items:center[^}]*text-align:center/);
   assert.match(css, /\.profile-favorite-copy\{[^}]*width:100%[^}]*align-items:center[^}]*text-align:center/);
-  assert.match(css, /\.profile-favorite-list strong\{[^}]*font-size:var\(--text-row-title\)/);
+  assert.match(css, /\.profile-favorite-list strong\{[^}]*display:-webkit-box[^}]*font-size:var\(--text-row-title\)[^}]*-webkit-box-orient:vertical[^}]*-webkit-line-clamp:2/);
+  assert.doesNotMatch(css, /\.profile-favorite-list strong\{[^}]*(?:white-space:nowrap|text-overflow:ellipsis)/);
 });
 
 test("only Profile Favourites artwork uses the corrected visible scale", () => {
