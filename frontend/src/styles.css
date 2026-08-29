@@ -291,19 +291,19 @@ meter{accent-color:var(--chart);width:120px}
 .profile-identity-copy{min-width:0;padding-top:var(--sp-2)}
 .profile-title-row{display:flex;align-items:center;gap:var(--sp-16)}
 .profile-header .identity-title{margin-bottom:0;font-size:var(--text-title-past)}
-.profile-handle-line{margin:var(--sp-12) 0 0;color:var(--text-muted);font-size:var(--text-micro)}
-.profile-social-counts{display:flex;flex-wrap:wrap;gap:var(--sp-16);align-items:center;margin-top:var(--sp-16)}
+.profile-handle-line{margin:var(--sp-4) 0 0;color:var(--text-muted);font-size:var(--text-micro)}
+.profile-social-counts{display:flex;flex-wrap:wrap;gap:var(--sp-16);align-items:center;margin-top:var(--sp-8)}
 .profile-social-counts>button{display:flex;min-width:0;min-height:0;gap:var(--sp-4);align-items:baseline;padding:0;border:0;color:var(--text);text-align:left}
 .profile-social-counts>button:hover small,.profile-social-counts>button:focus-visible small{color:var(--text)}
 .profile-social-counts strong{font-size:var(--text-ui);font-weight:600}
 .profile-social-counts small{color:var(--text-secondary);font-size:var(--text-ui);font-weight:400;letter-spacing:0;text-transform:none}
-.profile-header-action{grid-column:1/-1;width:100%}
+.profile-header-action{width:150px;grid-column:2;justify-self:start}
 .profile-follow-control{width:auto;min-width:150px;height:32px;min-height:32px;margin-top:var(--sp-12);padding:var(--sp-8) var(--sp-16);border:var(--hairline) solid var(--border-strong);color:var(--text-secondary);font-size:var(--text-ui);font-weight:500;line-height:1;text-align:center}
-.profile-header-action .profile-follow-control{width:100%;height:auto;min-height:var(--target-min);margin-top:0}
+.profile-header-action .profile-follow-control{width:150px;height:32px;min-height:32px;margin-top:0}
 .profile-follow-error{display:flex;max-width:320px;flex-wrap:wrap;align-items:center;gap:var(--sp-8) var(--sp-12);margin-top:var(--sp-8);color:var(--danger-text);font-size:var(--text-micro)}
 .profile-follow-error p{margin:0}
 .profile-follow-error button{border:0;color:inherit;text-decoration:underline}
-.profile-edit-link{display:flex;width:100%;align-items:center;justify-content:center;padding:var(--sp-8) var(--sp-16);border:var(--hairline) solid var(--border-strong);color:var(--text-secondary);font-size:var(--text-ui);font-weight:500;text-decoration:none}
+.profile-edit-link{display:flex;width:150px;height:32px;min-height:32px;align-items:center;justify-content:center;padding:var(--sp-8) var(--sp-16);border:var(--hairline) solid var(--border-strong);color:var(--text-secondary);font-size:var(--text-ui);font-weight:500;text-decoration:none}
 .profile-bio{max-width:640px;margin:var(--sp-12) 0 0;color:var(--text-secondary);font-family:var(--font-prose);font-size:var(--text-body);line-height:1.6}
 .profile-statistics,.profile-tabs,.profile-tab-panel,.profile-favorites,.profile-private-stub{max-width:var(--measure-rows);margin-right:auto;margin-left:auto}
 .profile-tabs{display:flex;gap:var(--sp-24);align-items:flex-end;margin-top:var(--sp-48);border-bottom:var(--hairline) solid var(--border);font-size:var(--text-ui)}
@@ -485,17 +485,21 @@ dialog .destructive{border-color:var(--action);background:var(--action);color:va
  .auth-links a,.auth-link-button{min-width:44px;min-height:var(--target-mobile)}
  .profile-header{row-gap:var(--sp-16)}
  .profile-social-counts{margin-top:var(--sp-8)}
- .profile-handle-line,.profile-bio{margin-top:var(--sp-8)}
+ .profile-bio{margin-top:var(--sp-8)}
  .profile-statistics{margin-top:var(--sp-16)}
  .profile-statistics-strip{row-gap:var(--sp-16)}
  .profile-stat.stat-lead .stat-value{font-size:var(--text-numeral-md)}
  .profile-tabs{margin-top:var(--sp-16)}
+ .profile-header-action .profile-follow-control,.profile-header-action .profile-edit-link{min-height:32px}
 }
 @media (prefers-reduced-motion:reduce){
  .favorite-heart.just-filled>img{animation:none}
 }
 @media (max-width:359px){
  .search-scopes-cue{display:inline-flex}
+}
+@media (max-width:341px){
+ .profile-header-action{grid-column:1/-1;justify-self:center}
 }
 @media (min-width:360px){
  .search-scopes{padding-right:0}

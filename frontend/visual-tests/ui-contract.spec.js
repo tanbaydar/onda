@@ -545,6 +545,9 @@ test.describe("public-beta visual contract", () => {
       const header = main.querySelector(".profile-header").getBoundingClientRect();
       const avatar = main.querySelector(".profile-header > .profile-avatar").getBoundingClientRect();
       const action = main.querySelector(".profile-header-action").getBoundingClientRect();
+      const title = main.querySelector(".profile-title-row").getBoundingClientRect();
+      const handle = main.querySelector(".profile-handle-line").getBoundingClientRect();
+      const socialCounts = main.querySelector(".profile-social-counts").getBoundingClientRect();
       const statisticsHeading = main.querySelector(".profile-statistics > .section-heading").getBoundingClientRect();
       const statisticsStripElement = main.querySelector(".profile-statistics-strip");
       const statisticsStrip = statisticsStripElement.getBoundingClientRect();
@@ -561,7 +564,12 @@ test.describe("public-beta visual contract", () => {
       return {
         headerWidth: header.width,
         avatarWidth: avatar.width,
+        actionWidth: action.width,
+        actionHeight: action.height,
         actionBelowAvatar: action.top >= avatar.bottom,
+        identityOrder: [title.top, handle.top, socialCounts.top],
+        titleToHandleGap: handle.top - title.bottom,
+        handleToCountsGap: socialCounts.top - handle.bottom,
         statisticsGapAbove: statisticsHeading.top - action.bottom,
         statisticsGapBelow: tabs.top - statisticsStrip.bottom,
         statisticsRowGap: Number.parseFloat(getComputedStyle(statisticsStripElement).rowGap),
@@ -579,7 +587,12 @@ test.describe("public-beta visual contract", () => {
     const expectedSectionGap = isMobile ? 16 : 48;
     expect(geometry.headerWidth).toBeLessThanOrEqual(800);
     expect(geometry.avatarWidth).toBe(isMobile ? 80 : 240);
+    expect(geometry.actionWidth).toBe(150);
+    expect(geometry.actionHeight).toBe(32);
     expect(geometry.actionBelowAvatar).toBe(true);
+    expect(geometry.identityOrder).toEqual([...geometry.identityOrder].sort((left, right) => left - right));
+    expect(geometry.titleToHandleGap).toBeLessThanOrEqual(4);
+    expect(geometry.handleToCountsGap).toBeLessThanOrEqual(8);
     expect(Math.abs(geometry.statisticsGapAbove - expectedSectionGap)).toBeLessThanOrEqual(1);
     expect(Math.abs(geometry.statisticsGapBelow - expectedSectionGap)).toBeLessThanOrEqual(1);
     expect(Math.abs(geometry.statisticsGapAbove - geometry.statisticsGapBelow)).toBeLessThanOrEqual(1);

@@ -9,10 +9,12 @@ test("profile identity applies the governed Instagram-derived spacing without ne
   const css = read("./styles.css");
 
   assert.match(profile, /className="profile-header"[\s\S]*<ProfileAvatar[\s\S]*className="profile-identity-copy"[\s\S]*className="profile-header-action"/);
+  assert.match(profile, /className="identity-title"[\s\S]*className="profile-handle-line"[\s\S]*className="profile-social-counts"/);
   assert.match(css, /\.profile-header\{[^}]*max-width:var\(--measure-rows\);[^}]*grid-template-columns:var\(--profile-avatar-mobile\) minmax\(0,1fr\)/);
   assert.match(css, /@media \(min-width:768px\)[\s\S]*\.profile-header\{grid-template-columns:var\(--profile-avatar-desktop\) minmax\(0,1fr\)/);
-  assert.match(css, /\.profile-header-action\{grid-column:1\/-1;width:100%\}/);
-  assert.match(css, /\.profile-edit-link\{display:flex;width:100%/);
+  assert.match(css, /\.profile-header-action\{width:150px;grid-column:2;justify-self:start\}/);
+  assert.match(css, /\.profile-header-action \.profile-follow-control\{width:150px;height:32px;min-height:32px/);
+  assert.match(css, /\.profile-edit-link\{display:flex;width:150px;height:32px;min-height:32px/);
   assert.doesNotMatch(profile, /View archive|New story|Share photos/);
 });
 
