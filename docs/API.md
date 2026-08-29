@@ -195,7 +195,7 @@ Avatar uploads are size- and dimension-bounded, validated as JPEG/PNG/WebP image
 
 | Method | Path | Pagination/action |
 |---|---|---|
-| `GET` | `/api/me/home/` | Six-source Home projection; opaque composite cursor |
+| `GET` | `/api/me/home/` | Five-source Home projection; rating and review are one activity; opaque composite cursor |
 | `GET` | `/api/me/notifications/` | Notification list; timestamp/ID cursor |
 | `POST` | `/api/me/notifications/{notification_id}/read/` | Mark one owned notification read |
 | `POST` | `/api/me/notifications/read-all/` | Mark all owned notifications read |

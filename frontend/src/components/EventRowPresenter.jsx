@@ -4,7 +4,7 @@ import { compactLineup } from "../discoverPresentation.js";
 import { eventPath } from "../entityRoutes.js";
 import { eventIsPast } from "../eventTime.js";
 import { formatCompactEventDateTime, formatEventDateTime } from "../formatEventDateTime.js";
-import { compactRelativeTime, feedItemPath, HOME_FEED_VERBS } from "../homeFeedPresentation.js";
+import { compactRelativeTime, feedItemPath, homeFeedVerb } from "../homeFeedPresentation.js";
 import { pluralize } from "../lib/plural.js";
 import { recentRatingVisible } from "../polishPresentation.js";
 import FeedReviewExcerpt from "./FeedReviewExcerpt.jsx";
@@ -75,8 +75,7 @@ function ProfileDiaryEventRow({ event, rating, hasReview = false, reviewBody = n
 function FeedEventRow({ item }) {
   const event = item.target.event;
   const isRated = item.type === "rated_been";
-  const isReview = item.type === "review";
-  const isRich = isRated || isReview;
+  const isRich = isRated;
   const visibleStartTime = hasHappened(event) ? null : event.start_time;
   return (
     <Link className={`home-feed-item home-feed-event${isRich ? " home-feed-rich" : ""}`} to={feedItemPath(item)}>
@@ -85,7 +84,7 @@ function FeedEventRow({ item }) {
         <span className="home-feed-actor-line">
           <ProfileAvatar profile={item.actor} small />
           <strong className="home-feed-actor-name">{item.actor.display_name}</strong>
-          <span className="home-feed-verb">{HOME_FEED_VERBS[item.type]}</span>
+          <span className="home-feed-verb">{homeFeedVerb(item)}</span>
           <time dateTime={item.activity_at}>{compactRelativeTime(item.activity_at)}</time>
         </span>
         <strong className="home-feed-object">{event.title}</strong>
