@@ -54,7 +54,7 @@ test("profile favorites keep their existing artwork and labels while arranging e
   assert.match(profile, /className="profile-favorite-link"/);
   assert.match(profile, /className="profile-favorite-copy"/);
   assert.doesNotMatch(profile, /FavoriteControl/);
-  assert.match(css, /\.profile-favorite-groups\{display:grid;gap:var\(--sp-32\)\}/);
+  assert.match(css, /\.profile-favorite-groups\{display:grid;gap:var\(--sp-16\)\}/);
   assert.match(css, /\.profile-favorite-list\{display:grid;grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
   assert.match(css, /\.profile-favorite-list \.artist-avatar\{width:min\(100%,var\(--favorite-flier\)\)[^}]*aspect-ratio:1/);
   assert.match(css, /\.profile-favorite-link\{[^}]*flex-direction:column[^}]*align-items:center[^}]*text-align:center/);
