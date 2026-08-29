@@ -26,12 +26,12 @@
   </tr>
   <tr>
     <td align="center" valign="top" colspan="3" width="50%">
-      <img src="assets/screens/profile.png" alt="Onda Profile screen" width="66.66%">
+      <img src="assets/screens/profile.png" alt="Onda Profile screen" width="64.66%">
       <br><b>Profile</b>
       <br><sub>Who you are, based on what you do</sub>
     </td>
     <td align="center" valign="top" colspan="3" width="50%">
-      <img src="assets/screens/favourites.png" alt="Onda Favourites screen" width="66.66%">
+      <img src="assets/screens/favourites.png" alt="Onda Favourites screen" width="64.66%">
       <br><b>Favourites</b>
       <br><sub>Let your taste speak</sub>
     </td>
