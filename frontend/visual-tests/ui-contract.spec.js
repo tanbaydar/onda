@@ -548,6 +548,8 @@ test.describe("public-beta visual contract", () => {
       const title = main.querySelector(".profile-title-row").getBoundingClientRect();
       const handle = main.querySelector(".profile-handle-line").getBoundingClientRect();
       const socialCounts = main.querySelector(".profile-social-counts").getBoundingClientRect();
+      const socialTarget = main.querySelector(".profile-social-counts > button").getBoundingClientRect();
+      const bio = main.querySelector(".profile-bio").getBoundingClientRect();
       const statisticsHeading = main.querySelector(".profile-statistics > .section-heading").getBoundingClientRect();
       const statisticsStripElement = main.querySelector(".profile-statistics-strip");
       const statisticsStrip = statisticsStripElement.getBoundingClientRect();
@@ -563,6 +565,7 @@ test.describe("public-beta visual contract", () => {
       const top = (selector) => row.querySelector(selector).getBoundingClientRect().top;
       return {
         headerWidth: header.width,
+        headerLeft: header.left,
         avatarWidth: avatar.width,
         actionWidth: action.width,
         actionHeight: action.height,
@@ -570,6 +573,12 @@ test.describe("public-beta visual contract", () => {
         identityOrder: [title.top, handle.top, socialCounts.top],
         titleToHandleGap: handle.top - title.bottom,
         handleToCountsGap: socialCounts.top - handle.bottom,
+        socialRowHeight: socialCounts.height,
+        socialTargetHeight: socialTarget.height,
+        bioLeft: bio.left,
+        bioWidth: bio.width,
+        bioBelowIdentity: bio.top >= Math.max(avatar.bottom, socialCounts.bottom),
+        actionBelowBio: action.top >= bio.bottom,
         statisticsGapAbove: statisticsHeading.top - action.bottom,
         statisticsGapBelow: tabs.top - statisticsStrip.bottom,
         statisticsRowGap: Number.parseFloat(getComputedStyle(statisticsStripElement).rowGap),
@@ -592,7 +601,15 @@ test.describe("public-beta visual contract", () => {
     expect(geometry.actionBelowAvatar).toBe(true);
     expect(geometry.identityOrder).toEqual([...geometry.identityOrder].sort((left, right) => left - right));
     expect(geometry.titleToHandleGap).toBeLessThanOrEqual(4);
-    expect(geometry.handleToCountsGap).toBeLessThanOrEqual(8);
+    expect(geometry.handleToCountsGap).toBeLessThanOrEqual(4);
+    expect(Math.abs(geometry.bioLeft - geometry.headerLeft)).toBeLessThanOrEqual(1);
+    expect(Math.abs(geometry.bioWidth - geometry.headerWidth)).toBeLessThanOrEqual(1);
+    expect(geometry.bioBelowIdentity).toBe(true);
+    expect(geometry.actionBelowBio).toBe(true);
+    if (isMobile) {
+      expect(geometry.socialRowHeight).toBeLessThanOrEqual(20);
+      expect(geometry.socialTargetHeight).toBe(44);
+    }
     expect(Math.abs(geometry.statisticsGapAbove - expectedSectionGap)).toBeLessThanOrEqual(1);
     expect(Math.abs(geometry.statisticsGapBelow - expectedSectionGap)).toBeLessThanOrEqual(1);
     expect(Math.abs(geometry.statisticsGapAbove - geometry.statisticsGapBelow)).toBeLessThanOrEqual(1);
