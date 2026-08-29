@@ -11,7 +11,7 @@ const presenterSource = readFileSync(new URL("./components/EventRowPresenter.jsx
 const excerptSource = readFileSync(new URL("./components/FeedReviewExcerpt.jsx", import.meta.url), "utf8");
 const styles = readFileSync(new URL("./styles.css", import.meta.url), "utf8");
 
-test("dense Home fixture and HomePage source cover the five supported activity types", () => {
+test("dense Home fixture and HomePage source cover the seven supported activity types", () => {
   const types = [...new Set(dense.results.map(({ type }) => type))].sort();
   assert.deepEqual(types, Object.keys(HOME_FEED_VERBS).sort());
   assert.match(pageSource, /homeFeedVerb\(item\)/);
@@ -20,7 +20,7 @@ test("dense Home fixture and HomePage source cover the five supported activity t
 });
 
 test("Home feed identity metadata uses one functional-font line with bold actors and objects", () => {
-  assert.deepEqual(Object.values(HOME_FEED_VERBS), ["rated", "will be at", "liked a review from", "favorited", "favorited"]);
+  assert.deepEqual(Object.values(HOME_FEED_VERBS), ["has been to", "rated", "reviewed", "will be at", "liked a review from", "favorited", "favorited"]);
   assert.ok(dense.results.some(({ actor }) => actor.display_name.length > 35));
   assert.ok(dense.results.some(({ target }) => (target.event?.title ?? target.artist?.name ?? "").length > 60));
   assert.match(styles, /\.home-feed-verb\{[^}]*flex:none[^}]*white-space:nowrap/);
@@ -32,15 +32,18 @@ test("Home feed identity metadata uses one functional-font line with bold actors
   assert.match(pageSource, /home-feed-verb[\s\S]{0,300}home-feed-object[\s\S]{0,300}<time/);
 });
 
-test("a rating and its written review are presented as one atomic activity", () => {
-  const reviewed = dense.results.find((item) => item.type === "rated_been" && item.context?.review);
+test("Been, rated, and reviewed states are presented as one diary activity each", () => {
+  const reviewed = dense.results.find((item) => item.type === "review" && item.context?.review);
   assert.ok(reviewed);
-  assert.equal(homeFeedVerb(reviewed), "liked and reviewed");
+  assert.equal(homeFeedVerb(reviewed), "reviewed");
   assert.equal(
-    dense.results.filter((item) => item.target.event?.id === reviewed.target.event.id && ["rated_been", "review"].includes(item.type)).length,
+    dense.results.filter((item) => item.target.event?.id === reviewed.target.event.id && ["been", "rated_been", "review"].includes(item.type)).length,
     1,
   );
-  assert.ok(dense.results.every((item) => item.type !== "review"));
+  assert.equal(HOME_FEED_VERBS.been, "has been to");
+  assert.equal(HOME_FEED_VERBS.rated_been, "rated");
+  assert.equal(HOME_FEED_VERBS.review, "reviewed");
+  assert.equal(HOME_FEED_VERBS.review_like, "liked a review from");
 });
 
 test("compact timestamps use the shared feed register", () => {
@@ -70,11 +73,11 @@ test("FeedReviewExcerpt and CSS sources gate a clear inline Read more marker on 
 test("review-like rows expose the review author, rating, and three-line excerpt", () => {
   assert.match(presenterSource, /Review by <strong>\{likedReview\.author\.display_name\}<\/strong>/);
   assert.match(presenterSource, /likedReview\?\.rating != null \? <RatingStars/);
-  assert.match(presenterSource, /isRated && item\.context\.review/);
+  assert.match(presenterSource, /isDiaryJudgment && item\.context\.review/);
   assert.match(presenterSource, /<FeedReviewExcerpt lineLimit=\{3\}>\{likedReview\.body\}<\/FeedReviewExcerpt>/);
 });
 
-test("grouping applies only to favorites and never rated or WBT rows", () => {
+test("grouping applies only to favorites and never diary or WBT rows", () => {
   const actor = { id: 1, username: "actor" };
   const make = (type, id) => ({ type, actor, activity_at: `2026-08-02T12:00:0${id}Z`, target: { event: { id, title: `${type} ${id}` } } });
   const results = groupFeedItems([make("favorite_event", 1), make("favorite_event", 2), make("rated_been", 3), make("rated_been", 4), make("will_be_there", 5), make("will_be_there", 6)]);

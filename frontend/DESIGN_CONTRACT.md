@@ -389,7 +389,7 @@ Follow, Unfollow, Request to follow, and Requested use one fixed 150px-minimum, 
 | Landing `/` | Session resolver only. Redirect to the correct destination; transient copy is functional, not a branded landing campaign. |
 | Discover `/discover` | "Discover Events" is the H1; city remains in the selector. Matched city/search controls. Upcoming/Recent tabs. Centered 800px ledger with 80×100 fliers. Recent alone may show average stars at the ≥3-rating gate. Infinite continuation via sentinel; loaded rows survive failure. |
 | Search `/search` | Primary 640px/18px search field, then All/Events/Artists/Venues/People scopes. Search begins at two trimmed characters after ~250ms. All groups cap at five with View all; single scope paginates. Search chrome never uses judgment green. |
-| Home `/home` | No H1 or overline. Feed begins 24px mobile / 32px desktop from content top. One centered 800px ledger. Rich rated entries, row-scale event actions, and quiet grouped one-liners share one anatomy. |
+| Home `/home` | No H1 or overline. Feed begins 24px mobile / 32px desktop from content top. One centered 800px ledger. Rich rated/reviewed entries, row-scale event actions, and quiet grouped one-liners share one anatomy. |
 | Register `/register` | 360px auth column. Username, email, password, display name, privacy. One primary Register action and quiet Log in path. |
 | Login `/login` | Username-or-email and password. One primary Log in action. Non-enumerating credential error. Quiet reset and registration paths. |
 | Verify `/verify-email` | “Check your email,” destination copy, expiry notice, single six-digit field, Verify, Resend code, quiet sent confirmation. |

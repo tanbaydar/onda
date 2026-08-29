@@ -103,15 +103,17 @@ The application applies these rules in database querysets before serialization. 
 
 ## Home feed
 
-Home is assembled from current database truth. It can contain five activity types from approved follow relationships:
+Home is assembled from current database truth. It can contain seven activity types from approved follow relationships:
 
 1. Will Be There
 2. review like
-3. rated Been entry, including its written review as one atomic activity
-4. favorite event
-5. favorite artist
+3. Been without a rating
+4. rated Been without a review
+5. reviewed Been
+6. favorite event
+7. favorite artist
 
-The feed has no independently populated timeline table. Each request combines the five sources with a database `UNION ALL`, filters privacy and hidden events inside the branches, orders by a stable composite cursor, and returns the next page. A review is joined to its rated Been row and never becomes a second feed activity. This avoids write-time fan-out and stale copied activity at the current scale.
+The feed has no independently populated timeline table. Each request combines five source branches with a database `UNION ALL`, filters privacy and hidden events inside the branches, orders by a stable composite cursor, and returns the next page. The diary branch emits exactly one item per current Been entry: “has been to,” “rated,” or “reviewed.” A review is joined to its Been row and never becomes a second diary activity; review likes remain independent. This avoids write-time fan-out and stale copied activity at the current scale.
 
 [Read how Home is assembled →](APPLICATION_DATA.md#home-is-a-projection-not-a-ledger)
 

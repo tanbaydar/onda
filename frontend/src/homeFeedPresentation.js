@@ -3,7 +3,9 @@ import { artistPath, eventPath } from "./entityRoutes.js";
 export const HOME_EMPTY_COPY = "No activity from people you follow yet.";
 
 export const HOME_FEED_VERBS = {
+  been: "has been to",
   rated_been: "rated",
+  review: "reviewed",
   will_be_there: "will be at",
   review_like: "liked a review from",
   favorite_event: "favorited",
@@ -11,7 +13,6 @@ export const HOME_FEED_VERBS = {
 };
 
 export function homeFeedVerb(item) {
-  if (item.type === "rated_been" && item.context?.review) return "liked and reviewed";
   return HOME_FEED_VERBS[item.type];
 }
 

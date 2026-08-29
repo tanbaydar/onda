@@ -655,7 +655,58 @@
       "context": null
     },
     {
+      "type": "been",
+      "activity_at": "2026-07-31T23:40:18.310000Z",
+      "actor": {
+        "id": 15,
+        "username": "design.fixture.actor",
+        "display_name": "A Deliberately Long Public Design Fixture Name",
+        "avatar": null
+      },
+      "target": {
+        "event": {
+          "id": 4,
+          "title": "Been Fixture Event",
+          "event_date": "2026-06-18",
+          "start_time": "21:00:00",
+          "cover_image_url": null,
+          "venue": {
+            "name": "Fixture Venue",
+            "city": {"name": "Boston"}
+          }
+        }
+      },
+      "context": null
+    },
+    {
       "type": "rated_been",
+      "activity_at": "2026-07-31T23:40:18.305000Z",
+      "actor": {
+        "id": 15,
+        "username": "design.fixture.actor",
+        "display_name": "A Deliberately Long Public Design Fixture Name",
+        "avatar": null
+      },
+      "target": {
+        "event": {
+          "id": 5,
+          "title": "Rated Fixture Event",
+          "event_date": "2026-06-18",
+          "start_time": "22:00:00",
+          "cover_image_url": null,
+          "venue": {
+            "name": "Fixture Venue",
+            "city": {"name": "Boston"}
+          }
+        }
+      },
+      "context": {
+        "rating": 4.0,
+        "review": null
+      }
+    },
+    {
+      "type": "review",
       "activity_at": "2026-07-31T23:40:18.299717Z",
       "actor": {
         "id": 15,

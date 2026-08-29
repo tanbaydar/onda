@@ -148,20 +148,20 @@ Onda does not copy every social action into a fan-out feed table. `GET /api/me/h
 flowchart LR
     Follows[Approved followees] --> WBT[Visible active Will Be There]
     Follows --> Likes[Visible review likes]
-    Follows --> Ratings[Visible rated Been<br/>with optional review]
+    Follows --> Diary[Visible Been<br/>current diary state]
     Follows --> FavEvent[Visible favorite events]
     Follows --> FavArtist[Visible favorite artists]
 
     WBT --> Union[(UNION ALL)]
     Likes --> Union
-    Ratings --> Union
+    Diary --> Union
     FavEvent --> Union
     FavArtist --> Union
     Union --> Cursor[Order by activity_at,<br/>activity_type, source_key]
     Cursor --> Page[20-item response + next cursor]
 ```
 
-Each branch emits the same projection shape. The rated Been branch joins its optional one-to-one review and uses the review's original publication time when present, so rating and review are always one activity. Privacy and event-lifecycle predicates are inside the branch, before union and pagination. This is important: filtering afterward could produce short pages, leak row existence, or make cursors inconsistent.
+Each branch emits the same projection shape. The diary branch emits exactly one state-derived item per Been entry: `been` at `created_at`, `rated_been` at `rated_at`, or `review` at the review's original `published_at`. Privacy and event-lifecycle predicates are inside the branch, before union and pagination. This is important: filtering afterward could produce short pages, leak row existence, or make cursors inconsistent.
 
 The stable cursor key is `(activity_at, activity_type, source_key)`. Timestamp alone is insufficient because several activities can share the same time; the type and source key make ordering total and repeatable.
 
@@ -231,7 +231,7 @@ Django's `on_delete=models.CASCADE` controls ORM behavior but does not automatic
 | Will Be There | User/event pair + creation time | Whether the mark is still active |
 | Follow | Pair, status, timestamps | Whether content is visible to this viewer |
 | Community rating | Individual diary ratings | Count/average and minimum-count state |
-| Home | Source actions only | Unified five-type feed and cursor page |
+| Home | Source actions only | Unified five-source, seven-type feed and cursor page |
 | Recent searches | Browser `localStorage` | Display order in that browser |
 
 The distinction prevents duplicated state where the source data already provides a stronger truth. In particular, there is no `FEED` table, stored Will-Be-There expiry, or shipped `RECENT_SEARCH` database table.

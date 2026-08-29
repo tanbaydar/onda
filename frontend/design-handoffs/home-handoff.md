@@ -1,5 +1,5 @@
 # HOME FEED — incremental handoff (delta; markdown is sole authority)
-Ruled 2026-08-02 · APPROVED as rendered + two dispatch amendments (§1 actor-line truncation, §5 desktop centering). Zero new tokens; scoped styles. Covers all five activity types with ONE anatomy.
+Ruled 2026-08-02 · APPROVED as rendered + two dispatch amendments (§1 actor-line truncation, §5 desktop centering). Zero new tokens; scoped styles. Covers all seven activity types with ONE anatomy.
 
 ## 1. Item anatomy (one grammar, amplitude varies — never six layouts)
 Every item = [flier slot]? + [actor line] + [object line]? + [payload]? — timestamp always on the actor line.
@@ -66,3 +66,11 @@ One quiet line ui `--text-secondary`: "No activity from people you follow yet." 
 - Review-like Home items use the action phrase "liked a review from" and keep the event as the object and row destination.
 - The liked review is apparent beneath the event: show its author, rating stars when a rating exists, and review body.
 - The review body uses the existing feed excerpt treatment with a three-line limit. Overflow ends inline with `… Read more`; the whole row remains the event-target affordance.
+
+## Dated delta — 2026-08-29 operator ruling: one diary item per Been entry
+
+- This ruling supersedes the "liked and reviewed" wording in the atomic-review correction. Home continues to derive exactly one diary item from each current Been entry.
+- A Been entry without a rating uses "has been to" and its creation timestamp.
+- A Been entry with a rating and no review uses "rated" and its rating timestamp.
+- A Been entry with both a rating and a review uses "reviewed" and its review publication timestamp. Rating stars and the review excerpt remain visible.
+- Genuine review-like activity remains independent and uses "liked a review from" with the existing review-like payload.
