@@ -5,9 +5,9 @@ import test from "node:test";
 import { FOLLOW_CONTROL_LABELS, followControlLabel } from "./followControl.js";
 
 test("follow control exposes all four ruled states through one label path", () => {
-  assert.deepEqual(FOLLOW_CONTROL_LABELS, ["Follow", "Unfollow", "Request to follow", "Requested"]);
+  assert.deepEqual(FOLLOW_CONTROL_LABELS, ["Follow", "Following", "Request to follow", "Requested"]);
   assert.equal(followControlLabel({ outgoing_status: null, follow_action: "follow" }), "Follow");
-  assert.equal(followControlLabel({ outgoing_status: "approved", follow_action: null }), "Unfollow");
+  assert.equal(followControlLabel({ outgoing_status: "approved", follow_action: null }), "Following");
   assert.equal(followControlLabel({ outgoing_status: null, follow_action: "request" }), "Request to follow");
   assert.equal(followControlLabel({ outgoing_status: "pending", follow_action: null }), "Requested");
 });

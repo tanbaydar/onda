@@ -118,3 +118,9 @@ Judgment color: Been-row stars + the strip's judgment unit ONLY. Display face: n
 - On mobile only, the Edit profile control and every FollowControl state span the full available profile-header width. Desktop retains the compact 150×32px control.
 - The mobile control remains 32px high and keeps its existing quiet typography and exact labels: Edit profile, Follow, Unfollow, Request to follow, and Requested.
 - The mobile rectangle and text use `--judgment` green. This is an explicit scoped exception to the profile allocation audit and the product-wide judgment-only green rule; it does not change any other action, control, state, copy, or surface.
+
+## Dated operator ruling — 2026-08-29 relationship copy
+
+- Remove the `Follows you` and approved-state `Following` relationship markers from the profile metadata line. The handle and home city remain.
+- Rename the approved FollowControl label from `Unfollow` to `Following`. Activating `Following` retains the existing unfollow behavior.
+- This ruling supersedes the approved-state label named in the full-width mobile profile actions ruling above; all other dimensions, colors, and states remain unchanged.

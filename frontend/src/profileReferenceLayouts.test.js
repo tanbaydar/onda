@@ -10,6 +10,8 @@ test("profile identity applies the governed Instagram-derived spacing without ne
 
   assert.match(profile, /className="profile-header"[\s\S]*<ProfileAvatar[\s\S]*className="profile-identity-copy"[\s\S]*className="profile-bio"[\s\S]*className="profile-header-action"/);
   assert.match(profile, /className="identity-title"[\s\S]*className="profile-handle-line"[\s\S]*className="profile-social-counts"/);
+  assert.match(profile, /className="profile-handle-line">@\{profile\.username\}\{profile\.home_city \? ` · \$\{profile\.home_city\.name\}` : ""\}<\/p>/);
+  assert.doesNotMatch(profile, /Follows you/);
   assert.match(css, /\.profile-header\{[^}]*max-width:var\(--measure-rows\);[^}]*grid-template-columns:var\(--profile-avatar-mobile\) minmax\(0,1fr\)/);
   assert.match(css, /@media \(min-width:768px\)[\s\S]*\.profile-header\{grid-template-columns:var\(--profile-avatar-desktop\) minmax\(0,1fr\)/);
   assert.match(css, /\.profile-header-action\{width:150px;grid-column:2;justify-self:start\}/);
