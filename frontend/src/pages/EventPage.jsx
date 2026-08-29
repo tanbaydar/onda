@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 
 import { ApiError, fetchJson, fetchWithCsrf } from "../api.js";
@@ -46,6 +46,7 @@ export default function EventPage({ user, sessionReady, onAuthenticationRequired
   const [willBeThereError, setWillBeThereError] = useState(null);
   const [confirmation, setConfirmation] = useState(null);
   const [editingEntry, setEditingEntry] = useState(false);
+  const ratingComposerRef = useRef(null);
   const [state, setState] = useState({
     loading: true,
     error: null,
@@ -136,6 +137,10 @@ export default function EventPage({ user, sessionReady, onAuthenticationRequired
 
   function removeEntry() {
     setConfirmation({ title: "Remove this event from Been?", consequence: state.event.viewer_entry?.review ? "This permanently deletes the entry, rating, written review, and all review likes." : "This permanently deletes its rating.", label: "Remove from Been", action: () => mutate(`/api/events/${eventId}/been/`, { method: "DELETE" }) });
+  }
+
+  function markBeen() {
+    ratingComposerRef.current?.querySelector('[role="slider"]')?.focus();
   }
 
   function saveReview(event) {
@@ -278,9 +283,9 @@ export default function EventPage({ user, sessionReady, onAuthenticationRequired
           )}
         </div>
         {user ? <div className="event-owner-block">
-            {!viewerHasRating ? <StarInput value={rating} disabled={saving} onChange={(value) => setRating(String(value))} onCommit={saveRating} /> : null}
-            <FavoriteControl compact path={`/api/events/${event.id}/favorite/`} state={event.viewer_favorite} onChanged={changeFavorite} />
-            {viewerHasRating ? <BeenControl disabled={saving} onRemove={removeEntry} /> : null}
+            {!viewerHasRating ? <div className="been-rating-composer" ref={ratingComposerRef}><StarInput value={rating} disabled={saving} onChange={(value) => setRating(String(value))} onCommit={saveRating} /></div> : null}
+            <FavoriteControl compact mode="event" path={`/api/events/${event.id}/favorite/`} state={event.viewer_favorite} onChanged={changeFavorite} />
+            <BeenControl marked={viewerHasRating} disabled={saving} onMark={markBeen} onRemove={removeEntry} />
             {event.viewer_will_be_there.was_marked ? <p className="dormant-wbt">Will Be There · marked</p> : null}
             {actionError ? <p className="favorite-notice" role="alert">{actionError}</p> : null}
         </div> : null}

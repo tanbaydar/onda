@@ -1,8 +1,9 @@
-export default function BeenControl({ disabled = false, onRemove }) {
+export default function BeenControl({ marked = false, disabled = false, onMark, onRemove }) {
+  const label = marked ? "Been" : "Mark Been";
   return (
-    <button className="been-control" type="button" disabled={disabled} aria-label="Remove from Been" onClick={onRemove}>
-      <img src="/assets/been-hand.svg" alt="" aria-hidden="true" />
-      <small>Been</small>
+    <button className={`been-control${marked ? " is-been" : ""}`} type="button" disabled={disabled} aria-label={marked ? "Remove from Been" : label} onClick={marked ? onRemove : onMark}>
+      <img src={marked ? "/assets/been-hand-filled.svg" : "/assets/been-hand.svg"} alt="" aria-hidden="true" />
+      <small>{label}</small>
     </button>
   );
 }

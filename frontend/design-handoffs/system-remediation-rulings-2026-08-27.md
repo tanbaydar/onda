@@ -58,3 +58,10 @@ Ruled 2026-08-27 by the current operator. Scope: the cross-system frontend remed
 - Marking an active event `Will Be There` creates one Activity notification for each approved follower of the actor.
 - The Activity sentence names the event and opens that event. Pending followers do not receive it.
 - An idempotent repeated mark creates no duplicate. Unmarking does not retract the historical Activity item.
+
+## Dated operator override — 2026-08-29 filled event controls
+
+- The supplied `/assets/been-hand-filled.svg` and `/assets/favorite-heart-filled.svg` are repository assets and are the required committed-state artwork.
+- A past event always exposes both event controls. Unmarked states render `Mark Been` and `Mark Favourite` with the existing outline assets. Marked states render `Been` and `Favourite` with the supplied filled assets.
+- `Mark Been` focuses the required rating control; committing a rating creates the Been entry and switches the control to its filled state. The existing rating requirement is unchanged.
+- Clicking a marked control retains the shipped removal behavior and confirmation where applicable.

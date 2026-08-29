@@ -39,13 +39,14 @@ test("PublicReviews source composes SortMenu with the two-option event contract"
 test("owner review editing keeps review actions separate from the Been control", () => {
   const beenControl = readFileSync(new URL("./components/BeenControl.jsx", import.meta.url), "utf8");
   const reviewActions = readFileSync(new URL("./components/ReviewActionsMenu.jsx", import.meta.url), "utf8");
-  assert.match(page, /<BeenControl disabled=\{saving\} onRemove=\{removeEntry\}/);
+  assert.match(page, /<BeenControl marked=\{viewerHasRating\} disabled=\{saving\} onMark=\{markBeen\} onRemove=\{removeEntry\}/);
   assert.match(page, /\{event\.viewer_entry\.review \? "Edit review" : "Publish review"\}/);
   assert.match(reviewActions, /Edit review/);
   assert.match(reviewActions, /Delete review/);
   assert.doesNotMatch(reviewActions, /hasReview/);
   assert.doesNotMatch(reviewActions, /onRemoveFromBeen/);
   assert.doesNotMatch(reviewActions, /Remove from Been/);
-  assert.match(beenControl, /src="\/assets\/been-hand\.svg"/);
-  assert.match(beenControl, /<small>Been<\/small>/);
+  assert.match(beenControl, /"\/assets\/been-hand-filled\.svg" : "\/assets\/been-hand\.svg"/);
+  assert.match(beenControl, /marked \? "Been" : "Mark Been"/);
+  assert.match(page, /ratingComposerRef\.current\?\.querySelector\('\[role="slider"\]'\)\?\.focus\(\)/);
 });

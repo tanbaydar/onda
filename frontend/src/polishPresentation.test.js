@@ -23,7 +23,7 @@ test("named surface sources compose the shared image, heart, and rating-star imp
   }
   assert.match(readFileSync(new URL("./pages/EventPage.jsx", import.meta.url), "utf8"), /ImageSlot/);
   const favorite = readFileSync(new URL("./components/FavoriteControl.jsx", import.meta.url), "utf8");
-  assert.match(favorite, /\/assets\/favorite-heart\.svg/); assert.match(favorite, /favorite-heart-row/);
+  assert.match(favorite, /\/assets\/favorite-heart\.svg/); assert.match(favorite, /\/assets\/favorite-heart-filled\.svg/); assert.match(favorite, /favorite-heart-row/);
   assert.match(favorite, /setTimeout\(\(\) => setFilled\(false\), 120\)/);
 });
 
