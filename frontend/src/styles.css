@@ -354,7 +354,7 @@ meter{accent-color:var(--chart);width:120px}
 .profile-favorite-group>h2{margin:0 0 var(--sp-8);color:var(--text-secondary);font-family:var(--font-fn);font-size:var(--text-ui);font-weight:600;letter-spacing:0;line-height:1.4}
 .profile-favorite-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--sp-24) var(--sp-16);margin:0}
 .profile-favorite-list>li{position:relative;min-width:0;padding:0}
-.profile-favorite-link{display:flex;min-width:0;min-height:var(--favorite-flier-h);flex-direction:column;gap:var(--sp-8);align-items:center;text-align:center;text-decoration:none}
+.profile-favorite-link{display:flex;min-width:0;flex-direction:column;gap:var(--sp-8);align-items:center;text-align:center;text-decoration:none}
 .profile-favorite-thumb{display:block;width:min(100%,var(--favorite-flier));height:auto;aspect-ratio:4/5;object-fit:cover}
 .profile-favorite-list .artist-avatar{width:min(100%,var(--favorite-flier));height:auto;aspect-ratio:1;object-fit:cover}
 .profile-favorite-copy{display:flex;width:100%;min-width:0;flex-direction:column;gap:var(--sp-4);align-items:center;text-align:center}
