@@ -16,5 +16,5 @@ test("event detail uses the compact Home-derived spacing register", () => {
   assert.match(styles, /\.event-rating-block>\.event-rating-label,\.event-rating-block>\.event-rating-empty\{margin:0;color:var\(--text-secondary\);font-size:var\(--text-micro\)\}/);
   assert.match(eventPage, /<p className="event-rating-label">Avg\. Rating<\/p><p className="event-rating-label">rating distribution<\/p>/);
   assert.doesNotMatch(eventPage, /Average from \$\{pluralize/);
-  assert.match(reviewStyles, /\.event-review-row\{padding:var\(--sp-12\) 0\}/);
+  assert.match(reviewStyles, /\.event-review-row\{[^}]*padding:var\(--sp-12\) 0\}/);
 });

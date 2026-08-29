@@ -66,3 +66,10 @@ This operator-approved override supersedes the earlier three-step event metadata
 - Event detail adopts Home's compact rhythm without changing its detail-page hierarchy: content begins at 24px on mobile and 32px on desktop, major event modules use the existing 24px step, and identity groups use the existing 16px step.
 - The event rating histogram uses the governed 120×26 compact register with a 32px gap after the numeral. The bar baseline aligns with the numeral baseline and the axis remains subordinate below it. The aligned labels directly below the columns read `Avg. Rating` and `rating distribution`; the distribution disclosure remains removed.
 - Event review rows use 12px vertical padding, matching Home's rich activity density while preserving ledger hairlines and readable prose leading.
+
+## Dated delta — 2026-08-29 Instagram-style review rows
+
+- Review rows use the compact Instagram comment composition: avatar at left, username and review copy inline, a muted metadata row below, and the like control as a heart target at right.
+- The visible `Like` / `Unlike` words are removed. The outline heart means unliked and the judgment-green filled heart means liked; accessible labels continue to expose `Like review` / `Unlike review` and the existing endpoint behavior is unchanged.
+- Zero likes are not printed. Positive counts keep the correct singular/plural form in the metadata row.
+- Ratings remain visible as compact stars between the review copy and metadata. Reply and translation actions are omitted because neither behavior exists in the product contract.
