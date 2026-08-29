@@ -629,7 +629,7 @@ test.describe("public-beta visual contract", () => {
     await expectNoHorizontalOverflow(page);
   });
 
-  test("Discover and Profile flyers render at the corrected visible scale without overflow", async ({ page }) => {
+  test("only Profile Favourites artwork uses the corrected visible scale without overflow", async ({ page }) => {
     await mockPublicApi(page, { authenticated: true, events: [EVENT_ROW_FIXTURE] });
     await page.goto("/u/onda_test");
     await expect(page.locator(".profile-favorite-thumb")).toBeVisible();
@@ -651,7 +651,7 @@ test.describe("public-beta visual contract", () => {
     expect(await page.locator(".profile-diary-thumb").evaluate((element) => {
       const box = element.getBoundingClientRect();
       return { width: box.width, height: box.height };
-    })).toEqual({ width: 153, height: 191.25 });
+    })).toEqual({ width: 102, height: 127.5 });
 
     await page.goto("/discover");
     await expect(page.getByRole("heading", { level: 1, name: "Boston" })).toBeVisible();
@@ -660,7 +660,7 @@ test.describe("public-beta visual contract", () => {
     expect(await eventFlyer.evaluate((element) => {
       const box = element.getBoundingClientRect();
       return { width: box.width, height: box.height };
-    })).toEqual({ width: 153, height: 191.25 });
+    })).toEqual({ width: 102, height: 127.5 });
   });
 
   test("pending follow requests are actionable from both Activity locations", async ({ page }) => {
