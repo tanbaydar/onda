@@ -57,7 +57,8 @@ test("profile favorites keep their existing artwork and labels while arranging e
   assert.match(css, /\.profile-favorite-groups\{display:grid;gap:var\(--sp-32\)\}/);
   assert.match(css, /\.profile-favorite-list\{display:grid;grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
   assert.match(css, /\.profile-favorite-list \.artist-avatar\{width:min\(100%,var\(--favorite-flier\)\)[^}]*aspect-ratio:1/);
-  assert.match(css, /\.profile-favorite-link\{[^}]*min-height:var\(--favorite-flier-h\)[^}]*flex-direction:column[^}]*align-items:center[^}]*text-align:center/);
+  assert.match(css, /\.profile-favorite-link\{[^}]*flex-direction:column[^}]*align-items:center[^}]*text-align:center/);
+  assert.doesNotMatch(css, /\.profile-favorite-link\{[^}]*min-height/);
   assert.match(css, /\.profile-favorite-copy\{[^}]*width:100%[^}]*align-items:center[^}]*text-align:center/);
   assert.match(css, /\.profile-favorite-list strong\{[^}]*display:-webkit-box[^}]*font-size:var\(--text-row-title\)[^}]*-webkit-box-orient:vertical[^}]*-webkit-line-clamp:2/);
   assert.doesNotMatch(css, /\.profile-favorite-list strong\{[^}]*(?:white-space:nowrap|text-overflow:ellipsis)/);
