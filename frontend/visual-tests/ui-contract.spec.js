@@ -545,6 +545,7 @@ test.describe("public-beta visual contract", () => {
       const header = main.querySelector(".profile-header").getBoundingClientRect();
       const avatar = main.querySelector(".profile-header > .profile-avatar").getBoundingClientRect();
       const action = main.querySelector(".profile-header-action").getBoundingClientRect();
+      const actionControlStyles = getComputedStyle(main.querySelector(".profile-edit-link, .profile-follow-control"));
       const title = main.querySelector(".profile-title-row").getBoundingClientRect();
       const handle = main.querySelector(".profile-handle-line").getBoundingClientRect();
       const socialCounts = main.querySelector(".profile-social-counts").getBoundingClientRect();
@@ -569,6 +570,8 @@ test.describe("public-beta visual contract", () => {
         avatarWidth: avatar.width,
         actionWidth: action.width,
         actionHeight: action.height,
+        actionColor: actionControlStyles.color,
+        actionBorderColor: actionControlStyles.borderColor,
         actionBelowAvatar: action.top >= avatar.bottom,
         identityOrder: [title.top, handle.top, socialCounts.top],
         titleToHandleGap: handle.top - title.bottom,
@@ -596,7 +599,7 @@ test.describe("public-beta visual contract", () => {
     const expectedSectionGap = isMobile ? 16 : 48;
     expect(geometry.headerWidth).toBeLessThanOrEqual(800);
     expect(geometry.avatarWidth).toBe(isMobile ? 80 : 240);
-    expect(geometry.actionWidth).toBe(150);
+    expect(Math.abs(geometry.actionWidth - (isMobile ? geometry.headerWidth : 150))).toBeLessThanOrEqual(1);
     expect(geometry.actionHeight).toBe(32);
     expect(geometry.actionBelowAvatar).toBe(true);
     expect(geometry.identityOrder).toEqual([...geometry.identityOrder].sort((left, right) => left - right));
@@ -607,6 +610,8 @@ test.describe("public-beta visual contract", () => {
     expect(geometry.bioBelowIdentity).toBe(true);
     expect(geometry.actionBelowBio).toBe(true);
     if (isMobile) {
+      expect(geometry.actionColor).toBe("rgb(29, 109, 72)");
+      expect(geometry.actionBorderColor).toBe("rgb(29, 109, 72)");
       expect(geometry.socialRowHeight).toBeLessThanOrEqual(20);
       expect(geometry.socialTargetHeight).toBe(44);
     }

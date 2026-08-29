@@ -19,4 +19,5 @@ test("follow-control CSS source fixes one box size for every state", () => {
   assert.match(rule, /height:32px/);
   assert.match(rule, /min-height:32px/);
   assert.match(rule, /text-align:center/);
+  assert.match(css, /@media \(max-width:767px\)\{[\s\S]*\.profile-header-action \.profile-follow-control,\.profile-header-action \.profile-edit-link\{width:100%;min-height:32px;border-color:var\(--judgment\);color:var\(--judgment\)\}/);
 });
