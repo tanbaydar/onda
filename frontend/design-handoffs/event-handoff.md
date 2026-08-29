@@ -64,5 +64,5 @@ This operator-approved override supersedes the earlier three-step event metadata
 ## Dated operator override — 2026-08-29 compact event rhythm
 
 - Event detail adopts Home's compact rhythm without changing its detail-page hierarchy: content begins at 24px on mobile and 32px on desktop, major event modules use the existing 24px step, and identity groups use the existing 16px step.
-- The event rating histogram uses the governed 120×26 compact register. The chart is vertically centered beside the numeral; the count and disclosure occupy the aligned row directly below, and the disclosure keeps the essential target size.
+- The event rating histogram uses the governed 120×26 compact register. The bar baseline aligns with the numeral baseline, the axis remains subordinate below it, and the count sits directly below the cluster. The distribution disclosure is removed for now.
 - Event review rows use 12px vertical padding, matching Home's rich activity density while preserving ledger hairlines and readable prose leading.

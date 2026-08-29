@@ -21,7 +21,6 @@ test("profile histogram CSS source declares one contextualized placement size ou
   assert.match(css, /\.profile-stat-histogram \.hist-bars\{height:30px\}/);
   assert.match(css, /\.profile-histogram-group\.is-empty \.hist-fill\{background:var\(--border-strong\)\}/);
   assert.doesNotMatch(css, /\.hist-bar(?:\[data-tooltip\])?[^}]*::after/);
-  assert.match(css, /\.rating-histogram-details>summary\{[^}]*min-height:44px/);
   assert.doesNotMatch(css, /@media[^}]+(?:profile-histogram-group|profile-stat-histogram)[^}]+(?:width|height)/s);
 });
 
