@@ -191,8 +191,8 @@ jobs:
       - container-security
       - delivery-safety
     if: >-
+      github.event_name == 'push' &&
       github.ref == 'refs/heads/main' &&
-      (github.event_name == 'workflow_dispatch' || github.event_name == 'push') &&
       needs.backend.result == 'success' &&
       needs.frontend.result == 'success' &&
       needs.security.result == 'success' &&

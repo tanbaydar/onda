@@ -11,7 +11,7 @@ source security scans, all production images, deployment shell behavior, and the
 resolved Compose configuration.
 
 The production job is eligible to run only after every check succeeds for a push
-to `main`, or after those same checks pass in an operator-started run.
+to `main`. Operator-started workflow runs execute the checks but never deploy.
 Production deployments are serialized and never canceled while in progress. The
 workflow connects with a dedicated SSH key, verifies the server host key, and
 asks the host to deploy the exact commit verified by that workflow run.
