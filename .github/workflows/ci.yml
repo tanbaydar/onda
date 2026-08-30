@@ -1,9 +1,10 @@
-name: CI
+name: CI/CD
 
 on:
   pull_request:
   push:
     branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -153,3 +154,165 @@ jobs:
           ignore-unfixed: false
           exit-code: 1
           timeout: 10m0s
+
+  delivery-safety:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Validate deployment shell
+        run: |
+          find infrastructure -type f \( -name '*.sh' -o -path '*/fixtures/bin/*' \) -print0 \
+            | xargs -0 bash -n
+          shellcheck infrastructure/scripts/*.sh \
+            infrastructure/tests/*.sh \
+            infrastructure/tests/fixtures/bin/* \
+            infrastructure/tests/fixtures/scripts/*.sh
+      - name: Exercise guarded deployment paths
+        run: infrastructure/tests/deploy_test.sh
+      - name: Validate production Compose configuration
+        env:
+          DJANGO_SECRET_KEY: ci-compose-secret-key
+          ONDA_DOMAIN: example.com
+          ONDA_DB_NAME: onda
+          ONDA_DB_USER: onda_ci
+          ONDA_DB_PASSWORD: ci-database-password-2026
+          ONDA_DB_ROOT_PASSWORD: ci-root-password-2026
+          CADDY_ACME_EMAIL: operations@example.com
+        run: docker compose config --quiet
+
+  deploy-production:
+    needs:
+      - backend
+      - frontend
+      - security
+      - container-security
+      - delivery-safety
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      (github.event_name == 'workflow_dispatch' || github.event_name == 'push') &&
+      needs.backend.result == 'success' &&
+      needs.frontend.result == 'success' &&
+      needs.security.result == 'success' &&
+      needs.container-security.result == 'success' &&
+      needs.delivery-safety.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    concurrency:
+      group: onda-production
+      cancel-in-progress: false
+    environment:
+      name: production
+      url: ${{ vars.ONDA_PRODUCTION_URL }}
+    env:
+      ONDA_DEPLOY_HOST: ${{ vars.ONDA_DEPLOY_HOST }}
+      ONDA_DEPLOY_PORT: ${{ vars.ONDA_DEPLOY_PORT || '22' }}
+      ONDA_DEPLOY_USER: ${{ vars.ONDA_DEPLOY_USER }}
+      ONDA_DEPLOY_PATH: ${{ vars.ONDA_DEPLOY_PATH }}
+      ONDA_DEPLOY_SHA: ${{ github.sha }}
+      ONDA_DEPLOY_PRIVATE_KEY: ${{ secrets.ONDA_DEPLOY_SSH_PRIVATE_KEY }}
+      ONDA_DEPLOY_KNOWN_HOSTS: ${{ secrets.ONDA_DEPLOY_SSH_KNOWN_HOSTS }}
+    steps:
+      - name: Validate production deployment configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          required_names=(
+            ONDA_DEPLOY_HOST
+            ONDA_DEPLOY_USER
+            ONDA_DEPLOY_PATH
+            ONDA_DEPLOY_PRIVATE_KEY
+            ONDA_DEPLOY_KNOWN_HOSTS
+          )
+          for required_name in "${required_names[@]}"; do
+            if [[ -z "${!required_name:-}" ]]; then
+              echo "::error::$required_name is not configured in the production environment"
+              exit 1
+            fi
+          done
+
+          [[ "$ONDA_DEPLOY_HOST" =~ ^[A-Za-z0-9.-]+$ ]] || {
+            echo "::error::ONDA_DEPLOY_HOST must be a DNS name or IPv4 address"
+            exit 1
+          }
+          if [[ ! "$ONDA_DEPLOY_PORT" =~ ^[0-9]{1,5}$ ]] ||
+            ((ONDA_DEPLOY_PORT < 1 || ONDA_DEPLOY_PORT > 65535)); then
+              echo "::error::ONDA_DEPLOY_PORT must be between 1 and 65535"
+              exit 1
+          fi
+          [[ "$ONDA_DEPLOY_USER" =~ ^[a-z_][a-z0-9_-]*$ ]] || {
+            echo "::error::ONDA_DEPLOY_USER contains unsupported characters"
+            exit 1
+          }
+          [[ "$ONDA_DEPLOY_PATH" =~ ^/[A-Za-z0-9._/-]+$ && "$ONDA_DEPLOY_PATH" != *".."* ]] || {
+            echo "::error::ONDA_DEPLOY_PATH must be an absolute path without whitespace or parent traversal"
+            exit 1
+          }
+          [[ "$ONDA_DEPLOY_SHA" =~ ^[0-9a-f]{40}$ ]] || {
+            echo "::error::The deployment source did not provide a full commit SHA"
+            exit 1
+          }
+
+      - name: Install ephemeral SSH credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          deploy_key_path="$RUNNER_TEMP/onda_deploy_key"
+          known_hosts_path="$RUNNER_TEMP/onda_known_hosts"
+          install -m 0600 /dev/null "$deploy_key_path"
+          install -m 0600 /dev/null "$known_hosts_path"
+          printf '%s\n' "$ONDA_DEPLOY_PRIVATE_KEY" >"$deploy_key_path"
+          printf '%s\n' "$ONDA_DEPLOY_KNOWN_HOSTS" >"$known_hosts_path"
+          ssh-keygen -y -f "$deploy_key_path" >/dev/null
+
+          known_host_lookup="$ONDA_DEPLOY_HOST"
+          if [[ "$ONDA_DEPLOY_PORT" != "22" ]]; then
+            known_host_lookup="[$ONDA_DEPLOY_HOST]:$ONDA_DEPLOY_PORT"
+          fi
+          ssh-keygen -F "$known_host_lookup" -f "$known_hosts_path" >/dev/null || {
+            echo "::error::ONDA_DEPLOY_SSH_KNOWN_HOSTS does not contain the configured host and port"
+            exit 1
+          }
+
+      - name: Deploy the tested revision
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          deploy_key_path="$RUNNER_TEMP/onda_deploy_key"
+          known_hosts_path="$RUNNER_TEMP/onda_known_hosts"
+          remote_target="$ONDA_DEPLOY_USER@$ONDA_DEPLOY_HOST"
+          remote_command="cd -- $ONDA_DEPLOY_PATH && ./infrastructure/scripts/deploy.sh $ONDA_DEPLOY_SHA"
+
+          ssh -T \
+            -i "$deploy_key_path" \
+            -p "$ONDA_DEPLOY_PORT" \
+            -o BatchMode=yes \
+            -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=yes \
+            -o "UserKnownHostsFile=$known_hosts_path" \
+            -o ConnectTimeout=15 \
+            -o ServerAliveInterval=15 \
+            -o ServerAliveCountMax=3 \
+            "$remote_target" \
+            "$remote_command"
+
+      - name: Remove ephemeral SSH credentials
+        if: always()
+        shell: bash
+        run: |
+          rm -f "$RUNNER_TEMP/onda_deploy_key" "$RUNNER_TEMP/onda_known_hosts"
+
+      - name: Record deployment request
+        shell: bash
+        run: |
+          {
+            echo "### Production deployment"
+            echo
+            echo "Completed the guarded deployment request for commit $ONDA_DEPLOY_SHA."
+            echo "The host log above records whether it deployed or superseded the revision."
+          } >>"$GITHUB_STEP_SUMMARY"

@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+printf 'docker %s\n' "$*" >>"${ONDA_TEST_LOG:?}"
