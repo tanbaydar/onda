@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+printf 'git %s\n' "$*" >>"${ONDA_TEST_LOG:?}"
+
+case "${1:-}" in
+  status)
+    if [[ "${ONDA_TEST_DIRTY:-false}" == "true" ]]; then
+      echo " M changed-file"
+    fi
+    ;;
+  fetch | merge | pull)
+    ;;
+  rev-parse)
+    printf '%s\n' "${ONDA_TEST_REMOTE_SHA:?}"
+    ;;
+  *)
+    echo "Unexpected git command: $*" >&2
+    exit 1
+    ;;
+esac
