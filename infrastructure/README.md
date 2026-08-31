@@ -16,6 +16,11 @@ Production deployments are serialized and never canceled while in progress. The
 workflow connects with a dedicated SSH key, verifies the server host key, and
 asks the host to deploy the exact commit verified by that workflow run.
 
+The production job runs on the dedicated `onda-production` self-hosted runner.
+Its unprivileged service account cannot read the production `.env` file or use
+Docker directly. Deployment still crosses the restricted SSH boundary on the
+host's loopback interface, where the key is limited to the guarded deploy command.
+
 The host-side deployment keeps the existing safety sequence:
 
 1. refuse a dirty production checkout;
@@ -37,7 +42,7 @@ variables:
 
 | Name | Value |
 |---|---|
-| `ONDA_DEPLOY_HOST` | Production DNS name or IPv4 address, without a scheme |
+| `ONDA_DEPLOY_HOST` | SSH host reachable from the runner; `127.0.0.1` for the single-host deployment |
 | `ONDA_DEPLOY_PORT` | SSH port; omit it to use `22` |
 | `ONDA_DEPLOY_USER` | Dedicated production deployment account |
 | `ONDA_DEPLOY_PATH` | Absolute path to the production checkout |
