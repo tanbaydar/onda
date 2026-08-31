@@ -198,7 +198,11 @@ jobs:
       needs.security.result == 'success' &&
       needs.container-security.result == 'success' &&
       needs.delivery-safety.result == 'success'
-    runs-on: ubuntu-latest
+    runs-on:
+      - self-hosted
+      - Linux
+      - ARM64
+      - onda-production
     timeout-minutes: 45
     concurrency:
       group: onda-production
