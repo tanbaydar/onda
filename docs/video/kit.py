@@ -8,8 +8,8 @@ from pathlib import Path
 import numpy as np
 from manim import (
     DOWN, LEFT, RIGHT, UP,
-    Arc, Dot, Intersection, Line, Polygon, Rectangle, RoundedRectangle, Scene, Star,
-    Text, VGroup,
+    Arc, DashedVMobject, Dot, Ellipse, Intersection, Line, Rectangle, RoundedRectangle, Scene,
+    Star, Text, VGroup, VMobject,
 )
 
 HERE = Path(__file__).resolve().parent
@@ -123,29 +123,77 @@ def table_row(cells, widths, height=0.5, color=INK, stroke=HAIR, fill=PANEL, siz
     return row
 
 
-# -------------------------------------------------------- layered planes
+# ---------------------------------------------------------- diagram parts
 
-class Stack:
-    """Three planes in a simple parallel projection. A point on a plane is (u, v, level)."""
+def node(title, sub=None, width=2.0, height=0.9, color=INK, fill=PANEL, title_size=22, sub_size=16,
+         dashed=False, radius=0.1, sub_color=MUTED):
+    """A labelled box. Index 0 is the frame, 1 is the title, 2 is the small line."""
+    frame = RoundedRectangle(width=width, height=height, corner_radius=radius, stroke_color=color,
+                             stroke_width=2.5, fill_color=fill, fill_opacity=1)
+    if dashed:
+        back = RoundedRectangle(width=width, height=height, corner_radius=radius, stroke_width=0,
+                                fill_color=fill, fill_opacity=1)
+        frame = VGroup(back, DashedVMobject(frame.copy().set_fill(opacity=0), num_dashes=int(18 * (width + height) / 3)))
+    name = sans(title, size=title_size)
+    parts = VGroup(frame, name)
+    if sub:
+        small = sans(sub, size=sub_size, color=sub_color, weight="NORMAL")
+        VGroup(name, small).arrange(DOWN, buff=0.1).move_to(frame)
+        parts.add(small)
+    else:
+        name.move_to(frame)
+    return parts
 
-    def __init__(self, origin, width=6.2, depth=2.3, skew=0.62, rise=0.40, gap=1.38):
-        self.origin = np.array(origin, dtype=float)
-        self.width, self.depth = width, depth
-        self.skew, self.rise, self.gap = skew, rise, gap
 
-    def point(self, u, v, level=0.0):
-        return self.origin + np.array([u + self.skew * v, self.rise * v + self.gap * level, 0.0])
+def arrow(start, end, color=MUTED, width=2.5, tip=0.15, both=False):
+    line = Line(start, end, stroke_color=color, stroke_width=width)
+    line.add_tip(tip_length=tip, tip_width=tip)
+    if both:
+        line.add_tip(tip_length=tip, tip_width=tip, at_start=True)
+    return line
 
-    def plane(self, level, color=HAIR, fill=PANEL, opacity=0.92):
-        corners = [self.point(0, 0, level), self.point(self.width, 0, level),
-                   self.point(self.width, self.depth, level), self.point(0, self.depth, level)]
-        return Polygon(*corners, stroke_color=color, stroke_width=2, fill_color=fill, fill_opacity=opacity)
 
-    def tile(self, u, v, level, w=0.62, d=0.5, color=MUTED, fill=None, opacity=1.0):
-        corners = [self.point(u, v, level), self.point(u + w, v, level),
-                   self.point(u + w, v + d, level), self.point(u, v + d, level)]
-        return Polygon(*corners, stroke_color=color, stroke_width=2,
-                       fill_color=fill or color, fill_opacity=opacity)
+def store(title, sub=None, width=1.9, height=1.05, color=INK, fill=PANEL, title_size=21, sub_size=15):
+    """A database cylinder. Index 0 is the shape, 1 is the title, 2 is the small line."""
+    ry = 0.13
+    body = Rectangle(width=width, height=height - 2 * ry, stroke_width=0, fill_color=fill, fill_opacity=1)
+    bottom = Ellipse(width=width, height=2 * ry, stroke_color=color, stroke_width=2.5,
+                     fill_color=fill, fill_opacity=1).move_to(body.get_bottom())
+    top = Ellipse(width=width, height=2 * ry, stroke_color=color, stroke_width=2.5,
+                  fill_color=fill, fill_opacity=1).move_to(body.get_top())
+    sides = VGroup(Line(body.get_corner(UP + LEFT), body.get_corner(DOWN + LEFT), stroke_color=color, stroke_width=2.5),
+                   Line(body.get_corner(UP + RIGHT), body.get_corner(DOWN + RIGHT), stroke_color=color, stroke_width=2.5))
+    shape = VGroup(bottom, body, sides, top)
+    name = sans(title, size=title_size)
+    parts = VGroup(shape, name)
+    if sub:
+        small = sans(sub, size=sub_size, color=MUTED, weight="NORMAL")
+        VGroup(name, small).arrange(DOWN, buff=0.08).move_to(body.get_center() + DOWN * 0.05)
+        parts.add(small)
+    else:
+        name.move_to(body.get_center() + DOWN * 0.05)
+    return parts
+
+
+def panel(title, note=None, width=3.0, height=3.0, color=HAIR, title_color=MUTED, fill=PANEL, opacity=0.55):
+    """A titled area. Index 0 is the frame, 1 is the title, 2 is the note."""
+    frame = RoundedRectangle(width=width, height=height, corner_radius=0.12, stroke_color=color,
+                             stroke_width=2, fill_color=fill, fill_opacity=opacity)
+    name = overline(title, size=16, color=title_color)
+    name.move_to(frame.get_corner(UP + LEFT) + RIGHT * 0.2 + DOWN * 0.26, aligned_edge=LEFT)
+    parts = VGroup(frame, name)
+    if note:
+        small = sans(note, size=16, color=MUTED, weight="NORMAL")
+        small.next_to(name, DOWN, buff=0.1, aligned_edge=LEFT)
+        parts.add(small)
+    return parts
+
+
+def tick(size=0.22, color=GREEN, width=4):
+    mark = VMobject(stroke_color=color, stroke_width=width)
+    mark.set_points_as_corners([LEFT * size * 0.5 + UP * size * 0.05, LEFT * size * 0.12 + DOWN * size * 0.36,
+                                RIGHT * size * 0.55 + UP * size * 0.45])
+    return mark
 
 
 # ------------------------------------------------------------ timed scene

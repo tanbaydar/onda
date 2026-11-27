@@ -39,7 +39,7 @@ def main() -> int:
 
     options = {"dry_run": True, "frame_rate": 60, "disable_caching": True, "verbosity": "ERROR", "progress_bar": "none"}
     with tempconfig(options):
-        film = scene.OndaExplainer()
+        film = scene.OndaSystem()
         film.render()
     length, voice = film.renderer.time, film.total
     worst = 0.0

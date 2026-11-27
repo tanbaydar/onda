@@ -1,7 +1,7 @@
-"""The video "How Onda works": one rating, from the tap to the feed of a friend.
+"""The video "Onda, system design": one night, from the first tap to the backup.
 
-Render:  manim -qh --fps 60 scene.py OndaExplainer        (in docs/video)
-Draft:   ONDA_ACTS=lock manim -ql --fps 15 scene.py OndaExplainer
+Render:  manim -qh --fps 60 scene.py OndaSystem          (in docs/video)
+Draft:   ONDA_ACTS=catalog manim -ql --fps 15 scene.py OndaSystem
 Poster:  manim -qh -s scene.py Poster
 
 The scene reads the cue times from timings.json. voice.py writes that file.
@@ -15,19 +15,21 @@ import os
 import numpy as np
 from manim import (
     DOWN, LEFT, RIGHT, UP,
-    Create, FadeIn, FadeOut, GrowFromCenter, LaggedStart, ReplacementTransform, Write,
-    Circle, Cross, DashedLine, DashedVMobject, Dot, Line, Polygon, Rectangle,
+    Create, FadeIn, FadeOut, LaggedStart, Write,
+    Circle, DashedLine, DashedVMobject, Dot, Line, Polygon, Rectangle,
     RoundedRectangle, VGroup, rate_functions, there_and_back, linear,
 )
 
 from kit import (
     AMBER, BG, BLUE, DIM, GREEN, HAIR, INK, MUTED, PANEL, RED,
-    CueScene, Stack, chip, display, half_star, mono, overline, padlock, page, phone, sans, star, table_row,
+    CueScene, arrow, chip, display, half_star, mono, node, overline, padlock, page, panel,
+    phone, sans, star, store, table_row, tick,
 )
 
 EASE = rate_functions.ease_in_out_cubic
 OUT = rate_functions.ease_out_cubic
 TOP_LEFT = LEFT * 6.45 + UP * 3.42
+TOP_RIGHT = RIGHT * 6.45 + UP * 3.42
 
 
 def packet(color=AMBER, radius=0.12):
@@ -40,30 +42,109 @@ def numeral(text, color, size=64):
     return display(text, size=size, color=color)
 
 
-def stars_row(radius=0.2, value=4.5, buff=0.1):
-    row = VGroup(*[star(radius=radius, filled=True) for _ in range(int(value))])
+def stars_row(radius=0.2, value=4.5, buff=0.1, color=GREEN):
+    row = VGroup(*[star(radius=radius, filled=True, color=color) for _ in range(int(value))])
     if value % 1:
-        row.add(half_star(radius=radius))
+        row.add(half_star(radius=radius, color=color))
     return row.arrange(RIGHT, buff=buff)
 
 
-def diary_table(position):
-    """The DIARY_ENTRY table: a name and a header row. Rows go under the header."""
-    widths = [1.2, 1.1, 1.1]
-    header = table_row(["user", "event", "rating"], widths, color=MUTED, fill=BG, size=19)
-    header.move_to(position + UP * 0.3)
-    name = overline("diary_entry", size=17).next_to(header, UP, buff=0.2).align_to(header, LEFT)
-    return VGroup(name, header), widths
+def ripple_at(point, color=INK):
+    return Circle(radius=0.14, stroke_color=color, stroke_width=3).move_to(point)
 
 
-def data_row(position, widths, color=INK, stroke=HAIR, fill=PANEL):
-    return table_row(["maya", "847", "4.5"], widths, color=color, stroke=stroke, fill=fill, size=21).move_to(position)
+# ------------------------------------------------------------------ the map
+
+class SystemMap:
+    """The whole system on one picture. An act lights the parts that it explains."""
+
+    def __init__(self):
+        self.parts: dict[str, VGroup] = {}
+        self.lit: dict[str, bool] = {}
+        add = self.add
+
+        host = RoundedRectangle(width=7.45, height=5.5, corner_radius=0.25, stroke_color=DIM, stroke_width=2,
+                                fill_color=PANEL, fill_opacity=0.35).move_to(RIGHT * 0.175 + UP * 0.05)
+        host_name = overline("one server", size=15)
+        host_name.move_to(host.get_corner(UP + RIGHT) + LEFT * 0.25 + DOWN * 0.27, aligned_edge=RIGHT)
+        add("host", VGroup(host, host_name))
+
+        add("source", node("listing source", "not trusted", width=2.3, height=1.0, color=MUTED, dashed=True)
+            .move_to(LEFT * 5.6 + UP * 1.7))
+        add("fetch", node("fetch", "inside limits", width=1.7, height=0.85).move_to(LEFT * 2.3 + UP * 1.7))
+        add("validate", node("validate", "one listing at a time", width=2.5, height=0.85).move_to(RIGHT * 1.35 + UP * 1.7))
+        add("evidence", store("evidence", color=MUTED).move_to(LEFT * 2.3))
+        add("catalog", store("catalog", color=GREEN).move_to(RIGHT * 0.3))
+        add("social", store("social", color=BLUE).move_to(RIGHT * 2.75))
+        add("proxy", node("proxy", width=1.7, height=0.85).move_to(LEFT * 2.3 + DOWN * 1.8))
+        add("api", node("API", width=3.9, height=0.85).move_to(RIGHT * 1.55 + DOWN * 1.8))
+
+        phones = VGroup(phone(width=0.5, height=0.9), phone(width=0.5, height=0.9)).arrange(RIGHT, buff=0.22)
+        people_name = sans("people", size=20).next_to(phones, DOWN, buff=0.16)
+        people = VGroup(phones, people_name)
+        people.shift(LEFT * 5.6 + DOWN * 1.8 - phones.get_center())
+        add("people", people)
+        add("checks", node("5 checks", "then deploy", width=2.3, height=1.0).move_to(RIGHT * 5.75 + UP * 1.7))
+        add("backups", node("backups", "off the server", width=2.3, height=1.0).move_to(RIGHT * 5.75 + DOWN * 0.6))
+
+        p = self.parts
+        add("a_source", arrow(p["source"].get_right(), p["fetch"].get_left()))
+        add("a_store", arrow(p["fetch"].get_bottom(), p["evidence"].get_top()))
+        add("a_replay", arrow(p["evidence"].get_right() + UP * 0.3, p["validate"].get_left() + DOWN * 0.15 + RIGHT * 0.05))
+        add("a_admit", arrow(RIGHT * 0.55 + UP * 1.275, RIGHT * 0.55 + UP * 0.56, color=GREEN))
+        add("a_keys", arrow(p["social"].get_left(), p["catalog"].get_right(), color=BLUE))
+        add("a_people", arrow(p["people"][0].get_right() + RIGHT * 0.2, p["proxy"].get_left(), both=True))
+        add("a_proxy", arrow(p["proxy"].get_right(), p["api"].get_left(), both=True))
+        add("a_read", arrow(RIGHT * 0.3 + DOWN * 1.375, RIGHT * 0.3 + DOWN * 0.56))
+        add("a_rw", arrow(RIGHT * 2.75 + DOWN * 1.375, RIGHT * 2.75 + DOWN * 0.56, both=True))
+        add("a_deploy", arrow(p["checks"].get_left(), RIGHT * 3.9 + UP * 1.7))
+        add("a_backup", arrow(RIGHT * 3.9 + DOWN * 0.3, p["backups"].get_left() + UP * 0.1))
+
+    def add(self, name, mobject):
+        self.parts[name] = mobject
+        self.lit[name] = True
+        return mobject
+
+    REGIONS = {
+        "night": ["source", "a_source", "fetch", "a_store", "evidence", "a_replay", "validate", "a_admit", "catalog"],
+        "request": ["people", "a_people", "proxy", "a_proxy", "api", "a_read", "a_rw", "catalog", "social"],
+        "data": ["evidence", "catalog", "social", "a_keys"],
+        "ops": ["checks", "a_deploy", "backups", "a_backup", "host"],
+    }
+
+    def everything(self):
+        return VGroup(*self.parts.values())
+
+    def dim_all(self):
+        """Set each part to the dim state at once (no animation)."""
+        for name, part in self.parts.items():
+            if self.lit[name]:
+                part.fade(0.75)
+                self.lit[name] = False
+
+    def spot(self, *names):
+        """Animations that light the named parts and regions, and dim the other parts."""
+        wanted = set()
+        for name in names:
+            wanted.update(self.REGIONS.get(name, [name]))
+        moves = []
+        for name, part in self.parts.items():
+            if name in wanted and not self.lit[name]:
+                moves.append(part.animate.fade(-3.0))
+                self.lit[name] = True
+            elif name not in wanted and self.lit[name]:
+                moves.append(part.animate.fade(0.75))
+                self.lit[name] = False
+        return moves
+
+    def center(self, name):
+        return self.parts[name][0].get_center() if isinstance(self.parts[name], VGroup) else self.parts[name].get_center()
 
 
-class OndaExplainer(CueScene):
+class OndaSystem(CueScene):
     def construct(self):
-        acts = [self.hook, self.contract, self.lock, self.layers, self.home, self.close]
-        only = os.environ.get("ONDA_ACTS")          # for a draft: "hook" or "hook,contract"
+        acts = [self.open, self.catalog, self.request, self.write, self.feed, self.vanish, self.ops, self.close]
+        only = os.environ.get("ONDA_ACTS")          # for a draft: "open" or "open,catalog"
         for act in acts:
             if only and act.__name__ not in only.split(","):
                 continue
@@ -78,555 +159,477 @@ class OndaExplainer(CueScene):
         if self.mobjects:
             self.play(*[FadeOut(item) for item in self.mobjects], run_time=run_time)
 
-    def chapter(self, number, name):
-        label = overline(f"{number}  ·  {name}", size=17)
+    def chapter(self, number, name, source=None):
+        """The label of the act at the top left, and the page of the docs at the top right."""
+        label = overline(f"{number} / 06  ·  {name}", size=17)
         label.move_to(TOP_LEFT, aligned_edge=LEFT)
-        return label
+        parts = VGroup(label)
+        if source:
+            parts.add(mono(source, size=15, color=DIM).move_to(TOP_RIGHT, aligned_edge=RIGHT))
+        return parts
 
-    def travel(self, dot, points, run_time, rate_func=EASE):
+    def travel(self, dot, points, run_time, rate_func=linear):
         """Move a packet through a list of points."""
+        total = sum(np.linalg.norm(np.array(b) - np.array(a)) for a, b in zip(points, points[1:]))
         for start, end in zip(points, points[1:]):
             share = np.linalg.norm(np.array(end) - np.array(start))
-            total = sum(np.linalg.norm(np.array(b) - np.array(a)) for a, b in zip(points, points[1:]))
-            self.play(dot.animate.move_to(end), run_time=max(0.12, run_time * share / total), rate_func=rate_func)
+            self.play(dot.animate.move_to(end), run_time=max(0.08, run_time * share / total), rate_func=rate_func)
 
-    # ------------------------------------------------------------------ hook
-    def hook(self):
-        device = phone(width=3.3, height=5.9).move_to(UP * 0.4)
-        title = display("Warehouse Night", size=27).move_to(device.get_center() + UP * 1.75)
-        meta = sans("Sat 21 Nov  ·  Brooklyn", size=16, color=MUTED, weight="NORMAL").next_to(title, DOWN, buff=0.16)
-        rule = Line(LEFT * 1.25, RIGHT * 1.25, stroke_color=HAIR, stroke_width=2).next_to(meta, DOWN, buff=0.36)
-        label = overline("Your rating", size=14).next_to(rule, DOWN, buff=0.36)
-        empty = VGroup(*[star(radius=0.25) for _ in range(5)]).arrange(RIGHT, buff=0.12).next_to(label, DOWN, buff=0.26)
-        been = sans("Been", size=19, color=MUTED).next_to(empty, DOWN, buff=0.5)
-        screen = VGroup(title, meta, rule, label, empty, been)
-
-        head = overline("onda  ·  how it works", size=17).move_to(TOP_LEFT, aligned_edge=LEFT)
-        self.add(head, device, screen)             # the first frame is the preview picture of the file
-
-        self.cue("tap", 0.95)
-        spot = empty[4].get_center()
-        ripple = Circle(radius=0.14, stroke_color=INK, stroke_width=3).move_to(spot)
-        self.play(ripple.animate.scale(3.4).set_stroke(opacity=0), run_time=0.55, rate_func=OUT)
-        self.remove(ripple)
-
-        self.cue("stars", -0.15)
-        filled = VGroup(*[star(radius=0.25, filled=True).move_to(empty[index]) for index in range(4)],
-                        half_star(radius=0.25).move_to(empty[4]))
-        number = display("4.5", size=52, color=GREEN).next_to(empty, DOWN, buff=0.4)
-        self.play(
-            LaggedStart(*[FadeIn(shape, scale=1.7) for shape in filled], lag_ratio=0.16),
-            FadeOut(been, run_time=0.3),
-            run_time=1.0,
-        )
-        self.play(FadeIn(number, shift=UP * 0.1), run_time=0.4, rate_func=OUT)
-
-        self.cue("onetap", -0.1)
-        dot = packet(radius=0.14).move_to(spot)
-        self.play(GrowFromCenter(dot), run_time=0.3)
-        self.play(dot.animate.move_to(RIGHT * 2.75 + UP * 0.4), run_time=0.75, rate_func=EASE)
-        one_tap = sans("one tap", size=30, color=AMBER).next_to(dot, UP, buff=0.32)
-        self.play(FadeIn(one_tap, shift=UP * 0.08), run_time=0.35)
-
-        handset = VGroup(device, title, meta, rule, label, empty, filled, number)
-        self.play(
-            handset.animate.scale(0.6).move_to(LEFT * 5.55 + UP * 0.4),
-            VGroup(dot, one_tap).animate.move_to(LEFT * 3.7 + UP * 0.62),
-            run_time=self.left("contract", -0.25), rate_func=EASE,
-        )
-
-        tiles, icons = VGroup(), []
-        names = ["a contract", "a lock", "three layers"]
-        for index, name in enumerate(names):
-            frame = RoundedRectangle(width=2.55, height=2.55, corner_radius=0.16, stroke_color=HAIR,
-                                     stroke_width=2, fill_color=PANEL, fill_opacity=1)
-            frame.move_to(LEFT * 0.75 + RIGHT * index * 3.0 + UP * 0.72)
-            caption = sans(name, size=28).next_to(frame, DOWN, buff=0.3)
-            tiles.add(VGroup(frame, caption))
-        icons.append(mono("{ }", size=64, color=AMBER, weight="BOLD").move_to(tiles[0][0]))
-        icons.append(padlock(size=1.05).move_to(tiles[1][0]))
-        stack = Stack(origin=(0, 0, 0), width=1.4, depth=0.8, skew=0.5, rise=0.34, gap=0.46)
-        icons.append(VGroup(*[
-            stack.plane(level, color=color, fill=color, opacity=0.28)
-            for level, color in ((0, MUTED), (1, GREEN), (2, BLUE))
-        ]).move_to(tiles[2][0]))
-        for cue_name, tile, icon in zip(("contract", "lock", "layers"), tiles, icons):
-            self.cue(cue_name, -0.12)
-            self.play(FadeIn(tile, shift=UP * 0.12), FadeIn(icon, scale=0.8), run_time=0.5, rate_func=OUT)
-        self.until(self.cues["request"] - 0.75)
-
-    # -------------------------------------------------------------- contract
-    def contract(self):
-        self.clear_stage()
-        head = self.chapter("01", "the contract")
-        device = phone(width=1.5, height=2.7).move_to(LEFT * 5.9 + UP * 0.5)
-        mini = stars_row(radius=0.1, buff=0.04).move_to(device.get_center() + UP * 0.1)
-        handset = VGroup(device, mini)
-
-        # the request card
-        card = RoundedRectangle(width=7.6, height=2.3, corner_radius=0.14, stroke_color=HAIR, stroke_width=2,
-                                fill_color=PANEL, fill_opacity=1).move_to(RIGHT * 0.6 + UP * 1.2)
-        line1 = mono("PUT /api/events/847/been/", size=34, t2c={"PUT": AMBER})
-        line2 = mono('{"rating": 4.5}', size=34, color=MUTED, t2c={"4.5": GREEN})
-        code = VGroup(line1, line2).arrange(DOWN, buff=0.34, aligned_edge=LEFT).move_to(card)
-        verb = line1[:3]
-
-        self.play(FadeIn(head), FadeIn(handset, shift=RIGHT * 0.2), run_time=0.3)
-        self.cue("request", -0.1)
-        self.play(FadeIn(card, scale=0.92), run_time=0.3, rate_func=OUT)
-        self.play(Write(line1), run_time=0.55)
-        self.play(FadeIn(line2, shift=UP * 0.08), run_time=0.25)
-
-        self.cue("put", -0.05)
-        ring = RoundedRectangle(width=verb.width + 0.3, height=verb.height + 0.3, corner_radius=0.08,
-                                stroke_color=AMBER, stroke_width=3).move_to(verb)
-        self.play(Create(ring), verb.animate.scale(1.12), run_time=0.4)
-        self.play(verb.animate.scale(1 / 1.12), run_time=0.25)
-
-        state = chip("a state:  my rating for event 847 is 4.5", color=GREEN, size=24)
-        action = chip("an action:  add a rating", color=MUTED, size=24)
-        VGroup(state, action).arrange(DOWN, buff=0.28, aligned_edge=LEFT).next_to(card, DOWN, buff=0.5).align_to(card, LEFT)
-        self.until(self.cues["put"] + 1.15)
-        self.play(FadeIn(state, shift=RIGHT * 0.15), run_time=0.4, rate_func=OUT)
-        self.cue("notaction", -0.1)
-        strike = Line(action.get_left() + LEFT * 0.12, action.get_right() + RIGHT * 0.12, stroke_color=RED, stroke_width=4)
-        self.play(FadeIn(action, shift=RIGHT * 0.15), run_time=0.3)
-        self.play(Create(strike), action.animate.set_opacity(0.45), run_time=0.35)
-
-        # the path through the guards
-        gates_x = [-2.9, -0.45, 2.0]
-        gate_names = [("view", "shape"), ("service", "state"), ("schema", "constraints")]
-        gates = VGroup()
-        for x, (name, job) in zip(gates_x, gate_names):
-            bar = Line(RIGHT * x + UP * 1.5, RIGHT * x + DOWN * 0.7, stroke_color=DIM, stroke_width=4)
-            sub = sans(job, size=20, color=MUTED, weight="NORMAL").next_to(bar, UP, buff=0.2)
-            title = overline(name, size=19, color=INK).next_to(sub, UP, buff=0.12)
-            gates.add(VGroup(bar, title, sub))
-        table_at = RIGHT * 4.9 + UP * 0.6
-        frame, widths = diary_table(table_at)
-        lane_y = 0.5
-        start = device.get_right() + RIGHT * 0.25
-        lane = DashedLine(start, RIGHT * 3.3 + UP * lane_y, dash_length=0.08, stroke_color=HAIR, stroke_width=2)
-        small = VGroup(card, code, ring)
-        self.until(self.cues["first"] - 0.62)
-        self.play(
-            FadeOut(state), FadeOut(action), FadeOut(strike),
-            small.animate.scale(0.5).move_to(RIGHT * 4.9 + UP * 3.1),
-            LaggedStart(*[FadeIn(gate, shift=UP * 0.1) for gate in gates], lag_ratio=0.15),
-            FadeIn(frame), Create(lane),
-            run_time=0.5, rate_func=EASE,
-        )
-
-        def send(color, stop_at=None, run_time=0.75):
-            """Send a packet. It passes each gate, or stops at gate `stop_at`."""
-            dot = packet(color=color).move_to(start)
-            self.play(GrowFromCenter(dot), run_time=0.12)
-            last = len(gates_x) if stop_at is None else stop_at
-            step = run_time / (last + 1)
-            for index in range(last):
-                self.play(dot.animate.move_to(RIGHT * gates_x[index] + UP * lane_y), run_time=step, rate_func=linear)
-                self.play(gates[index][0].animate.set_stroke(GREEN), run_time=0.01)
-            return dot, step
-
-        # first request: 201
-        self.cue("first", -0.1)
-        dot, step = send(AMBER)
-        row_at = table_at + DOWN * 0.2
-        row = data_row(row_at, widths, color=INK, stroke=GREEN)
-        self.play(dot.animate.move_to(row_at + LEFT * 1.95), run_time=step, rate_func=linear)
-        self.play(FadeOut(dot, scale=0.3), FadeIn(row, shift=LEFT * 0.2), run_time=0.25)
-        created = numeral("201", GREEN).move_to(LEFT * 3.95 + DOWN * 1.55)
-        created_label = sans("created", size=24, color=GREEN).next_to(created, RIGHT, buff=0.25).align_to(created, DOWN)
-        self.cue("c201", -0.1)
-        self.play(FadeIn(created, shift=LEFT * 0.3), FadeIn(created_label, shift=LEFT * 0.3), run_time=0.35, rate_func=OUT)
-        self.play(*[gate[0].animate.set_stroke(DIM) for gate in gates], run_time=0.3)
-
-        # second request: 200, the same row
-        self.cue("second", -0.3)
-        dot, step = send(AMBER)
-        self.play(dot.animate.move_to(row_at + LEFT * 1.95), run_time=step, rate_func=linear)
-        self.play(FadeOut(dot, scale=0.3), row.animate(rate_func=there_and_back).scale(1.08), run_time=0.3)
-        ok = numeral("200", INK).next_to(created_label, RIGHT, buff=0.9).align_to(created, DOWN)
-        ok_label = sans("same state", size=24, color=INK).next_to(ok, RIGHT, buff=0.25).align_to(ok, DOWN)
-        self.cue("c200", -0.1)
-        self.play(FadeIn(ok, shift=LEFT * 0.3), FadeIn(ok_label, shift=LEFT * 0.3), run_time=0.35, rate_func=OUT)
-        self.cue("onerow", -0.1)
-        count = VGroup(numeral("1", GREEN, size=54), sans("row", size=24, color=GREEN)).arrange(RIGHT, buff=0.18, aligned_edge=DOWN)
-        count.next_to(row, DOWN, buff=0.42)
-        law = mono("f(f(x)) = f(x)", size=22, color=MUTED).next_to(count, DOWN, buff=0.3)
-        self.play(FadeIn(count, shift=UP * 0.1), run_time=0.35)
-        self.play(FadeIn(law), *[gate[0].animate.set_stroke(DIM) for gate in gates], run_time=0.4)
-
-        # failures
-        self.cue("errors", -0.15)
-        self.play(FadeOut(VGroup(created, created_label, ok, ok_label, law)), run_time=0.35)
-        self.play(LaggedStart(*[gate[0].animate(rate_func=there_and_back).set_stroke(INK) for gate in gates],
-                              lag_ratio=0.25), run_time=1.1)
-
-        def refuse(cue_name, gate_index, color, code_text, meaning, detail, left_edge):
-            self.cue(cue_name, -0.2 - 0.25 * gate_index)
-            dot, _ = send(color, stop_at=gate_index, run_time=0.5 + 0.2 * gate_index)
-            target = RIGHT * (gates_x[gate_index] - 0.22) + UP * lane_y
-            self.play(dot.animate.move_to(target), run_time=0.14, rate_func=linear)
-            bar = gates[gate_index][0]
-            big = numeral(code_text, color, size=58)
-            text = sans(meaning, size=24, color=color)
-            note = mono(detail, size=19, color=MUTED)
-            block = VGroup(big, VGroup(text, note).arrange(DOWN, buff=0.14, aligned_edge=LEFT)).arrange(RIGHT, buff=0.3)
-            block.move_to(RIGHT * left_edge + DOWN * 1.85, aligned_edge=LEFT)
-            tick = DashedLine(bar.get_bottom(), bar.get_bottom() + DOWN * 0.5, dash_length=0.07,
-                              stroke_color=color, stroke_width=3)
-            self.play(bar.animate.set_stroke(color), dot.animate.shift(LEFT * 0.35),
-                      Create(tick), FadeIn(block, shift=UP * 0.12), run_time=0.35, rate_func=OUT)
-            self.play(FadeOut(dot), run_time=0.3)
-            return block
-
-        refuse("e400", 0, RED, "400", "your request is wrong", '{"rating": 4.3}', -6.7)
-        refuse("e409", 1, AMBER, "409", "right request, state not ready", "the show starts at 22:00", -1.0)
-        self.until(self.cues["service"] - 0.75)
-
-    # ------------------------------------------------------------------ lock
-    def lock(self):
-        self.clear_stage()
-        head = self.chapter("02", "the lock")
-        level = mono("READ COMMITTED", size=20, color=MUTED).move_to(RIGHT * 5.3 + UP * 3.42)
-        table_at = RIGHT * 5.0 + UP * 0.75
-        frame, widths = diary_table(table_at)
-        row_at = table_at + DOWN * 0.2
-        lanes_y = {"A": 1.35, "B": -1.25}
-        lock_y = 0.05
-        x_lock, x_read, x_write, x_end = -4.6, -1.9, 0.5, 2.6
-        lanes = {}
-        for name, y in lanes_y.items():
-            tag = chip(name, color=AMBER, size=24, font="mono").move_to(LEFT * 6.1 + UP * y)
-            line = Line(LEFT * 5.55 + UP * y, RIGHT * x_end + UP * y, stroke_color=HAIR, stroke_width=3)
-            read = Dot(RIGHT * x_read + UP * y, radius=0.1, color=DIM)
-            write = Dot(RIGHT * x_write + UP * y, radius=0.1, color=DIM)
-            read_label = overline("read", size=18).next_to(read, DOWN, buff=0.24)
-            write_label = overline("write", size=18).next_to(write, DOWN, buff=0.24)
-            lanes[name] = VGroup(tag, line, read, write, read_label, write_label)
-        self.play(FadeIn(head), FadeIn(level), FadeIn(frame), run_time=0.3)
-
-        # one request: read, then write
-        self.cue("service", -0.1)
-        self.play(FadeIn(lanes["A"], shift=RIGHT * 0.2), run_time=0.4)
-        marker_a = packet().move_to(LEFT * 5.2 + UP * lanes_y["A"])
-        self.play(GrowFromCenter(marker_a), run_time=0.2)
-        self.play(marker_a.animate.move_to(RIGHT * x_read + UP * lanes_y["A"]), run_time=self.left("reads", 0.05), rate_func=EASE)
-        self.play(lanes["A"][2].animate.set_color(BLUE), lanes["A"][4].animate.set_color(BLUE), run_time=0.2)
-        self.play(marker_a.animate.move_to(RIGHT * x_write + UP * lanes_y["A"]), run_time=self.left("writes", 0.05), rate_func=EASE)
-        self.play(lanes["A"][3].animate.set_color(GREEN), lanes["A"][5].animate.set_color(GREEN), run_time=0.2)
-
-        # two requests at the same time
-        self.until(self.cues["race"] - 0.75)
-        self.play(
-            marker_a.animate.move_to(LEFT * 5.2 + UP * lanes_y["A"]),
-            lanes["A"][2].animate.set_color(DIM), lanes["A"][3].animate.set_color(DIM),
-            lanes["A"][4].animate.set_color(MUTED), lanes["A"][5].animate.set_color(MUTED),
-            FadeIn(lanes["B"], shift=RIGHT * 0.2), run_time=0.5,
-        )
-        marker_b = packet().move_to(LEFT * 5.2 + UP * lanes_y["B"])
-        self.play(GrowFromCenter(marker_b), run_time=0.2)
-        self.cue("race", 0.15)
-        self.play(marker_a.animate.move_to(RIGHT * x_read + UP * lanes_y["A"]),
-                  marker_b.animate.move_to(RIGHT * x_read + UP * lanes_y["B"]),
-                  level.animate(rate_func=there_and_back).set_color(INK).scale(1.08), run_time=0.9, rate_func=EASE)
-        seen = VGroup(*[
-            chip('"no entry"', color=BLUE, size=22, font="mono").move_to(RIGHT * x_read + UP * (y + 0.66))
-            for y in lanes_y.values()
-        ])
-        self.play(*[lanes[name][2].animate.set_color(BLUE) for name in lanes],
-                  LaggedStart(*[FadeIn(item, shift=UP * 0.1) for item in seen], lag_ratio=0.3), run_time=0.7)
-
-        self.cue("collide", -0.2)
-        self.play(marker_a.animate.move_to(RIGHT * x_write + UP * lanes_y["A"]),
-                  marker_b.animate.move_to(RIGHT * x_write + UP * lanes_y["B"]), run_time=0.5, rate_func=EASE)
-        row1 = data_row(row_at, widths, stroke=RED)
-        row2 = data_row(row_at + DOWN * 0.5, widths, stroke=RED)
-        self.play(marker_a.animate.move_to(row_at + LEFT * 1.95), marker_b.animate.move_to(row_at + LEFT * 1.95 + DOWN * 0.5),
-                  run_time=0.35, rate_func=linear)
-        clash = Cross(VGroup(row1, row2), stroke_color=RED, stroke_width=5, scale_factor=0.62)
-        self.play(FadeIn(row1, shift=LEFT * 0.15), FadeIn(row2, shift=LEFT * 0.15),
-                  FadeOut(marker_a, scale=0.3), FadeOut(marker_b, scale=0.3), run_time=0.2)
-        self.play(Create(clash), run_time=0.3)
-
-        # the lock
-        self.until(self.cues["lockrow"] - 0.55)
-        self.play(FadeOut(VGroup(row1, row2, clash, seen)),
-                  *[lanes[name][index].animate.set_color(DIM) for name in lanes for index in (2, 3)],
-                  run_time=0.4)
-        user_row = table_row(["onda_user", "maya"], [1.6, 1.0], size=19, stroke=AMBER).move_to(RIGHT * x_lock + UP * lock_y)
-        lock_icon = padlock(size=0.55, closed=False).next_to(user_row, LEFT, buff=0.22)
-        ropes = VGroup(*[
-            DashedLine(RIGHT * x_lock + UP * y, RIGHT * x_lock + UP * (lock_y + (0.27 if y > 0 else -0.27)),
-                       dash_length=0.07, stroke_color=AMBER, stroke_width=2.5)
-            for y in lanes_y.values()
-        ])
-        marker_a = packet().move_to(LEFT * 5.2 + UP * lanes_y["A"])
-        marker_b = packet().move_to(LEFT * 5.2 + UP * lanes_y["B"])
-        at_lock = {name: RIGHT * x_lock + UP * y for name, y in lanes_y.items()}
-        self.cue("lockrow", -0.1)
-        self.play(FadeIn(user_row, scale=0.9), FadeIn(lock_icon), FadeIn(marker_a), FadeIn(marker_b), run_time=0.4)
-        closed = padlock(size=0.55, closed=True).move_to(lock_icon)
-        holder = sans("held by A", size=20, color=AMBER).next_to(user_row, RIGHT, buff=0.22)
-        self.play(marker_a.animate.move_to(at_lock["A"]), run_time=0.4, rate_func=EASE)
-        self.play(FadeOut(lock_icon), FadeIn(closed, scale=1.25), Create(ropes[0]), FadeIn(holder), run_time=0.3)
-        # B comes to the same lock and stops
-        self.play(marker_b.animate.move_to(at_lock["B"]), run_time=0.4, rate_func=EASE)
-        self.play(marker_b.animate(rate_func=there_and_back).shift(RIGHT * 0.2), run_time=0.25)
-        self.play(marker_a.animate.move_to(RIGHT * x_read + UP * lanes_y["A"]), run_time=0.4, rate_func=EASE)
-        self.play(lanes["A"][2].animate.set_color(BLUE), run_time=0.12)
-
-        self.cue("wait", -0.15)
-        waits = sans("waits", size=22, color=MUTED, weight="NORMAL").move_to(at_lock["B"] + RIGHT * 0.75 + UP * 0.36)
-        self.play(FadeIn(waits), marker_a.animate.move_to(RIGHT * x_write + UP * lanes_y["A"]), run_time=0.4, rate_func=EASE)
-        row = data_row(row_at, widths, stroke=GREEN)
-        self.play(lanes["A"][3].animate.set_color(GREEN), marker_a.animate.move_to(row_at + LEFT * 1.95), run_time=0.3)
-        self.play(FadeIn(row, shift=LEFT * 0.15), FadeOut(marker_a, scale=0.3), run_time=0.22)
-        # B takes the lock, finds the entry, and changes the same row
-        holder_b = sans("held by B", size=20, color=AMBER).move_to(holder)
-        self.play(FadeOut(waits), FadeOut(holder), FadeIn(holder_b), FadeOut(ropes[0]), Create(ropes[1]), run_time=0.3)
-        self.play(marker_b.animate.move_to(RIGHT * x_read + UP * lanes_y["B"]), run_time=0.4, rate_func=EASE)
-        found = chip("entry exists", color=BLUE, size=22, font="mono").move_to(RIGHT * x_read + UP * (lanes_y["B"] + 0.66))
-        self.play(lanes["B"][2].animate.set_color(BLUE), FadeIn(found, shift=UP * 0.1), run_time=0.3)
-        self.play(marker_b.animate.move_to(RIGHT * x_write + UP * lanes_y["B"]), run_time=0.35, rate_func=EASE)
-        self.play(lanes["B"][3].animate.set_color(GREEN), marker_b.animate.move_to(row_at + LEFT * 1.95), run_time=0.28)
-        self.play(FadeOut(marker_b, scale=0.3), row.animate(rate_func=there_and_back).scale(1.08), run_time=0.3)
-
-        # a request that forgets the lock meets the unique key
-        rogue = packet(color=RED).move_to(RIGHT * 1.7 + DOWN * 2.2)
-        no_lock = sans("no lock", size=20, color=RED, weight="NORMAL").next_to(rogue, LEFT, buff=0.22)
-        self.play(FadeIn(rogue), FadeIn(no_lock), run_time=0.3)
-        self.cue("ukey", -0.1)
-        guard_x = 2.95
-        guard = Line(RIGHT * guard_x + UP * 1.6, RIGHT * guard_x + DOWN * 0.3, stroke_color=GREEN, stroke_width=5)
-        guard_name = mono("UNIQUE (user_id, event_id)", size=20, color=GREEN).next_to(frame, UP, buff=0.34).align_to(frame, RIGHT)
-        self.play(Create(guard), FadeIn(guard_name, shift=DOWN * 0.1), run_time=0.45)
-        self.cue("refuse", -0.2)
-        self.play(rogue.animate.move_to(RIGHT * (guard_x - 0.25) + UP * 0.55), FadeOut(no_lock), run_time=0.45, rate_func=EASE)
-        self.play(guard.animate(rate_func=there_and_back).set_stroke(INK, width=8),
-                  rogue.animate.shift(LEFT * 0.7 + DOWN * 0.5).set_opacity(0), run_time=0.5)
-        self.remove(rogue)
-        one = VGroup(numeral("1", GREEN, size=54), sans("row", size=24, color=GREEN)).arrange(RIGHT, buff=0.18, aligned_edge=DOWN)
-        one.next_to(row, DOWN, buff=0.42)
-        self.play(FadeIn(one, shift=UP * 0.1), run_time=0.35)
-        self.until(self.cues["where"] - 0.75)
-
-    # ---------------------------------------------------------------- layers
-    def layers(self):
-        self.clear_stage()
-        head = self.chapter("03", "the layers")
-        self.play(FadeIn(head), run_time=0.3)
-
-        # where did event 847 come from?
-        widths = [1.15, 1.0, 0.95]
-        row = data_row(UP * 0.6, widths).scale(1.7)
-        self.cue("where", -0.15)
-        self.play(FadeIn(row, scale=0.9), run_time=0.4)
-        ring = RoundedRectangle(width=row[1].width + 0.22, height=row[1].height + 0.22, corner_radius=0.06,
-                                stroke_color=AMBER, stroke_width=4).move_to(row[1])
-        asks = display("?", size=72, color=AMBER).next_to(ring, UP, buff=0.3)
-        self.play(Create(ring), row[0].animate.set_opacity(0.3), row[2].animate.set_opacity(0.3), run_time=0.5)
-        self.play(FadeIn(asks, shift=UP * 0.15), run_time=0.35)
-
-        # the source
-        self.until(self.cues["source"] - 0.5)
-        self.play(FadeOut(VGroup(row, ring, asks)), run_time=0.4)
-        first_spot = LEFT * 2.2 + UP * 0.35
-        last_spot = LEFT * 5.5 + DOWN * 0.95
-        cloud = RoundedRectangle(width=2.5, height=1.5, corner_radius=0.5, stroke_color=MUTED, stroke_width=2.5)
-        cloud = DashedVMobject(cloud, num_dashes=36).move_to(first_spot)
-        cloud_name = sans("listing source", size=23).move_to(cloud.get_center() + UP * 0.17)
-        cloud_note = sans("not trusted", size=19, color=MUTED, weight="NORMAL").next_to(cloud_name, DOWN, buff=0.13)
-        moon = Circle(radius=0.16, stroke_width=0, fill_color=INK, fill_opacity=1)
-        bite = Circle(radius=0.16, stroke_width=0, fill_color=BG, fill_opacity=1).shift(RIGHT * 0.1 + UP * 0.06)
-        night = VGroup(VGroup(moon, bite), sans("every night", size=20, color=MUTED, weight="NORMAL")).arrange(RIGHT, buff=0.16)
-        night.next_to(cloud, UP, buff=0.3)
-        source = VGroup(cloud, cloud_name, cloud_note)
-        pages = VGroup(*[page(width=0.5, height=0.64).move_to(cloud.get_right() + RIGHT * (0.8 + index * 0.78)) for index in range(4)])
-        self.cue("source", -0.1)
-        self.play(FadeIn(source, shift=RIGHT * 0.2), FadeIn(night), run_time=0.5)
-        self.play(LaggedStart(*[FadeIn(sheet, shift=RIGHT * 0.7) for sheet in pages], lag_ratio=0.4), run_time=1.7, rate_func=OUT)
-
-        stack = Stack(origin=(-3.3, -2.45, 0), width=5.2, depth=2.4, skew=0.6, rise=0.42, gap=1.85)
-        colors = [MUTED, GREEN, BLUE]
-        names = ["evidence", "catalog", "social"]
-        notes = ["what the source sent", "what Onda trusts", "what people did"]
-        planes = VGroup(*[stack.plane(level, color=DIM, fill=PANEL, opacity=0.9) for level in range(3)])
-        label_x = 3.65
-        titles, subs = VGroup(), VGroup()
-        for level in range(3):
-            middle = stack.point(0, stack.depth / 2, level)[1]
-            name = overline(names[level], size=19, color=colors[level])
-            name.move_to(RIGHT * label_x + UP * (middle + 0.3), aligned_edge=LEFT)
-            note = sans(notes[level], size=20, color=MUTED, weight="NORMAL").next_to(name, DOWN, buff=0.15, aligned_edge=LEFT)
-            titles.add(name)
-            subs.add(note)
-
-        # three planes rise, and the source moves to the side
-        self.cue("three", -0.3)
-        pile_at = last_spot + RIGHT * 1.5 + DOWN * 0.3
-        self.play(VGroup(source, night).animate.shift(last_spot - first_spot),
-                  *[sheet.animate.scale(0.85).move_to(pile_at + (RIGHT * 0.07 + UP * 0.05) * index)
-                    for index, sheet in enumerate(pages)],
-                  LaggedStart(*[FadeIn(planes[level], shift=UP * 0.25) for level in range(3)], lag_ratio=0.3),
-                  LaggedStart(*[FadeIn(titles[level], shift=UP * 0.25) for level in range(3)], lag_ratio=0.3),
-                  run_time=1.3, rate_func=EASE)
-
-        # evidence: stored first
-        self.cue("evidence", -0.15)
-        tiles0 = VGroup(*[stack.tile(0.35 + index * 1.2, 0.8, 0, w=0.9, d=0.8, color=MUTED, fill=PANEL) for index in range(4)])
-        self.play(planes[0].animate.set_stroke(MUTED), FadeIn(subs[0], shift=UP * 0.08),
-                  LaggedStart(*[sheet.animate.move_to(tile.get_center()).set_opacity(0) for sheet, tile in zip(pages, tiles0)],
-                              lag_ratio=0.18),
-                  LaggedStart(*[FadeIn(tile) for tile in tiles0], lag_ratio=0.18),
-                  run_time=1.5)
-        self.remove(pages)
-        stored = sans("stored first", size=20, color=INK).next_to(subs[0], DOWN, buff=0.15, aligned_edge=LEFT)
-        self.cue("stored", -0.1)
-        self.play(FadeIn(stored, shift=UP * 0.08), run_time=0.35)
-
-        # catalog: the rows of one listing rise in one transaction
-        def parts(u, bad=False):
-            return VGroup(*[
-                stack.tile(u + 0.07 + index * 0.2, 0.95, 0, w=0.15, d=0.5,
-                           color=(RED if bad and index == 2 else INK), fill=PANEL)
-                for index in range(4)
-            ])
-
-        self.cue("catalog", -0.15)
-        scan = Line(stack.point(0.15, 0.4, 0), stack.point(0.15, 2.0, 0), stroke_color=GREEN, stroke_width=4)
-        self.play(planes[1].animate.set_stroke(GREEN), FadeIn(subs[1], shift=UP * 0.08), FadeIn(scan), run_time=0.3)
-        self.play(scan.animate.shift(RIGHT * 4.9), run_time=0.8, rate_func=EASE)
-        self.play(FadeOut(scan), run_time=0.15)
-        good = parts(0.35)
-        self.play(FadeIn(good, scale=0.8), run_time=0.25)
-        event_u, event_w = 2.75, 1.0
-        landed = VGroup(*[
-            stack.tile(0.6 + index * 0.66, 0.8, 1, w=0.5, d=0.8, color=GREEN, fill=GREEN, opacity=0.14)
-            for index in range(3)
-        ])
-        event_tile = stack.tile(event_u, 0.8, 1, w=event_w, d=0.8, color=GREEN, fill=GREEN, opacity=0.3)
-        landed.add(event_tile)
-        self.play(*[ReplacementTransform(part, tile) for part, tile in zip(good, landed)], run_time=0.85, rate_func=EASE)
-        event_name = mono("847", size=19, color=INK).move_to(event_tile)
-        self.play(FadeIn(event_name), run_time=0.3)
-
-        self.cue("onetx", -0.2)
-        atomic = sans("all rows, or none", size=20, color=INK).next_to(subs[1], DOWN, buff=0.15, aligned_edge=LEFT)
-        bad = parts(2.75, bad=True)
-        self.play(FadeIn(bad, scale=0.8), run_time=0.3)
-        self.play(bad.animate.shift(UP * 0.95), run_time=0.45, rate_func=EASE)
-        self.play(bad.animate.set_stroke(RED), FadeIn(atomic, shift=UP * 0.08), run_time=0.25)
-        self.play(bad.animate.shift(DOWN * 0.95).set_opacity(0), tiles0[2].animate.set_stroke(RED), run_time=0.45)
-        self.remove(bad)
-
-        # social: what people did
-        self.cue("social", -0.15)
-        maya_u, maya_w = 2.78, 1.9
-        maya = stack.tile(maya_u, 0.8, 2, w=maya_w, d=0.8, color=BLUE, fill=BLUE, opacity=0.25)
-        maya_name = mono("maya 4.5", size=19, color=INK).move_to(maya)
-        other = stack.tile(0.45, 0.8, 2, w=maya_w, d=0.8, color=DIM, fill=PANEL)
-        self.play(planes[2].animate.set_stroke(BLUE), FadeIn(subs[2], shift=UP * 0.08), FadeIn(other),
-                  FadeIn(maya, scale=0.8), FadeIn(maya_name), run_time=0.5)
-
-        self.cue("keys", -0.15)
-        key = Line(stack.point(maya_u + maya_w / 2, 0.8, 2), stack.point(event_u + event_w / 2, 1.6, 1),
-                   stroke_color=INK, stroke_width=3).add_tip(tip_length=0.2, tip_width=0.2)
-        one_way = sans("keys point down", size=20, color=INK).next_to(key.get_center(), RIGHT, buff=0.3)
-        self.play(Create(key), run_time=0.5)
-        self.play(FadeIn(one_way, shift=LEFT * 0.1), run_time=0.3)
-
-        # the identity map: the ID of the source stops here
-        self.cue("idmap", -0.15)
-        gap_y = (stack.point(0, stack.depth, 0)[1] + stack.point(0, 0, 1)[1]) / 2
-        page_top = stack.point(0.35 + 0.45, 1.6, 0)
-        event_foot = stack.point(event_u + event_w / 2, 0.8, 1)
-        source_id = chip("ra:2291877", color=MUTED, size=18, font="mono").move_to(RIGHT * page_top[0] + UP * gap_y)
-        own_id = chip("847", color=GREEN, size=18, font="mono").move_to(RIGHT * event_foot[0] + UP * gap_y)
-        hop = Line(source_id.get_right() + RIGHT * 0.1, own_id.get_left() + LEFT * 0.1,
-                   stroke_color=MUTED, stroke_width=2.5).add_tip(tip_length=0.15, tip_width=0.15)
-        up_from = Line(page_top, source_id.get_bottom(), stroke_color=MUTED, stroke_width=2.5)
-        up_to = Line(own_id.get_top(), event_foot, stroke_color=GREEN, stroke_width=2.5)
-        map_name = overline("identity map", size=16).next_to(own_id, RIGHT, buff=0.3)
-        self.play(Create(up_from), run_time=0.25)
-        self.play(FadeIn(source_id, shift=UP * 0.08), run_time=0.3)
-        self.play(Create(hop), FadeIn(own_id, shift=RIGHT * 0.08), run_time=0.35)
-        self.play(Create(up_to), FadeIn(map_name), run_time=0.3)
-        self.play(VGroup(source_id, up_from, hop).animate.set_opacity(0.6), run_time=0.4)
-
-        # a listing vanishes: only a complete snapshot counts
-        self.until(self.cues["vanish"] - 0.55)
-        self.play(FadeOut(VGroup(source, night)), run_time=0.4)
-        left_x = -6.85
-        title = overline("nightly snapshots", size=16).move_to(RIGHT * left_x + UP * 2.3, aligned_edge=LEFT)
-        rows_y = [1.55, 0.95, 0.35, -0.25]
-        full = [True, False, True, True]
-        slot = 4
+    # ------------------------------------------------------------------ open
+    def open(self):
+        head = overline("onda  ·  system design", size=17).move_to(TOP_LEFT, aligned_edge=LEFT)
+        device = phone(width=3.1, height=5.5).move_to(LEFT * 3.9 + UP * 0.45)
+        title = display("Your diary", size=25).move_to(device.get_top() + DOWN * 0.72)
+        rule = Line(LEFT * 1.2, RIGHT * 1.2, stroke_color=HAIR, stroke_width=2).next_to(title, DOWN, buff=0.22)
+        nights = [("Warehouse Night", "Sat 21 Nov", 4.5), ("Open Air", "Sun 8 Nov", 4.0), ("Late Shift", "Fri 30 Oct", 5.0),
+                  ("Basement", "Sat 17 Oct", 3.5)]
         rows = VGroup()
-        for index, (y, whole) in enumerate(zip(rows_y, full)):
-            name = sans(f"night {index + 1}", size=18, color=MUTED, weight="NORMAL")
-            name.move_to(RIGHT * left_x + UP * y, aligned_edge=LEFT)
-            cells = VGroup(*[Rectangle(width=0.2, height=0.28, stroke_color=MUTED, stroke_width=1.5,
-                                       fill_color=PANEL, fill_opacity=1) for _ in range(6)]).arrange(RIGHT, buff=0.05)
-            cells.move_to(RIGHT * (left_x + 0.95) + UP * y, aligned_edge=LEFT)
-            if whole:
-                gone = DashedVMobject(Rectangle(width=0.2, height=0.28, stroke_color=AMBER, stroke_width=2), num_dashes=10)
-                gone.move_to(cells[slot])
-                strip = VGroup(*[cell for number, cell in enumerate(cells) if number != slot], gone)
-            else:
-                cut = sans("partial", size=17, color=AMBER, weight="NORMAL").move_to(cells[3].get_left() + RIGHT * 0.06, aligned_edge=LEFT)
-                strip = VGroup(*cells[:3], cut)
-            rows.add(VGroup(name, strip))
-        tag = mono("847", size=15, color=AMBER).next_to(rows[0][1][-1], UP, buff=0.12)
-        self.cue("vanish", -0.1)
-        self.play(FadeIn(title), LaggedStart(*[FadeIn(item, shift=UP * 0.1) for item in rows], lag_ratio=0.2),
-                  FadeIn(tag, run_time=0.9), run_time=0.9)
+        for index, (name, date, value) in enumerate(nights):
+            frame = RoundedRectangle(width=2.5, height=0.86, corner_radius=0.06, stroke_color=HAIR, stroke_width=2,
+                                     fill_color=PANEL, fill_opacity=1)
+            frame.move_to(rule.get_center() + DOWN * (0.7 + index * 1.0))
+            line = sans(name, size=17).move_to(frame.get_left() + RIGHT * 0.16 + UP * 0.17, aligned_edge=LEFT)
+            when = sans(date, size=13, color=MUTED, weight="NORMAL")
+            when.move_to(frame.get_left() + RIGHT * 0.16 + DOWN * 0.2, aligned_edge=LEFT)
+            rating = stars_row(radius=0.085, value=value, buff=0.035)
+            rating.move_to(frame.get_right() + LEFT * 0.16 + DOWN * 0.2, aligned_edge=RIGHT)
+            rows.add(VGroup(frame, line, when, rating))
+        wordmark = display("onda", size=132).move_to(RIGHT * 2.75 + UP * 1.45)
+        tagline = sans("a diary for live music", size=28, color=MUTED, weight="NORMAL").next_to(wordmark, DOWN, buff=0.3)
+        self.add(head, device, title, rule, rows[0], wordmark.copy().set_opacity(0.12))   # the first frame is the preview
+        ghost = self.mobjects[-1]
 
-        counter_label = sans("misses", size=22, color=MUTED, weight="NORMAL").move_to(RIGHT * left_x + DOWN * 1.3, aligned_edge=LEFT)
-        digits = [numeral(str(value), AMBER if value < 3 else RED, size=58) for value in (0, 1, 2, 3)]
-        for digit in digits:
-            digit.next_to(counter_label, RIGHT, buff=0.3)
-        digits[0].set_color(DIM)
-        marks = VGroup(*[
-            mono("+1" if whole else "+0", size=19, color=AMBER if whole else MUTED)
-            .move_to(RIGHT * (left_x + 2.65) + UP * y, aligned_edge=LEFT)
-            for y, whole in zip(rows_y, full)
-        ])
-        self.play(FadeIn(counter_label), FadeIn(digits[0]), run_time=0.3)
+        self.cue("o_shows", 0.2)
+        self.play(LaggedStart(*[FadeIn(row, shift=UP * 0.1) for row in rows[1:]], lag_ratio=0.3), run_time=1.5, rate_func=OUT)
+        self.cue("o_onda", -0.1)
+        self.play(FadeOut(ghost, run_time=0.2), Write(wordmark), run_time=0.9)
+        self.play(FadeIn(tagline, shift=UP * 0.1), run_time=0.4)
 
-        self.cue("complete", -0.1)
-        count = 0
-        for index in range(3):
-            step = [FadeIn(marks[index], shift=RIGHT * 0.1)]
-            if full[index]:
-                step += [FadeOut(digits[count], shift=UP * 0.15), FadeIn(digits[count + 1], shift=UP * 0.15),
-                         rows[index][1][-1].animate(rate_func=there_and_back).scale(1.35)]
-                count += 1
-            else:
-                step += [rows[index][1][-1].animate(rate_func=there_and_back).set_opacity(0.35)]
-            self.play(*step, run_time=0.5)
-            self.wait(0.22)
+        author = sans("Tan Baydar", size=30).move_to(RIGHT * 2.75 + DOWN * 0.75)
+        jobs = VGroup(*[chip(text, color=INK, size=20) for text in ("design", "code", "operations")]).arrange(RIGHT, buff=0.2)
+        jobs.next_to(author, DOWN, buff=0.3)
+        live_dot = Dot(radius=0.07, color=GREEN)
+        live = VGroup(live_dot, mono("live at ondaapp.io", size=19, color=GREEN)).arrange(RIGHT, buff=0.14)
+        live.next_to(jobs, DOWN, buff=0.34)
+        self.cue("o_own", -0.15)
+        self.play(FadeIn(author, shift=UP * 0.08), FadeIn(jobs[0], shift=UP * 0.08), run_time=0.4)
+        self.play(FadeIn(jobs[1], shift=UP * 0.08), run_time=0.35)
+        self.cue("o_run", -0.1)
+        self.play(FadeIn(jobs[2], shift=UP * 0.08), FadeIn(live, shift=UP * 0.08), run_time=0.4)
+        self.play(live_dot.animate(rate_func=there_and_back).scale(1.8), run_time=0.6)
 
-        self.cue("misses", -0.3)
-        self.play(FadeIn(marks[3], shift=RIGHT * 0.1), FadeOut(digits[2], shift=UP * 0.15), FadeIn(digits[3], shift=UP * 0.15),
-                  rows[3][1][-1].animate(rate_func=there_and_back).scale(1.35), run_time=0.45)
-        hidden = DashedVMobject(event_tile.copy().set_fill(opacity=0).set_stroke(MUTED), num_dashes=22)
-        hidden_name = mono("hidden", size=18, color=MUTED).next_to(event_tile, RIGHT, buff=0.16)
-        self.play(FadeOut(event_tile), FadeIn(hidden), event_name.animate.set_color(MUTED), FadeIn(hidden_name, shift=LEFT * 0.08),
-                  run_time=0.6)
+        # the whole system
+        self.cue("o_map", -0.45)
+        system = SystemMap()
+        handset = VGroup(device, title, rule, rows)
+        target = system.parts["people"][0][0]
+        self.play(FadeOut(VGroup(wordmark, tagline, author, jobs, live)),
+                  handset.animate.scale(target.height / device.height).move_to(target).set_opacity(0),
+                  run_time=0.55, rate_func=EASE)
+        self.remove(handset)
+        order = ["people", "a_people", "proxy", "a_proxy", "api", "host", "a_read", "a_rw", "catalog", "social", "a_keys",
+                 "evidence", "a_replay", "validate", "a_admit", "a_store", "fetch", "a_source", "source",
+                 "checks", "a_deploy", "backups", "a_backup"]
+        self.play(LaggedStart(*[FadeIn(system.parts[name]) for name in order], lag_ratio=0.07), run_time=1.5)
 
-        self.cue("nodelete", -0.1)
-        kept = sans("the row stays", size=20, color=BLUE).move_to(one_way, aligned_edge=LEFT)
-        self.play(FadeOut(one_way), FadeIn(kept),
-                  key.animate(rate_func=there_and_back).set_stroke(BLUE, width=6),
-                  maya.animate(rate_func=there_and_back).scale(1.08), run_time=0.9)
-        self.until(self.cues["leo"] - 0.75)
+        self.cue("o_tap", -0.1)
+        spot = system.parts["people"][0][0].get_center()
+        ring = ripple_at(spot)
+        self.play(ring.animate.scale(3.2).set_stroke(opacity=0), run_time=0.4, rate_func=OUT)
+        self.remove(ring)
+        dot = packet(radius=0.1).move_to(spot)
+        self.add(dot)
+        self.travel(dot, [spot, system.parts["proxy"].get_center(), system.parts["api"].get_left() + RIGHT * 0.9,
+                          RIGHT * 0.3 + DOWN * 1.8, RIGHT * 0.3 + DOWN * 0.2], run_time=0.9)
+        self.play(FadeOut(dot, scale=0.4), system.parts["catalog"].animate(rate_func=there_and_back).scale(1.08), run_time=0.35)
+        self.until(self.cues["c_friday"] - 0.75)
 
-    # ------------------------------------------------------------------ home
-    def home(self):
+    # --------------------------------------------------------------- request
+    def request(self):
         self.clear_stage()
-        head = self.chapter("04", "the read")
+        head = self.chapter("02", "the request", "docs/ARCHITECTURE.md")
+        system = SystemMap()
+        system.dim_all()
+        for name in SystemMap.REGIONS["request"]:
+            system.parts[name].fade(-3.0)
+            system.lit[name] = True
+        lift = UP * 0.2
+        system.everything().shift(lift)
+        self.play(FadeIn(head), FadeIn(system.everything()), run_time=0.4)
+
+        self.cue("r_tap", -0.05)
+        parts = system.parts
+        spot = parts["people"][0][0].get_center()
+        ring = ripple_at(spot)
+        self.play(ring.animate.scale(3.2).set_stroke(opacity=0), run_time=0.3, rate_func=OUT)
+        self.remove(ring)
+        dot = packet(radius=0.1).move_to(spot)
+        self.add(dot)
+        way = [spot, parts["proxy"].get_center(), RIGHT * 0.3 + DOWN * 1.8 + lift, RIGHT * 0.3 + DOWN * 0.1 + lift]
+        self.travel(dot, way, run_time=0.6)
+        self.play(parts["catalog"].animate(rate_func=there_and_back).scale(1.08), dot.animate.set_color(GREEN), run_time=0.22)
+        self.travel(dot, way[::-1], run_time=0.5)
+        self.remove(dot)
+
+        # the source is not in this path
+        self.cue("r_never", -0.1)
+        night = overline("only at night", size=15, color=MUTED).next_to(parts["fetch"], UP, buff=0.16)
+        zero = chip("0 calls to the source", color=GREEN, size=19).next_to(parts["api"], DOWN, buff=0.22)
+        bar = Line(parts["source"].get_corner(DOWN + LEFT) + LEFT * 0.1, parts["source"].get_corner(UP + RIGHT) + RIGHT * 0.1,
+                   stroke_color=RED, stroke_width=4)
+        self.play(FadeIn(night), Create(bar), run_time=0.45)
+        self.play(FadeIn(zero, shift=UP * 0.08), run_time=0.35)
+
+        self.cue("r_own", -0.1)
+        local = overline("local reads", size=15, color=GREEN).next_to(parts["a_read"], LEFT, buff=0.14)
+        self.play(parts["catalog"].animate(rate_func=there_and_back).scale(1.07),
+                  parts["social"].animate(rate_func=there_and_back).scale(1.07), FadeIn(local), run_time=0.7)
+
+        # one server, three containers
+        self.cue("r_server", -0.15)
+        self.play(FadeOut(bar), *system.spot("request", "host", "fetch", "validate", "evidence"), run_time=0.4)
+        frame = parts["host"][0]
+        colors = {"proxy": AMBER, "api": BLUE, "fetch": BLUE, "validate": BLUE, "evidence": GREEN, "catalog": GREEN, "social": GREEN}
+        marks = []
+        for name, color in colors.items():
+            shape = parts[name][0]
+            outline = shape.copy() if name in ("proxy", "api", "fetch", "validate") else None
+            if outline is None:
+                continue
+            marks.append(outline.set_fill(opacity=0).set_stroke(color, width=4))
+        box = RoundedRectangle(width=7.05, height=1.42, corner_radius=0.2, stroke_color=GREEN, stroke_width=4).move_to(RIGHT * 0.225 + lift)
+        legend = VGroup(
+            VGroup(Dot(radius=0.07, color=AMBER), sans("proxy", size=18)).arrange(RIGHT, buff=0.12),
+            VGroup(Dot(radius=0.07, color=BLUE), sans("app: API and the nightly job", size=18)).arrange(RIGHT, buff=0.12),
+            VGroup(Dot(radius=0.07, color=GREEN), sans("database", size=18)).arrange(RIGHT, buff=0.12),
+        ).arrange(RIGHT, buff=0.5).move_to(RIGHT * 0.175 + DOWN * 2.42 + lift)
+        self.play(frame.animate.set_stroke(INK), Create(marks[0]), FadeIn(legend[0]), FadeOut(zero), run_time=0.4)
+        self.play(*[Create(mark) for mark in marks[1:]], FadeIn(legend[1]), run_time=0.45)
+        self.play(Create(box), FadeIn(legend[2]), run_time=0.45)
+
+        self.cue("r_proxy", -0.15)
+        door = mono(":443", size=19, color=AMBER).next_to(parts["a_people"], UP, buff=0.12)
+        locks = VGroup(*[padlock(size=0.26, color=MUTED).move_to(point) for point in (
+            parts["api"].get_right() + LEFT * 0.3, box.get_right() + LEFT * 0.3 + UP * 0.45)])
+        hardening = sans("read-only file system  ·  no root  ·  pinned images", size=18, color=MUTED, weight="NORMAL")
+        hardening.next_to(frame, DOWN, buff=0.16)
+        self.play(parts["a_people"].animate.set_color(AMBER), FadeIn(door, shift=UP * 0.06), run_time=0.4)
+        self.play(FadeIn(locks), FadeIn(hardening, shift=UP * 0.06), run_time=0.5)
+        self.until(self.cues["w_sat"] - 0.75)
+
+    # --------------------------------------------------------------- catalog
+    def catalog(self):
+        self.clear_stage()
+        head = self.chapter("01", "the catalog", "docs/INGESTION.md")
+
+        # Friday: Maya opens Discover
+        device = phone(width=3.2, height=5.7).move_to(UP * 0.35)
+        title = display("Discover", size=26).move_to(device.get_top() + DOWN * 0.72)
+        city = sans("New York City", size=16, color=MUTED, weight="NORMAL").next_to(title, DOWN, buff=0.14)
+        rule = Line(LEFT * 1.25, RIGHT * 1.25, stroke_color=HAIR, stroke_width=2).next_to(city, DOWN, buff=0.2)
+        shows = [("Warehouse Night", "Sat  ·  Brooklyn"), ("Rooftop Session", "Sun  ·  Queens"), ("Vinyl Room", "Fri  ·  Manhattan")]
+        cards = VGroup()
+        for index, (name, where) in enumerate(shows):
+            frame = RoundedRectangle(width=2.6, height=0.95, corner_radius=0.06, stroke_color=HAIR, stroke_width=2,
+                                     fill_color=PANEL, fill_opacity=1)
+            frame.move_to(rule.get_center() + DOWN * (0.75 + index * 1.1))
+            line = sans(name, size=18).move_to(frame.get_left() + RIGHT * 0.18 + UP * 0.18, aligned_edge=LEFT)
+            place = sans(where, size=14, color=MUTED, weight="NORMAL")
+            place.move_to(frame.get_left() + RIGHT * 0.18 + DOWN * 0.2, aligned_edge=LEFT)
+            cards.add(VGroup(frame, line, place))
+        day = overline("friday", size=17, color=AMBER).next_to(device, LEFT, buff=0.5).align_to(device, UP).shift(DOWN * 0.4)
+        self.play(FadeIn(head), FadeIn(VGroup(device, title, city, rule), shift=UP * 0.12), FadeIn(day), run_time=0.3)
+        self.cue("c_friday", 0.1)
+        self.play(LaggedStart(*[FadeIn(card, shift=UP * 0.1) for card in cards], lag_ratio=0.25), run_time=1.1, rate_func=OUT)
+
+        self.cue("c_where", -0.15)
+        ask = display("?", size=64, color=AMBER).next_to(cards[0], RIGHT, buff=0.75)
+        self.play(cards[0][0].animate.set_stroke(AMBER, width=3), FadeIn(ask, shift=LEFT * 0.15), run_time=0.45)
+
+        # trace the event back to its source
+        y = 0.9
+        source = node("listing source", "not trusted", width=2.1, height=1.2, color=MUTED, dashed=True, title_size=20)
+        source.move_to(LEFT * 5.85 + UP * y)
+        fetcher = node("fetch", width=1.6, height=1.2).move_to(LEFT * 3.55 + UP * y)
+        evidence = panel("evidence", "raw responses", width=2.2, height=4.4, color=MUTED).move_to(LEFT * 1.35 + UP * 0.3)
+        gate_x = 0.15
+        gate = Line(RIGHT * gate_x + UP * 2.5, RIGHT * gate_x + DOWN * 1.9, stroke_color=DIM, stroke_width=5)
+        gate_name = overline("validate", size=16, color=INK).next_to(gate, UP, buff=0.16)
+        catalog = panel("catalog", "what Onda trusts", width=3.6, height=3.25, color=GREEN, title_color=GREEN).move_to(RIGHT * 2.35 + UP * 0.875)
+        rejects = panel("rejections", width=3.6, height=0.9, color=DIM).move_to(RIGHT * 2.35 + DOWN * 1.5)
+        handset = VGroup(device, title, city, rule, cards)
+        small_at = RIGHT * 5.75 + UP * y
+        reads = arrow(catalog[0].get_right() + UP * 0.025, small_at + LEFT * 0.86)
+        self.until(self.cues["c_site"] - 1.2)
+        self.play(FadeOut(ask), FadeOut(day), handset.animate.scale(0.5).move_to(small_at), run_time=0.45, rate_func=EASE)
+        links = VGroup(arrow(source.get_right(), fetcher.get_left()), arrow(fetcher.get_right(), evidence[0].get_left() + UP * 0.6))
+        self.play(LaggedStart(FadeIn(catalog), Create(reads), FadeIn(rejects), FadeIn(VGroup(gate, gate_name)),
+                              FadeIn(evidence), FadeIn(fetcher), Create(links[1]), Create(links[0]), lag_ratio=0.12),
+                  run_time=0.7)
+        self.cue("c_site", 0.0)
+        self.play(FadeIn(source, scale=0.9), run_time=0.4)
+
+        self.cue("c_trust", -0.1)
+        wall_x = -4.62
+        wall = DashedLine(RIGHT * wall_x + UP * 2.45, RIGHT * wall_x + DOWN * 2.6, dash_length=0.1, stroke_color=AMBER, stroke_width=3)
+        wall_name = overline("trust boundary", size=15, color=AMBER).next_to(wall, UP, buff=0.12)
+        self.play(Create(wall), FadeIn(wall_name), run_time=0.6)
+
+        # each night: fetch inside limits
+        self.cue("c_fetch", -0.1)
+        moon = Circle(radius=0.15, stroke_width=0, fill_color=INK, fill_opacity=1)
+        bite = Circle(radius=0.15, stroke_width=0, fill_color=BG, fill_opacity=1).shift(RIGHT * 0.09 + UP * 0.06)
+        night = VGroup(VGroup(moon, bite), sans("every night", size=18, color=MUTED, weight="NORMAL")).arrange(RIGHT, buff=0.14)
+        night.next_to(fetcher, UP, buff=0.22)
+        sheets = VGroup(*[page(width=0.36, height=0.46).move_to(source.get_center()) for _ in range(3)])
+        self.play(FadeIn(night), run_time=0.3)
+        self.add(sheets)
+        self.play(LaggedStart(*[sheet.animate.move_to(fetcher.get_center() + RIGHT * (index - 1) * 0.4 + DOWN * 0.3)
+                                for index, sheet in enumerate(sheets)], lag_ratio=0.25),
+                  fetcher[1].animate.shift(UP * 0.3), run_time=self.left("c_limits", -0.15), rate_func=EASE)
+
+        self.cue("c_limits", -0.1)
+        limits = VGroup(*[chip(text, color=AMBER, size=16, pad=0.1) for text in
+                          ("20 s timeout", "3 tries, jitter", "1 call / 1.5 s", "2 MiB a page", "1 run at a time")])
+        limits.arrange(DOWN, buff=0.1).next_to(fetcher, DOWN, buff=0.25)
+        self.play(LaggedStart(*[FadeIn(item, shift=UP * 0.08) for item in limits], lag_ratio=0.18), run_time=1.1)
+
+        # store first, read second
+        self.cue("c_store", -0.1)
+        rows_y = [1.3, 0.75, 0.2]
+        stored = VGroup()
+        for index, row_y in enumerate(rows_y):
+            frame = RoundedRectangle(width=1.8, height=0.42, corner_radius=0.05, stroke_color=MUTED, stroke_width=1.5,
+                                     fill_color=PANEL, fill_opacity=1).move_to(LEFT * 1.35 + UP * row_y)
+            name = mono(f"page {index + 1}", size=15, color=INK).move_to(frame.get_left() + RIGHT * 0.5, aligned_edge=LEFT)
+            stored.add(VGroup(frame, name))
+        first = display("1", size=30, color=AMBER).move_to(evidence[0].get_corner(UP + RIGHT) + LEFT * 0.3 + DOWN * 0.34)
+        self.play(LaggedStart(*[sheet.animate.scale(0.75).move_to(row[0].get_left() + RIGHT * 0.26)
+                                for sheet, row in zip(sheets, stored)], lag_ratio=0.2),
+                  LaggedStart(*[FadeIn(row) for row in stored], lag_ratio=0.2), FadeIn(first, scale=1.4),
+                  evidence[0].animate.set_stroke(INK), run_time=1.2, rate_func=EASE)
+        self.cue("c_before", 0.0)
+        second = display("2", size=30, color=AMBER).next_to(gate_name, RIGHT, buff=0.2)
+        self.play(gate.animate.set_stroke(INK), FadeIn(second, scale=1.4), run_time=0.45)
+
+        # one listing, one transaction
+        self.cue("c_tx", -0.15)
+        letters = ["A", "B", "C"]
+        lot_y = [-0.3, -0.8, -1.3]
+        listings = VGroup()
+        for letter, row_y in zip(letters, lot_y):
+            frame = RoundedRectangle(width=0.62, height=0.4, corner_radius=0.05, stroke_color=INK, stroke_width=2,
+                                     fill_color=PANEL, fill_opacity=1).move_to(LEFT * 1.35 + UP * row_y)
+            name = mono(letter, size=17).move_to(frame)
+            left = mono("[", size=26, color=GREEN).next_to(frame, LEFT, buff=0.1)
+            right = mono("]", size=26, color=GREEN).next_to(frame, RIGHT, buff=0.1)
+            listings.add(VGroup(frame, name, left, right))
+        note = sans("3 listings", size=16, color=MUTED, weight="NORMAL").move_to(LEFT * 1.35 + DOWN * 1.68)
+        self.play(stored[0][0].animate.set_stroke(INK, width=2.5),
+                  LaggedStart(*[FadeIn(item[:2], shift=DOWN * 0.15) for item in listings], lag_ratio=0.15), FadeIn(note), run_time=0.7)
+        tx_note = sans("1 transaction each", size=16, color=GREEN).move_to(note)
+        self.play(LaggedStart(*[FadeIn(item[2:]) for item in listings], lag_ratio=0.15),
+                  FadeOut(note), FadeIn(tx_note), run_time=0.6)
+
+        def rows_for(kinds, top, left_x, color=GREEN):
+            group = VGroup()
+            for index, kind in enumerate(kinds):
+                frame = Rectangle(width=1.5, height=0.36, stroke_color=color, stroke_width=1.5, fill_color=color, fill_opacity=0.14)
+                frame.move_to(RIGHT * (left_x + 0.75) + UP * (top - index * 0.36))
+                group.add(VGroup(frame, mono(kind, size=15, color=INK).move_to(frame)))
+            return group
+
+        def admit(item, rows, run_time=0.75):
+            self.play(item.animate.move_to(RIGHT * (gate_x - 0.2) + UP * item.get_center()[1]), run_time=run_time * 0.4, rate_func=EASE)
+            self.play(gate.animate(rate_func=there_and_back).set_stroke(GREEN), FadeOut(item, shift=RIGHT * 0.5),
+                      LaggedStart(*[FadeIn(row, shift=RIGHT * 0.2) for row in rows], lag_ratio=0.12), run_time=run_time * 0.6)
+
+        self.cue("c_valid", -0.2)
+        rows_a = rows_for(["venue", "artist", "artist", "event 847", "lineup"], top=1.4, left_x=0.85)
+        admit(listings[0], rows_a)
+        events = sans("events", size=16, color=MUTED, weight="NORMAL")
+        count = display("1", size=30, color=GREEN)
+        counter = VGroup(events, count).arrange(RIGHT, buff=0.16, aligned_edge=DOWN)
+        counter.move_to(catalog[0].get_corner(UP + RIGHT) + LEFT * 0.75 + DOWN * 0.36)
+        self.play(FadeIn(counter), rows_a[3][0].animate.set_fill(opacity=0.4), run_time=0.3)
+
+        self.cue("c_bad", -0.35)
+        bad = listings[1]
+        self.play(bad.animate.move_to(RIGHT * (gate_x - 0.2) + UP * bad.get_center()[1]), run_time=0.35, rate_func=EASE)
+        ghost_rows = rows_for(["venue", "event"], top=0.3, left_x=2.5, color=RED)
+        self.play(gate.animate.set_stroke(RED), bad[0].animate.set_stroke(RED), FadeIn(ghost_rows, shift=RIGHT * 0.2), run_time=0.3)
+        record = chip("BAD_DATE", color=RED, size=15, font="mono", pad=0.11)
+        record.move_to(rejects[0].get_right() + LEFT * 0.2, aligned_edge=RIGHT)
+        self.play(FadeOut(ghost_rows, shift=LEFT * 0.2), FadeOut(bad, shift=DOWN * 0.3), FadeIn(record, shift=DOWN * 0.2),
+                  gate.animate.set_stroke(INK), run_time=0.5)
+        rows_c = rows_for(["venue", "artist", "event 848"], top=1.4, left_x=2.5)
+        admit(listings[2], rows_c, run_time=0.6)
+        two = display("2", size=30, color=GREEN).move_to(count)
+        self.play(FadeOut(count), FadeIn(two), rows_c[2][0].animate.set_fill(opacity=0.4), FadeOut(tx_note), run_time=0.3)
+
+        # the identity map, and a replay
+        self.cue("c_map", -0.1)
+        source_id = chip("ra:2291877", color=MUTED, size=17, font="mono")
+        own_id = chip("847", color=GREEN, size=17, font="mono")
+        source_id.move_to(RIGHT * (gate_x - 1.25) + DOWN * 2.42)
+        own_id.move_to(RIGHT * (gate_x + 0.95) + DOWN * 2.42)
+        hop = arrow(source_id.get_right() + RIGHT * 0.08, own_id.get_left() + LEFT * 0.08)
+        map_name = overline("identity map", size=15).next_to(own_id, RIGHT, buff=0.25)
+        self.play(FadeIn(source_id, shift=RIGHT * 0.1), run_time=0.3)
+        self.play(Create(hop), FadeIn(own_id), FadeIn(map_name), run_time=0.45)
+        self.play(source_id.animate.set_opacity(0.5), rows_a[3][0].animate(rate_func=there_and_back).set_stroke(INK, width=3), run_time=0.5)
+
+        self.cue("c_replay", -0.1)
+        again = arrow(stored[0][0].get_right() + RIGHT * 0.05, RIGHT * 0.8 + UP * 1.3, color=AMBER, width=3)
+        again_name = sans("replay", size=19, color=AMBER).move_to(LEFT * 1.35 + DOWN * 0.55)
+        self.play(Create(again), FadeIn(again_name), stored[0][0].animate.set_stroke(AMBER), run_time=0.5)
+        echo = VGroup(rows_a.copy(), rows_c.copy()).set_stroke(AMBER)
+        self.play(FadeIn(echo, shift=RIGHT * 0.25), run_time=0.45)
+        self.cue("c_twice", -0.1)
+        same = sans("same rows", size=18, color=GREEN).next_to(VGroup(rows_a, rows_c), DOWN, buff=0.2)
+        self.play(FadeOut(echo), FadeIn(same, shift=UP * 0.08),
+                  two.animate(rate_func=there_and_back).scale(1.35), run_time=0.7)
+        self.until(self.cues["r_tap"] - 0.75)
+
+    # ----------------------------------------------------------------- write
+    def write(self):
+        self.clear_stage()
+        head = self.chapter("03", "the write", "docs/ARCHITECTURE.md")
+        lane_y = 0.55
+        device = phone(width=1.9, height=3.5).move_to(LEFT * 5.9 + UP * lane_y)
+        big, home_spot = 1.55, LEFT * 5.9 + UP * lane_y
+        title = display("Warehouse", size=17).move_to(device.get_top() + DOWN * 0.62)
+        title2 = display("Night", size=17).next_to(title, DOWN, buff=0.06)
+        been = VGroup(RoundedRectangle(width=1.3, height=0.42, corner_radius=0.08, stroke_color=DIM, stroke_width=2),
+                      sans("Been", size=16, color=MUTED)).move_to(device.get_center() + UP * 0.05)
+        empty = VGroup(*[star(radius=0.13) for _ in range(5)]).arrange(RIGHT, buff=0.06).move_to(device.get_center() + DOWN * 0.7)
+        days = VGroup(*[overline(name, size=16, color=DIM) for name in ("fri", "sat", "sun")]).arrange(RIGHT, buff=0.3)
+        days.next_to(device, UP, buff=0.3)
+        handset = VGroup(device, title, title2, been, empty, days)
+        handset.scale(big).move_to(UP * 0.2)
+        self.play(FadeIn(head), FadeIn(handset, shift=UP * 0.12), run_time=0.3)
+
+        self.cue("w_sat", -0.1)
+        been_on = VGroup(RoundedRectangle(width=1.3, height=0.42, corner_radius=0.08, stroke_color=GREEN, stroke_width=2,
+                                          fill_color=GREEN, fill_opacity=0.18),
+                         VGroup(tick(size=0.2), sans("Been", size=16, color=GREEN)).arrange(RIGHT, buff=0.1)).move_to(been)
+        self.play(days[1].animate.set_color(AMBER), FadeOut(been), FadeIn(been_on, scale=1.1), run_time=0.45)
+        self.cue("w_sun", -0.1)
+        self.play(days[1].animate.set_color(DIM), days[2].animate.set_color(AMBER), run_time=0.3)
+        self.cue("w_stars", -0.2)
+        filled = VGroup(*[star(radius=0.13 * big, filled=True).move_to(empty[index]) for index in range(4)],
+                        half_star(radius=0.13 * big).move_to(empty[4]))
+        self.play(LaggedStart(*[FadeIn(shape, scale=1.7) for shape in filled], lag_ratio=0.15), run_time=0.9)
+        handset = VGroup(device, title, title2, been_on, empty, filled, days)
+        self.until(self.cues["w_states"] - 0.6)
+        self.play(handset.animate.scale(1 / big).move_to(home_spot + UP * 0.2), run_time=0.5, rate_func=EASE)
+
+        # an entry has three states
+        self.cue("w_states", -0.1)
+        states = VGroup()
+        specs = [("been", "no rating", MUTED), ("rated", "half steps", GREEN), ("reviewed", "needs a rating", BLUE)]
+        for index, (name, rule, color) in enumerate(specs):
+            frame = RoundedRectangle(width=1.3, height=0.62, corner_radius=0.08, stroke_color=color, stroke_width=2.5,
+                                     fill_color=PANEL, fill_opacity=1).move_to(RIGHT * (2.9 + index * 1.55) + DOWN * 1.6)
+            label = sans(name, size=19).move_to(frame)
+            small = sans(rule, size=15, color=MUTED, weight="NORMAL").next_to(frame, DOWN, buff=0.14)
+            states.add(VGroup(frame, label, small))
+        steps = VGroup(*[arrow(a[0].get_right(), b[0].get_left(), tip=0.12) for a, b in zip(states, states[1:])])
+        states_name = overline("one entry, three states", size=15).next_to(states, UP, buff=0.22).align_to(states, LEFT)
+        strip = VGroup(states_name, states, steps)
+        strip_home, strip_big = strip.get_center(), 1.5
+        strip.scale(strip_big).move_to(RIGHT * 0.9 + UP * 0.5)
+        self.play(FadeIn(states_name), LaggedStart(FadeIn(states[0], shift=UP * 0.1), Create(steps[0]), FadeIn(states[1], shift=UP * 0.1),
+                                                  Create(steps[1]), FadeIn(states[2], shift=UP * 0.1), lag_ratio=0.35), run_time=1.5)
+        self.play(states[1][0].animate.set_fill(GREEN, opacity=0.2), run_time=0.3)
+
+        # four guards
+        guards_x = [-4.05, -2.65, -1.25, 0.6]
+        guards = VGroup()
+        for x, name in zip(guards_x, ["edge", "view", "service", "schema"]):
+            bar = Line(RIGHT * x + UP * 1.5, RIGHT * x + DOWN * 0.4, stroke_color=DIM, stroke_width=5)
+            name_text = overline(name, size=17, color=INK).next_to(bar, UP, buff=0.2)
+            guards.add(VGroup(bar, name_text))
+        table_at = RIGHT * 4.35 + UP * (lane_y + 0.25)
+        widths = [0.95, 0.85, 0.9, 1.45]
+        header = table_row(["user", "event", "rating", "rated_at"], widths, color=MUTED, fill=BG, size=17).move_to(table_at + UP * 0.25)
+        table_name = overline("social  ·  diary_entry", size=15, color=BLUE).next_to(header, UP, buff=0.18).align_to(header, LEFT)
+        start = RIGHT * (device.get_right()[0] + 0.2) + UP * lane_y
+        lane = DashedLine(start, header.get_left() + DOWN * 0.5 + LEFT * 0.1, dash_length=0.08, stroke_color=HAIR, stroke_width=2)
+        row_at = table_at + DOWN * 0.25
+        self.cue("w_guards", -1.05)
+        self.play(strip.animate.scale(1 / strip_big).move_to(strip_home), run_time=0.5, rate_func=EASE)
+        self.play(LaggedStart(*[FadeIn(guard, shift=UP * 0.1) for guard in guards], lag_ratio=0.15),
+                  FadeIn(VGroup(header, table_name)), Create(lane), run_time=0.5)
+
+        def send(color=AMBER, y=lane_y, run_time=0.8, stop=None):
+            dot = packet(color=color, radius=0.1).move_to(start + UP * (y - lane_y))
+            self.add(dot)
+            stops = guards_x if stop is None else guards_x[:stop]
+            for index, x in enumerate(stops):
+                self.play(dot.animate.move_to(RIGHT * x + UP * y), run_time=run_time / 5, rate_func=linear)
+                self.play(guards[index][0].animate.set_stroke(GREEN), run_time=0.02)
+            return dot
+
+        self.cue("w_guards", 0.0)
+        dot = send()
+        row = table_row(["maya", "847", "4.5", "Sun 10:12"], widths, color=INK, stroke=GREEN, size=17).move_to(row_at)
+        self.play(dot.animate.move_to(row.get_left() + LEFT * 0.15), run_time=0.2, rate_func=linear)
+        self.play(FadeOut(dot, scale=0.3), FadeIn(row, shift=LEFT * 0.15), run_time=0.25)
+
+        def notes(texts, x):
+            group = VGroup(*[sans(text, size=15, color=MUTED, weight="NORMAL") for text in texts]).arrange(DOWN, buff=0.1)
+            return group.move_to(RIGHT * x + DOWN * 0.7, aligned_edge=UP)
+
+        details = VGroup(
+            notes(["TLS", "session", "CSRF"], guards_x[0]),
+            notes(["types", "ranges"], guards_x[1]),
+            notes(["transaction", "row lock"], guards_x[2]),
+            VGroup(chip("UNIQUE (user, event)", size=14, color=GREEN), chip("CHECK rating", size=14, color=GREEN),
+                   chip("FK RESTRICT", size=14, color=GREEN)).arrange(DOWN, buff=0.1)
+            .move_to(RIGHT * guards_x[3] + DOWN * 0.7, aligned_edge=UP),
+        )
+        self.play(*[FadeIn(details[index], shift=UP * 0.08) for index in range(3)], run_time=0.4)
+
+        self.cue("w_schema", -0.15)
+        self.play(guards[3][0].animate.set_stroke(GREEN, width=8), *[guards[index][0].animate.set_stroke(DIM) for index in range(3)],
+                  LaggedStart(*[FadeIn(item, shift=UP * 0.08) for item in details[3]], lag_ratio=0.2), run_time=0.9)
+
+        # a code path that forgets the first two guards
+        self.cue("w_skip", -0.2)
+        rogue = packet(color=RED, radius=0.1).move_to(LEFT * 4.5 + UP * 2.75)
+        rogue_name = sans("a path that skips them", size=17, color=RED, weight="NORMAL").next_to(rogue, RIGHT, buff=0.2)
+        self.play(FadeIn(rogue), FadeIn(rogue_name), run_time=0.25)
+        self.play(rogue.animate.move_to(RIGHT * 0.0 + UP * 2.75), FadeOut(rogue_name), run_time=0.5, rate_func=EASE)
+        self.play(rogue.animate.move_to(RIGHT * (guards_x[3] - 0.2) + UP * 1.1), run_time=0.3, rate_func=EASE)
+        self.play(guards[3][0].animate(rate_func=there_and_back).set_stroke(INK, width=10),
+                  rogue.animate.shift(LEFT * 0.6 + UP * 0.3).set_opacity(0), run_time=0.45)
+        self.remove(rogue)
+
+        # two taps at once
+        self.cue("w_two", -0.15)
+        self.play(*[guard[0].animate.set_stroke(DIM, width=5) for guard in guards], run_time=0.2)
+        first = packet(radius=0.1).move_to(start + UP * 0.16)
+        second = packet(radius=0.1).move_to(start + DOWN * 0.16)
+        self.add(first, second)
+        self.play(first.animate.move_to(RIGHT * guards_x[2] + UP * (lane_y + 0.16)),
+                  second.animate.move_to(RIGHT * (guards_x[2] - 0.3) + UP * (lane_y - 0.16)), run_time=0.5, rate_func=linear)
+        hold = padlock(size=0.3).next_to(second, DOWN, buff=0.14).shift(LEFT * 0.25)
+        waits = sans("waits", size=16, color=AMBER, weight="NORMAL").next_to(hold, RIGHT, buff=0.1)
+        self.play(FadeIn(hold), FadeIn(waits), first.animate.move_to(row.get_left() + LEFT * 0.15 + UP * 0.1), run_time=0.45, rate_func=linear)
+        self.play(FadeOut(first, scale=0.3), row.animate(rate_func=there_and_back).scale(1.06), FadeOut(hold), FadeOut(waits), run_time=0.3)
+        self.cue("w_one", -0.25)
+        self.play(second.animate.move_to(row.get_left() + LEFT * 0.15 + DOWN * 0.1), run_time=0.4, rate_func=linear)
+        one = VGroup(numeral("1", GREEN, size=50), sans("row", size=22, color=GREEN)).arrange(RIGHT, buff=0.16, aligned_edge=DOWN)
+        one.next_to(row, RIGHT, buff=0.3)
+        one.move_to(row.get_bottom() + DOWN * 0.5)
+        self.play(FadeOut(second, scale=0.3), row.animate(rate_func=there_and_back).scale(1.06), FadeIn(one, shift=UP * 0.1), run_time=0.4)
+        self.until(self.cues["f_leo"] - 0.75)
+
+    # ------------------------------------------------------------------ feed
+    def feed(self):
+        self.clear_stage()
+        head = self.chapter("04", "the feed", "docs/HOME_FEED.md")
         device = phone(width=2.8, height=5.0).move_to(RIGHT * 5.45 + UP * 0.4)
         home_title = display("Home", size=26).move_to(device.get_top() + DOWN * 0.62)
         home_rule = Line(LEFT * 1.12, RIGHT * 1.12, stroke_color=HAIR, stroke_width=2).next_to(home_title, DOWN, buff=0.2)
@@ -640,23 +643,25 @@ class OndaExplainer(CueScene):
         handset = VGroup(device, home_title, home_rule, owner, skeleton)
         handset.shift(LEFT * 5.45)
         self.play(FadeIn(head), run_time=0.3)
-        self.cue("leo", -0.15)
+        self.cue("f_leo", -0.15)
         self.play(FadeIn(VGroup(device, home_title, home_rule, owner), shift=UP * 0.15),
                   LaggedStart(*[FadeIn(item) for item in skeleton], lag_ratio=0.12), run_time=0.7, rate_func=OUT)
 
         # no feed table
-        self.cue("nofeed", -0.75)
+        self.cue("f_notable", -0.75)
         self.play(handset.animate.shift(RIGHT * 5.45), run_time=0.6, rate_func=EASE)
         ghost = VGroup(*[DashedVMobject(Rectangle(width=3.4, height=0.52, stroke_color=MUTED, stroke_width=2), num_dashes=36)
                          for _ in range(4)]).arrange(DOWN, buff=0).move_to(LEFT * 1.6 + UP * 0.35)
         ghost_name = overline("feed table", size=17).next_to(ghost, UP, buff=0.24)
-        self.play(FadeIn(ghost), FadeIn(ghost_name), run_time=0.4)
-        no = Cross(ghost, stroke_color=RED, stroke_width=5, scale_factor=0.85)
+        ghost_note = sans("one copy for each follower", size=19, color=MUTED, weight="NORMAL").next_to(ghost, DOWN, buff=0.24)
+        self.play(FadeIn(ghost), FadeIn(ghost_name), FadeIn(ghost_note), run_time=0.35)
+        no = VGroup(Line(ghost.get_corner(UP + LEFT), ghost.get_corner(DOWN + RIGHT), stroke_color=RED, stroke_width=5),
+                    Line(ghost.get_corner(DOWN + LEFT), ghost.get_corner(UP + RIGHT), stroke_color=RED, stroke_width=5)).scale(0.85)
         self.play(Create(no), run_time=0.4)
-        self.until(self.cues["union"] - 0.6)
-        self.play(FadeOut(VGroup(ghost, ghost_name, no), scale=0.9), run_time=0.35)
+        self.until(self.cues["f_query"] - 0.5)
+        self.play(FadeOut(VGroup(ghost, ghost_name, ghost_note, no), scale=0.9), run_time=0.35)
 
-        # five branches into one query
+        # one query, five branches
         names = ["will_be_there", "review_like", "diary_entry", "favorite_event", "favorite_artist"]
         ys = [2.0, 1.2, 0.4, -0.4, -1.2]
         box_x, gate_x, bend_x = -5.7, -4.15, -3.8
@@ -670,40 +675,39 @@ class OndaExplainer(CueScene):
             sources.add(VGroup(box, text))
             streams.add(Line(box.get_right(), RIGHT * bend_x + UP * y, stroke_color=HAIR, stroke_width=2.5))
             joins.add(Line(RIGHT * bend_x + UP * y, merge, stroke_color=HAIR, stroke_width=2.5))
-        self.cue("union", -0.15)
-        self.play(LaggedStart(*[FadeIn(item, shift=RIGHT * 0.15) for item in sources], lag_ratio=0.1), run_time=0.6)
-        self.play(LaggedStart(*[Create(line) for line in streams], lag_ratio=0.08),
-                  LaggedStart(*[Create(line) for line in joins], lag_ratio=0.08),
-                  FadeIn(union, scale=0.9), run_time=0.8)
-
-        # each branch filters first
+        one_query = overline("one query", size=15, color=INK).next_to(union, UP, buff=0.2)
+        self.cue("f_query", -0.1)
+        self.play(FadeIn(union, scale=0.9), FadeIn(one_query), run_time=0.4)
+        self.cue("f_branches", -0.2)
+        self.play(LaggedStart(*[FadeIn(item, shift=RIGHT * 0.15) for item in sources], lag_ratio=0.1),
+                  LaggedStart(*[Create(line) for line in streams], lag_ratio=0.1),
+                  LaggedStart(*[Create(line) for line in joins], lag_ratio=0.1), run_time=0.8)
         gates = VGroup(*[Line(RIGHT * gate_x + UP * (y + 0.24), RIGHT * gate_x + UP * (y - 0.24), stroke_color=GREEN, stroke_width=5)
                          for y in ys])
         gate_name = sans("privacy  ·  event status  ·  cursor", size=18, color=GREEN)
         gate_name.move_to(RIGHT * (gate_x + 0.25) + UP * 2.78)
-        self.cue("filter", -0.2)
-        self.play(LaggedStart(*[Create(gate) for gate in gates], lag_ratio=0.08), FadeIn(gate_name, shift=DOWN * 0.1), run_time=0.6)
+        self.play(LaggedStart(*[Create(gate) for gate in gates], lag_ratio=0.08), FadeIn(gate_name, shift=DOWN * 0.1), run_time=0.5)
         flows = []
         for index, y in enumerate(ys):
-            for step in range(3):
+            for step in range(2):
                 private = (index + step) % 3 == 1
                 dot = Dot(radius=0.075, color=MUTED if private else GREEN).move_to(sources[index][0].get_right())
                 flows.append((dot, y, private))
-        animations = []
+        moves = []
         for dot, y, private in flows:
             if private:
-                animations.append(dot.animate(rate_func=OUT).move_to(RIGHT * (gate_x - 0.12) + UP * y).set_opacity(0))
+                moves.append(dot.animate(rate_func=OUT).move_to(RIGHT * (gate_x - 0.12) + UP * y).set_opacity(0))
             else:
-                animations.append(dot.animate(rate_func=EASE).move_to(RIGHT * bend_x + UP * y))
+                moves.append(dot.animate(rate_func=EASE).move_to(RIGHT * bend_x + UP * y))
         self.add(*[dot for dot, *_ in flows])
-        self.play(LaggedStart(*animations, lag_ratio=0.05), run_time=1.4)
+        self.play(LaggedStart(*moves, lag_ratio=0.05), run_time=self.left("f_sort", -0.5, minimum=0.4))
         passed = [dot for dot, _, private in flows if not private]
-        self.play(*[dot.animate.move_to(merge).set_opacity(0) for dot in passed], run_time=0.45)
+        self.play(*[dot.animate.move_to(merge).set_opacity(0) for dot in passed], run_time=0.3)
         self.remove(*[dot for dot, *_ in flows])
 
-        # one sort on a total order
+        # one sort, and a cursor
         column_x, bar_w, row_h, top_y = 1.2, 3.0, 0.52, 1.9
-        entries = [("22:05", "will_be_there"), ("22:05", "review"), ("21:58", "favorite_event"),
+        entries = [("22:05", "will_be_there"), ("22:05", "rated_been"), ("21:58", "favorite_event"),
                    ("21:40", "review_like"), ("21:12", "favorite_artist")]
 
         def bar(time_text, type_text, color=DIM):
@@ -720,33 +724,19 @@ class OndaExplainer(CueScene):
         for position, index in enumerate([2, 0, 4, 1, 3]):
             bars[index].move_to(row_at(position))
         list_left = column_x - bar_w / 2
-        arrow_out = Line(union.get_right(), RIGHT * (list_left - 0.1) + UP * 0.4, stroke_color=HAIR,
-                         stroke_width=2.5).add_tip(tip_length=0.14, tip_width=0.14)
+        arrow_out = arrow(union.get_right(), RIGHT * (list_left - 0.1) + UP * 0.4, color=HAIR, tip=0.14)
         sort_name = mono("ORDER BY time, type, key", size=17, color=INK).move_to(RIGHT * column_x + UP * (top_y + 0.62))
-        self.cue("sort", -0.2)
-        self.play(Create(arrow_out), LaggedStart(*[FadeIn(item, shift=RIGHT * 0.2) for item in bars], lag_ratio=0.08),
-                  FadeIn(sort_name), run_time=0.7)
-        self.play(*[bars[index].animate.move_to(row_at(index)) for index in range(5)], run_time=1.0, rate_func=EASE)
-        words = {"bytime": sort_name[7:11], "bytype": sort_name[12:16], "bykey": sort_name[17:20]}
-        columns = {"bytime": [item[1] for item in bars], "bytype": [item[2] for item in bars], "bykey": []}
-        for cue_name, word in words.items():
-            self.cue(cue_name, -0.05)
-            self.play(word.animate.set_color(AMBER),
-                      *[part.animate(rate_func=there_and_back).set_color(AMBER) for part in columns[cue_name]], run_time=0.4)
-        self.cue("total", -0.25)
-        tie = RoundedRectangle(width=bar_w + 0.2, height=row_h * 2 + 0.04, corner_radius=0.06, stroke_color=AMBER, stroke_width=3)
-        tie.move_to(RIGHT * column_x + UP * (top_y - row_h / 2))
-        tie_note = sans("same time: type decides", size=18, color=AMBER).move_to(RIGHT * column_x + UP * (top_y - 4 * row_h - 0.6))
-        self.play(Create(tie), FadeIn(tie_note), run_time=0.5)
+        self.cue("f_sort", -0.2)
+        self.play(Create(arrow_out), LaggedStart(*[FadeIn(item, shift=RIGHT * 0.2) for item in bars], lag_ratio=0.06),
+                  FadeIn(sort_name), run_time=0.45)
+        self.play(*[bars[index].animate.move_to(row_at(index)) for index in range(5)], run_time=0.7, rate_func=EASE)
 
-        # the cursor is the key of the last row of the page
-        self.cue("cursor", -0.2)
+        self.cue("f_cursor", -0.15)
         cut_y = top_y - 2.5 * row_h
         cursor = Line(RIGHT * (list_left - 0.08) + UP * cut_y, RIGHT * (list_left + bar_w + 0.08) + UP * cut_y,
                       stroke_color=AMBER, stroke_width=4)
         cursor_name = sans("cursor", size=18, color=AMBER).next_to(cursor, RIGHT, buff=0.12)
-        self.play(FadeOut(tie), FadeOut(tie_note), Create(cursor), FadeIn(cursor_name, shift=LEFT * 0.1),
-                  bars[2][0].animate.set_stroke(AMBER), sort_name.animate.set_color(INK), run_time=0.5)
+        self.play(Create(cursor), FadeIn(cursor_name, shift=LEFT * 0.1), bars[2][0].animate.set_stroke(AMBER), run_time=0.4)
 
         def card(text, detail=None):
             frame = RoundedRectangle(width=card_w, height=card_h, corner_radius=0.06, stroke_color=DIM, stroke_width=2,
@@ -756,90 +746,396 @@ class OndaExplainer(CueScene):
             extra.move_to(frame.get_left() + RIGHT * 0.16 + DOWN * 0.16, aligned_edge=LEFT)
             return VGroup(frame, line, extra)
 
-        cards = VGroup(card("Sam will be at", "Open Air"), card("Ana reviewed", "Late Shift"), card("Kai favorited", "Basement"))
+        cards = VGroup(card("Sam will be at", "Rooftop Session"), card("Maya rated"), card("Kai favorited", "Vinyl Room"))
+        cards[1][0].set_stroke(GREEN)
         for item, slot in zip(cards, slots):
             item.move_to(slot)
         movers = [bars[index].copy() for index in range(3)]
         self.add(*movers)
         self.play(*[mover.animate.move_to(item.get_center()).set_opacity(0) for mover, item in zip(movers, cards)],
                   LaggedStart(*[FadeIn(item) for item in cards], lag_ratio=0.12),
-                  FadeOut(skeleton[:3]), run_time=0.9, rate_func=EASE)
+                  FadeOut(skeleton[:3]), run_time=0.8, rate_func=EASE)
         self.remove(*movers)
 
-        # a new row: the key moves with its row, a position does not
-        self.cue("noshift", -0.3)
+        # new activity: the key moves with its row, a position does not
+        self.cue("f_shift", -0.3)
         route = [sources[2][0].get_right(), RIGHT * bend_x + UP * ys[2], merge]
         spark = packet(color=GREEN, radius=0.09).move_to(route[0])
         self.add(spark)
-        self.travel(spark, route, run_time=0.45)
-        self.play(spark.animate.move_to(row_at(0) + LEFT * (bar_w / 2)).set_opacity(0), run_time=0.25)
+        self.travel(spark, route, run_time=0.4)
+        self.play(spark.animate.move_to(row_at(0) + LEFT * (bar_w / 2)).set_opacity(0), run_time=0.2)
         self.remove(spark)
-        fresh = bar("22:09", "rated_been", color=GREEN).move_to(row_at(0))
+        fresh = bar("22:09", "review", color=BLUE).move_to(row_at(0))
         stale = DashedLine(cursor.get_start(), cursor.get_end(), dash_length=0.09, stroke_color=RED, stroke_width=3)
         stale_name = sans("offset 3", size=18, color=RED).move_to(cursor_name, aligned_edge=LEFT)
         self.play(VGroup(*bars, cursor, cursor_name).animate.shift(DOWN * row_h),
                   FadeIn(fresh, shift=DOWN * 0.2), FadeIn(stale), FadeIn(stale_name), run_time=0.7, rate_func=EASE)
 
-        # the rating is there on the next request
-        self.cue("appears", -0.2)
-        maya_card = card("Maya rated").move_to(slots[0])
-        maya_card[0].set_stroke(GREEN)
-        mover = fresh.copy()
-        self.play(*[item.animate.move_to(slots[index + 1]) for index, item in enumerate(cards)], FadeOut(skeleton[3]),
-                  run_time=0.5, rate_func=EASE)
-        self.add(mover)
-        self.play(mover.animate.move_to(slots[0]).set_opacity(0), FadeIn(maya_card), run_time=0.7, rate_func=EASE)
-        self.remove(mover)
-        focus = RoundedRectangle(width=card_w + 0.16, height=card_h + 0.16, corner_radius=0.09, stroke_color=GREEN, stroke_width=4)
-        focus.move_to(maya_card)
-        self.play(Create(focus), run_time=0.4)
+        # the measurement, and the limit
+        self.cue("f_bench", -0.5)
+        plumbing = VGroup(sources, streams, joins, gates, gate_name, union, one_query, arrow_out)
+        self.play(FadeOut(plumbing), run_time=0.35)
+        left = -6.55
+        bench_name = overline("measured  ·  2026-11-27", size=15).move_to(RIGHT * left + UP * 2.55, aligned_edge=LEFT)
+        load = sans("100,000 rows  ·  500 people  ·  50 followed", size=20).move_to(RIGHT * left + UP * 2.05, aligned_edge=LEFT)
+        self.cue("f_bench", -0.05)
+        self.play(FadeIn(bench_name), FadeIn(load, shift=UP * 0.08), run_time=0.4)
+        big = numeral("88", GREEN, size=118).move_to(RIGHT * left + UP * 0.85, aligned_edge=LEFT)
+        unit = sans("ms", size=40, color=GREEN).next_to(big, RIGHT, buff=0.18).align_to(big, DOWN)
+        kind = sans("p95 of page 1", size=21).next_to(unit, RIGHT, buff=0.4).align_to(big, UP).shift(DOWN * 0.08)
+        how = VGroup(sans("Django test client,", size=16, color=MUTED, weight="NORMAL"),
+                     sans("production middleware", size=16, color=MUTED, weight="NORMAL")).arrange(DOWN, buff=0.07, aligned_edge=LEFT)
+        how.next_to(kind, DOWN, buff=0.14, aligned_edge=LEFT)
+        self.cue("f_ms", -0.15)
+        self.play(FadeIn(big, shift=UP * 0.12), FadeIn(unit, shift=UP * 0.12), run_time=0.4, rate_func=OUT)
+        scale = 3.1 / 88
+        marks = VGroup()
+        for index, (name, value) in enumerate((("page 1", 87.6), ("page 50", 77.6))):
+            label = sans(name, size=18, color=MUTED, weight="NORMAL").move_to(RIGHT * left + DOWN * (0.45 + index * 0.5), aligned_edge=LEFT)
+            rod = Rectangle(width=value * scale, height=0.24, stroke_width=0, fill_color=GREEN, fill_opacity=0.75)
+            rod.move_to(RIGHT * (left + 1.15) + DOWN * (0.45 + index * 0.5), aligned_edge=LEFT)
+            number = mono(f"{value:.0f} ms", size=16).next_to(rod, RIGHT, buff=0.14)
+            marks.add(VGroup(label, rod, number))
+        self.play(FadeIn(kind), FadeIn(how), LaggedStart(*[FadeIn(mark, shift=RIGHT * 0.15) for mark in marks], lag_ratio=0.3), run_time=0.8)
+        deep = sans("a deep page costs the same", size=18, color=GREEN).next_to(marks, DOWN, buff=0.2, aligned_edge=LEFT)
+        self.play(FadeIn(deep), run_time=0.3)
 
-        self.cue("nocopy", -0.3)
-        rise = Line(union.get_right(), fresh[0].get_left() + LEFT * 0.06, stroke_color=GREEN,
-                    stroke_width=3.5).add_tip(tip_length=0.16, tip_width=0.16)
-        lit = VGroup(streams[2].copy().set_stroke(GREEN, width=3.5), joins[2].copy().set_stroke(GREEN, width=3.5), rise)
-        link = Line(fresh[0].get_right(), maya_card[0].get_left(), stroke_color=GREEN, stroke_width=3.5)
-        read_name = sans("read from the row.  no copy.", size=22, color=GREEN).move_to(LEFT * 2.6 + DOWN * 2.15)
-        self.play(sources[2][0].animate.set_stroke(GREEN), Create(lit, lag_ratio=1), run_time=0.7)
-        self.play(Create(link), FadeIn(read_name, shift=UP * 0.08), run_time=0.45)
-        self.until(self.cues["close1"] - 0.55)
+        self.cue("f_limit", -0.1)
+        limit_name = overline("the limit", size=15, color=AMBER).move_to(RIGHT * left + DOWN * 1.92, aligned_edge=LEFT)
+        limit = sans("page 1 sorts each visible row of the followees: 7,920 here", size=18, color=AMBER)
+        limit.next_to(limit_name, DOWN, buff=0.12, aligned_edge=LEFT)
+        self.play(FadeIn(limit_name), FadeIn(limit, shift=UP * 0.08), run_time=0.45)
+        self.cue("f_docs", -0.1)
+        change = sans("Decision 10: change it when Home is the slowest request", size=18)
+        change.next_to(limit, DOWN, buff=0.12, aligned_edge=LEFT)
+        self.play(FadeIn(change, shift=UP * 0.08), head[1].animate(rate_func=there_and_back).set_color(INK), run_time=0.6)
+        self.until(self.cues["v_next"] - 0.75)
+
+    # ---------------------------------------------------------------- vanish
+    def vanish(self):
+        self.clear_stage()
+        head = self.chapter("05", "the missing listing", "docs/INGESTION.md")
+
+        # the phone of Maya: a plan for a future night, and the diary of a past night
+        home, big = RIGHT * 5.75 + UP * 0.3, 1.5
+        device = phone(width=1.9, height=3.4).move_to(home)
+
+        def tile(y, name, height):
+            frame = RoundedRectangle(width=1.56, height=height, corner_radius=0.05, stroke_color=HAIR, stroke_width=2,
+                                     fill_color=PANEL, fill_opacity=1).move_to(home + UP * y)
+            return frame, sans(name, size=13).move_to(frame.get_top() + DOWN * 0.2)
+
+        plans = overline("plans", size=10).move_to(home + LEFT * 0.76 + UP * 1.24, aligned_edge=LEFT)
+        plan_frame, plan_name = tile(0.62, "Harbor Lights", 0.96)
+        plan_date = sans("Sat 19 Dec", size=11, color=MUTED, weight="NORMAL").next_to(plan_name, DOWN, buff=0.07)
+        pill_off = VGroup(RoundedRectangle(width=1.24, height=0.27, corner_radius=0.07, stroke_color=DIM, stroke_width=1.5),
+                          sans("Will be there", size=11, color=MUTED)).move_to(plan_frame.get_bottom() + UP * 0.22)
+        pill_on = VGroup(RoundedRectangle(width=1.24, height=0.27, corner_radius=0.07, stroke_color=GREEN, stroke_width=1.5,
+                                          fill_color=GREEN, fill_opacity=0.18),
+                         sans("Will be there", size=11, color=GREEN)).move_to(pill_off)
+        diary = overline("diary", size=10).move_to(home + LEFT * 0.76 + DOWN * 0.08, aligned_edge=LEFT)
+        night_frame, night_name = tile(-0.62, "Warehouse Night", 0.72)
+        night_stars = stars_row(radius=0.07, buff=0.03).move_to(night_frame.get_bottom() + UP * 0.2)
+        owner = sans("Maya", size=18, color=MUTED, weight="NORMAL").next_to(device, DOWN, buff=0.15)
+        fixed = [device, plans, plan_frame, plan_name, plan_date, diary, night_frame, night_name, night_stars]
+        VGroup(*fixed, pill_off, pill_on).scale(big).move_to(UP * 0.25)
+        self.play(FadeIn(head), FadeIn(VGroup(*fixed, pill_off), shift=UP * 0.12), run_time=0.3)
+
+        self.cue("v_next", 0.3)
+        ring = ripple_at(pill_off.get_center())
+        self.play(ring.animate.scale(3.0).set_stroke(opacity=0), run_time=0.35, rate_func=OUT)
+        self.remove(ring)
+        self.play(FadeOut(pill_off), FadeIn(pill_on), plan_frame.animate.set_stroke(GREEN), run_time=0.35)
+
+        # the source, the two layers, and the key between them
+        cloud = node("listing source", "not trusted", width=2.2, height=1.9, color=MUTED, dashed=True, title_size=20)
+        cloud.move_to(LEFT * 5.65 + UP * 1.2)
+        cloud[1].shift(UP * 0.35)
+        cloud[2].shift(UP * 0.35)
+        listing = chip("Harbor Lights", color=INK, size=15).move_to(cloud.get_center() + DOWN * 0.5)
+        trusted = panel("catalog", width=3.5, height=1.5, color=GREEN, title_color=GREEN).move_to(RIGHT * 2.2 + UP * 1.55)
+        people = panel("social", width=3.5, height=1.75, color=BLUE, title_color=BLUE).move_to(RIGHT * 2.2 + DOWN * 1.2)
+        table_name = mono("will_be_there", size=13, color=MUTED)
+        table_name.move_to(people[0].get_corner(UP + RIGHT) + LEFT * 0.2 + DOWN * 0.27, aligned_edge=RIGHT)
+
+        def status(text, stroke):
+            return table_row(["event 912", text], [1.5, 1.5], size=16, stroke=stroke).move_to(trusted[0].get_center() + DOWN * 0.22)
+
+        event_row = status("active", GREEN)
+        plan_row = table_row(["maya", "912"], [1.1, 0.9], size=16, stroke=BLUE)
+        plan_row.move_to(people[0].get_left() + RIGHT * 0.25 + DOWN * 0.42, aligned_edge=LEFT)
+        key = arrow(plan_row[1].get_top(), event_row[0].get_bottom() + RIGHT * 0.2, color=BLUE, width=3)
+        key_name = mono("FK RESTRICT", size=16, color=BLUE).move_to(RIGHT * 2.2 + UP * 0.55, aligned_edge=LEFT)
+        handset = VGroup(*fixed, pill_on)
+        self.until(self.cues["v_drop"] - 0.7)
+        self.play(handset.animate.scale(1 / big).move_to(home), run_time=0.5, rate_func=EASE)
+        self.play(FadeIn(VGroup(cloud, listing, trusted, people, table_name, event_row, plan_row, key, key_name, owner)), run_time=0.35)
+
+        self.cue("v_drop", 0.8)
+        gone = DashedVMobject(listing[0].copy().set_fill(opacity=0).set_stroke(DIM), num_dashes=26)
+        self.play(FadeOut(listing, shift=DOWN * 0.15), FadeIn(gone), run_time=0.5)
+
+        # is the show cancelled, or did the fetch fail?
+        left_x = -3.75
+        asks = VGroup(chip("show cancelled?", color=INK, size=17), chip("fetch failed?", color=INK, size=17))
+        asks[0].move_to(RIGHT * left_x + UP * 2.6, aligned_edge=LEFT)
+        asks[1].next_to(asks[0], RIGHT, buff=0.2)
+        self.cue("v_gone", -0.1)
+        self.play(FadeIn(asks[0], shift=UP * 0.08), run_time=0.35)
+        self.cue("v_fail", -0.1)
+        self.play(FadeIn(asks[1], shift=UP * 0.08), run_time=0.35)
+
+        # one snapshot each night
+        rows_y = [1.8, 1.25, 0.7, 0.15, -0.4]
+        kinds = ["miss", "partial", "miss", "miss", "seen"]
+        signs = {"miss": ("+1", AMBER), "partial": ("+0", MUTED), "seen": ("seen", GREEN)}
+        slot = 4
+        rows, marks = VGroup(), VGroup()
+        for index, (y, kind) in enumerate(zip(rows_y, kinds)):
+            name = sans(f"night {index + 1}", size=18, color=MUTED, weight="NORMAL")
+            name.move_to(RIGHT * left_x + UP * y, aligned_edge=LEFT)
+            cells = VGroup(*[Rectangle(width=0.2, height=0.28, stroke_color=MUTED, stroke_width=1.5,
+                                       fill_color=PANEL, fill_opacity=1) for _ in range(6)]).arrange(RIGHT, buff=0.05)
+            cells.move_to(RIGHT * (left_x + 0.95) + UP * y, aligned_edge=LEFT)
+            if kind == "partial":
+                cut = sans("partial", size=17, color=AMBER, weight="NORMAL")
+                cut.move_to(cells[3].get_left() + RIGHT * 0.06, aligned_edge=LEFT)
+                strip = VGroup(*cells[:3], cut)
+            elif kind == "miss":
+                hole = DashedVMobject(Rectangle(width=0.2, height=0.28, stroke_color=AMBER, stroke_width=2), num_dashes=10)
+                strip = VGroup(*[cell for number, cell in enumerate(cells) if number != slot], hole.move_to(cells[slot]))
+            else:
+                cells[slot].set_stroke(GREEN, width=2.5).set_fill(GREEN, opacity=0.55)
+                strip = VGroup(*[cell for number, cell in enumerate(cells) if number != slot], cells[slot])
+            rows.add(VGroup(name, strip))
+            text, color = signs[kind]
+            marks.add(mono(text, size=19, color=color).move_to(RIGHT * (left_x + 2.65) + UP * y, aligned_edge=LEFT))
+        counter_label = sans("misses", size=22, color=MUTED, weight="NORMAL").move_to(RIGHT * left_x + DOWN * 1.35, aligned_edge=LEFT)
+        digits = [numeral(text, color, size=58) for text, color in (("0", DIM), ("1", AMBER), ("2", AMBER), ("3", RED), ("0", GREEN))]
+        for digit in digits:
+            digit.next_to(counter_label, RIGHT, buff=0.3)
+        rule = sans("a miss needs a complete snapshot", size=17, color=GREEN).move_to(RIGHT * left_x + DOWN * 2.15, aligned_edge=LEFT)
+        unverified, hidden, active = status("unverified", AMBER), status("hidden", DIM), status("active", GREEN)
+        hidden[1][1].set_color(MUTED)
+        hidden[0][1].set_color(MUTED)
+
+        def count(old, new, *more, run_time=0.4):
+            self.play(FadeOut(digits[old], shift=UP * 0.15), FadeIn(digits[new], shift=UP * 0.15), *more, run_time=run_time)
+
+        self.cue("v_whole", -0.45)
+        self.play(FadeIn(counter_label), FadeIn(digits[0]), run_time=0.3)
+        self.cue("v_whole", -0.05)
+        self.play(FadeIn(rows[0], shift=UP * 0.1), run_time=0.25)
+        count(0, 1, FadeIn(marks[0], shift=RIGHT * 0.1), FadeOut(event_row), FadeIn(unverified))
+        self.cue("v_arrived", -0.1)
+        self.play(FadeIn(rows[1], shift=UP * 0.1), run_time=0.25)
+        self.play(FadeIn(marks[1], shift=RIGHT * 0.1), FadeIn(rule, shift=UP * 0.08), run_time=0.4)
+        self.until(self.cues["v_three"] - 0.95)
+        self.play(FadeIn(rows[2], shift=UP * 0.1), run_time=0.2)
+        count(1, 2, FadeIn(marks[2], shift=RIGHT * 0.1), run_time=0.3)
+        self.cue("v_three", -0.2)
+        self.play(FadeIn(rows[3], shift=UP * 0.1), run_time=0.2)
+        count(2, 3, FadeIn(marks[3], shift=RIGHT * 0.1), run_time=0.3)
+        plan_parts = VGroup(plan_frame, plan_name, plan_date, pill_on)
+        self.play(FadeOut(unverified), FadeIn(hidden), trusted[0].animate.set_stroke(DIM), plan_parts.animate.fade(0.7), run_time=0.5)
+
+        # one sight, and the event is back
+        self.cue("v_back", -0.15)
+        self.play(FadeOut(gone), FadeIn(listing, shift=UP * 0.15), FadeIn(rows[4], shift=UP * 0.1), run_time=0.35)
+        count(3, 4, FadeIn(marks[4], shift=RIGHT * 0.1), FadeOut(hidden), FadeIn(active), trusted[0].animate.set_stroke(GREEN),
+              plan_parts.animate.fade(-7 / 3), run_time=0.5)
+
+        self.cue("v_nodelete", -0.1)
+        kept = chip("0 rows deleted", color=GREEN, size=15, pad=0.12).move_to(RIGHT * 2.2 + UP * 0.1, aligned_edge=LEFT)
+        self.play(FadeIn(kept, shift=UP * 0.08), key.animate(rate_func=there_and_back).set_stroke(width=7),
+                  key_name.animate(rate_func=there_and_back).scale(1.15), run_time=0.6)
+
+        self.cue("v_keeps", -0.1)
+        glow = RoundedRectangle(width=1.68, height=0.84, corner_radius=0.08, stroke_color=GREEN, stroke_width=4).move_to(night_frame)
+        lock = padlock(size=0.17, color=GREEN).next_to(night_stars, RIGHT, buff=0.12)
+        scope = sans("the reconciler reads future events only", size=17, color=MUTED, weight="NORMAL")
+        scope.move_to(RIGHT * left_x + DOWN * 2.55, aligned_edge=LEFT)
+        self.play(Create(glow), FadeIn(lock, scale=1.3), FadeIn(scope, shift=UP * 0.08), run_time=0.6)
+        self.until(self.cues["p_if"] - 0.75)
+
+    # ------------------------------------------------------------------- ops
+    def ops(self):
+        self.clear_stage()
+        head = self.chapter("06", "operations", "infrastructure/README.md")
+        mid = 0.95                                   # the height of the main line
+        self.play(FadeIn(head), run_time=0.3)
+
+        ask_change = chip("a bad change?", color=RED, size=19).move_to(LEFT * 6.45 + UP * 2.75, aligned_edge=LEFT)
+        ask_dies = chip("the server dies?", color=RED, size=19).move_to(RIGHT * 4.25 + UP * 2.75, aligned_edge=LEFT)
+        commit = chip("9f3c2e1", color=INK, size=16, font="mono").move_to(LEFT * 5.87 + UP * mid)
+        commit_name = sans("commit", size=15, color=MUTED, weight="NORMAL").next_to(commit, UP, buff=0.12)
+        server = RoundedRectangle(width=3.0, height=2.6, corner_radius=0.15, stroke_color=DIM, stroke_width=2.5,
+                                  fill_color=PANEL, fill_opacity=0.6).move_to(RIGHT * 2.1 + UP * mid)
+        server_name = overline("one server", size=15)
+        server_name.move_to(server.get_corner(UP + LEFT) + RIGHT * 0.25 + DOWN * 0.3, aligned_edge=LEFT)
+
+        self.cue("p_if", -0.1)
+        self.play(FadeIn(ask_change, shift=UP * 0.08), FadeIn(VGroup(commit, commit_name), shift=RIGHT * 0.15), run_time=0.4)
+        self.play(commit[0].animate(rate_func=there_and_back).set_stroke(RED, width=4), run_time=0.6)
+        self.cue("p_dies", -0.1)
+        self.play(FadeIn(ask_dies, shift=UP * 0.08), FadeIn(VGroup(server, server_name)), run_time=0.4)
+        self.play(server.animate(rate_func=there_and_back).set_stroke(RED, width=4), run_time=0.6)
+
+        # five checks, side by side
+        checks = [("backend", "265 tests on MySQL"), ("frontend", "158 tests"), ("security", "Bandit, pip-audit"),
+                  ("containers", "Trivy, 3 images"), ("delivery", "deploy script test")]
+        ring_x, name_x, detail_x, bracket_x = -4.9, -4.63, -3.3, -1.45
+        rows, fan = VGroup(), VGroup()
+        for index, (name, detail) in enumerate(checks):
+            y = mid + (2 - index) * 0.46
+            ring = Circle(radius=0.12, stroke_color=DIM, stroke_width=2).move_to(RIGHT * ring_x + UP * y)
+            label = sans(name, size=16).move_to(RIGHT * name_x + UP * y, aligned_edge=LEFT)
+            small = sans(detail, size=13.5, color=MUTED, weight="NORMAL").move_to(RIGHT * detail_x + UP * y, aligned_edge=LEFT)
+            rows.add(VGroup(ring, label, small, tick(size=0.15, width=3).move_to(ring)))
+            fan.add(Line(commit.get_right() + RIGHT * 0.05, ring.get_left() + LEFT * 0.06, stroke_color=HAIR, stroke_width=2))
+        self.cue("p_checks", -0.25)
+        self.play(LaggedStart(*[Create(line) for line in fan], lag_ratio=0.1),
+                  LaggedStart(*[FadeIn(row[:3], shift=RIGHT * 0.12) for row in rows], lag_ratio=0.1), run_time=0.7)
+        self.play(LaggedStart(*[Create(row[3]) for row in rows], lag_ratio=0.3),
+                  LaggedStart(*[row[0].animate.set_stroke(GREEN) for row in rows], lag_ratio=0.3), run_time=1.3)
+
+        # only the tested commit goes to the server
+        bracket = Line(RIGHT * bracket_x + UP * (mid + 1.05), RIGHT * bracket_x + UP * (mid - 1.05), stroke_color=GREEN, stroke_width=2.5)
+        tested = chip("9f3c2e1", color=GREEN, size=16, font="mono").move_to(LEFT * 0.42 + UP * mid)
+        tested_name = sans("tested commit", size=15, color=GREEN, weight="NORMAL").next_to(tested, UP, buff=0.12)
+        into = arrow(RIGHT * bracket_x + UP * mid, tested.get_left() + LEFT * 0.04, color=GREEN, tip=0.12)
+        deploy = arrow(tested.get_right() + RIGHT * 0.04, server.get_left(), color=GREEN, tip=0.12)
+        steps = VGroup()
+        for index, text in enumerate(("backup, file tested", "fast-forward only", "migrate, start", "health check")):
+            item = VGroup(mono(str(index + 1), size=14, color=MUTED), sans(text, size=17, color=MUTED)).arrange(RIGHT, buff=0.18)
+            steps.add(item.move_to(server.get_left() + RIGHT * 0.3 + UP * (0.55 - index * 0.46), aligned_edge=LEFT))
+        self.cue("p_commit", -0.1)
+        self.play(Create(bracket), run_time=0.2)
+        self.play(Create(into), FadeIn(VGroup(tested, tested_name), shift=RIGHT * 0.1), run_time=0.35)
+        self.play(Create(deploy), FadeIn(steps), server.animate.set_stroke(INK), run_time=0.4)
+        self.cue("p_backup", -0.1)
+        self.play(steps[0].animate.set_color(INK), run_time=0.3)
+        self.play(steps[1].animate.set_color(INK), run_time=0.25)
+        self.play(steps[2].animate.set_color(INK), run_time=0.25)
+        self.cue("p_health", -0.05)
+        ok = tick(size=0.2).next_to(steps[3], RIGHT, buff=0.2)
+        self.play(steps[3].animate.set_color(INK), Create(ok), server.animate.set_stroke(GREEN), run_time=0.45)
+
+        # every day: an encrypted backup leaves the server
+        vault = node("backup bucket", "off the server, encrypted", width=2.5, height=0.95, title_size=19, sub_size=14)
+        vault.move_to(RIGHT * 5.5 + UP * (mid + 0.5))
+        daily = arrow(server.get_right() + UP * 0.5, vault.get_left(), tip=0.13)
+        daily_name = sans("daily", size=16).next_to(daily, UP, buff=0.1)
+        self.cue("p_daily", -0.1)
+        self.play(server.animate.set_stroke(INK), Create(daily), FadeIn(daily_name), FadeIn(vault, shift=LEFT * 0.1), run_time=0.5)
+        self.cue("p_leaves", -0.05)
+        days = VGroup(*[Rectangle(width=0.17, height=0.17, stroke_color=DIM, stroke_width=1.5, fill_color=MUTED, fill_opacity=0.25)
+                        for _ in range(30)]).arrange_in_grid(rows=3, cols=10, buff=0.06).move_to(RIGHT * 5.5 + UP * (mid - 0.5))
+        kept = sans("30 days kept", size=14, color=MUTED, weight="NORMAL").next_to(days, DOWN, buff=0.12)
+        cargo = padlock(size=0.22, color=GREEN).move_to(daily.get_start())
+        self.add(cargo)
+        self.play(cargo.animate.move_to(vault.get_left() + RIGHT * 0.05), run_time=0.45, rate_func=EASE)
+        self.play(FadeOut(cargo, scale=0.5), LaggedStart(*[FadeIn(day, scale=0.6) for day in days], lag_ratio=0.03),
+                  FadeIn(kept), run_time=0.9)
+        self.play(days[-1].animate.set_fill(GREEN, opacity=0.9).set_stroke(GREEN), run_time=0.3)
+
+        # every month: a restore into an empty database
+        empty = node("empty database", width=2.5, height=0.7, title_size=18).move_to(RIGHT * 5.5 + DOWN * 1.3)
+        monthly = arrow(RIGHT * 5.5 + UP * (kept.get_bottom()[1] - 0.08), empty.get_top(), tip=0.13)
+        monthly_name = sans("monthly", size=16).next_to(monthly, RIGHT, buff=0.14)
+        self.cue("p_month", -0.1)
+        self.play(Create(monthly), FadeIn(monthly_name), FadeIn(empty, shift=UP * 0.1), run_time=0.5)
+        copy = days[-1].copy()
+        self.add(copy)
+        self.play(copy.animate.move_to(empty.get_top() + DOWN * 0.1), run_time=0.5, rate_func=EASE)
+        self.play(FadeOut(copy, scale=0.5), empty[0].animate.set_stroke(GREEN), run_time=0.3)
+        self.cue("p_hope", -0.1)
+        proof = VGroup(tick(size=0.18), sans("each table checked", size=15, color=GREEN)).arrange(RIGHT, buff=0.12)
+        proof.next_to(empty, DOWN, buff=0.16)
+        self.play(FadeIn(proof, shift=UP * 0.08), run_time=0.4)
+
+        # the limit, in plain words
+        left = -6.45
+        limit_name = overline("the limit", size=15, color=AMBER).move_to(RIGHT * left + DOWN * 1.12, aligned_edge=LEFT)
+        lines = [sans("one server is a single point of failure", size=18, color=AMBER),
+                 sans("the writes after the last backup can be lost", size=18, color=AMBER),
+                 sans("for now, the cost stays in proportion to the load", size=18, color=GREEN),
+                 sans("Decision 15: change it when one hour of downtime has a real cost", size=18)]
+        for index, line in enumerate(lines):
+            line.move_to(RIGHT * left + DOWN * (1.5 + index * 0.38), aligned_edge=LEFT)
+        self.cue("p_one", -0.1)
+        self.play(FadeIn(limit_name), FadeIn(lines[0], shift=UP * 0.08), server.animate.set_stroke(AMBER),
+                  server_name.animate.set_color(AMBER), run_time=0.45)
+        self.cue("p_day", -0.1)
+        self.play(FadeIn(lines[1], shift=UP * 0.08), daily_name.animate.set_color(AMBER), daily.animate.set_color(AMBER), run_time=0.45)
+        self.cue("p_price", -0.1)
+        self.play(FadeIn(lines[2], shift=UP * 0.08), run_time=0.45)
+        self.cue("p_when", -0.1)
+        self.play(FadeIn(lines[3], shift=UP * 0.08), head[1].animate(rate_func=there_and_back).set_color(INK), run_time=0.6)
+        self.until(self.cues["z_trust"] - 0.75)
 
     # ----------------------------------------------------------------- close
     def close(self):
         self.clear_stage()
-        words = ["One tap.", "One row.", "Three layers.", "No copies."]
-        cues = ["close1", "close2", "close3", "close4"]
-        stack = Stack(origin=(0, 0, 0), width=1.5, depth=0.85, skew=0.5, rise=0.36, gap=0.42)
-        table = VGroup(*[Rectangle(width=1.7, height=0.3, stroke_color=MUTED, stroke_width=2) for _ in range(3)]).arrange(DOWN, buff=0)
-        icons = [
-            stars_row(radius=0.2, buff=0.07),
-            table_row(["maya", "847", "4.5"], [1.0, 0.78, 0.78], height=0.5, size=17, stroke=GREEN),
-            VGroup(*[stack.plane(level, color=color, fill=color, opacity=0.28)
-                     for level, color in ((0, MUTED), (1, GREEN), (2, BLUE))]),
-            VGroup(table, Cross(table, stroke_color=RED, stroke_width=4, scale_factor=0.85)),
-        ]
-        texts = VGroup(*[sans(word, size=34) for word in words]).arrange(RIGHT, buff=0.95).move_to(DOWN * 0.25)
-        for text in texts:                       # put the first capital letter of each word on one line
-            text.shift(UP * (texts[0][0].get_bottom()[1] - text[0].get_bottom()[1]))
-        columns = VGroup()
-        for text, icon in zip(texts, icons):
-            icon.move_to(text.get_center() + UP * 1.3)
-            columns.add(VGroup(icon, text))
-        for cue_name, column in zip(cues, columns):
-            self.cue(cue_name, -0.1)
-            self.play(FadeIn(column, shift=UP * 0.15), run_time=0.4, rate_func=OUT)
+        head = overline("onda  ·  system design", size=17).move_to(TOP_LEFT, aligned_edge=LEFT)
+        system = SystemMap()
+        system.dim_all()
+        picture = system.everything()
+        picture.scale(0.6).move_to(RIGHT * 2.8 + UP * 0.35)
+        self.play(FadeIn(head), FadeIn(picture), run_time=0.35)
 
-        self.cue("onda", -0.45)
-        self.play(FadeOut(columns, shift=UP * 0.2), run_time=0.35)
-        wordmark = display("onda", size=150).move_to(UP * 0.95)
-        site = sans("ondaapp.io", size=30).next_to(wordmark, DOWN, buff=0.35)
-        repo = mono("github.com/tanbaydar/onda", size=20, color=MUTED).next_to(site, DOWN, buff=0.22)
-        author = sans("Designed and built by Tan Baydar", size=21, color=INK).move_to(DOWN * 2.05)
-        made = sans("Animation: Manim   ·   Voice: ElevenLabs   ·   Made with Claude Code", size=17, color=MUTED,
-                    weight="NORMAL").next_to(author, DOWN, buff=0.2)
-        self.play(Write(wordmark), run_time=1.0)
-        self.play(FadeIn(site, shift=UP * 0.1), FadeIn(repo, shift=UP * 0.1), run_time=0.45)
-        self.play(FadeIn(author), FadeIn(made), run_time=0.5)
+        # four rules, and the part of the system that each rule made
+        left = -6.45
+        rules = [
+            ("z_trust", "Trust nothing from outside", "the catalog, the missing listing", ["night"]),
+            ("z_atomic", "Keep every write atomic", "one transaction, one row lock, the schema",
+             ["api", "a_rw", "social", "a_keys", "catalog"]),
+            ("z_derive", "Derive instead of copying", "the feed is a query, the status is a count", ["request"]),
+            ("z_prove", "Prove what you run", "five checks, a restore test, a benchmark", ["ops"]),
+        ]
+        for index, (name, text, where, regions) in enumerate(rules):
+            y = 2.05 - index * 1.05
+            number = numeral(str(index + 1), AMBER, size=36).move_to(RIGHT * left + UP * y, aligned_edge=LEFT)
+            phrase = sans(text, size=25).move_to(RIGHT * (left + 0.55) + UP * (y + 0.12), aligned_edge=LEFT)
+            small = sans(where, size=15, color=MUTED, weight="NORMAL")
+            small.move_to(RIGHT * (left + 0.55) + UP * (y - 0.26), aligned_edge=LEFT)
+            self.cue(name, -0.1)
+            self.play(FadeIn(number), FadeIn(phrase, shift=RIGHT * 0.1), FadeIn(small, shift=RIGHT * 0.1),
+                      *system.spot(*regions), run_time=0.5)
+
+        # sixteen decisions
+        self.cue("z_repo", -0.45)
+        self.play(FadeOut(picture), run_time=0.3)
+        cells = VGroup()
+        for index in range(16):
+            box = RoundedRectangle(width=0.8, height=0.8, corner_radius=0.08, stroke_color=DIM, stroke_width=2,
+                                   fill_color=PANEL, fill_opacity=1)
+            cells.add(VGroup(box, display(str(index + 1), size=26).move_to(box)))
+        cells.arrange_in_grid(rows=2, cols=8, buff=0.15).move_to(RIGHT * 2.9 + UP * 1.2)
+        grid_name = overline("16 decisions", size=16, color=INK).next_to(cells, UP, buff=0.25).align_to(cells, LEFT)
+        self.play(LaggedStart(*[FadeIn(cell, scale=0.8) for cell in cells], lag_ratio=0.04), FadeIn(grid_name), run_time=0.7)
+        anatomy = VGroup(*[chip(text, size=17, color=color) for text, color in
+                           (("problem", INK), ("options", INK), ("decision", GREEN), ("cost", AMBER), ("change it when", AMBER))])
+        anatomy.arrange(RIGHT, buff=0.16).next_to(cells, DOWN, buff=0.4).align_to(cells, LEFT)
+        self.cue("z_repo", 1.1)
+        self.play(LaggedStart(*[FadeIn(item, shift=UP * 0.08) for item in anatomy], lag_ratio=0.12),
+                  cells[9][0].animate.set_stroke(AMBER), cells[14][0].animate.set_stroke(AMBER), run_time=0.8)
+        self.cue("z_in", -0.1)
+        where = mono("github.com/tanbaydar/onda", size=22).next_to(anatomy, DOWN, buff=0.5).align_to(cells, LEFT)
+        record = mono("docs/DECISIONS.md", size=18, color=MUTED).next_to(where, DOWN, buff=0.16, aligned_edge=LEFT)
+        self.play(FadeIn(where, shift=UP * 0.08), FadeIn(record, shift=UP * 0.08), run_time=0.45)
+
+        # the end card
+        self.cue("z_thanks", -0.45)
+        self.play(*[FadeOut(item) for item in self.mobjects], run_time=0.3)
+        wordmark = display("onda", size=112).move_to(UP * 1.5)
+        by = sans("Designed, built and operated by Tan Baydar", size=28).next_to(wordmark, DOWN, buff=0.55)
+        live = VGroup(Dot(radius=0.07, color=GREEN), mono("ondaapp.io", size=21, color=GREEN)).arrange(RIGHT, buff=0.14)
+        links = VGroup(live, mono("github.com/tanbaydar/onda", size=21)).arrange(RIGHT, buff=0.8).next_to(by, DOWN, buff=0.5)
+        credit = sans("Each scene of this video is code. Animation: Manim. Voice: ElevenLabs. Made with Claude Code.",
+                      size=15, color=MUTED, weight="NORMAL").move_to(DOWN * 2.5)
+        self.play(FadeIn(wordmark, shift=UP * 0.1), run_time=0.4)
+        self.play(FadeIn(by, shift=UP * 0.08), FadeIn(links, shift=UP * 0.08), FadeIn(credit), run_time=0.5)
 
 
 class Poster(CueScene):
@@ -848,40 +1144,18 @@ class Poster(CueScene):
     def construct(self):
         minutes, seconds = divmod(round(self.total), 60)
         left = -6.3
-        label = overline("onda  ·  how it works", size=20).move_to(RIGHT * left + UP * 3.05, aligned_edge=LEFT)
-        title = VGroup(display("One tap,", size=96), display("end to end.", size=96)).arrange(DOWN, buff=0.28, aligned_edge=LEFT)
-        title.move_to(RIGHT * left + UP * 1.2, aligned_edge=LEFT)
-        lead = VGroup(
-            sans("A contract, a lock, three layers,", size=28, color=MUTED, weight="NORMAL"),
-            sans("and a feed with no copy.", size=28, color=MUTED, weight="NORMAL"),
-        ).arrange(DOWN, buff=0.16, aligned_edge=LEFT).next_to(title, DOWN, buff=0.55, aligned_edge=LEFT)
+        label = overline("onda  ·  system design", size=20).move_to(RIGHT * left + UP * 3.1, aligned_edge=LEFT)
+        title = display("One night, end to end.", size=76).move_to(RIGHT * left + UP * 2.1, aligned_edge=LEFT)
+        lead = sans("A source that is not trusted, a write, a feed with no copy, and a tested backup.",
+                    size=24, color=MUTED, weight="NORMAL").move_to(RIGHT * left + UP * 1.2, aligned_edge=LEFT)
         ring = Circle(radius=0.52, stroke_color=GREEN, stroke_width=5, fill_color=GREEN, fill_opacity=0.14)
-        arrow = Polygon(LEFT * 0.16 + UP * 0.25, LEFT * 0.16 + DOWN * 0.25, RIGHT * 0.3, stroke_width=0,
-                        fill_color=GREEN, fill_opacity=1).move_to(ring.get_center() + RIGHT * 0.04)
-        button = VGroup(ring, arrow).move_to(RIGHT * (left + 0.52) + DOWN * 2.55)
-        watch = sans("Watch the video", size=30).next_to(button, RIGHT, buff=0.35).shift(UP * 0.2)
-        length = sans(f"{minutes} min {seconds} s  ·  with subtitles", size=22, color=MUTED, weight="NORMAL")
+        play = Polygon(LEFT * 0.16 + UP * 0.25, LEFT * 0.16 + DOWN * 0.25, RIGHT * 0.3, stroke_width=0,
+                       fill_color=GREEN, fill_opacity=1).move_to(ring.get_center() + RIGHT * 0.04)
+        button = VGroup(ring, play).move_to(RIGHT * (left + 0.52) + DOWN * 1.2)
+        watch = sans("Watch the video", size=30).next_to(button, DOWN, buff=0.4).align_to(button, LEFT)
+        length = sans(f"{minutes} min {seconds} s  ·  with subtitles", size=21, color=MUTED, weight="NORMAL")
         length.next_to(watch, DOWN, buff=0.14, aligned_edge=LEFT)
-
-        stack = Stack(origin=(1.05, -2.5, 0), width=4.0, depth=2.3, skew=0.6, rise=0.42, gap=1.8)
-        colors = [MUTED, GREEN, BLUE]
-        names = ["evidence", "catalog", "social"]
-        planes = VGroup(*[stack.plane(level, color=colors[level], fill=PANEL, opacity=0.92) for level in range(3)])
-        tags = VGroup(*[
-            overline(names[level], size=15, color=colors[level]).move_to(stack.point(0.3, 1.82, level), aligned_edge=LEFT)
-            for level in range(3)
-        ])
-        pages = VGroup(*[stack.tile(0.3 + index * 0.92, 0.45, 0, w=0.7, d=0.75, color=RED if index == 2 else MUTED, fill=PANEL)
-                         for index in range(4)])
-        rows = VGroup(*[stack.tile(0.3 + index * 0.55, 0.45, 1, w=0.42, d=0.75, color=GREEN, fill=GREEN, opacity=0.14)
-                        for index in range(3)])
-        event_u, event_w = 2.1, 1.0
-        event_tile = stack.tile(event_u, 0.45, 1, w=event_w, d=0.75, color=GREEN, fill=GREEN, opacity=0.3)
-        event_name = mono("847", size=19).move_to(event_tile)
-        maya_u, maya_w = 1.75, 1.9
-        maya = stack.tile(maya_u, 0.45, 2, w=maya_w, d=0.75, color=BLUE, fill=BLUE, opacity=0.25)
-        maya_name = mono("maya 4.5", size=19).move_to(maya)
-        key = Line(stack.point(maya_u + maya_w / 2, 0.45, 2), stack.point(event_u + event_w / 2, 1.2, 1),
-                   stroke_color=INK, stroke_width=3).add_tip(tip_length=0.2, tip_width=0.2)
-        self.add(label, title, lead, button, watch, length, planes, tags, pages, rows, event_tile, event_name,
-                 maya, maya_name, key)
+        system = SystemMap()
+        picture = system.everything()
+        picture.scale(0.62).move_to(RIGHT * 2.55 + DOWN * 1.3)
+        self.add(label, title, lead, button, watch, length, picture)
