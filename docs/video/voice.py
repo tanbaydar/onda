@@ -35,6 +35,7 @@ ASSETS = HERE.parent / "assets" / "video"
 MARK = re.compile(r"\{(\w+)\}|\{\+([0-9.]+)\}|\|")   # a cue, a pause in seconds, or a subtitle bar
 API = "https://api.elevenlabs.io/v1/text-to-speech/{voice}/with-timestamps?output_format=mp3_44100_192"
 MAX_SUBTITLE = 48          # characters in one subtitle line
+FADE = 0.012               # seconds of fade on each side of a pause cut
 
 
 def plain(text: str) -> str:
@@ -73,6 +74,17 @@ def duration(path: Path) -> float:
         capture_output=True, text=True, check=True,
     )
     return float(out.stdout.strip())
+
+
+def quiet_parts(path: Path) -> list[tuple[float, float]]:
+    """Return each part of a sound file that has no voice, as (start, end) in seconds."""
+    out = subprocess.run(
+        ["ffmpeg", "-v", "info", "-i", str(path), "-af", "silencedetect=noise=-36dB:d=0.12", "-f", "null", "-"],
+        capture_output=True, text=True, check=True,
+    ).stderr
+    begins = [float(value) for value in re.findall(r"silence_start: ([0-9.]+)", out)]
+    finishes = [float(value) for value in re.findall(r"silence_end: ([0-9.]+)", out)]
+    return list(zip(begins, finishes))
 
 
 def stamp(seconds: float, separator: str) -> str:
@@ -118,13 +130,19 @@ def main() -> None:
         pauses = [(position, seconds) for position, seconds in pauses if position < len(starts)]
         extra = [sum(seconds for position, seconds in pauses if position <= number)
                  for number in range(len(starts))]
+        # The service gives the start of a word well, but it adds the pause before the word to the end
+        # of the word before it. Thus the cut goes to the middle of the quiet part that the sound has
+        # before the word, and not to a time between the two words.
+        quiet = [(first / TEMPO, last / TEMPO) for first, last in quiet_parts(BUILD / f"segment-{segment_id}.mp3")]
         cuts = []                                      # (time in the segment, seconds of silence)
         for position, seconds in pauses:
-            previous = position - 1
-            while previous >= 0 and texts[index][previous] == " ":
-                previous -= 1
-            cut = 0.0 if previous < 0 else (ends[previous] + starts[position]) / 2
-            cuts.append((cut, seconds))
+            word = starts[position]
+            near = [(first, last) for first, last in quiet if first < word + 0.05 and last > word - 0.9]
+            if not near:
+                sys.exit(f"No quiet part before the pause at character {position} of {segment_id}. "
+                         "Put the pause mark after the end of a sentence.")
+            first, last = min(near, key=lambda part: abs(part[1] - word))
+            cuts.append(((first + last) / 2, seconds))
         silence = sum(seconds for _, seconds in cuts)
 
         # second pass: the cues and the subtitles
@@ -181,8 +199,13 @@ def main() -> None:
         filters.append(f"[{number}:a]rubberband=tempo={TEMPO},asplit={len(pieces)}{taps}")
         for piece, (first, last, start) in enumerate(pieces):
             name = f"[a{number}_{piece}]"
+            fades = ""
+            if piece > 0:
+                fades += f"afade=t=in:d={FADE},"
+            if piece < len(pieces) - 1:
+                fades += f"afade=t=out:st={last - first - FADE:.4f}:d={FADE},"
             filters.append(f"[t{number}_{piece}]atrim=start={first:.4f}:end={last:.4f},asetpts=PTS-STARTPTS,"
-                           f"adelay={round(start * 1000)}:all=1{name}")
+                           f"{fades}adelay={round(start * 1000)}:all=1{name}")
             names.append(name)
     filters.append(f"{''.join(names)}amix=inputs={len(names)}:normalize=0,apad=whole_dur={total},"
                    f"loudnorm=I=-16:TP=-1.5:LRA=11,aresample=48000[out]")

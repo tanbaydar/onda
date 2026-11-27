@@ -89,6 +89,7 @@ Some pictures have much text. A pause mark gives the picture more time, and the 
 ```
 
 `{+0.8}` adds 0.8 seconds of silence before the word that follows it.
+The script finds the quiet part that the sound has before that word, and it cuts in the middle of that part.
 The script moves each later cue by the same time. Thus the picture stays with the voice.
 
 ### The check
