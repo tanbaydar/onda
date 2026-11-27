@@ -172,6 +172,8 @@ jobs:
             infrastructure/tests/fixtures/scripts/*.sh
       - name: Exercise guarded deployment paths
         run: infrastructure/tests/deploy_test.sh
+      - name: Exercise schedule installation
+        run: infrastructure/tests/install_operations_test.sh
       - name: Validate production Compose configuration
         env:
           DJANGO_SECRET_KEY: ci-compose-secret-key

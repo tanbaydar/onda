@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Record the command and do not run it. A test must not change the machine
+# that runs it.
+printf 'sudo %s\n' "$*" >>"${ONDA_TEST_LOG:?}"

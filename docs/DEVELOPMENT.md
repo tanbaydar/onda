@@ -125,6 +125,7 @@ A new database has no events.
 | Frontend build | `frontend/` | `npm run build` | 95 modules |
 | Docs | Root | `python3 docs/tools/check_docs.py` | 0 errors |
 | Deploy script | Root | `infrastructure/tests/deploy_test.sh` | Runs in CI |
+| Schedule installer | Root | `infrastructure/tests/install_operations_test.sh` | Runs in CI |
 
 - The backend tests create the database `test_<name>`. The MySQL account must have the permission to create it.
 - CI runs the same commands. It adds Bandit, pip-audit, `npm audit`, Trivy scans and a production settings check.

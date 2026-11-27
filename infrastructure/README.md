@@ -39,7 +39,7 @@ Each image and each CI action uses a fixed digest.
 | `frontend` | Tests, production build, `npm audit` |
 | `security` | Bandit on the source, pip-audit on the packages |
 | `container-security` | Trivy on the repository and on the three production images |
-| `delivery-safety` | ShellCheck, a test of the deploy script, and a check of the Compose file |
+| `delivery-safety` | ShellCheck, a test of the deploy script, a test of the schedule installer, and a check of the Compose file |
 
 - A pull request and a manual run do the checks. They do not deploy.
 - Deploys go one at a time. A new push does not cancel a deploy in the middle.

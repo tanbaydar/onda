@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# The file that ONDA_TEST_CRONTAB names is the table. Like the real command,
+# "-l" fails while the user has no table.
+table="${ONDA_TEST_CRONTAB:?}"
+
+case "${1:-}" in
+  -l)
+    if [[ ! -f "$table" ]]; then
+      echo "no crontab for the test user" >&2
+      exit 1
+    fi
+    cat "$table"
+    ;;
+  "" | -*)
+    echo "Unexpected crontab command: $*" >&2
+    exit 1
+    ;;
+  *)
+    cp "$1" "$table"
+    ;;
+esac
