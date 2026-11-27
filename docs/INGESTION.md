@@ -1,335 +1,192 @@
-# Event ingestion: from external observations to trusted catalog state
+[Onda](../README.md) / [Documentation](README.md) / Ingestion
 
-This is the part of Onda where uncertainty is handled. It explains the implemented path from a provider response to a canonical event, including the conditions under which Onda refuses to change existing truth.
+# Ingestion: trust at a network boundary
 
-## Why this pipeline exists
+> **For** engineers who want the full design of the nightly path. **Read time** 8 minutes.
 
-Onda borrows the useful shape of social diaries such as Beli and Letterboxd: the object being discussed needs a stable catalog identity before users can rate it, review it, or share it. The live-music domain has a different data constraint. [Letterboxd documents that TMDB supplies its film metadata](https://letterboxd.com/about/film-data/); I did not find an equivalent source that was simultaneously centralized, authoritative, complete, and suitable for Onda's event needs.
+Onda builds its catalog from event listings on a website that it does not control.
+This page shows how a listing becomes a catalog event, and when Onda refuses to change the catalog.
 
-Resident Advisor was the closest source I found for the first version. Its listings still have the properties that make direct product coupling unsafe:
+## In brief
 
-- events change or disappear;
-- pagination can be partial;
-- provider IDs belong to the provider, not to Onda;
-- individual records can be incomplete even when the page request succeeds;
-- the endpoint is an observed web contract, not an Onda-owned API contract;
-- a future source may describe the same city, venue, artist, or event differently.
+- The request path does not use the source. Only a scheduled command does.
+- Onda stores each response before it parses the response.
+- Each listing is one transaction. A bad listing gives a rejection record and no other change.
+- A source ID maps to an Onda ID. Thus a replay does not make duplicates.
+- An absent event is a miss only in a complete snapshot. Three misses hide a future event. Nothing deletes it.
 
-The resulting architecture is best described as an **anti-corruption layer with a source-neutral canonical model**. The adapter absorbs provider-specific structure. Identity tables translate provider IDs. Only validated canonical entities cross into product code.
+## Why the source gets this care
 
-Onda is not itself a distributed service topology, but acquisition crosses a real distributed boundary that Onda does not control. The timeout, retry, idempotency, partial-failure, concurrency, and reconciliation rules below are the measures used to keep that boundary from corrupting local state.
+Letterboxd, a film diary, gets its film data from one database, [TMDB](https://letterboxd.com/about/film-data/).
+Live music has no equivalent: no one source is complete and has authority.
+Resident Advisor was the best source that I found for the first version.
+Its listings have five properties that make a direct connection to the product unsafe:
 
-That wording is intentionally narrower than “source-independent”:
+- An event can change or disappear.
+- A request for one page can fail, and the other pages can be successful.
+- The IDs belong to the source.
+- A listing can be successful as a response and incomplete as an event.
+- The interface is a web interface. It is not a contract with Onda.
 
-| Statement | True today? | Meaning |
-|---|---:|---|
-| Product tables do not contain RA IDs | Yes | Provider identity terminates at mapping tables. |
-| Product requests parse RA payloads | No | Ingestion is outside the synchronous request path. |
-| A new provider can target the same canonical model | Yes, by design | The seam exists and is tested through current contracts. |
-| A second provider adapter exists | No | v1 has one implemented source. |
-| Coverage survives the loss of RA today | No | Existing data remains readable, but catalog updates stop. |
-| Replacing the source is configuration-only | No | It requires an adapter and real entity-mapping work. |
+## One run
 
-## The trust boundary
+![The client fetches a page and Onda stores the response before it parses it. Each listing goes through its own transaction. After the last page, Onda counts misses only if the snapshot is complete.](assets/figures/ingestion-pipeline.svg)
 
-```mermaid
-flowchart LR
-    subgraph Provider[Provider-shaped zone]
-        Request[RA request contract]
-        Response[Listing response]
-    end
+1. A host schedule starts the command `manage.py sync_ra` each night.
+2. The runner takes the advisory lock `onda_sync_ra`. If a different run has the lock, the command stops with exit code 2 and writes nothing.
+3. For each seed, the client fetches the listings of the next 30 days. It gets 20 listings for each page, one page at a time.
+4. The runner stores each result in `RAW_INGEST` with the status `pending`.
+5. The transformer processes each `pending` row. This includes rows from an earlier run that stopped.
+6. For each seed, the runner tests the completeness conditions. If they pass in a nightly run, the reconciler counts the misses.
+7. The runner writes the counters to `SYNC_RUN` and releases the lock.
 
-    subgraph Evidence[Acquisition evidence]
-        Seed[(TRACKED_SOURCE_PAGE)]
-        Run[(SYNC_RUN)]
-        Raw[(RAW_INGEST)]
-        Reject[(REJECTED_INGEST)]
-    end
+The command stops with exit code 1 if a seed failed or if the run admitted no listing.
+Thus the schedule log shows a bad run without a read of the database.
 
-    subgraph Boundary[Anti-corruption layer]
-        Client[RA client]
-        Validate[Envelope + observation validation]
-        DTO[Source-normalized EventDTO]
-        Identity[Provider identity resolution]
-    end
+## Rule 1. Store first
 
-    subgraph Canonical[Source-neutral product catalog]
-        City[(CITY)]
-        Venue[(VENUE)]
-        Event[(EVENT)]
-        Artist[(ARTIST)]
-        Lineup[(EVENT_ARTIST)]
-    end
+A row in `RAW_INGEST` has the seed, the run, the date window, the page number, the body, the HTTP status and the fetch time.
 
-    Seed --> Client --> Request --> Response
-    Response --> Raw
-    Run --> Raw
-    Raw --> Validate
-    Validate -->|invalid observation| Reject
-    Validate -->|valid observation| DTO --> Identity
-    Identity --> City
-    Identity --> Venue
-    Identity --> Event
-    Identity --> Artist
-    Event --> Lineup
-    Artist --> Lineup
-```
+- A transport failure is evidence too. Its row has no status code and no body.
+- A body that is not JSON stays as it arrived. The row gets the status `failed`. The column type is text, not JSON, for this reason.
+- The foreign keys to the seed and to the run use `RESTRICT`. A delete of a parent row cannot remove evidence.
 
-The Transformer is the only code bridge between provider-shaped evidence and canonical state. Application tables refer to canonical IDs; they never refer to `RAW_INGEST`, a tracked provider page, or an RA identifier.
+The transformer reads only stored rows. Thus the same code path does the first pass and each replay.
 
-## One synchronization run
+## Rule 2. One listing, one transaction
 
-The scheduled entry point is the Django management command `manage.py sync_ra`. In production it runs nightly. The command delegates all acquisition decisions to the runner and exits nonzero when the run crashes, any configured city seed fails, or the run admits zero observations.
+For each listing on a page, the transformer does these steps:
 
-```mermaid
-sequenceDiagram
-    participant Cron as Scheduler
-    participant Run as sync_ra runner
-    participant RA as Source
-    participant Raw as RAW_INGEST
-    participant Tx as Transformer
-    participant Cat as Canonical catalog
+1. It records the source ID as "seen", before admission.
+2. It validates the title, the date, the venue, the artists and the IDs.
+3. It opens a transaction.
+4. It finds or creates the venue, the artists, the event, the identity rows and the ordered lineup.
+5. It commits all rows. If a step fails, it rolls back all rows.
+6. After a rollback, it writes one rejection record with the reason.
 
-    Cron->>Run: start nightly sync
-    Run->>Run: acquire MySQL advisory lock
-    alt another sync owns the lock
-        Run-->>Cron: refuse immediately and create no run
-    else lock acquired
-        Run->>Raw: create running SYNC_RUN
-        loop each active mapped city, then each page
-            Run->>RA: bounded sequential fetch
-            RA-->>Run: terminal result
-            Run->>Raw: archive before validation
-        end
-        loop each pending raw row
-            Run->>Tx: transform
-            alt observation valid
-                Tx->>Cat: atomic idempotent upsert
-            else observation invalid
-                Tx->>Raw: record quarantine after rollback
-            end
-        end
-        alt current seed proven complete
-            Run->>Cat: reconcile presence and absence
-        else incomplete
-            Run->>Run: do not infer absence
-        end
-        Run->>Raw: persist counters, status, error summary
-        Run->>Run: release lock in finally
-    end
-```
-
-### Acquisition controls
-
-| Control | Implemented behavior | Why it exists |
-|---|---|---|
-| Mutual exclusion | Non-blocking MySQL advisory lock `onda_sync_ra` | Two schedulers cannot race canonical updates or absence counters. |
-| Scope | Each active tracked page must map to a canonical city before any request | Unknown provider areas cannot silently create cities. |
-| Window | Nightly default runs from the runner's current date through 30 days ahead | Work and reconciliation scope are explicit. |
-| Pagination | Page size 20; pages fetched sequentially | Avoids burst concurrency and makes coverage accounting deterministic. |
-| Pacing | 1.5 seconds between page fetches | Bounds request frequency at the adapter. |
-| Timeout | 20 seconds per attempt | A stalled source cannot hang the run indefinitely. |
-| Retry ceiling | At most 3 attempts | Transient recovery remains finite. |
-| Retry statuses | 408, 429, 500, 502, 503, 504 | Only expected transient classes retry. |
-| Backoff | Honors `Retry-After`; otherwise full jitter from zero to an exponential ceiling (1 second after attempt 1, 2 seconds after attempt 2; implementation cap 8 seconds) | Responds to throttling without synchronized retry bursts. |
-| Run budget | 1,000 request attempts, including retries | A pagination anomaly cannot produce unbounded traffic. |
-| Network boundary | One fixed HTTPS endpoint; redirects must retain the exact origin | The adapter cannot be redirected to another host or a cloud metadata address. |
-| Response ceiling | 2 MiB per response | A malfunctioning source cannot force an unbounded in-memory read. |
-| Archive budget | 100 MiB of encoded response bodies per run | A run stops before an anomalous source can fill database storage. |
-
-The v1 adapter calls a publicly reachable, unauthenticated Resident Advisor GraphQL listing endpoint using a captured request shape. It uses no account credentials, cookies, CAPTCHA bypass, challenge circumvention, or per-user requests.
-
-## Evidence is stored before it is judged
-
-For every response inside those safety ceilings, the runner creates `RAW_INGEST` from the **terminal fetch result before payload validation**. It records:
-
-- the tracked source page and sync run;
-- requested date window, page number, and page size;
-- response body and HTTP status when available;
-- fetch time;
-- processing status: `pending`, `processed`, or `failed`.
-
-A transport failure is evidence too: it is archived with a null status/body. A malformed HTML body returned under HTTP 200 stays intact when processing marks the row failed. An over-limit body is deliberately not retained; the run records the named ceiling failure instead. This makes ordinary acquisition replayable without allowing evidence storage itself to become unbounded, and separates “what was received” from “what Onda concluded.”
-
-The raw evidence relationships use restrictive deletion behavior. A run or seed cannot be casually deleted through a cascade that also erases the response history.
-
-## One bad observation does not poison its page
-
-After the listing envelope is parsed, each listing wrapper is handled independently:
-
-1. Record a usable provider event ID as **observed**, even before admission.
-2. Validate required title, date, venue, artist, and provider identity fields.
-3. Normalize the source object into an internal `EventDTO`.
-4. Open a transaction for that observation.
-5. Resolve or create the canonical venue, artists, event, identity mappings, and ordered lineup.
-6. Commit the complete graph, or roll it all back.
-7. After rollback, write one `REJECTED_INGEST` occurrence with the raw row, wrapper index, provider reference when available, and a reason.
-
-```mermaid
-flowchart TD
-    Observation[One listing wrapper] --> Shape{Usable shape?}
-    Shape -->|No| Quarantine[Quarantine reason]
-    Shape -->|Yes| Transaction[Begin database transaction]
-    Transaction --> Venue[Resolve venue identity]
-    Venue --> Artists[Resolve artist identities]
-    Artists --> Event[Upsert event identity + fields]
-    Event --> Lineup[Replace ordered lineup if changed]
-    Lineup --> Commit[Commit complete graph]
-    Venue -->|exception| Rollback[Rollback every canonical write]
-    Artists -->|exception| Rollback
-    Event -->|exception| Rollback
-    Lineup -->|exception| Rollback
-    Rollback --> Quarantine
-```
-
-Implemented quarantine reasons are `NO_ARTIST`, `EMPTY_TITLE`, `BAD_DATE`, `PARSE_FAILURE`, and a reserved `OUT_OF_SCOPE` category. Quarantine is strict: the transformer does not invent an artist, repair a date, or admit a partial event to improve coverage numbers.
-
-The unique key `(raw_ingest_id, entity_index)` makes rejection recording idempotent when a pending row is recovered after an interrupted run.
-
-## Idempotency and the identity firewall
-
-Onda maintains four mappings:
-
-| Mapping | Provider key resolves to |
+| Reason | Meaning |
 |---|---|
-| `CITY_IDENTITY` | canonical `CITY` |
-| `VENUE_IDENTITY` | canonical `VENUE` |
-| `ARTIST_IDENTITY` | canonical `ARTIST` |
-| `EVENT_IDENTITY` | canonical `EVENT` |
+| `NO_ARTIST` | The lineup has no artist with an ID |
+| `EMPTY_TITLE` | The title has no visible character |
+| `BAD_DATE` | Onda cannot read the date |
+| `PARSE_FAILURE` | A field is absent or has an incorrect type |
 
-Each provider identity is unique on `(source, source_id)`, and each canonical record can have at most one identity for a given source. Display names are mutable attributes, not identity keys: two artists may share a name, and a venue rename does not create a second venue when its provider identity is stable.
+Onda admits an event only if its lineup has one artist or more.
+It does not repair a listing: it does not invent an artist, and it does not correct a date.
+Thus a rejection is not always an error at the source.
 
-Reprocessing the same provider ID updates the mapped canonical row in place. Event lineup rows are replaced atomically only when their ordered content changes. Contract tests process fixtures repeatedly—including pagination and lineup reordering—and assert stable canonical state.
+The unique key `(raw_ingest_id, entity_index)` makes the rejection record idempotent. A replay does not write a second record.
 
-```mermaid
-flowchart LR
-    RAEvent[RA event ID 123] --> EI[EVENT_IDENTITY<br/>source=ra, source_id=123]
-    EI --> E[EVENT 847<br/>canonical ID]
-    E --> Diary[DIARY_ENTRY.event_id=847]
-    E --> Favorite[FAVORITE_EVENT.event_id=847]
-    E --> WBT[WILL_BE_THERE.event_id=847]
-```
+## Rule 3. Translate the identity
 
-If a future adapter observes the same real event, it needs an explicit entity-resolution decision before a second identity can point to event 847. The schema supports that result; it does not pretend the difficult matching decision is automatic.
+| Identity map | Unique keys |
+|---|---|
+| `CITY_IDENTITY`, `VENUE_IDENTITY`, `ARTIST_IDENTITY`, `EVENT_IDENTITY` | `(source, source_id)` and `(entity, source)` |
 
-## Completeness is a safety condition
+- The transformer finds the row by `(source, source_id)`. If the row is there, it updates the catalog row. If not, it creates the two rows.
+- A name is an attribute, not a key. A venue with a new name stays the same venue.
+- The lineup changes only if the ordered list of artists is different.
+- The source sometimes gives two IDs to one real event. If title, venue, date, start time and lineup all agree, the later row becomes an alias. Reads show the first row only, and Onda deletes no row.
 
-Fetching “the last page” is not enough evidence that a source window is complete. Onda evaluates completeness after transformation. A city seed is complete only when all of the following are true:
+A second source can add a second identity row for the same event.
+The schema is ready for that. The match of two sources is separate work, and it is not built.
 
-- the expected number of archived pages exists;
-- every page's terminal response is HTTP 200;
-- every raw page reached `processed` rather than `failed`;
-- the number of listing wrappers equals the source's `totalResults` value;
-- every wrapper contains a usable nested provider event ID.
+## Rule 4. When is a snapshot complete?
 
-Duplicate event IDs are allowed. Completeness is measured at **listing-wrapper grain** because the provider can return more than one wrapper for the same event; reconciliation later consumes the unique ID set.
+The last page is not proof. A snapshot of one seed is complete only if all five conditions are true:
 
-> **Safety rule:** incomplete data may add valid observations, but it may never subtract existing catalog truth.
+- The number of stored pages is equal to the number of expected pages.
+- Each page has the HTTP status 200.
+- Each page has the status `processed`.
+- The number of listings is equal to the total that the source reports, and the total is the same on each page.
+- Each listing has a source ID for its event.
 
-This asymmetry matters. A good event on page one can still be admitted when page two fails. But because the overall snapshot is incomplete, an event missing from the fetched subset cannot accumulate a miss.
+The count uses listings, not events, because the source can give two listings for one event.
 
-## Absence is suspicion, not deletion
+> [!IMPORTANT]
+> An incomplete snapshot can add data. It cannot subtract data.
 
-Only a complete **nightly** seed window can reconcile absence. Backfill and replay runs transform data without changing absence counters.
+Onda admits a good event on page 1 when page 2 fails.
+But an event that is absent from an incomplete snapshot does not get a miss.
 
-For future events inside that city, source, and date window:
+## Rule 5. A miss is a suspicion
 
-- an observed provider identity resets `misses` to zero;
-- an omitted identity increments `misses` by one;
-- any identity at zero keeps the canonical event `active`;
-- all identities at one or more misses make it `unverified`;
-- all identities at three or more misses make it `hidden`.
+![An event is active when the source shows it. One miss makes it unverified. Three misses make it hidden. One later sight makes it active again.](assets/figures/event-lifecycle.svg)
 
-```mermaid
-stateDiagram-v2
-    [*] --> Active
-    Active --> Active: observed / misses = 0
-    Active --> Unverified: complete snapshot omits it / miss 1
-    Unverified --> Unverified: complete snapshot omits it / miss 2
-    Unverified --> Hidden: complete snapshot omits it / miss 3
-    Unverified --> Active: observed again / misses = 0
-    Hidden --> Active: observed again / misses = 0
-```
+- The reconciler looks only at future events of one source, in one city, in the date window of the run.
+- An event that the run saw gets `misses = 0`. An event that the run did not see gets one more miss.
+- The status comes from all identity rows of the event and of its aliases. If one source sees the event, it stays `active`.
+- A backfill run and a replay run do not count misses.
+- A past event keeps its last status. Thus the history of a past night does not change.
+- The source has no field for a cancellation. Onda does not read a title to find one.
 
-With multiple provider identities, the status is derived collectively: one currently observed source can keep the event active. The current implementation has one source, but the rule does not hard-code that assumption.
+## The limits of the client
 
-Reconciliation never deletes the event or user history. A hidden event is suppressed by catalog and social queries. Its Been entries, reviews, likes, plans, and favorites remain stored, and they become visible again if the event is observed later.
+| Guard | Value |
+|---|---|
+| Timeout for one attempt | 20 seconds |
+| Attempts for one page | A maximum of 3 |
+| Faults that cause a retry | A timeout, a connection error, or status 408, 429, 500, 502, 503, 504 |
+| Delay before a retry | `Retry-After`, or a random time up to 1 second, then up to 2 seconds |
+| Delay between pages | 1.5 seconds |
+| Attempts for one run | A maximum of 1,000 |
+| Size of one response | A maximum of 2 MiB |
+| Stored bodies for one run | A maximum of 100 MiB |
+| Endpoint | One HTTPS URL. A redirect must keep the same origin |
 
-The captured RA contract has no structured cancellation field. Onda does not guess cancellation from title text; cancellation-like disappearance follows the same repeated-absence rule.
+[Decision 7](DECISIONS.md#7-bound-each-fault-at-the-network-boundary) gives the reason for each limit.
 
-## Failure behavior is explicit
+## What each failure keeps and blocks
 
-| Failure | Preserved | Blocked |
+| Failure | Onda keeps | Onda blocks |
 |---|---|---|
-| Advisory lock already held | Existing run and catalog state | Second run; no duplicate `SYNC_RUN` row |
-| Transport/HTTP failure | Terminal fetch evidence and run diagnostics | Completeness and absence reconciliation |
-| Response or archive ceiling reached | Existing evidence and run diagnostics | Oversized body retention, completeness, and absence reconciliation |
-| Whole payload malformed | Exact archived response body | Every observation on that page |
-| One event malformed | Valid siblings and a rejection record | Partial writes for that event only |
-| Missing provider event ID | Wrapper count and rejection evidence | Completeness for the seed |
-| Run crash | Previously committed per-observation work and raw evidence | Run marked `crashed`; command returns failure |
-| Incomplete seed | Any valid additions already admitted | Miss increments and hiding |
-| Source unavailable over time | Existing canonical catalog and all user data | New coverage and updates |
+| A second run starts | The first run and the catalog | The second run. No run record |
+| A transport failure or an HTTP error | The fetch result and the error text | Completeness, and thus the miss count |
+| A response over the size limit | The earlier evidence and the error text | That body, and completeness |
+| A page that is not JSON | The exact body | All listings on that page |
+| One listing that is not valid | The other listings, and a rejection record | All writes for that listing |
+| A listing with no event ID | The rejection record | Completeness for the seed |
+| A crash of the run | Committed listings and stored responses | Nothing more. The run gets the status `crashed` |
+| The source stays down | The catalog and all user data | New events and updates |
 
-`SYNC_RUN` records start/finish times, run type, status, seeds attempted/failed, admitted observations, quarantined observations, drops, and an error summary. These counters describe pipeline outcomes; “admitted” is not synonymous with “new unique event,” because a repeated observation can update an existing canonical row.
+## How to add a second source
 
-## How a new source would be added
+This procedure is the planned path. No second source is in the code today.
 
-The intentional extension seam is before the canonical DTO and identity resolver:
+1. Get permission from the owner of the source.
+2. Add the source to the `Source` list in `backend/config/sources.py`.
+3. Write a client with the limits in the table above.
+4. Record synthetic fixtures for a complete page, a bad page and a page with errors.
+5. Map each response field to `EventDTO`.
+6. Add the seeds, and add one `CITY_IDENTITY` row for each city.
+7. Make the decision how an event of the new source matches an event that is in the catalog.
+8. Write the completeness conditions for the new source.
+9. Run a backfill, and compare its result with the catalog before the nightly schedule starts.
 
-```mermaid
-flowchart LR
-    RA[RA adapter] --> DTO[Canonical ingestion DTO]
-    New[Future provider adapter] -. not implemented .-> DTO
-    DTO --> Rules[Shared validation + transactions]
-    Rules --> IDs[Source identity mappings]
-    IDs --> Catalog[Canonical catalog]
-    Catalog --> Product[Unchanged product API]
-```
+The React app, the social tables and the API do not change, because they use Onda IDs only.
 
-A real replacement or additional source would require:
+## Evidence
 
-1. permission and contract review for that source;
-2. a bounded client with captured, sanitized fixtures;
-3. response-to-DTO mapping and provider-specific validation;
-4. tracked-page/city mappings;
-5. entity resolution for overlap with existing cities, venues, artists, and events;
-6. completeness semantics appropriate to that provider;
-7. contract, idempotency, failure, and reconciliation tests;
-8. a controlled backfill and comparison before changing coverage responsibility.
+- 53 tests in [`backend/ingestion/tests/`](../backend/ingestion/tests/) run against MySQL in CI.
+- 14 synthetic fixtures give complete, bad, double, multi-page and incomplete responses.
+- A backfill run on 2026-08-20 had 2 of 2 seeds complete. It admitted 1,919 listings and rejected 1,128.
+- The live catalog had 360 upcoming events on 2026-11-27. Thus the nightly path operates.
 
-The React application, user tables, and most catalog endpoints should not need provider-shaped changes. That is the architectural protection. The adapter and entity-resolution work remain real engineering work.
+## The source and permission
 
-## Verification and production evidence
-
-As verified on **August 20, 2026**:
-
-- 13 synthetic JSON contracts exercise the ingestion boundary;
-- the full 262-test Django suite passed against MySQL;
-- production scheduled the sync once per night under a host-level `flock`, in addition to the MySQL advisory lock;
-- the most recent completed run inspected was a two-city backfill with 2/2 seeds successful, 1,919 observations admitted, 1,128 quarantined, and 0 dropped;
-- New York City and Boston both had successful source timestamps that day.
-
-Those counts are an operational sample, not a quality percentage or permanent throughput claim. Quarantine can reflect events that intentionally fail Onda's admission contract—for example, a listing with no usable artist—not merely software errors.
-
-## Limits and source posture
-
-- v1 is single-source. The downstream schema is source-neutral; current coverage is not.
-- The observed source is not controlled by Onda and can change without notice.
-- No automatic cross-provider entity matcher exists.
-- This is scheduled ingestion inside a modular monolith, not a distributed streaming platform. There is no queue, worker fleet, Kafka, Celery, Redis, or microservice mesh.
-- Onda has not been released commercially or broadly distributed. Before broader distribution or commercial use, I intend to contact Resident Advisor and reassess the source arrangement.
-- Onda is not affiliated with Resident Advisor. Source evidence and names are used here to explain the implementation honestly, not to claim endorsement or data ownership.
+- The client calls one public listing endpoint of Resident Advisor, with the same public headers as its web page.
+- The client uses no account, no cookie and no bypass of a challenge. It sends one request each 1.5 seconds.
+- Onda has no connection with Resident Advisor.
+- Before a wider release or commercial use, I will contact Resident Advisor about the use of its data.
 
 ## Code map
 
-| Concern | Primary implementation |
+| Subject | File |
 |---|---|
-| Command and operator exit contract | `backend/ingestion/management/commands/sync_ra.py` |
-| Run orchestration, budget, completeness | `backend/ingestion/runner.py` |
-| HTTP policy and pacing | `backend/ingestion/client.py` |
-| Provider transformation and atomic admission | `backend/ingestion/transformer.py` |
-| Presence/absence lifecycle | `backend/ingestion/reconciler.py` |
-| Raw evidence and telemetry models | `backend/ingestion/models.py` |
-| Canonical and identity models | `backend/catalog/models.py` |
-| Synthetic contract fixtures | `backend/ingestion/tests/fixtures/` |
+| Command and exit codes | [`backend/ingestion/management/commands/sync_ra.py`](../backend/ingestion/management/commands/sync_ra.py) |
+| Run, budgets, completeness | [`backend/ingestion/runner.py`](../backend/ingestion/runner.py) |
+| HTTP limits and delays | [`backend/ingestion/client.py`](../backend/ingestion/client.py) |
+| Validation and admission | [`backend/ingestion/transformer.py`](../backend/ingestion/transformer.py) |
+| Miss count and status | [`backend/ingestion/reconciler.py`](../backend/ingestion/reconciler.py) |
+| Evidence tables | [`backend/ingestion/models.py`](../backend/ingestion/models.py) |
+| Catalog and identity maps | [`backend/catalog/models.py`](../backend/catalog/models.py) |

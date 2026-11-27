@@ -4,6 +4,7 @@
 Run with DJANGO_SETTINGS_MODULE=config.settings_production and a ONDA_DB_NAME
 containing ``benchmark``. The safety checks intentionally reject the normal
 ``onda`` database and any database that already contains application data.
+README.md in this directory gives the full procedure.
 """
 
 from __future__ import annotations
@@ -118,6 +119,7 @@ def seed() -> dict[str, int]:
         username="cv.feed.viewer",
         display_name="CV Feed Viewer",
         is_private=False,
+        email_verified_at=base,
     )
     actors = [
         User(
@@ -251,7 +253,9 @@ def get(client: Client, cursor=None):
     params = {"page_size": 20}
     if cursor:
         params["cursor"] = cursor
-    response = client.get("/api/me/home/", params, secure=True, HTTP_HOST="localhost")
+    response = client.get(
+        "/api/me/home/", params, secure=True, HTTP_HOST=settings.ALLOWED_HOSTS[0]
+    )
     if response.status_code != 200:
         raise RuntimeError(f"Feed returned HTTP {response.status_code}: {response.content[:500]!r}")
     return response
@@ -270,6 +274,22 @@ def measure(client: Client, cursor, requests=220, discard=20):
         if index >= discard:
             samples.append(elapsed)
     return round(percentile95_ms(samples), 3), len(samples), len(response.json()["results"])
+
+
+def linux_hardware() -> tuple[str, int | None]:
+    cpu, memory_bytes = platform.processor() or platform.machine(), None
+    try:
+        for line in Path("/proc/cpuinfo").read_text().splitlines():
+            if line.startswith("model name"):
+                cpu = f"{line.split(':', 1)[1].strip()} ({os.cpu_count()} logical CPUs)"
+                break
+        for line in Path("/proc/meminfo").read_text().splitlines():
+            if line.startswith("MemTotal"):
+                memory_bytes = int(line.split()[1]) * 1024
+                break
+    except (OSError, ValueError, IndexError):
+        pass
+    return cpu, memory_bytes
 
 
 def benchmark() -> dict:
@@ -301,7 +321,7 @@ def benchmark() -> dict:
         ).strip().splitlines()
         cpu, memory_bytes = hardware[0], int(hardware[1])
     except (OSError, subprocess.SubprocessError, ValueError, IndexError):
-        cpu, memory_bytes = platform.processor() or platform.machine(), None
+        cpu, memory_bytes = linux_hardware()
     return {
         "page_1_p95_ms": page1,
         "page_1_measured_requests": page1_n,

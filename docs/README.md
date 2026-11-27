@@ -1,13 +1,46 @@
+[Onda](../README.md) / Documentation
+
 # Documentation
 
-These pages explain the shipped product and the engineering decisions behind it. The root [README](../README.md) is the one-page entry point.
+> **Start here.** Find the row that describes you.
 
-| Document | Scope |
+## Find your page
+
+| You are | You want to know | Read | Time |
+|---|---|---|---|
+| All readers | What Onda is, and the reason for each product rule | [Product](PRODUCT.md) | 4 minutes |
+| An engineer | How one request goes through the system | [How Onda works](ARCHITECTURE.md) | 9 minutes |
+| An engineer | Why the design is this design, and its cost | [Decisions](DECISIONS.md) | 12 minutes |
+| An engineer | How Onda trusts data from an external source | [Ingestion](INGESTION.md) | 8 minutes |
+| An engineer | How the feed query operates, and its limit | [Home feed](HOME_FEED.md) | 7 minutes |
+| An engineer who calls the API | The contract of each route | [API reference](API.md) | Lookup |
+| An engineer who reads or writes data | Tables, constraints, safe entry points | [Database reference](DATABASE.md) | Lookup |
+| An engineer who runs the code | Local setup, checks, where code goes | [Development](DEVELOPMENT.md) | 15 minutes |
+| The operator | How to deploy, back up and restore | [Operations](../infrastructure/README.md) | Procedures |
+
+A [90-second video](assets/video/onda-how-it-works.mp4) shows the same system with one example.
+
+## One page, one job
+
+| Type of page | Its job | Pages |
+|---|---|---|
+| Explanation | It tells how and why | Product, How Onda works, Decisions, Ingestion, Home feed |
+| Reference | It gives facts for a lookup | API reference, Database reference, [Glossary](GLOSSARY.md) |
+| Procedure | It gives the steps of a task | Development, Operations |
+| Standard | It gives the rules for a writer | [Writing standard](STYLE.md) |
+
+## How these pages are written
+
+- The pages follow the writing rules of ASD-STE100 Simplified Technical English. A sentence is short, a word has one meaning, and the voice is active.
+- A script checks the rules that a program can measure, and each link. CI runs it on each change.
+- Each number has a source: a test, a file or a command.
+- I compared each page with the code on 2026-11-27.
+
+## More material
+
+| Material | Contents |
 |---|---|
-| [Product guide](PRODUCT_GUIDE.md) | User-visible purpose, features, flows, and current demo boundaries |
-| [Event ingestion](INGESTION.md) | Source acquisition, raw evidence, validation, idempotency, quarantine, and reconciliation |
-| [Application data](APPLICATION_DATA.md) | Canonical reads, social writes, privacy, lifecycle behavior, feed assembly, and time semantics |
-| [API](API.md) | First-party JSON API, sessions, CSRF, route inventory, errors, and pagination |
-| [Database](DATABASE.md) | Crow's-foot diagrams of the 25 shipped product tables and their invariants |
-
-Implementation paths and enforcing tests are linked directly from each page so the documentation can be checked against the code without navigating internal project records.
+| [Design contract](../frontend/DESIGN_CONTRACT.md) | The rules of the user interface, and the audit of 2026-08-27 |
+| [Benchmark](../benchmarks/home-feed/README.md) | The procedure and the records for the Home feed measurement |
+| [Video source](video/README.md) | The script and the scenes of the video |
+| [Security policy](../.github/SECURITY.md) | How to report a vulnerability |

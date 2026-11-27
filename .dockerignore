@@ -42,3 +42,6 @@ backups
 *.dump
 *.log
 .DS_Store
+
+# Documentation, figures and video are not part of an image
+docs
