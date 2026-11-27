@@ -37,7 +37,7 @@ def system_map() -> Figure:
     fig.overline(a, 34, "Nightly path")
     fig.text(a + 118, 34, "A schedule starts it. No person waits for it.", **NOTE)
     fig.hline(a, 928, 176, stroke="s-hair", sw=1)
-    fig.overline(a, 204, "One database, three zones")
+    fig.overline(a, 204, "One database, three layers")
     fig.hline(a, 928, 356, stroke="s-hair", sw=1)
     fig.overline(a, 384, "Request path")
     fig.text(a + 124, 384, "It uses local data only. It does not call the source.", **NOTE)
@@ -283,13 +283,13 @@ def keyset() -> Figure:
     return fig
 
 
-def data_zones() -> Figure:
+def data_layers() -> Figure:
     fig = Figure(
-        960, 460, "Three data zones",
-        "The evidence zone has 4 tables, the catalog zone has 9 tables and the social zone has "
+        960, 460, "Three data layers",
+        "The evidence layer has 4 tables, the catalog layer has 9 tables and the social layer has "
         "12 tables. Only the transformer writes from evidence to the catalog. Social tables "
-        "refer to catalog rows with foreign keys. No key goes from the social zone to the "
-        "evidence zone. A source ID stops at the identity map.",
+        "refer to catalog rows with foreign keys. No key goes from the social layer to the "
+        "evidence layer. A source ID stops at the identity map.",
     )
     cols = [(32, 244), (358, 244), (684, 244)]
     titles = [("Evidence", "4 tables", "plain"), ("Catalog", "9 tables", "trusted"), ("Social data", "12 tables", "plain")]
@@ -318,7 +318,7 @@ def data_zones() -> Figure:
     fig.text(643, 138, "keys", size=12, cls="ink2", font="medium", anchor="middle")
     fig.text(643, 170, "RESTRICT", size=11, cls="muted", anchor="middle")
     # identity example
-    fig.overline(32, 326, "One event, three zones")
+    fig.overline(32, 326, "One event, three layers")
     y = 346
     fig.node(32, y, 200, 56, "source ID 2291877", ["in a stored response"], kind="external", size=14, sub_size=12)
     fig.arrow([(232, y + 28), (286, y + 28)])
@@ -399,7 +399,7 @@ def journey() -> Figure:
 
 def er_evidence() -> Figure:
     fig = Figure(
-        960, 280, "Tables of the evidence zone",
+        960, 280, "Tables of the evidence layer",
         "One seed has many stored responses. One run has many stored responses. "
         "One stored response has many rejection records.",
     )
@@ -417,7 +417,7 @@ def er_evidence() -> Figure:
 
 def er_catalog() -> Figure:
     fig = Figure(
-        960, 444, "Tables of the catalog zone",
+        960, 444, "Tables of the catalog layer",
         "A city has many venues, a venue has many events, and an event has many lineup rows. "
         "An artist has many lineup rows. Each of the four entities has many identity rows, "
         "one for each source.",
@@ -452,7 +452,7 @@ def er_catalog() -> Figure:
 
 def er_social() -> Figure:
     fig = Figure(
-        960, 470, "Tables of the social zone",
+        960, 470, "Tables of the social layer",
         "One user has many follows, Been entries, plans, favorites, likes, notifications and codes. "
         "One Been entry has zero or one review. One review has many likes. "
         "Been entries, plans and favorites refer to catalog rows.",
@@ -499,7 +499,7 @@ FIGURES = {
     "event-lifecycle": event_lifecycle,
     "home-feed": home_feed,
     "keyset": keyset,
-    "data-zones": data_zones,
+    "data-layers": data_layers,
     "deployment": deployment,
     "journey": journey,
     "er-evidence": er_evidence,

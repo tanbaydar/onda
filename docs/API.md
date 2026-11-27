@@ -220,8 +220,13 @@ X-CSRFToken: <value of the csrftoken cookie>
 - `DELETE …/been/rating/` keeps the entry. It deletes the review and the likes of the review, and it reports the two.
 
   ```json
-  {"entry": {"id": 1, "rating": null, "rated_at": null, "created_at": "2026-11-27T02:59:30.257644Z", "review": null},
-   "cascade": {"review_deleted": true, "review_likes_deleted": 1}}
+  {
+    "entry": {
+      "id": 1, "rating": null, "rated_at": null,
+      "created_at": "2026-11-27T02:59:30.257644Z", "review": null
+    },
+    "cascade": {"review_deleted": true, "review_likes_deleted": 1}
+  }
   ```
 
 - `GET …/reviews/` shows authors with a public profile only. It does not show the review of the viewer. `sort` is `most_liked` or `newest`.

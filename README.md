@@ -23,10 +23,12 @@
 </p>
 
 <p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/hero-dark.png">
-    <img src="docs/assets/hero-light.png" alt="Three screens of Onda: Home, Discover and Event" width="896">
-  </picture>
+  <a href="docs/assets/video/onda-how-it-works.mp4"><img src="docs/assets/video/poster.png" alt="Play the video: how Onda works, in 1 minute 56 seconds" width="896"></a>
+</p>
+
+<p align="center">
+  <b>Watch one rating go from the tap of one person to the feed of a friend.</b><br>
+  <sub>1 minute 56 seconds, with subtitles. I made the video with Claude Code, and <a href="docs/video/README.md">each scene is code</a>.</sub>
 </p>
 
 ## What Onda is
@@ -38,15 +40,39 @@ Onda is live at [ondaapp.io](https://ondaapp.io/) with events in New York City a
 I build it in my free time, and a small group of friends uses it.
 The [product page](docs/PRODUCT.md) explains the product and the reason for each rule, with no technical words.
 
-## See it in 90 seconds
+## Most used screens
 
-<p align="center">
-  <a href="docs/assets/video/onda-how-it-works.mp4"><img src="docs/assets/video/poster.png" alt="Play the video: one rating, from the tap to the feed of a friend" width="896"></a>
-</p>
-
-The video follows one rating from the tap of one person to the feed of a friend.
-I made it with Claude Code: Manim draws the animation, and ElevenLabs gives the voice.
-The scenes are code in [`docs/video/`](docs/video/README.md).
+<table>
+  <tr>
+    <td align="center" valign="top" colspan="2" width="33.33%">
+      <a href="docs/assets/screens/home.png"><img src="docs/assets/screens/small/home.png" alt="The Home screen of Onda" width="100%"></a>
+      <br><b>Home</b>
+      <br><sub>See what your friends are up to</sub>
+    </td>
+    <td align="center" valign="top" colspan="2" width="33.33%">
+      <a href="docs/assets/screens/discover.png"><img src="docs/assets/screens/small/discover.png" alt="The Discover screen of Onda" width="100%"></a>
+      <br><b>Discover</b>
+      <br><sub>Find events in your city</sub>
+    </td>
+    <td align="center" valign="top" colspan="2" width="33.33%">
+      <a href="docs/assets/screens/event.png"><img src="docs/assets/screens/small/event.png" alt="The Event screen of Onda" width="100%"></a>
+      <br><b>Event</b>
+      <br><sub>Hear it from people who were there</sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" valign="top" colspan="3" width="50%">
+      <a href="docs/assets/screens/profile.png"><img src="docs/assets/screens/small/profile.png" alt="The Profile screen of Onda" width="64.66%"></a>
+      <br><b>Profile</b>
+      <br><sub>Who you are, based on what you do</sub>
+    </td>
+    <td align="center" valign="top" colspan="3" width="50%">
+      <a href="docs/assets/screens/favourites.png"><img src="docs/assets/screens/small/favourites.png" alt="The Favourites screen of Onda" width="64.66%"></a>
+      <br><b>Favourites</b>
+      <br><sub>Let your taste speak</sub>
+    </td>
+  </tr>
+</table>
 
 ## The engineering problem
 
@@ -65,7 +91,7 @@ The design obeys three rules:
 
 - **Nightly path.** A schedule starts a run. The client fetches each page inside fixed limits. Onda stores each response before it parses the response. Then each valid listing goes into the catalog in one transaction.
 - **Request path.** The React app calls a JSON API on the same origin. A view validates the request. A service function makes the change in one transaction. The constraints of MySQL are the last guard.
-- **One database, three zones.** Evidence, catalog and social data. Keys point one way, from social data to the catalog. A source ID stops at an identity map.
+- **One database, three layers.** Evidence, catalog and social data. Keys point one way, from social data to the catalog. A source ID stops at an identity map.
 
 [Follow one rating through the system](docs/ARCHITECTURE.md)
 
@@ -97,6 +123,7 @@ Each row is a decision with options and a cost. [Read the 16 decisions](docs/DEC
 | The nightly path operates in production: 329 upcoming events in New York City on 2026-11-27 | `curl "https://ondaapp.io/api/events/?when=upcoming&city_id=1&page_size=1"` |
 | Each deploy uses the tested commit, after a backup | The [workflow](.github/workflows/ci.yml) and the [deploy script](infrastructure/scripts/deploy.sh) |
 | These pages obey a writing standard | `python3 docs/tools/check_docs.py` |
+| Each animation of the video starts at its word, to 0.12 seconds | `python3 docs/video/check_sync.py`, and [how the video is made](docs/video/README.md) |
 
 ## Documentation
 

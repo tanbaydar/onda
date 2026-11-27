@@ -18,7 +18,7 @@
 | An engineer who runs the code | Local setup, checks, where code goes | [Development](DEVELOPMENT.md) | 15 minutes |
 | The operator | How to deploy, back up and restore | [Operations](../infrastructure/README.md) | Procedures |
 
-A [90-second video](assets/video/onda-how-it-works.mp4) shows the same system with one example.
+A [video of 2 minutes](assets/video/onda-how-it-works.mp4) follows one rating through the same system.
 
 ## One page, one job
 

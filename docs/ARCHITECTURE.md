@@ -10,7 +10,7 @@ The [decisions page](DECISIONS.md) gives the options that I did not select, and 
 
 ## In brief
 
-- Onda is one Django application and one MySQL database. The database has three zones, and the keys point one way.
+- Onda is one Django application and one MySQL database. The database has three layers, and the keys point one way.
 - A write is one transaction. A row lock makes each "read, then write" sequence safe. The schema holds the invariants.
 - The catalog comes from a source that Onda does not control. Onda stores each response first. A missing listing does not delete data.
 - Home is a query, not a table. One `UNION ALL` reads the rows as they are now, in a total order.
@@ -28,7 +28,7 @@ The [decisions page](DECISIONS.md) gives the options that I did not select, and 
 | `frontend` | The React app | No table. It calls the API |
 
 The modules are Python packages in one process. They are not network services.
-Two rules keep the zones apart:
+Two rules keep the layers apart:
 
 - Only `ingestion` writes to the catalog.
 - A product table stores Onda IDs only. A source ID stops at an identity map.

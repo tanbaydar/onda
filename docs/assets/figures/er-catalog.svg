@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 444" width="960" height="444" role="img" aria-labelledby="t d">
-<title id="t">Tables of the catalog zone</title>
+<title id="t">Tables of the catalog layer</title>
 <desc id="d">A city has many venues, a venue has many events, and an event has many lineup rows. An artist has many lineup rows. Each of the four entities has many identity rows, one for each source.</desc>
 <style>:root{--panel:#FFFFFF;--ink:#1B1B1B;--ink2:#4F4F4F;--muted:#6E6E6E;--line:#9A9A9A;
 --hair:#E3E3E3;--soft:#F5F5F3;--accent:#1D6D48;--accent-soft:#E6F1EB;--warn:#8A3A30;--warn-soft:#F7EAE8}

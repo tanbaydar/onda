@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 470" width="960" height="470" role="img" aria-labelledby="t d">
-<title id="t">Tables of the social zone</title>
+<title id="t">Tables of the social layer</title>
 <desc id="d">One user has many follows, Been entries, plans, favorites, likes, notifications and codes. One Been entry has zero or one review. One review has many likes. Been entries, plans and favorites refer to catalog rows.</desc>
 <style>:root{--panel:#FFFFFF;--ink:#1B1B1B;--ink2:#4F4F4F;--muted:#6E6E6E;--line:#9A9A9A;
 --hair:#E3E3E3;--soft:#F5F5F3;--accent:#1D6D48;--accent-soft:#E6F1EB;--warn:#8A3A30;--warn-soft:#F7EAE8}

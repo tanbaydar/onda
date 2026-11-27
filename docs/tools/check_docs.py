@@ -28,7 +28,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
-DEFAULT_PAGES = ["README.md", "docs/*.md", "infrastructure/README.md"]
+DEFAULT_PAGES = ["README.md", "docs/*.md", "docs/video/README.md", "infrastructure/README.md"]
 
 MAX_WORDS_DESCRIPTION = 25
 MAX_WORDS_PROCEDURE = 20

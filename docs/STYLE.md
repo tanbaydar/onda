@@ -96,3 +96,4 @@ Python 3.10 or later is necessary for the check. No other package is necessary.
 
 The figures and the video use the typefaces of the product: Rozha One, General Sans and Gambetta.
 Indian Type Foundry owns the copyrights and the trademarks of these typefaces.
+The code text in the video uses JetBrains Mono. JetBrains publishes it under the SIL Open Font License.

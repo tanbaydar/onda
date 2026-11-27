@@ -71,3 +71,8 @@ backups/
 .vscode/
 *.swp
 *.swo
+
+# Video build files. The final video is in docs/assets/video/.
+docs/video/build/
+docs/video/media/
+docs/video/narration.m4a

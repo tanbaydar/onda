@@ -10,7 +10,7 @@ The facts on this page come from the models, and from `information_schema` after
 
 ## In brief
 
-- The tables are in three zones: evidence (4), catalog (9) and social data (12).
+- The tables are in three layers: evidence (4), catalog (9) and social data (12).
 - Keys point one way, from social data to the catalog. No key points from social data to evidence.
 - A rule that one row can prove is a constraint. This page lists all of them.
 - Read through the shared querysets. They contain the privacy filter and the status filter.
@@ -18,19 +18,19 @@ The facts on this page come from the models, and from `information_schema` after
 
 ## Contents
 
-- [The three zones](#the-three-zones)
+- [The three layers](#the-three-layers)
 - [How to read safely](#how-to-read-safely) and [how to write safely](#how-to-write-safely)
-- Tables: [evidence](#zone-1-evidence), [catalog](#zone-2-catalog), [social data](#zone-3-social-data)
+- Tables: [evidence](#layer-1-evidence), [catalog](#layer-2-catalog), [social data](#layer-3-social-data)
 - [Rules that the database cannot express](#rules-that-the-database-cannot-express)
 - [Delete rules](#delete-rules), [indexes](#indexes-and-the-read-paths-that-they-serve), [stored and derived data](#stored-and-derived-data)
 
-## The three zones
+## The three layers
 
-![The evidence zone has 4 tables, the catalog zone has 9 and the social zone has 12. Only the transformer writes from evidence to the catalog. Social tables refer to catalog rows. A source ID stops at the identity map.](assets/figures/data-zones.svg)
+![The evidence layer has 4 tables, the catalog layer has 9 and the social layer has 12. Only the transformer writes from evidence to the catalog. Social tables refer to catalog rows. A source ID stops at the identity map.](assets/figures/data-layers.svg)
 
 In the figures on this page, a short cross line is the "one" end of a relation. Three lines are the "many" end.
 
-| Zone | Contents | Who writes |
+| Layer | Contents | Who writes |
 |---|---|---|
 | Evidence | Each response of the source, and each rejection | `ingestion` |
 | Catalog | Cities, venues, artists, events, lineups, and the identity maps | `ingestion` |
@@ -76,7 +76,7 @@ Each function is one transaction.
 | Change privacy | `change_privacy` | The user | None |
 | Count an attempt for a rate limit | `consume_rate_limit` in `users/rate_limits.py` | The counter row | `RateLimitExceeded` |
 
-## Zone 1. Evidence
+## Layer 1. Evidence
 
 ![One seed has many stored responses. One run has many stored responses. One stored response has many rejection records.](assets/figures/er-evidence.svg)
 
@@ -90,7 +90,7 @@ Each function is one transaction.
 - `response_body` is text, not JSON. Thus a body that is not JSON stays as it arrived.
 - `events_upserted` counts admitted listings. It is not a count of new events, because a listing can update a row.
 
-## Zone 2. Catalog
+## Layer 2. Catalog
 
 ![A city has many venues, a venue has many events, and an event has many lineup rows. An artist has many lineup rows. Each of the four entities has many identity rows.](assets/figures/er-catalog.svg)
 
@@ -109,7 +109,7 @@ Each function is one transaction.
 - A catalog table has no source ID column. Only the identity maps have one.
 - The foreign key cannot make sure that an event has an artist. The transformer does: it admits an event only with one artist or more.
 
-## Zone 3. Social data
+## Layer 3. Social data
 
 ![One user has many follows, Been entries, plans, favorites, notifications and codes. One Been entry has zero or one review. One review has many likes. Been entries, plans and favorites refer to catalog rows.](assets/figures/er-social.svg)
 
@@ -220,7 +220,7 @@ A value that Onda can derive is not stored. Thus no copy can be old.
 
 ## Source files
 
-| Zone | Models | Migrations |
+| Layer | Models | Migrations |
 |---|---|---|
 | Evidence | [`backend/ingestion/models.py`](../backend/ingestion/models.py) | [`backend/ingestion/migrations/`](../backend/ingestion/migrations/) |
 | Catalog | [`backend/catalog/models.py`](../backend/catalog/models.py) | [`backend/catalog/migrations/`](../backend/catalog/migrations/) |
