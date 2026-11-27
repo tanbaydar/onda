@@ -76,6 +76,10 @@ Each function is one transaction.
 | Change privacy | `change_privacy` | The user | None |
 | Count an attempt for a rate limit | `consume_rate_limit` in `users/rate_limits.py` | The counter row | `RateLimitExceeded` |
 
+`like_review` and `save_will_be_there` also write the notifications, in the same transaction.
+Each function writes a notification only for a recipient who has none for that actor, type and target.
+Thus a like or a plan that a person removes and adds again writes no second notification.
+
 ## Layer 1. Evidence
 
 ![One seed has many stored responses. One run has many stored responses. One stored response has many rejection records.](assets/figures/er-evidence.svg)
@@ -124,9 +128,10 @@ Each function is one transaction.
 | `REVIEW_LIKE` | One like | `user_id`, `review_id`, `created_at` | Primary key `(user_id, review_id)` |
 | `WILL_BE_THERE` | One plan | `user_id`, `event_id`, `created_at` | Primary key `(user_id, event_id)` |
 | `FAVORITE_EVENT`, `FAVORITE_ARTIST`, `FAVORITE_VENUE` | One favorite | `user_id`, the target ID, `added_at` | Primary key `(user_id, target ID)` |
-| `NOTIFICATION` | One notification for one recipient | `id`, `recipient_id`, `actor_id`, `type`, `review_id`, `event_id`, `created_at`, `read_at` | Check: the actor is not the recipient. Check: `review_like` has a review, `will_be_there` has an event, and the other types have none |
+| `NOTIFICATION` | One notification for one recipient | `id`, `recipient_id`, `actor_id`, `type`, `review_id`, `event_id`, `created_at`, `read_at` | Unique `(review_id, actor_id, type, recipient_id)`. Unique `(event_id, actor_id, type, recipient_id)`. Check: the actor is not the recipient. Check: `review_like` has a review, `will_be_there` has an event, and the other types have none |
 
 - A composite primary key makes a second row for the same pair impossible.
+- The two unique keys of `NOTIFICATION` give one row for each recipient, actor, type and target. A unique key does not compare `NULL` values, so each key applies only to the rows that have its target. The follow types have no target, and they can repeat.
 - `DIARY_ENTRY` has a surrogate `id`, because `REVIEW.entry_id` refers to one row.
 - `REQUEST_THROTTLE` has no foreign key to a user. `key_hash` is an HMAC of the address or of the account name.
 - `WILL_BE_THERE` has no column for an end time. The read derives "active" from the date of the event at the venue.
@@ -179,6 +184,8 @@ No application code deletes an event. The answer to a missing event is a status,
 | Primary keys that start with `user_id` | The plans, the likes and the favorites of one person. The Home branches |
 | `NOTIFICATION (recipient_id, created_at)` | The list of notifications in keyset order |
 | `NOTIFICATION (recipient_id, read_at)` | The unread count, and "read all" |
+| `NOTIFICATION (review_id, actor_id, type, recipient_id)`, unique | The lookup before a like writes a notification. The foreign key on `review_id` |
+| `NOTIFICATION (event_id, actor_id, type, recipient_id)`, unique | The followers who have the notification for a plan. The foreign key on `event_id` |
 | `RAW_INGEST (run_id)`, `(seed_id, fetched_at)` | The rows of one run. The history of one seed |
 | `REQUEST_THROTTLE (updated_at)` | The removal of old counters |
 

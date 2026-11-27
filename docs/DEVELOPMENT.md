@@ -120,7 +120,7 @@ A new database has no events.
 
 | Check | Directory | Command | Result on 2026-11-27 |
 |---|---|---|---|
-| Backend tests | `backend/` | `python manage.py test` | 265 tests pass |
+| Backend tests | `backend/` | `python manage.py test` | 278 tests pass |
 | Frontend tests | `frontend/` | `npm test` | 158 tests pass |
 | Frontend build | `frontend/` | `npm run build` | 95 modules |
 | Docs | Root | `python3 docs/tools/check_docs.py` | 0 errors |

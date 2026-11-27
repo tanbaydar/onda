@@ -1,15 +1,16 @@
 import json
+import threading
 from datetime import UTC, datetime, timedelta
 from unittest.mock import patch
 
 from django.apps import apps
-from django.db import IntegrityError, connection, transaction
+from django.db import IntegrityError, close_old_connections, connection, transaction
 from django.db.models.deletion import RestrictedError
-from django.test import Client, TestCase
+from django.test import Client, TestCase, TransactionTestCase
 from django.test.utils import CaptureQueriesContext
 
 from catalog.models import Artist, City, Event, EventArtist, EventStatus, Venue
-from users.models import DiaryEntry, Follow, FollowStatus, User
+from users.models import DiaryEntry, Follow, FollowStatus, Notification, User
 
 
 EVENT_DAY = datetime(2026, 8, 20, 16, 0, tzinfo=UTC)
@@ -171,6 +172,90 @@ class WillBeThereApiContractTests(TestCase):
                 event=self.event,
             ).exists()
         )
+
+    def unmark(self, user, event=None):
+        return self.request(
+            self.client_for(user),
+            "delete",
+            f"/api/events/{(event or self.event).id}/will-be-there/",
+        )
+
+    def plan_notifications(self, actor, event=None):
+        return Notification.objects.filter(
+            actor=actor,
+            type="will_be_there",
+            event=event or self.event,
+        )
+
+    def test_mark_remove_mark_again_keeps_one_notification_for_each_follower(self):
+        self.follow(self.viewer, self.public_user)
+        self.follow(self.other, self.public_user)
+
+        first = self.mark(self.public_user)
+        original_ids = set(self.plan_notifications(self.public_user).values_list("id", flat=True))
+        removed = self.unmark(self.public_user)
+        again = self.mark(self.public_user, now=BEFORE_BOSTON_EXPIRY)
+
+        self.assertEqual(
+            [first.status_code, removed.status_code, again.status_code],
+            [201, 204, 201],
+        )
+        self.assertCountEqual(
+            self.plan_notifications(self.public_user).values_list("recipient_id", flat=True),
+            [self.viewer.id, self.other.id],
+        )
+        self.assertEqual(
+            set(self.plan_notifications(self.public_user).values_list("id", flat=True)),
+            original_ids,
+        )
+
+    def test_second_mark_notifies_only_a_follower_who_has_no_notification(self):
+        self.follow(self.viewer, self.public_user)
+        self.mark(self.public_user)
+        self.unmark(self.public_user)
+        self.follow(self.other, self.public_user)
+        self.mark(self.public_user, now=BEFORE_BOSTON_EXPIRY)
+        self.mark(self.public_user, self.other_event, now=BEFORE_BOSTON_EXPIRY)
+
+        self.assertEqual(
+            dict(self.plan_notifications(self.public_user).values_list("recipient_id", "created_at")),
+            {self.viewer.id: EVENT_DAY, self.other.id: BEFORE_BOSTON_EXPIRY},
+        )
+        self.assertCountEqual(
+            self.plan_notifications(self.public_user, self.other_event).values_list("recipient_id", flat=True),
+            [self.viewer.id, self.other.id],
+        )
+
+    def test_second_mark_does_not_reopen_a_read_notification(self):
+        self.follow(self.viewer, self.public_user)
+        self.mark(self.public_user)
+        follower = self.client_for(self.viewer)
+        unread = self.get(follower, "/api/me/notifications/").json()["results"]
+        self.request(follower, "post", f"/api/me/notifications/{unread[0]['id']}/read/")
+        read = self.get(follower, "/api/me/notifications/").json()["results"]
+
+        self.unmark(self.public_user)
+        self.mark(self.public_user, now=BEFORE_BOSTON_EXPIRY)
+        after = self.get(follower, "/api/me/notifications/").json()["results"]
+
+        self.assertIsNone(unread[0]["read_at"])
+        self.assertIsNotNone(read[0]["read_at"])
+        self.assertEqual(after, read)
+
+    def test_mark_statement_count_does_not_grow_with_followers(self):
+        self.follow(self.viewer, self.public_user)
+        one_follower_client = self.client_for(self.public_user)
+        with CaptureQueriesContext(connection) as one_follower:
+            self.request(one_follower_client, "put", f"/api/events/{self.event.id}/will-be-there/")
+        self.follow(self.other, self.public_user)
+        self.follow(self.private_user, self.public_user)
+        three_followers_client = self.client_for(self.public_user)
+        with CaptureQueriesContext(connection) as three_followers:
+            self.request(three_followers_client, "put", f"/api/events/{self.other_event.id}/will-be-there/")
+
+        self.assertEqual(self.plan_notifications(self.public_user).count(), 1)
+        self.assertEqual(self.plan_notifications(self.public_user, self.other_event).count(), 3)
+        self.assertEqual(len(three_followers), len(one_follower))
 
     def test_event_detail_viewer_state_and_guest_omission(self):
         self.mark(self.viewer)
@@ -336,3 +421,72 @@ class WillBeThereApiContractTests(TestCase):
         self.mark(self.public_user)
         with self.assertRaises(RestrictedError):
             self.event.delete()
+
+
+class WillBeThereNotificationConcurrencyTests(TransactionTestCase):
+    def test_two_concurrent_marks_write_no_second_notification(self):
+        from users.services import save_will_be_there
+
+        city = City.objects.create(
+            name="Plan Race City",
+            region_code="MA",
+            region_name="Massachusetts",
+            country_code="US",
+            timezone="America/New_York",
+        )
+        venue = Venue.objects.create(name="Plan Race Venue", city=city)
+        event = Event.objects.create(
+            title="Plan Race Event",
+            event_date="2099-01-01",
+            venue=venue,
+            status=EventStatus.ACTIVE,
+        )
+        event = Event.objects.select_related("venue__city").get(pk=event.pk)
+        actor, follower = (
+            User.objects.create_user(
+                email=f"{name}@plan-race.test",
+                password="A-real-password-123!",
+                username=f"plan.race.{name}",
+                display_name=name,
+                is_private=False,
+            )
+            for name in ("actor", "follower")
+        )
+        Follow.objects.create(
+            follower=follower,
+            followee=actor,
+            status=FollowStatus.APPROVED,
+            created_at=EVENT_DAY,
+            approved_at=EVENT_DAY,
+        )
+        # The state after a mark that the person removed: the follower has the
+        # notification, and the plan is not there.
+        told = {
+            "recipient": follower,
+            "actor": actor,
+            "type": "will_be_there",
+            "event": event,
+        }
+        Notification.objects.create(created_at=EVENT_DAY, **told)
+        barrier = threading.Barrier(2)
+        outcomes = []
+
+        def mark():
+            close_old_connections()
+            try:
+                barrier.wait()
+                _entry, created = save_will_be_there(user=actor, event=event)
+                outcomes.append(created)
+            except Exception as exc:  # recorded and asserted in the main thread
+                outcomes.append(exc)
+            finally:
+                close_old_connections()
+
+        threads = [threading.Thread(target=mark) for _ in range(2)]
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join(timeout=10)
+
+        self.assertCountEqual(outcomes, [True, False])
+        self.assertEqual(Notification.objects.filter(**told).count(), 1)

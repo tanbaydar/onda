@@ -596,4 +596,15 @@ class Notification(models.Model):
                 ),
                 name="ck_notification_type_target",
             ),
+            # One notification for each recipient, actor, type and target.
+            # A unique key does not compare NULL values, so each key applies
+            # only to the rows that have its target column.
+            models.UniqueConstraint(
+                fields=("review", "actor", "type", "recipient"),
+                name="uq_notification_review_target",
+            ),
+            models.UniqueConstraint(
+                fields=("event", "actor", "type", "recipient"),
+                name="uq_notification_event_target",
+            ),
         ]

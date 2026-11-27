@@ -2,7 +2,7 @@ from datetime import datetime, time
 from zoneinfo import ZoneInfo
 
 from django.db import IntegrityError, transaction
-from django.db.models import Avg, Count
+from django.db.models import Avg, Count, Exists, OuterRef
 from django.utils.timezone import now as timezone_now
 
 from .auth_services import require_account_action, require_account_action_for_user_id
@@ -249,10 +249,19 @@ def save_will_be_there(*, user, event):
         defaults={"created_at": now},
     )
     if created:
-        follower_ids = Follow.objects.filter(
-            followee=user,
-            status=FollowStatus.APPROVED,
-        ).values_list("follower_id", flat=True)
+        # "created" is also true for a plan that the person removed and added
+        # again. A follower who has the notification for it gets no second row.
+        already_notified = Notification.objects.filter(
+            recipient_id=OuterRef("follower_id"),
+            actor=user,
+            type=NotificationType.WILL_BE_THERE,
+            event=event,
+        )
+        follower_ids = (
+            Follow.objects.filter(followee=user, status=FollowStatus.APPROVED)
+            .exclude(Exists(already_notified))
+            .values_list("follower_id", flat=True)
+        )
         Notification.objects.bulk_create(
             [
                 Notification(
@@ -521,12 +530,14 @@ def like_review(*, user, review):
         ReviewLike.objects.create(user=user, review=review)
     except IntegrityError as exc:
         raise ReviewLikeConflict("Review is already liked.") from exc
-    Notification.objects.create(
-        recipient=review.entry.user,
+    # A like that the person removed and added again finds the first
+    # notification, with its read state, and writes no second row.
+    Notification.objects.get_or_create(
+        recipient_id=review.entry.user_id,
         actor=user,
         type=NotificationType.REVIEW_LIKE,
         review=review,
-        created_at=timezone_now(),
+        defaults={"created_at": timezone_now()},
     )
     return review.likes.count()
 

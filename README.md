@@ -116,7 +116,7 @@ Each row is a decision with options and a cost. [Read the 16 decisions](docs/DEC
 
 | Claim | Where to look |
 |---|---|
-| 265 backend tests pass on MySQL | The [CI runs](https://github.com/tanbaydar/onda/actions/workflows/ci.yml), or `python manage.py test` |
+| 278 backend tests pass on MySQL | The [CI runs](https://github.com/tanbaydar/onda/actions/workflows/ci.yml), or `python manage.py test` |
 | 158 frontend tests pass | `npm test` |
 | Home answers in 88 ms at p95 with 100,000 seeded rows. Page 50 is not slower than page 1 | The [benchmark record](benchmarks/home-feed/results-2026-11-27.yaml) |
 | The live API answers on HTTPS with six security headers | `curl -sI https://ondaapp.io/api/cities/` |
