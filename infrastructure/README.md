@@ -45,6 +45,7 @@ Each image and each CI action uses a fixed digest.
 - Deploys go one at a time. A new push does not cancel a deploy in the middle.
 - The production job runs on the runner `onda-production`. Its account cannot read the `.env` file and cannot use Docker.
 - The job connects through SSH on the loopback interface. The SSH key can run the deploy command only.
+- The Trivy scans fail on each advisory of high or critical severity, also when the advisory has no fix. [`.trivyignore`](../.trivyignore) lists each accepted advisory with its reason and an end date. On 2026-11-27 it has one rule, for CVE-2026-116587 in go-jose v3, until 2027-02-26.
 
 ## What the deploy script does
 
