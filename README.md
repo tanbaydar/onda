@@ -23,12 +23,12 @@
 </p>
 
 <p align="center">
-  <a href="docs/assets/video/onda-how-it-works.mp4"><img src="docs/assets/video/poster.png" alt="Play the video: how Onda works, in 1 minute 56 seconds" width="896"></a>
+  <a href="docs/assets/video/onda-how-it-works.mp4"><img src="docs/assets/video/poster.png" alt="Play the video: the system design of Onda, in 2 minutes 45 seconds" width="896"></a>
 </p>
 
 <p align="center">
-  <b>Watch one rating go from the tap of one person to the feed of a friend.</b><br>
-  <sub>1 minute 56 seconds, with subtitles. I made the video with Claude Code, and <a href="docs/video/README.md">each scene is code</a>.</sub>
+  <b>Watch the design of the full system in 2 minutes 45 seconds.</b><br>
+  <sub>Six chapters, with subtitles. Each chapter shows the page that has its facts. I made the video with Claude Code, and <a href="docs/video/README.md">each scene is code</a>.</sub>
 </p>
 
 ## What Onda is

@@ -32,8 +32,7 @@ from narration import GAP, LEAD_IN, MODEL_ID, SEGMENTS, TAIL, TEMPO, VOICE_ID
 HERE = Path(__file__).resolve().parent
 BUILD = HERE / "build"
 ASSETS = HERE.parent / "assets" / "video"
-CUE = re.compile(r"\{(\w+)\}")
-MARK = re.compile(r"\{(\w+)\}|\|")          # a cue mark, or a bar that splits the subtitle
+MARK = re.compile(r"\{(\w+)\}|\{\+([0-9.]+)\}|\|")   # a cue, a pause in seconds, or a subtitle bar
 API = "https://api.elevenlabs.io/v1/text-to-speech/{voice}/with-timestamps?output_format=mp3_44100_192"
 MAX_SUBTITLE = 48          # characters in one subtitle line
 
@@ -102,34 +101,69 @@ def main() -> None:
         ends = [time / TEMPO for time in alignment["character_end_times_seconds"]]
         if len(starts) != len(texts[index]):
             sys.exit(f"Alignment of {segment_id} has {len(starts)} characters, text has {len(texts[index])}.")
+        length = duration(BUILD / f"segment-{segment_id}.mp3") / TEMPO
+
+        # first pass: a pause mark {+1.5} adds silence before the word that follows it
+        pauses: list[tuple[int, float]] = []          # (character index, seconds)
+        offset = 0
+        for say, _ in lines:
+            shift = 0
+            for mark in MARK.finditer(say):
+                if mark.group(2):
+                    pauses.append((offset + mark.start() - shift, float(mark.group(2))))
+                shift += len(mark.group(0))
+            offset += len(plain(say)) + 1
+        # a pause mark after the last word adds silence after the segment
+        trailing = sum(seconds for position, seconds in pauses if position >= len(starts))
+        pauses = [(position, seconds) for position, seconds in pauses if position < len(starts)]
+        extra = [sum(seconds for position, seconds in pauses if position <= number)
+                 for number in range(len(starts))]
+        cuts = []                                      # (time in the segment, seconds of silence)
+        for position, seconds in pauses:
+            previous = position - 1
+            while previous >= 0 and texts[index][previous] == " ":
+                previous -= 1
+            cut = 0.0 if previous < 0 else (ends[previous] + starts[position]) / 2
+            cuts.append((cut, seconds))
+        silence = sum(seconds for _, seconds in cuts)
+
+        # second pass: the cues and the subtitles
         offset = 0
         for say, sub in lines:
             spoken = plain(say)
-            # a mark names the position, in the spoken text, of the word that follows it
             shift = 0
-            cuts = [0]
+            bars = [0]
             for mark in MARK.finditer(say):
                 position = mark.start() - shift
                 if mark.group(1):
-                    cues[mark.group(1)] = round(clock + starts[min(offset + position, len(starts) - 1)], 3)
-                else:
-                    cuts.append(position)
+                    at = min(offset + position, len(starts) - 1)
+                    cues[mark.group(1)] = round(clock + starts[at] + extra[at], 3)
+                elif not mark.group(2):
+                    bars.append(position)
                 shift += len(mark.group(0))
-            cuts.append(len(spoken))
+            bars.append(len(spoken))
             parts = [part.strip() for part in sub.split("|")]
-            if len(parts) != len(cuts) - 1:
+            if len(parts) != len(bars) - 1:
                 sys.exit(f"The two texts of a line have a different number of bars: {sub!r}")
-            for part, first, after in zip(parts, cuts, cuts[1:]):
+            for part, first, after in zip(parts, bars, bars[1:]):
                 if len(part) > MAX_SUBTITLE:
                     sys.exit(f"A subtitle has more than {MAX_SUBTITLE} characters. Add a bar: {part!r}")
                 last = offset + len(spoken[:after].rstrip()) - 1
-                subtitles.append({"start": round(clock + starts[offset + first], 3),
-                                  "end": round(clock + ends[last], 3), "text": part})
+                subtitles.append({"start": round(clock + starts[offset + first] + extra[offset + first], 3),
+                                  "end": round(clock + ends[last] + extra[last], 3), "text": part})
             offset += len(spoken) + 1
-        length = duration(BUILD / f"segment-{segment_id}.mp3") / TEMPO
-        segments.append({"id": segment_id, "start": round(clock, 3), "end": round(clock + ends[-1], 3)})
-        inputs.append((BUILD / f"segment-{segment_id}.mp3", clock))
-        clock += max(length, ends[-1]) + GAP
+
+        # the sound of the segment: one piece between each two pauses
+        edges = [0.0] + [cut for cut, _ in cuts] + [max(length, ends[-1]) + 0.05]
+        waited = 0.0
+        pieces = []
+        for number, (first, last) in enumerate(zip(edges, edges[1:])):
+            pieces.append((first, last, clock + first + waited))
+            if number < len(cuts):
+                waited += cuts[number][1]
+        segments.append({"id": segment_id, "start": round(clock, 3), "end": round(clock + ends[-1] + silence, 3)})
+        inputs.append((BUILD / f"segment-{segment_id}.mp3", pieces))
+        clock += max(length, ends[-1]) + silence + trailing + GAP
 
     total = round(clock - GAP + TAIL, 3)
     # keep each subtitle on screen until the next one starts, with a maximum of 0.6 s more
@@ -140,11 +174,17 @@ def main() -> None:
     # one voice track: each segment at its tempo and its start time, then loudness to -16 LUFS
     command = ["ffmpeg", "-y", "-v", "error"]
     filters = []
-    for number, (path, start) in enumerate(inputs):
+    names = []
+    for number, (path, pieces) in enumerate(inputs):
         command += ["-i", str(path)]
-        filters.append(f"[{number}:a]rubberband=tempo={TEMPO},adelay={round(start * 1000)}:all=1[a{number}]")
-    mix = "".join(f"[a{number}]" for number in range(len(inputs)))
-    filters.append(f"{mix}amix=inputs={len(inputs)}:normalize=0,apad=whole_dur={total},"
+        taps = "".join(f"[t{number}_{piece}]" for piece in range(len(pieces)))
+        filters.append(f"[{number}:a]rubberband=tempo={TEMPO},asplit={len(pieces)}{taps}")
+        for piece, (first, last, start) in enumerate(pieces):
+            name = f"[a{number}_{piece}]"
+            filters.append(f"[t{number}_{piece}]atrim=start={first:.4f}:end={last:.4f},asetpts=PTS-STARTPTS,"
+                           f"adelay={round(start * 1000)}:all=1{name}")
+            names.append(name)
+    filters.append(f"{''.join(names)}amix=inputs={len(names)}:normalize=0,apad=whole_dur={total},"
                    f"loudnorm=I=-16:TP=-1.5:LRA=11,aresample=48000[out]")
     command += ["-filter_complex", ";".join(filters), "-map", "[out]", "-t", str(total),
                 "-c:a", "aac", "-b:a", "192k", str(HERE / "narration.m4a")]

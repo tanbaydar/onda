@@ -1,146 +1,230 @@
 WEBVTT
 
-00:00:00.500 --> 00:00:02.136
-Maya gives last night's show
+00:00:00.500 --> 00:00:02.517
+I go to a lot of live shows,
 
-00:00:02.176 --> 00:00:03.812
+00:00:02.557 --> 00:00:05.527
+so I built Onda: a diary for those nights.
+
+00:00:05.567 --> 00:00:07.050
+I designed it, built it,
+
+00:00:07.090 --> 00:00:08.689
+and run it in production.
+
+00:00:08.729 --> 00:00:10.365
+Here is the whole system,
+
+00:00:10.405 --> 00:00:12.224
+one tap at a time.
+
+00:00:13.070 --> 00:00:16.459
+Friday. Maya opens Onda to find a show.
+
+00:00:16.499 --> 00:00:18.135
+Where do the events come from?
+
+00:00:18.175 --> 00:00:20.497
+From a website I do not control.
+
+00:00:20.537 --> 00:00:23.011
+So Onda trusts nothing it sends.
+
+00:00:23.051 --> 00:00:24.688
+Each night it fetches the listings
+
+00:00:24.728 --> 00:00:26.888
+inside hard limits.
+
+00:00:26.928 --> 00:00:28.792
+It stores every raw response
+
+00:00:28.832 --> 00:00:30.773
+before any code reads it.
+
+00:00:30.813 --> 00:00:33.364
+Then each listing gets its own transaction.
+
+00:00:33.404 --> 00:00:35.345
+A valid one becomes an event.
+
+00:00:35.385 --> 00:00:38.164
+A broken one leaves only a rejection record.
+
+00:00:38.204 --> 00:00:40.652
+The website's identifiers stop at a map,
+
+00:00:40.692 --> 00:00:42.164
+so I can replay any night
+
+00:00:42.204 --> 00:00:44.747
+and nothing is created twice.
+
+00:00:44.947 --> 00:00:46.761
+Maya taps an event.
+
+00:00:46.801 --> 00:00:49.250
+Her request never waits for that website.
+
+00:00:49.290 --> 00:00:51.307
+It reads my own database.
+
+00:00:51.347 --> 00:00:53.516
+One server, three containers.
+
+00:00:53.556 --> 00:00:56.594
+Only the proxy faces the internet.
+
+00:00:56.794 --> 00:00:58.659
+Saturday, she goes.
+
+00:00:58.699 --> 00:01:00.640
+Sunday, she rates the night:
+
+00:01:00.680 --> 00:01:02.316
 four and a half stars.
 
-00:00:03.852 --> 00:00:04.803
-One tap.
+00:01:02.356 --> 00:01:05.280
+A diary entry has three states.
 
-00:00:04.843 --> 00:00:07.736
-To keep that tap true, Onda needs a contract,
+00:01:05.618 --> 00:01:07.788
+Every write passes four guards.
 
-00:00:07.776 --> 00:00:11.005
-a lock, and a database with three layers.
+00:01:07.828 --> 00:01:09.388
+The last one is the schema,
 
-00:00:11.251 --> 00:00:13.345
-The tap becomes a PUT request.
+00:01:09.428 --> 00:01:11.521
+so no code path can skip it.
 
-00:00:13.385 --> 00:00:15.783
-It names a state, not an action.
+00:01:11.561 --> 00:01:13.197
+Two taps at the same instant
 
-00:00:15.823 --> 00:00:18.754
-Send it once: 201, created.
+00:01:13.237 --> 00:01:15.361
+still make one row.
 
-00:00:18.794 --> 00:00:22.107
-Send it again: 200. Still one row.
+00:01:15.561 --> 00:01:17.959
+Now her friend Leo opens Home.
 
-00:00:22.147 --> 00:00:24.469
-And every failure has one meaning.
+00:01:17.999 --> 00:01:20.499
+There is no feed table to keep in sync.
 
-00:00:24.509 --> 00:00:27.059
-400: your request is wrong.
+00:01:20.539 --> 00:01:22.073
+Home is one query.
 
-00:00:27.099 --> 00:00:29.269
-409: your request is right,
+00:01:22.113 --> 00:01:24.511
+Five branches, each filtered for privacy,
 
-00:00:29.309 --> 00:00:31.509
-but the state is not ready.
+00:01:24.551 --> 00:01:25.959
+then one sort.
 
-00:00:31.709 --> 00:00:34.869
-Inside, the code reads, then writes.
+00:01:25.999 --> 00:01:28.321
+His cursor is the key of the last row,
 
-00:00:34.909 --> 00:00:36.011
-At READ COMMITTED,
+00:01:28.361 --> 00:01:30.759
+so new activity never shifts his page.
 
-00:00:36.051 --> 00:00:38.488
-two requests can both read "no entry",
+00:01:30.799 --> 00:01:32.283
+At 100,000 rows,
 
-00:00:38.528 --> 00:00:40.164
-and both try to insert.
+00:01:32.323 --> 00:01:35.361
+a page takes 88 milliseconds.
 
-00:00:40.204 --> 00:00:43.148
-So the service locks one row first, the user's,
+00:01:35.837 --> 00:01:37.295
+I know where this stops scaling,
 
-00:00:43.188 --> 00:00:45.002
-and the second request waits.
+00:01:37.335 --> 00:01:40.018
+and the docs say what I would try next.
 
-00:00:45.042 --> 00:00:46.830
-If any code forgets the lock,
+00:01:41.218 --> 00:01:43.083
+Maya plans her next show.
 
-00:00:46.870 --> 00:00:50.061
-a unique key refuses the second row.
+00:01:43.123 --> 00:01:45.216
+Then the website drops that listing.
 
-00:00:50.261 --> 00:00:53.421
-But where did event 847 come from?
+00:01:45.256 --> 00:01:46.435
+Is the show cancelled,
 
-00:00:53.461 --> 00:00:55.326
-Every night, Onda reads listings
+00:01:46.475 --> 00:01:48.437
+or did the fetch fail?
 
-00:00:55.366 --> 00:00:57.688
-from a site it does not control.
+00:01:48.477 --> 00:01:49.554
+A miss only counts
 
-00:00:57.728 --> 00:01:00.050
-So the database has three layers.
+00:01:49.594 --> 00:01:51.535
+when the whole snapshot arrived.
 
-00:01:00.090 --> 00:01:02.107
-Evidence: every response,
-
-00:01:02.147 --> 00:01:04.316
-stored before anything reads it.
-
-00:01:04.356 --> 00:01:07.211
-Catalog: only what passes validation.
-
-00:01:07.251 --> 00:01:09.954
-One listing, one transaction.
-
-00:01:09.994 --> 00:01:11.859
-Social: what people did.
-
-00:01:11.899 --> 00:01:13.129
-Keys point one way,
-
-00:01:13.169 --> 00:01:15.745
-and the source's ID stops at a map.
-
-00:01:15.785 --> 00:01:17.116
-If a listing vanishes,
-
-00:01:17.156 --> 00:01:20.011
-only a complete snapshot counts as a miss.
-
-00:01:20.051 --> 00:01:21.992
+00:01:51.575 --> 00:01:53.364
 Three misses hide the event.
 
-00:01:22.032 --> 00:01:24.004
-Nothing deletes it.
+00:01:53.404 --> 00:01:55.192
+One sighting brings it back.
 
-00:01:24.204 --> 00:01:26.069
-Now Leo opens Home.
+00:01:55.232 --> 00:01:56.259
+Nothing is deleted,
 
-00:01:26.109 --> 00:01:27.821
-There is no feed table.
+00:01:56.299 --> 00:01:59.109
+and a past night never changes.
 
-00:01:27.861 --> 00:01:30.030
-One query, five branches.
+00:01:59.309 --> 00:02:00.945
+And if I ship a bad change,
 
-00:01:30.070 --> 00:01:32.545
-Each branch filters privacy first.
+00:02:00.985 --> 00:02:02.469
+or the server dies?
 
-00:01:32.585 --> 00:01:35.897
-Then one sort, by time, type, and key:
+00:02:02.509 --> 00:02:05.356
+Every change passes five checks.
 
-00:01:35.937 --> 00:01:37.345
-a total order.
+00:02:05.594 --> 00:02:07.535
+Only the tested commit deploys,
 
-00:01:37.385 --> 00:01:39.250
-The cursor is the last key,
+00:02:07.575 --> 00:02:08.500
+after a backup,
 
-00:01:39.290 --> 00:01:41.611
-so new rows never shift his page.
+00:02:08.540 --> 00:02:10.126
+with a health check behind it.
 
-00:01:41.651 --> 00:01:44.278
-Maya's rating is there on his next request.
+00:02:10.166 --> 00:02:10.786
+Every day,
 
-00:01:44.318 --> 00:01:46.594
-No copy to go stale.
+00:02:10.826 --> 00:02:13.097
+an encrypted backup leaves the server.
 
-00:01:46.794 --> 00:01:51.402
-One tap. One row. Three layers. No copies.
+00:02:13.137 --> 00:02:15.230
+Every month, a job restores one,
 
-00:01:51.442 --> 00:01:53.490
-This is Onda.
+00:02:15.270 --> 00:02:17.897
+because an untested backup is only a hope.
+
+00:02:17.937 --> 00:02:19.726
+It is still one server.
+
+00:02:19.766 --> 00:02:22.164
+A bad day can cost a day of data.
+
+00:02:22.204 --> 00:02:24.424
+At this size, that is the right price,
+
+00:02:24.464 --> 00:02:27.223
+and the docs say when it stops being right.
+
+00:02:28.223 --> 00:02:30.240
+Trust nothing from outside.
+
+00:02:30.280 --> 00:02:32.221
+Keep every write atomic.
+
+00:02:32.261 --> 00:02:34.278
+Derive instead of copying.
+
+00:02:34.318 --> 00:02:35.954
+Prove what you run.
+
+00:02:35.994 --> 00:02:38.545
+Sixteen decisions, each with its cost,
+
+00:02:38.585 --> 00:02:40.145
+are in the repository.
+
+00:02:40.185 --> 00:02:42.004
+Thank you for your time.
 
