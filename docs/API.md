@@ -393,9 +393,7 @@ The rating distribution has 10 buckets, one for each half step. This example sho
 | `event` | `id`, `title`, or `null`. Only for `will_be_there` |
 | `created_at`, `read_at` | Times. `read_at` is `null` before the read |
 
-One notification is possible for each recipient, actor, type and target. The target is the review or the event.
 A like or a mark that the actor removes and adds again keeps the first notification, with its `created_at` and its `read_at`.
-The types `follow`, `follow_request` and `request_accepted` have no target, so each of these actions writes a new notification.
 
 ## Security rules of the API
 

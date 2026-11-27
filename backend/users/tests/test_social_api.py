@@ -4,7 +4,7 @@ from datetime import UTC, datetime, timedelta
 from unittest.mock import patch
 
 from django.apps import apps
-from django.db import IntegrityError, close_old_connections, connection, transaction
+from django.db import IntegrityError, close_old_connections, transaction
 from django.test import Client, TestCase, TransactionTestCase
 
 from catalog.models import Artist, City, Event, EventArtist, EventStatus, Venue
@@ -437,13 +437,38 @@ class SocialApiContractTests(TestCase):
         unread = author.get("/api/me/notifications/").json()["results"]
         self.request(author, "post", f"/api/me/notifications/{unread[0]['id']}/read/")
         read = author.get("/api/me/notifications/").json()["results"]
-        self.request(liker, "delete", path)
-        self.request(liker, "post", path, now=NOW + timedelta(hours=1))
+        unliked = self.request(liker, "delete", path)
+        again = self.request(liker, "post", path, now=NOW + timedelta(hours=1))
         after = author.get("/api/me/notifications/").json()["results"]
 
+        self.assertEqual([unliked.status_code, again.status_code], [204, 201])
         self.assertIsNone(unread[0]["read_at"])
         self.assertIsNotNone(read[0]["read_at"])
         self.assertEqual(after, read)
+
+    def test_repeated_like_adds_no_row_to_a_table_that_has_copies(self):
+        # Before this rule, each repeat wrote one more row. Those rows stay
+        # in the table, and the lookup must not fail on them.
+        review = self.review(self.public_user, "Copies from before")
+        Notification = apps.get_model("users", "Notification")
+        for hours in (0, 1):
+            Notification.objects.create(
+                recipient=self.public_user,
+                actor=self.viewer,
+                type="review_like",
+                review=review,
+                created_at=NOW + timedelta(hours=hours),
+            )
+
+        liked = self.request(
+            self.auth_client(self.viewer),
+            "post",
+            f"/api/reviews/{review.id}/like/",
+            now=NOW + timedelta(hours=2),
+        )
+
+        self.assertEqual(liked.status_code, 201)
+        self.assertEqual(Notification.objects.filter(review=review).count(), 2)
 
     def test_like_notification_identity_includes_the_actor_and_the_review(self):
         first = self.review(self.public_user, "First target")
@@ -476,21 +501,6 @@ class SocialApiContractTests(TestCase):
         )
         Notification = apps.get_model("users", "Notification")
         review.delete()
-        self.assertFalse(Notification.objects.exists())
-
-    def test_physical_review_delete_cascades_like_notification(self):
-        review = self.review(self.public_user, "Delete with SQL")
-        self.request(
-            self.auth_client(self.viewer), "post", f"/api/reviews/{review.id}/like/"
-        )
-        Notification = apps.get_model("users", "Notification")
-        self.assertTrue(Notification.objects.filter(review_id=review.id).exists())
-
-        # The unique key on the review target is also the index of this
-        # foreign key, so the cascade of the database goes through it.
-        with connection.cursor() as cursor:
-            cursor.execute("DELETE FROM REVIEW WHERE id = %s", (review.id,))
-
         self.assertFalse(Notification.objects.exists())
 
     def test_notifications_order_mark_read_and_mark_all_preserve_history(self):
@@ -562,38 +572,6 @@ class SocialApiContractTests(TestCase):
         ):
             with self.subTest(values=values), self.assertRaises(IntegrityError), transaction.atomic():
                 Notification.objects.create(created_at=NOW, **values)
-
-    def test_notification_unique_keys_reject_a_second_row_for_one_target(self):
-        Notification = apps.get_model("users", "Notification")
-        pair = {"recipient": self.public_user, "actor": self.viewer}
-        review = self.review(self.public_user, "Unique target")
-        for values in (
-            {"type": "review_like", "review": review},
-            {"type": "will_be_there", "event": self.event},
-        ):
-            Notification.objects.create(created_at=NOW, **pair, **values)
-            with self.subTest(values=values), self.assertRaises(IntegrityError), transaction.atomic():
-                Notification.objects.create(
-                    created_at=NOW + timedelta(hours=1), **pair, **values
-                )
-
-        # A unique key does not compare NULL values. A type that has no target
-        # is thus outside the two keys, and a second row is possible.
-        for _ in range(2):
-            Notification.objects.create(created_at=NOW, type="follow", **pair)
-        self.assertEqual(
-            Notification.objects.filter(type="follow", **pair).count(), 2
-        )
-
-    def test_notification_keys_do_not_block_a_repeated_follow(self):
-        client = self.auth_client(self.viewer)
-        path = f"/api/users/{self.public_user.id}/follow/"
-        statuses = [
-            self.request(client, method, path).status_code
-            for method in ("post", "delete", "post")
-        ]
-
-        self.assertEqual(statuses, [201, 204, 201])
 
     def test_real_follower_count_orders_public_review_tie(self):
         first = self.review(self.public_user, "Less followed")

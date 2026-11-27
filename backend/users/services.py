@@ -2,7 +2,7 @@ from datetime import datetime, time
 from zoneinfo import ZoneInfo
 
 from django.db import IntegrityError, transaction
-from django.db.models import Avg, Count, Exists, OuterRef
+from django.db.models import Avg, Count
 from django.utils.timezone import now as timezone_now
 
 from .auth_services import require_account_action, require_account_action_for_user_id
@@ -251,17 +251,19 @@ def save_will_be_there(*, user, event):
     if created:
         # "created" is also true for a plan that the person removed and added
         # again. A follower who has the notification for it gets no second row.
-        already_notified = Notification.objects.filter(
-            recipient_id=OuterRef("follower_id"),
-            actor=user,
-            type=NotificationType.WILL_BE_THERE,
-            event=event,
+        # The row of the plan is the mutex: a remove waits for the commit of
+        # the first mark, so this read sees the rows that the first mark wrote.
+        already_notified = set(
+            Notification.objects.filter(
+                actor=user,
+                type=NotificationType.WILL_BE_THERE,
+                event=event,
+            ).values_list("recipient_id", flat=True)
         )
-        follower_ids = (
-            Follow.objects.filter(followee=user, status=FollowStatus.APPROVED)
-            .exclude(Exists(already_notified))
-            .values_list("follower_id", flat=True)
-        )
+        follower_ids = Follow.objects.filter(
+            followee=user,
+            status=FollowStatus.APPROVED,
+        ).values_list("follower_id", flat=True)
         Notification.objects.bulk_create(
             [
                 Notification(
@@ -272,6 +274,7 @@ def save_will_be_there(*, user, event):
                     created_at=now,
                 )
                 for follower_id in follower_ids
+                if follower_id not in already_notified
             ]
         )
     return entry, created
@@ -531,14 +534,16 @@ def like_review(*, user, review):
     except IntegrityError as exc:
         raise ReviewLikeConflict("Review is already liked.") from exc
     # A like that the person removed and added again finds the first
-    # notification, with its read state, and writes no second row.
-    Notification.objects.get_or_create(
-        recipient_id=review.entry.user_id,
-        actor=user,
-        type=NotificationType.REVIEW_LIKE,
-        review=review,
-        defaults={"created_at": timezone_now()},
-    )
+    # notification, with its read state, and writes no second row. The lock
+    # on the review puts this lookup after the commit of the first like.
+    notification = {
+        "recipient_id": review.entry.user_id,
+        "actor": user,
+        "type": NotificationType.REVIEW_LIKE,
+        "review": review,
+    }
+    if not Notification.objects.filter(**notification).exists():
+        Notification.objects.create(**notification, created_at=timezone_now())
     return review.likes.count()
 
 

@@ -105,7 +105,6 @@ The service locks the user row, counts, and then inserts.
 | A review has a rating | `save_review` refuses. `remove_rating` deletes the review in the same transaction | None. The rule uses two tables |
 | A maximum of three favorites of each type | Row lock, then count | None. The rule uses many rows |
 | No follow to yourself, no second follow | Service | Check constraint, composite primary key |
-| One notification for each recipient, actor, type and target | Lookup, then insert | Two unique keys |
 | An event with history stays | None | Foreign key with `RESTRICT` |
 
 > [!NOTE]
