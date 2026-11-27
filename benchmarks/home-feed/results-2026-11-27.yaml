@@ -1,0 +1,85 @@
+benchmark:
+  measured_at: "2026-11-27"
+  repository_commit: "69e9dca"
+  commit_note: "The feed code is the code of this commit. The benchmark script has the two corrections that this change set adds."
+  endpoint: "/api/me/home/"
+  feed_version: "five branches (the current query)"
+  transport: "Django HTTP test client through the configured production middleware stack"
+  authentication: "session-authenticated via Client.login, with a verified account"
+  page_size: 20
+  request_order: "sequential"
+  requests_per_page_total: 220
+  warmup_requests_discarded: 20
+  measured_requests_per_page: 200
+  cursor_method: "walked the endpoint from page 1 through page 49; the returned page-49 cursor was used for page 50"
+  deepest_page_confirmed: 50
+  runs: 3
+
+query_count_assertion:
+  file: "backend/users/tests/test_home_api.py"
+  test: "HomeFeedContractTests.test_seven_type_identical_timestamp_order_and_source_key_tiebreak_are_fixed"
+  asserted_queries: 4
+  asserted_shape: "two session/auth lookups, one bounded city-boundary lookup, and one five-branch UNION ALL"
+
+seed:
+  database: "onda_feed_benchmark"
+  script_created:
+    users: 501
+    viewer_follows: 50
+    events: 500
+    artists: 300
+    reviews: 20000
+    rows:
+      follow: 20000
+      rated_been: 20000
+      will_be_there: 15000
+      favorite_event: 20000
+      favorite_artist: 15000
+      review_like: 10000
+      total: 100000
+  note: "A follow is not a feed branch in the current query. 80,000 of the 100,000 rows are feed source rows."
+
+results:
+  page_1:
+    p95_ms_each_run: [87.641, 87.499, 97.310]
+    p95_ms_median: 87.641
+    response_items: 20
+  page_50:
+    p95_ms_each_run: [81.976, 71.294, 77.636]
+    p95_ms_median: 77.636
+    response_items: 20
+  not_included:
+    - "A first run that started immediately after the seed gave 255.982 ms and 233.060 ms. The cause was not examined. The three runs above started later."
+
+plan:
+  command: "EXPLAIN ANALYZE of the UNION ALL statement for the benchmark viewer"
+  followees_read: 50
+  rows_materialized_for_page_1: 7920
+  access: "Each branch starts at the primary key of FOLLOW and does one index lookup for each followee on its source table."
+  sort: "Top-21 sort on (activity_at, activity_type, source_key), all descending"
+  table_scans_of_source_tables: 0
+  isolation_level: "READ-COMMITTED"
+
+environment:
+  hardware:
+    cpu: "Intel(R) Xeon(R) Processor @ 2.10GHz (4 logical CPUs, cloud virtual machine)"
+    memory_bytes: 16868675584
+  operating_system: "Linux-6.18.44-fc-v880-x86_64-with-glibc2.39 (Ubuntu 24.04)"
+  mysql_version: "8.0.46-0ubuntu0.24.04.5"
+  python_version: "3.13.18"
+  django_version: "6.0.8"
+  django_settings_module: "config.settings_production"
+  debug: false
+  production_settings_deviations:
+    - "ONDA_DB_NAME=onda_feed_benchmark, a dedicated local account"
+    - "ONDA_DOMAIN=bench.example.com"
+    - "SMTP settings with placeholder values. The benchmark sends no email."
+    - "Requests used Django's in-process HTTP test client rather than a deployed WSGI server; configured middleware and secure-request handling remained active."
+  database_isolation: "Dedicated local database; neither the development database nor a production database was used."
+  schema_or_index_modified: false
+
+decisions:
+  - "Kept the seed of the 2026-08-17 record, so that the two records use the same data shape."
+  - "Reported the median of three runs, and listed each run."
+  - "Used nearest-rank p95: sorted_samples[ceil(0.95 * n) - 1]."
+  - "CI uses MySQL 8.4 and Python 3.12. This record used the versions of the measurement machine."

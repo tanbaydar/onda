@@ -1,0 +1,16 @@
+# Findings that the Trivy scans in .github/workflows/ci.yml accept for a limited time.
+# Each rule is one finding ID and the date when the rule stops.
+# After that date the scan fails again, and a person must review the finding.
+
+# CVE-2026-116587: go-jose, denial of service through RSA parameters in a JWK.
+# Where:    github.com/go-jose/go-jose/v3 3.0.5 in the Caddy binary of the proxy image.
+# Why:      The v3 line has no fixed release. The module comes in through
+#           go.step.sm/crypto 0.81.0. The release of that module that drops go-jose v3
+#           does not compile with smallstep/certificates 0.30.2, the newest release.
+# Analysis: The Caddyfile has no acme_server, no pki block and no "tls internal".
+#           Certificates come from a public ACME service through certmagic and acmez,
+#           which have their own JOSE code. In this configuration, no request path
+#           gives a JWK to go-jose v3.
+# Note:     The ID also matches go-jose v4 before 4.1.6. frontend.Dockerfile pins 4.1.6.
+# Accepted: 2026-11-27. Remove this rule when the Caddy build has no go-jose v3.
+CVE-2026-116587 exp:2027-02-26

@@ -1,474 +1,227 @@
-# Shipped database: crow's-foot reference
+[Onda](../README.md) / [Documentation](README.md) / Database reference
 
-This document describes the **implemented Onda product schema** as of August 21, 2026. It is derived from the current Django models and migrations: 25 project-owned tables across ingestion, canonical identity, and application data.
+# Database reference
 
-It deliberately excludes Django framework tables and generated framework junctions for admin, permissions, groups, content types, migrations, and sessions. Those tables exist in the deployed database but do not express Onda's domain model.
+> **For** engineers who read or write the data. **Use** this page as a lookup table.
 
-## Read the notation
+Onda uses one MySQL 8.4 database with InnoDB tables.
+Onda owns 25 tables. Django adds its own tables for sessions and migrations, and this page does not list them.
+The facts on this page come from the models, and from `information_schema` after all migrations.
 
-| Mark | Meaning |
+## In brief
+
+- The tables are in three layers: evidence (4), catalog (9) and social data (12).
+- Keys point one way, from social data to the catalog. No key points from social data to evidence.
+- A rule that one row can prove is a constraint. This page lists all of them.
+- Read through the shared querysets. They contain the privacy filter and the status filter.
+- Write through the service functions. They contain the transaction and the lock.
+
+## Contents
+
+- [The three layers](#the-three-layers)
+- [How to read safely](#how-to-read-safely) and [how to write safely](#how-to-write-safely)
+- Tables: [evidence](#layer-1-evidence), [catalog](#layer-2-catalog), [social data](#layer-3-social-data)
+- [Rules that the database cannot express](#rules-that-the-database-cannot-express)
+- [Delete rules](#delete-rules), [indexes](#indexes-and-the-read-paths-that-they-serve), [stored and derived data](#stored-and-derived-data)
+
+## The three layers
+
+![The evidence layer has 4 tables, the catalog layer has 9 and the social layer has 12. Only the transformer writes from evidence to the catalog. Social tables refer to catalog rows. A source ID stops at the identity map.](assets/figures/data-layers.svg)
+
+In the figures on this page, a short cross line is the "one" end of a relation. Three lines are the "many" end.
+
+| Layer | Contents | Who writes |
+|---|---|---|
+| Evidence | Each response of the source, and each rejection | `ingestion` |
+| Catalog | Cities, venues, artists, events, lineups, and the identity maps | `ingestion` |
+| Social data | Accounts, follows, diary, reviews, likes, plans, favorites, notifications | `users` |
+
+The isolation level is `READ COMMITTED`, the default of Django for MySQL.
+
+## How to read safely
+
+A query on a raw model can return a hidden event, an alias or a private row.
+Use these entry points.
+
+| You want | Use |
 |---|---|
-| `||` | exactly one |
-| `o|` | zero or one |
-| `o{` | zero or many |
-| `PK` | primary key |
-| `FK` | foreign key |
-| `UK` | unique key |
-
-The diagrams show physical relationship cardinality. A stricter service invariant is called out in prose when the database alone cannot express it—for example, ingestion admits an event with at least one artist, but a foreign key cannot force every `EVENT` row to have an `EVENT_ARTIST` child at every instant.
-
-## Three data zones
-
-```mermaid
-flowchart LR
-    subgraph IZ[Ingestion evidence — 4 tables]
-        Seeds[Tracked source pages]
-        Runs[Run telemetry]
-        Raw[Raw responses]
-        Rejected[Quarantined observations]
-    end
-
-    subgraph CZ[Canonical + identity — 9 tables]
-        Canon[City / venue / artist / event / lineup]
-        Identity[Four provider identity maps]
-    end
-
-    subgraph AZ[Application — 12 tables]
-        Accounts[Accounts + follows + abuse controls]
-        Diary[Diary + reviews + likes]
-        Social[Plans + favorites + notifications]
-    end
-
-    IZ -->|Transformer only| CZ
-    CZ -->|canonical foreign keys| AZ
-```
-
-There is intentionally no foreign key from application tables back to ingestion evidence. Provider-shaped data ends at the Transformer and identity mappings.
-
-## 1. Ingestion evidence
-
-```mermaid
-erDiagram
-    TRACKED_SOURCE_PAGE ||--o{ RAW_INGEST : "is requested by"
-    SYNC_RUN ||--o{ RAW_INGEST : "archives"
-    RAW_INGEST ||--o{ REJECTED_INGEST : "can quarantine"
-
-    TRACKED_SOURCE_PAGE {
-        bigint id PK
-        varchar source
-        varchar area_ref
-        varchar label
-        boolean active
-        datetime last_synced_at
-        datetime last_success_at
-    }
-
-    SYNC_RUN {
-        bigint id PK
-        varchar run_type
-        varchar status
-        datetime started_at
-        datetime finished_at
-        int seeds_attempted
-        int seeds_failed
-        int events_upserted
-        int events_quarantined
-        int events_dropped
-        text error_summary
-    }
-
-    RAW_INGEST {
-        bigint id PK
-        bigint seed_id FK
-        bigint run_id FK
-        date window_start
-        date window_end
-        int page_number
-        int page_size
-        text response_body
-        smallint http_status
-        datetime fetched_at
-        varchar processing_status
-    }
-
-    REJECTED_INGEST {
-        bigint id PK
-        bigint raw_ingest_id FK
-        int entity_index
-        varchar entity_ref
-        varchar reason
-        text detail
-        datetime rejected_at
-    }
-```
-
-Key constraints:
-
-- `TRACKED_SOURCE_PAGE(source, area_ref)` is unique.
-- `SYNC_RUN.run_type` is one of `nightly`, `backfill`, `replay`; status is `running`, `completed`, or `crashed`.
-- `RAW_INGEST.processing_status` is `pending`, `processed`, or `failed`.
-- `REJECTED_INGEST(raw_ingest_id, entity_index)` is unique, so replay cannot duplicate the same occurrence.
-- Raw-to-seed, raw-to-run, and rejected-to-raw deletion behavior is restrictive. Evidence cannot disappear through an ordinary parent cascade.
-
-`RAW_INGEST` has operational indexes on `run_id` and `(seed_id, fetched_at)`. The raw response is text rather than a native JSON column so a malformed or non-JSON body can still be preserved exactly.
-
-## 2. Canonical catalog and provider identities
-
-```mermaid
-erDiagram
-    CITY ||--o{ VENUE : "contains"
-    VENUE ||--o{ EVENT : "hosts"
-    EVENT ||--o{ EVENT_ARTIST : "has lineup slots"
-    ARTIST ||--o{ EVENT_ARTIST : "fills"
-
-    CITY ||--o{ CITY_IDENTITY : "maps from sources"
-    VENUE ||--o{ VENUE_IDENTITY : "maps from sources"
-    ARTIST ||--o{ ARTIST_IDENTITY : "maps from sources"
-    EVENT ||--o{ EVENT_IDENTITY : "maps from sources"
-
-    CITY {
-        bigint id PK
-        varchar name
-        varchar region_code
-        varchar region_name
-        char country_code
-        varchar timezone
-    }
-
-    VENUE {
-        bigint id PK
-        varchar name
-        bigint city_id FK
-    }
-
-    ARTIST {
-        bigint id PK
-        varchar name
-        varchar image_url
-    }
-
-    EVENT {
-        bigint id PK
-        varchar title
-        date event_date
-        time start_time
-        bigint venue_id FK
-        varchar cover_image_url
-        varchar status
-        bigint canonical_event_id FK
-    }
-
-    EVENT_ARTIST {
-        bigint id PK
-        bigint event_id FK
-        bigint artist_id FK
-        int position
-    }
-
-    CITY_IDENTITY {
-        bigint id PK
-        bigint city_id FK
-        varchar source
-        varchar source_id
-    }
-
-    VENUE_IDENTITY {
-        bigint id PK
-        bigint venue_id FK
-        varchar source
-        varchar source_id
-    }
-
-    ARTIST_IDENTITY {
-        bigint id PK
-        bigint artist_id FK
-        varchar source
-        varchar source_id
-    }
-
-    EVENT_IDENTITY {
-        bigint id PK
-        bigint event_id FK
-        varchar source
-        varchar source_id
-        datetime last_seen_at
-        int misses
-    }
-```
-
-Composite uniqueness that cannot be expressed field-by-field in the compact diagram:
-
-- `CITY(country_code, region_code, name)`;
-- `EVENT_ARTIST(event_id, artist_id)` and `EVENT_ARTIST(event_id, position)`;
-- every identity table: `(source, source_id)` and `(canonical_id, source)`.
-
-Canonical records never store an RA ID. A provider ID is unique only inside its `(entity type, source)` namespace and resolves through the matching identity table. This supports stable Onda IDs when provider display attributes change and creates a place for another source identity if a future integration deliberately maps it to the same real entity.
-
-`EVENT.status` is constrained to `active`, `unverified`, or `hidden`. `EVENT_IDENTITY.misses` and `last_seen_at` retain the source testimony used to derive that status. Catalog indexes support `(status, event_date)` and `(venue_id, event_date)` reads.
-
-A provider can occasionally publish separate source IDs for the same show. When title, venue, local date/time, and ordered lineup all agree, the later `EVENT` row retains its own identity evidence but points to the earliest row through `canonical_event_id`. Catalog reads expose only the canonical row, old alias URLs resolve to it, and lifecycle reconciliation considers evidence from the whole alias group. The migration only marks groups that have no user-owned Been, Will Be There, or favorite data; it never deletes source or event rows.
-
-Deletion intent differs by relationship:
-
-- deleting a canonical city, venue, artist, or event is restricted while downstream canonical/product references exist;
-- deleting an event cascades through its lineup and provider identity rows only after those restrictions have been resolved;
-- deleting an artist is restricted by lineup use;
-- canonical deletion is not the normal response to source absence—lifecycle status is.
-
-## 3. Application and social data
-
-### Accounts, follows, and publishing
-
-```mermaid
-erDiagram
-    CITY o|--o{ ONDA_USER : "is optional home city for"
-    ONDA_USER ||--o{ ACCOUNT_CODE : "owns"
-    ONDA_USER ||--o{ FOLLOW : "acts as follower"
-    ONDA_USER ||--o{ FOLLOW : "acts as followee"
-
-    ONDA_USER ||--o{ DIARY_ENTRY : "logs"
-    EVENT ||--o{ DIARY_ENTRY : "is logged in"
-    DIARY_ENTRY ||--o| REVIEW : "may publish"
-    ONDA_USER ||--o{ REVIEW_LIKE : "creates"
-    REVIEW ||--o{ REVIEW_LIKE : "receives"
-
-    CITY {
-        bigint id PK
-    }
-
-    EVENT {
-        bigint id PK
-    }
-
-    ONDA_USER {
-        bigint id PK
-        varchar email UK
-        varchar username UK
-        varchar display_name
-        varchar bio
-        varchar avatar
-        bigint home_city_id FK
-        boolean is_private
-        varchar status
-        datetime email_verified_at
-        datetime deletion_due_at
-        datetime created_at
-    }
-
-    ACCOUNT_CODE {
-        bigint id PK
-        bigint user_id FK
-        varchar purpose
-        varchar code_hash
-        datetime sent_at
-        datetime expires_at
-        smallint failed_attempts
-        datetime consumed_at
-    }
-
-    REQUEST_THROTTLE {
-        bigint id PK
-        varchar scope
-        char key_hash
-        datetime window_started_at
-        int count
-        datetime updated_at
-    }
-
-    FOLLOW {
-        bigint follower_id PK, FK
-        bigint followee_id PK, FK
-        varchar status
-        datetime created_at
-        datetime approved_at
-    }
-
-    DIARY_ENTRY {
-        bigint id PK
-        bigint user_id FK
-        bigint event_id FK
-        decimal rating
-        datetime rated_at
-        datetime created_at
-    }
-
-    REVIEW {
-        bigint id PK
-        bigint entry_id FK, UK
-        varchar body
-        datetime published_at
-    }
-
-    REVIEW_LIKE {
-        bigint user_id PK, FK
-        bigint review_id PK, FK
-        datetime created_at
-    }
-```
-
-### Plans and favorites
-
-```mermaid
-erDiagram
-    ONDA_USER ||--o{ WILL_BE_THERE : "plans"
-    EVENT ||--o{ WILL_BE_THERE : "is planned"
-
-    ONDA_USER ||--o{ FAVORITE_EVENT : "chooses"
-    EVENT ||--o{ FAVORITE_EVENT : "is selected"
-    ONDA_USER ||--o{ FAVORITE_ARTIST : "chooses"
-    ARTIST ||--o{ FAVORITE_ARTIST : "is selected"
-    ONDA_USER ||--o{ FAVORITE_VENUE : "chooses"
-    VENUE ||--o{ FAVORITE_VENUE : "is selected"
-
-    ONDA_USER {
-        bigint id PK
-    }
-
-    EVENT {
-        bigint id PK
-    }
-
-    ARTIST {
-        bigint id PK
-    }
-
-    VENUE {
-        bigint id PK
-    }
-
-    WILL_BE_THERE {
-        bigint user_id PK, FK
-        bigint event_id PK, FK
-        datetime created_at
-    }
-
-    FAVORITE_EVENT {
-        bigint user_id PK, FK
-        bigint event_id PK, FK
-        datetime added_at
-    }
-
-    FAVORITE_ARTIST {
-        bigint user_id PK, FK
-        bigint artist_id PK, FK
-        datetime added_at
-    }
-
-    FAVORITE_VENUE {
-        bigint user_id PK, FK
-        bigint venue_id PK, FK
-        datetime added_at
-    }
-```
-
-### Notifications
-
-```mermaid
-erDiagram
-    ONDA_USER ||--o{ NOTIFICATION : "receives"
-    ONDA_USER ||--o{ NOTIFICATION : "acts in"
-    REVIEW o|--o{ NOTIFICATION : "optionally concerns"
-
-    ONDA_USER {
-        bigint id PK
-    }
-
-    REVIEW {
-        bigint id PK
-    }
-
-    NOTIFICATION {
-        bigint id PK
-        bigint recipient_id FK
-        bigint actor_id FK
-        varchar type
-        bigint review_id FK
-        datetime created_at
-        datetime read_at
-    }
-```
-
-`ONDA_USER` is the custom Django user table. It also contains framework account
-fields such as the password hash and staff/activity flags, omitted above so the
-domain relationships remain readable.
-
-`REQUEST_THROTTLE` bounds repeated login, registration, account-code, password-reset,
-and avatar-upload attempts. It has no user foreign key by design. The rate-limit key
-is an HMAC of an account identifier or client address; the raw email, username, or IP
-address is not stored in this table. `(scope, key_hash)` is unique, `count` must remain
-positive, and `updated_at` is indexed so expired windows can be removed efficiently.
-
-### Composite identities and caps
-
-The following relationships use composite primary keys, which makes “the same relationship twice” physically impossible:
-
-- `FOLLOW(follower_id, followee_id)`;
-- `REVIEW_LIKE(user_id, review_id)`;
-- `WILL_BE_THERE(user_id, event_id)`;
-- each of the three favorite tables `(user_id, target_id)`.
-
-`DIARY_ENTRY` uses a surrogate primary key but makes `(user_id, event_id)` unique because `REVIEW.entry_id` needs a stable one-to-one parent. Favorite counts—at most three events, artists, and venues per user—are cross-row rules enforced transactionally in the service layer rather than by a simple row check.
-
-### Checks that encode product laws
-
-Representative database checks include:
-
-- an active user must have a username; deactivated/pending-deletion users must not;
-- only a pending-deletion user has `deletion_due_at`;
-- account-code expiry is after send time and failed attempts are at most five;
-- a user cannot follow themself;
-- pending follows have no approval time and approved follows do;
-- diary `rating` and `rated_at` are null or populated together;
-- rating is null or a valid half-star value from 0.5 through 5.0;
-- review body cannot be whitespace-only;
-- notification actor and recipient differ;
-- only `review_like` notifications have a review reference.
-
-Some domain laws require transactions rather than row-local checks: an event must have started before the first Been entry, a review needs a rating, Will Be There expires by venue-local date, favorite lists have caps, and viewer privacy depends on an approved follow relationship.
-
-### Cascades and restrictions
-
-User-owned data uses physical MySQL cascades:
-
-```mermaid
-flowchart LR
-    User[ONDA_USER deleted] --> Owned[Codes, follows, diary, likes,<br/>plans, favorites, notifications deleted]
-    Diary[DIARY_ENTRY deleted] --> Review[REVIEW deleted]
-    Review --> Likes[REVIEW_LIKE deleted]
-    Review --> ReviewNotif[Review-linked notifications deleted]
-
-    Event[EVENT referenced] -->|RESTRICT| DiaryKeep[DIARY_ENTRY]
-    Event -->|RESTRICT| PlanKeep[WILL_BE_THERE]
-    Event -->|RESTRICT| FavKeep[FAVORITE_EVENT]
-```
-
-Django ORM cascade declarations do not automatically mean MySQL emitted the same physical `ON DELETE` action. The migration history explicitly rebuilds and tests those foreign keys, so the ownership policy survives direct database enforcement as well as ORM deletion.
-
-## Indexes aligned with read paths
-
-The schema uses targeted indexes rather than indexing every foreign key twice:
+| Events that people can see | `_event_queryset()` in `catalog/views.py`. It removes hidden events and aliases |
+| One event from an ID in a URL | `_canonical_event(event_id)`. It follows an alias, and it gives `404` for a hidden event |
+| The Been entries that a viewer can see | `DiaryEntry.objects.visible_to(viewer)` |
+| The ratings for a public average | `DiaryEntry.objects.for_aggregation()`. It includes private profiles, with no name |
+| The ratings of the circle of a viewer | `DiaryEntry.objects.for_circle(viewer)` |
+| The reviews that a viewer can see | `Review.objects.visible_to(viewer)` |
+| The reviews for the public section of an event | `Review.objects.for_public_section()` |
+| The plans that are active now | `WillBeThere.objects.active_at(now)`, `.visible_to(viewer, now)` |
+| The profiles that show their content to a viewer | `User.objects.profile_content_visible_to(viewer)` |
+| The viewer for a privacy decision | `effective_visibility_viewer(request.user)` |
+
+## How to write safely
+
+Change state only through these functions in `users/services.py`.
+Each function is one transaction.
+
+| Change | Function | Row that it locks | Conflict that it raises |
+|---|---|---|---|
+| Add or change a rating | `save_rating` | The user | `EventNotStarted` |
+| Remove a rating | `remove_rating` | The Been entry | None. It also deletes the review |
+| Remove a Been entry | `remove_entry` | The Been entry | None |
+| Add or change a review | `save_review` | The Been entry | `ReviewRequiresRating` |
+| Delete a review | `delete_review` | The review | None |
+| Like a review | `like_review` | The review | `ReviewLikeConflict` |
+| Add a plan | `save_will_be_there` | None. The primary key is the guard | `WillBeThereExpired` |
+| Add a favorite | `save_favorite` | The user | `FavoriteLimitReached` |
+| Follow a person | `follow_user` | The followee | `FollowConflict` |
+| Answer a follow request | `accept_follow_request`, `decline_follow_request` | The user | None |
+| Change privacy | `change_privacy` | The user | None |
+| Count an attempt for a rate limit | `consume_rate_limit` in `users/rate_limits.py` | The counter row | `RateLimitExceeded` |
+
+## Layer 1. Evidence
+
+![One seed has many stored responses. One run has many stored responses. One stored response has many rejection records.](assets/figures/er-evidence.svg)
+
+| Table | One row is | Columns | Keys and checks |
+|---|---|---|---|
+| `TRACKED_SOURCE_PAGE` | One city on the source (a seed) | `id`, `source`, `area_ref`, `label`, `active`, `last_synced_at`, `last_success_at` | Unique `(source, area_ref)` |
+| `SYNC_RUN` | One run of the sync command | `id`, `run_type`, `status`, `started_at`, `finished_at`, `seeds_attempted`, `seeds_failed`, `events_upserted`, `events_quarantined`, `events_dropped`, `error_summary` | Check: `run_type` is `nightly`, `backfill` or `replay`. Check: `status` is `running`, `completed` or `crashed` |
+| `RAW_INGEST` | One stored response for one page | `id`, `seed_id`, `run_id`, `window_start`, `window_end`, `page_number`, `page_size`, `response_body`, `http_status`, `fetched_at`, `processing_status` | Check: `processing_status` is `pending`, `processed` or `failed` |
+| `REJECTED_INGEST` | One listing that Onda did not admit | `id`, `raw_ingest_id`, `entity_index`, `entity_ref`, `reason`, `detail`, `rejected_at` | Unique `(raw_ingest_id, entity_index)`. Check on `reason` |
+
+- `response_body` is text, not JSON. Thus a body that is not JSON stays as it arrived.
+- `events_upserted` counts admitted listings. It is not a count of new events, because a listing can update a row.
+
+## Layer 2. Catalog
+
+![A city has many venues, a venue has many events, and an event has many lineup rows. An artist has many lineup rows. Each of the four entities has many identity rows.](assets/figures/er-catalog.svg)
+
+| Table | One row is | Columns | Keys and checks |
+|---|---|---|---|
+| `CITY` | One city | `id`, `name`, `region_code`, `region_name`, `country_code`, `timezone` | Unique `(country_code, region_code, name)` |
+| `VENUE` | One venue | `id`, `name`, `city_id` | |
+| `ARTIST` | One artist | `id`, `name`, `image_url` | |
+| `EVENT` | One event | `id`, `title`, `event_date`, `start_time`, `venue_id`, `cover_image_url`, `status`, `canonical_event_id` | Check: `status` is `active`, `unverified` or `hidden` |
+| `EVENT_ARTIST` | One artist in one lineup | `id`, `event_id`, `artist_id`, `position` | Unique `(event_id, artist_id)`. Unique `(event_id, position)` |
+| `EVENT_IDENTITY` | One source ID of one event | `id`, `event_id`, `source`, `source_id`, `last_seen_at`, `misses` | Unique `(source, source_id)`. Unique `(event_id, source)` |
+| `VENUE_IDENTITY`, `ARTIST_IDENTITY`, `CITY_IDENTITY` | One source ID of one entity | `id`, the entity ID, `source`, `source_id` | The same two unique keys |
+
+- `event_date` and `start_time` are local values at the venue. `CITY.timezone` is an IANA name, for example `America/New_York`.
+- `canonical_event_id` is `NULL` for a normal row. An alias row points to the first row of the same real event.
+- A catalog table has no source ID column. Only the identity maps have one.
+- The foreign key cannot make sure that an event has an artist. The transformer does: it admits an event only with one artist or more.
+
+## Layer 3. Social data
+
+![One user has many follows, Been entries, plans, favorites, notifications and codes. One Been entry has zero or one review. One review has many likes. Been entries, plans and favorites refer to catalog rows.](assets/figures/er-social.svg)
+
+| Table | One row is | Columns | Keys and checks |
+|---|---|---|---|
+| `ONDA_USER` | One account | `id`, `email`, `email_verified_at`, `username`, `recovery_username`, `display_name`, `bio`, `avatar`, `home_city_id`, `is_private`, `status`, `deletion_due_at`, `created_at`, and the account columns of Django | Unique `email`. Unique `username`. Check: an `active` account has a username. Check: only a `pending_deletion` account has `deletion_due_at` |
+| `ACCOUNT_CODE` | One code for one purpose | `id`, `user_id`, `purpose`, `code_hash`, `sent_at`, `expires_at`, `failed_attempts`, `consumed_at` | Unique `(user_id, purpose)`. Check: `failed_attempts <= 5`. Check: `expires_at > sent_at` |
+| `REQUEST_THROTTLE` | One counter of a rate limit | `id`, `scope`, `key_hash`, `window_started_at`, `count`, `updated_at` | Unique `(scope, key_hash)`. Check: `count >= 1` |
+| `FOLLOW` | One follow | `follower_id`, `followee_id`, `status`, `created_at`, `approved_at` | Primary key `(follower_id, followee_id)`. Check: not to yourself. Check: `approved` has `approved_at`, and `pending` does not |
+| `DIARY_ENTRY` | One Been entry | `id`, `user_id`, `event_id`, `rating`, `rated_at`, `created_at` | Unique `(user_id, event_id)`. Check: `rating` is `NULL` or a half step from 0.5 to 5.0. Check: `rating` and `rated_at` are set together |
+| `REVIEW` | One review | `id`, `entry_id`, `body`, `published_at` | Unique `entry_id`. Check: `body` has a visible character |
+| `REVIEW_LIKE` | One like | `user_id`, `review_id`, `created_at` | Primary key `(user_id, review_id)` |
+| `WILL_BE_THERE` | One plan | `user_id`, `event_id`, `created_at` | Primary key `(user_id, event_id)` |
+| `FAVORITE_EVENT`, `FAVORITE_ARTIST`, `FAVORITE_VENUE` | One favorite | `user_id`, the target ID, `added_at` | Primary key `(user_id, target ID)` |
+| `NOTIFICATION` | One notification for one recipient | `id`, `recipient_id`, `actor_id`, `type`, `review_id`, `event_id`, `created_at`, `read_at` | Check: the actor is not the recipient. Check: `review_like` has a review, `will_be_there` has an event, and the other types have none |
+
+- A composite primary key makes a second row for the same pair impossible.
+- `DIARY_ENTRY` has a surrogate `id`, because `REVIEW.entry_id` refers to one row.
+- `REQUEST_THROTTLE` has no foreign key to a user. `key_hash` is an HMAC of the address or of the account name.
+- `WILL_BE_THERE` has no column for an end time. The read derives "active" from the date of the event at the venue.
+
+## Rules that the database cannot express
+
+These rules use more than one row. One service function enforces each rule, in a transaction.
+
+| Rule | Function |
+|---|---|
+| A new Been entry is possible only after the start of the event at the venue | `save_rating` |
+| A review has a rating. The removal of a rating deletes the review | `save_review`, `remove_rating` |
+| A person has a maximum of 3 favorites of each type | `save_favorite` |
+| A plan is possible only until the end of the day of the event at the venue | `save_will_be_there` |
+| A follow to a private profile starts as `pending` | `follow_user` |
+| A change from private to public approves all open requests | `change_privacy` |
+| A person cannot like their own review | `like_review` |
+
+## Delete rules
+
+MySQL shows `RESTRICT` as `NO ACTION`. In InnoDB the two do the same: the delete fails immediately.
+
+| If you delete | These rows go too (`CASCADE`) | The delete fails while these rows are there (`RESTRICT`) |
+|---|---|---|
+| A user | Codes, follows, Been entries, likes, plans, favorites, notifications | |
+| A Been entry | Its review | |
+| A review | Its likes and its notifications | |
+| An event | Its lineup rows and its identity rows | Been entries, plans, favorites, notifications, alias rows |
+| An artist | Its identity rows | Lineup rows, favorites |
+| A venue | Its identity rows | Events, favorites |
+| A city | Its identity rows | Venues, the home city of a user |
+| A seed or a run | | Stored responses |
+| A stored response | | Rejection records |
+
+Django applies `on_delete=CASCADE` in Python and leaves the key in MySQL with no action.
+The migrations add the `CASCADE` action to the keys in the left column, and tests delete rows with direct SQL to prove it.
+One key is different: `NOTIFICATION.event_id` cascades in Django only.
+
+No application code deletes an event. The answer to a missing event is a status, not a delete.
+
+## Indexes and the read paths that they serve
 
 | Index | Read path |
 |---|---|
-| `EVENT(status, event_date)` | visible upcoming/past catalog |
-| `EVENT(venue_id, event_date)` | venue event lists |
-| `RAW_INGEST(run_id)` | run recovery and diagnostics |
-| `RAW_INGEST(seed_id, fetched_at)` | source-page history |
-| `FOLLOW(followee_id, status)` | follower counts, requests, privacy checks |
-| `NOTIFICATION(recipient_id, created_at)` | notification timeline |
-| `NOTIFICATION(recipient_id, read_at)` | unread counts and bulk read |
-| `REQUEST_THROTTLE(updated_at)` | expired rate-limit window cleanup |
+| `EVENT (status, event_date)` | Upcoming and past lists of visible events |
+| `EVENT (venue_id, event_date)` | The events of one venue |
+| `FOLLOW` primary key `(follower_id, followee_id)` | The followees of a viewer. Each branch of Home starts here |
+| `FOLLOW (followee_id, status)` | Follower counts, open requests, the privacy filter |
+| `DIARY_ENTRY (user_id, event_id)` | The Been entries of one person. The Home branch |
+| Primary keys that start with `user_id` | The plans, the likes and the favorites of one person. The Home branches |
+| `NOTIFICATION (recipient_id, created_at)` | The list of notifications in keyset order |
+| `NOTIFICATION (recipient_id, read_at)` | The unread count, and "read all" |
+| `RAW_INGEST (run_id)`, `(seed_id, fetched_at)` | The rows of one run. The history of one seed |
+| `REQUEST_THROTTLE (updated_at)` | The removal of old counters |
 
-Composite primary/unique keys also provide useful access paths for relationship existence checks. Query-count and cursor behavior for the most complex read—the five-branch Home feed—are covered separately in [APPLICATION_DATA.md](APPLICATION_DATA.md#home-is-a-projection-not-a-ledger).
+## Stored and derived data
 
-## Source of truth
-
-The diagrams above cover the 25 Onda-owned tables that are currently shipped. Django framework tables are present in the physical database but omitted because they do not define Onda's domain model. Unshipped design ideas are not included.
-
-| Schema area | Models | Migration history |
+| Subject | Stored | Derived on each read |
 |---|---|---|
-| Ingestion evidence | `backend/ingestion/models.py` | `backend/ingestion/migrations/` |
-| Canonical and identity | `backend/catalog/models.py` | `backend/catalog/migrations/` |
-| Accounts and social | `backend/users/models.py` | `backend/users/migrations/` |
+| Event status | `EVENT.status` and the miss counter | If a query shows the event |
+| A plan | The pair and its time | If the plan is active |
+| A follow | The pair, the status and the times | If a viewer can see the content |
+| The rating of an event | Each rating | The count, the average and the distribution |
+| Home | The source rows only | The feed and its cursor |
+| Notifications | One row for each recipient | Nothing. Each row has its own read state |
+| Recent searches | Nothing on the server. The browser keeps them | |
 
-Run `.venv/bin/python backend/manage.py makemigrations --check --dry-run` to detect model/migration drift and `.venv/bin/python backend/manage.py test` to exercise schema and behavioral constraints against MySQL.
+A value that Onda can derive is not stored. Thus no copy can be old.
+
+## How to do a check of the schema
+
+1. Make sure that the models and the migrations agree.
+
+   ```bash
+   python backend/manage.py makemigrations --check --dry-run
+   ```
+
+2. Run the tests. They use a MySQL database.
+
+   ```bash
+   python backend/manage.py test
+   ```
+
+3. Read the delete action of each foreign key.
+
+   ```sql
+   SELECT TABLE_NAME, REFERENCED_TABLE_NAME, DELETE_RULE
+   FROM information_schema.REFERENTIAL_CONSTRAINTS
+   WHERE CONSTRAINT_SCHEMA = DATABASE();
+   ```
+
+## Source files
+
+| Layer | Models | Migrations |
+|---|---|---|
+| Evidence | [`backend/ingestion/models.py`](../backend/ingestion/models.py) | [`backend/ingestion/migrations/`](../backend/ingestion/migrations/) |
+| Catalog | [`backend/catalog/models.py`](../backend/catalog/models.py) | [`backend/catalog/migrations/`](../backend/catalog/migrations/) |
+| Social data | [`backend/users/models.py`](../backend/users/models.py) | [`backend/users/migrations/`](../backend/users/migrations/) |

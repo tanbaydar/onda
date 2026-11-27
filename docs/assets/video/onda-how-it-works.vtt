@@ -1,0 +1,146 @@
+WEBVTT
+
+00:00:00.500 --> 00:00:02.136
+Maya gives last night's show
+
+00:00:02.176 --> 00:00:03.812
+four and a half stars.
+
+00:00:03.852 --> 00:00:04.803
+One tap.
+
+00:00:04.843 --> 00:00:07.736
+To keep that tap true, Onda needs a contract,
+
+00:00:07.776 --> 00:00:11.005
+a lock, and a database with three layers.
+
+00:00:11.251 --> 00:00:13.345
+The tap becomes a PUT request.
+
+00:00:13.385 --> 00:00:15.783
+It names a state, not an action.
+
+00:00:15.823 --> 00:00:18.754
+Send it once: 201, created.
+
+00:00:18.794 --> 00:00:22.107
+Send it again: 200. Still one row.
+
+00:00:22.147 --> 00:00:24.469
+And every failure has one meaning.
+
+00:00:24.509 --> 00:00:27.059
+400: your request is wrong.
+
+00:00:27.099 --> 00:00:29.269
+409: your request is right,
+
+00:00:29.309 --> 00:00:31.509
+but the state is not ready.
+
+00:00:31.709 --> 00:00:34.869
+Inside, the code reads, then writes.
+
+00:00:34.909 --> 00:00:36.011
+At READ COMMITTED,
+
+00:00:36.051 --> 00:00:38.488
+two requests can both read "no entry",
+
+00:00:38.528 --> 00:00:40.164
+and both try to insert.
+
+00:00:40.204 --> 00:00:43.148
+So the service locks one row first, the user's,
+
+00:00:43.188 --> 00:00:45.002
+and the second request waits.
+
+00:00:45.042 --> 00:00:46.830
+If any code forgets the lock,
+
+00:00:46.870 --> 00:00:50.061
+a unique key refuses the second row.
+
+00:00:50.261 --> 00:00:53.421
+But where did event 847 come from?
+
+00:00:53.461 --> 00:00:55.326
+Every night, Onda reads listings
+
+00:00:55.366 --> 00:00:57.688
+from a site it does not control.
+
+00:00:57.728 --> 00:01:00.050
+So the database has three layers.
+
+00:01:00.090 --> 00:01:02.107
+Evidence: every response,
+
+00:01:02.147 --> 00:01:04.316
+stored before anything reads it.
+
+00:01:04.356 --> 00:01:07.211
+Catalog: only what passes validation.
+
+00:01:07.251 --> 00:01:09.954
+One listing, one transaction.
+
+00:01:09.994 --> 00:01:11.859
+Social: what people did.
+
+00:01:11.899 --> 00:01:13.129
+Keys point one way,
+
+00:01:13.169 --> 00:01:15.745
+and the source's ID stops at a map.
+
+00:01:15.785 --> 00:01:17.116
+If a listing vanishes,
+
+00:01:17.156 --> 00:01:20.011
+only a complete snapshot counts as a miss.
+
+00:01:20.051 --> 00:01:21.992
+Three misses hide the event.
+
+00:01:22.032 --> 00:01:24.004
+Nothing deletes it.
+
+00:01:24.204 --> 00:01:26.069
+Now Leo opens Home.
+
+00:01:26.109 --> 00:01:27.821
+There is no feed table.
+
+00:01:27.861 --> 00:01:30.030
+One query, five branches.
+
+00:01:30.070 --> 00:01:32.545
+Each branch filters privacy first.
+
+00:01:32.585 --> 00:01:35.897
+Then one sort, by time, type, and key:
+
+00:01:35.937 --> 00:01:37.345
+a total order.
+
+00:01:37.385 --> 00:01:39.250
+The cursor is the last key,
+
+00:01:39.290 --> 00:01:41.611
+so new rows never shift his page.
+
+00:01:41.651 --> 00:01:44.278
+Maya's rating is there on his next request.
+
+00:01:44.318 --> 00:01:46.594
+No copy to go stale.
+
+00:01:46.794 --> 00:01:51.402
+One tap. One row. Three layers. No copies.
+
+00:01:51.442 --> 00:01:53.490
+This is Onda.
+

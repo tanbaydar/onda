@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 132" width="360" height="132" role="img" aria-labelledby="t d">
+<title id="t">Onda</title>
+<desc id="d">The Onda wordmark.</desc>
+<style>:root{--panel:#FFFFFF;--ink:#1B1B1B;--ink2:#4F4F4F;--muted:#6E6E6E;--line:#9A9A9A;
+--hair:#E3E3E3;--soft:#F5F5F3;--accent:#1D6D48;--accent-soft:#E6F1EB;--warn:#8A3A30;--warn-soft:#F7EAE8}
+@media (prefers-color-scheme: dark){:root{--panel:#0D1117;--ink:#E6EDF3;--ink2:#C2CAD3;
+--muted:#8B949E;--line:#6E7681;--hair:#30363D;--soft:#161B22;--accent:#56C596;
+--accent-soft:#10261D;--warn:#F08B80;--warn-soft:#2B1715}}
+.panel{fill:var(--panel)}.ink{fill:var(--ink)}.ink2{fill:var(--ink2)}.muted{fill:var(--muted)}
+.accent{fill:var(--accent)}.warn{fill:var(--warn)}.soft{fill:var(--soft)}.hair{fill:var(--hair)}
+.accent-soft{fill:var(--accent-soft)}.warn-soft{fill:var(--warn-soft)}.line{fill:var(--line)}
+.none{fill:none}
+.s-ink{stroke:var(--ink)}.s-ink2{stroke:var(--ink2)}.s-muted{stroke:var(--muted)}
+.s-line{stroke:var(--line)}.s-hair{stroke:var(--hair)}.s-accent{stroke:var(--accent)}
+.s-warn{stroke:var(--warn)}.s-none{stroke:none}</style>
+<defs><path id="display-70" d="M422 -5Q340 -5 319 44Q269 -8 166 -8Q111 -8 76 18Q40 43 40 93Q40 160 92 196Q144 233 274 248L314 253V302Q314 389 301 419Q288 449 250 449Q211 449 200 438Q189 428 192 414Q195 401 202 379Q209 357 209 344Q209 313 188 292Q166 270 136 270Q105 270 83 292Q61 313 61 344Q61 395 114 432Q166 468 270 468Q375 468 420 427Q464 386 464 282V102Q464 49 477 36Q490 22 525 30V20Q515 10 487 2Q459 -5 422 -5ZM314 64V234L278 229Q232 223 204 194Q175 165 179 113Q184 75 207 54Q230 34 260 34Q291 34 314 64Z"/><path id="display-73" d="M229 -12Q148 -12 89 52Q30 116 30 233Q30 350 88 416Q146 482 229 482Q270 482 306 465Q342 448 358 414V650H308V670H508V20H558V0H358V46Q331 -12 229 -12ZM358 219V384Q331 438 288 438Q244 438 213 388Q182 338 182 230Q182 121 214 71Q246 21 291 28Q316 32 329 44Q358 72 358 219Z"/><path id="display-83" d="M565 20H615V0H365V20H415V300Q415 371 394 401Q373 431 331 431Q274 431 240 371V20H290V0H40V20H90V440H40V460H240V408Q259 434 300 452Q340 471 387 471Q565 471 565 278Z"/><path id="display-84" d="M205 60Q227 10 281 10Q335 10 358 61Q381 112 381 230Q381 347 358 398Q335 450 281 450Q227 450 205 398Q183 347 183 229Q183 111 205 60ZM30 228Q30 289 52 337Q75 385 112 413Q150 441 193 456Q236 470 281 470Q326 470 370 456Q413 441 450 413Q488 385 511 337Q534 289 534 229Q534 169 511 122Q488 75 450 47Q374 -10 279 -10Q184 -10 107 52Q30 114 30 228Z"/></defs>
+<rect width="360" height="132" class="panel"/>
+<g class="ink"><use href="#display-84" transform="translate(58.22 96) scale(104e-3 -104e-3)"/><use href="#display-83" transform="translate(116.87 96) scale(104e-3 -104e-3)"/><use href="#display-73" transform="translate(183.95 96) scale(104e-3 -104e-3)"/><use href="#display-70" transform="translate(245.1 96) scale(104e-3 -104e-3)"/></g>
+</svg>
