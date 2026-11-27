@@ -67,10 +67,10 @@ class SocialApiContractTests(TestCase):
         client.get("/api/auth/session/")
         return client
 
-    def request(self, client, method, path, payload=None):
+    def request(self, client, method, path, payload=None, *, now=NOW):
         token = client.cookies.get("csrftoken")
         headers = {"HTTP_X_CSRFTOKEN": token.value} if token else {}
-        with patch("users.services.timezone_now", return_value=NOW):
+        with patch("users.services.timezone_now", return_value=now):
             return getattr(client, method)(
                 path,
                 data=json.dumps(payload or {}),
@@ -393,6 +393,106 @@ class SocialApiContractTests(TestCase):
         payload = self.auth_client(self.public_user).get("/api/me/notifications/").json()["results"][0]
         self.assertEqual(payload["review"]["event_id"], self.event.id)
         self.assertEqual(payload["review"]["event_title"], self.event.title)
+
+    def test_like_unlike_like_again_keeps_one_notification(self):
+        review = self.review(self.public_user, "Liked two times")
+        client = self.auth_client(self.viewer)
+        path = f"/api/reviews/{review.id}/like/"
+        Notification = apps.get_model("users", "Notification")
+
+        first = self.request(client, "post", path)
+        original = Notification.objects.get(recipient=self.public_user)
+        unliked = self.request(client, "delete", path)
+        again = self.request(client, "post", path, now=NOW + timedelta(hours=1))
+
+        self.assertEqual(
+            [first.status_code, unliked.status_code, again.status_code],
+            [201, 204, 201],
+        )
+        self.assertEqual(again.json(), {"like_count": 1, "viewer_has_liked": True})
+        self.assertEqual(
+            list(
+                Notification.objects.filter(recipient=self.public_user).values(
+                    "id", "actor_id", "type", "review_id", "created_at"
+                )
+            ),
+            [
+                {
+                    "id": original.id,
+                    "actor_id": self.viewer.id,
+                    "type": "review_like",
+                    "review_id": review.id,
+                    "created_at": NOW,
+                }
+            ],
+        )
+
+    def test_repeated_like_does_not_reopen_a_read_notification(self):
+        review = self.review(self.public_user, "Read one time")
+        liker = self.auth_client(self.viewer)
+        author = self.auth_client(self.public_user)
+        path = f"/api/reviews/{review.id}/like/"
+
+        self.request(liker, "post", path)
+        unread = author.get("/api/me/notifications/").json()["results"]
+        self.request(author, "post", f"/api/me/notifications/{unread[0]['id']}/read/")
+        read = author.get("/api/me/notifications/").json()["results"]
+        unliked = self.request(liker, "delete", path)
+        again = self.request(liker, "post", path, now=NOW + timedelta(hours=1))
+        after = author.get("/api/me/notifications/").json()["results"]
+
+        self.assertEqual([unliked.status_code, again.status_code], [204, 201])
+        self.assertIsNone(unread[0]["read_at"])
+        self.assertIsNotNone(read[0]["read_at"])
+        self.assertEqual(after, read)
+
+    def test_repeated_like_adds_no_row_to_a_table_that_has_copies(self):
+        # Before this rule, each repeat wrote one more row. Those rows stay
+        # in the table, and the lookup must not fail on them.
+        review = self.review(self.public_user, "Copies from before")
+        Notification = apps.get_model("users", "Notification")
+        for hours in (0, 1):
+            Notification.objects.create(
+                recipient=self.public_user,
+                actor=self.viewer,
+                type="review_like",
+                review=review,
+                created_at=NOW + timedelta(hours=hours),
+            )
+
+        liked = self.request(
+            self.auth_client(self.viewer),
+            "post",
+            f"/api/reviews/{review.id}/like/",
+            now=NOW + timedelta(hours=2),
+        )
+
+        self.assertEqual(liked.status_code, 201)
+        self.assertEqual(Notification.objects.filter(review=review).count(), 2)
+
+    def test_like_notification_identity_includes_the_actor_and_the_review(self):
+        first = self.review(self.public_user, "First target")
+        second = self.review(self.public_user, "Second target", event=self.other_event)
+        for liker, review in (
+            (self.viewer, first),
+            (self.other, first),
+            (self.viewer, second),
+        ):
+            self.request(
+                self.auth_client(liker), "post", f"/api/reviews/{review.id}/like/"
+            )
+        Notification = apps.get_model("users", "Notification")
+
+        self.assertCountEqual(
+            Notification.objects.filter(
+                recipient=self.public_user, type="review_like"
+            ).values_list("actor_id", "review_id"),
+            [
+                (self.viewer.id, first.id),
+                (self.other.id, first.id),
+                (self.viewer.id, second.id),
+            ],
+        )
 
     def test_review_deletion_cascades_like_notification(self):
         review = self.review(self.public_user, "Delete notification")

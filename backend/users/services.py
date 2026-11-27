@@ -249,6 +249,17 @@ def save_will_be_there(*, user, event):
         defaults={"created_at": now},
     )
     if created:
+        # "created" is also true for a plan that the person removed and added
+        # again. A follower who has the notification for it gets no second row.
+        # The row of the plan is the mutex: a remove waits for the commit of
+        # the first mark, so this read sees the rows that the first mark wrote.
+        already_notified = set(
+            Notification.objects.filter(
+                actor=user,
+                type=NotificationType.WILL_BE_THERE,
+                event=event,
+            ).values_list("recipient_id", flat=True)
+        )
         follower_ids = Follow.objects.filter(
             followee=user,
             status=FollowStatus.APPROVED,
@@ -263,6 +274,7 @@ def save_will_be_there(*, user, event):
                     created_at=now,
                 )
                 for follower_id in follower_ids
+                if follower_id not in already_notified
             ]
         )
     return entry, created
@@ -521,13 +533,17 @@ def like_review(*, user, review):
         ReviewLike.objects.create(user=user, review=review)
     except IntegrityError as exc:
         raise ReviewLikeConflict("Review is already liked.") from exc
-    Notification.objects.create(
-        recipient=review.entry.user,
-        actor=user,
-        type=NotificationType.REVIEW_LIKE,
-        review=review,
-        created_at=timezone_now(),
-    )
+    # A like that the person removed and added again finds the first
+    # notification, with its read state, and writes no second row. The lock
+    # on the review puts this lookup after the commit of the first like.
+    notification = {
+        "recipient_id": review.entry.user_id,
+        "actor": user,
+        "type": NotificationType.REVIEW_LIKE,
+        "review": review,
+    }
+    if not Notification.objects.filter(**notification).exists():
+        Notification.objects.create(**notification, created_at=timezone_now())
     return review.likes.count()
 
 

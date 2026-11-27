@@ -76,6 +76,11 @@ Each function is one transaction.
 | Change privacy | `change_privacy` | The user | None |
 | Count an attempt for a rate limit | `consume_rate_limit` in `users/rate_limits.py` | The counter row | `RateLimitExceeded` |
 
+`like_review` and `save_will_be_there` also write the notifications, in the same transaction.
+Each function writes a notification only for a recipient who has none from that actor for that review or event.
+Thus a like or a plan that a person removes and adds again writes no second notification.
+No key in the schema enforces this rule. The service is the only guard.
+
 ## Layer 1. Evidence
 
 ![One seed has many stored responses. One run has many stored responses. One stored response has many rejection records.](assets/figures/er-evidence.svg)

@@ -147,8 +147,16 @@ That was 7,920 rows in the benchmark. The cost increases with the number of foll
 ## Notifications are different
 
 A notification is a stored row for each recipient, because each recipient has a separate read state.
-A new Will Be There mark thus writes one row for each approved follower, in the same transaction.
+A new Will Be There mark thus writes one row for each approved follower who has none for that plan, in the same transaction.
+
+A stored row does not go away when the source row goes away.
+If a person removes a like or a plan, Home does not show the item on the next request, but the notification stays.
+Thus the write of a notification must be idempotent: a like or a plan that the person adds again writes no second row.
+The service looks for the first row in the transaction of the like or the plan, and it inserts only if no row is there.
+The first row keeps its read state, so the recipient does not see the same news two times.
+
 The list of notifications uses a keyset cursor on `(created_at, id)`.
+No write changes `created_at`, so a row keeps its position in the list.
 
 ## Code and tests
 

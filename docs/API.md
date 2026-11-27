@@ -231,6 +231,7 @@ X-CSRFToken: <value of the csrftoken cookie>
 
 - `GET …/reviews/` shows authors with a public profile only. It does not show the review of the viewer. `sort` is `most_liked` or `newest`.
 - `GET …/circle/` shows the ratings and the reviews of the followees of the viewer, with the average of the circle.
+- The first like of a person on a review writes one notification for the author. `DELETE …/like/` keeps that notification. A like that the person removes and adds again writes no second notification.
 
 ### Will Be There
 
@@ -241,7 +242,8 @@ X-CSRFToken: <value of the csrftoken cookie>
 | `GET` | `/api/events/{id}/will-be-there/public/` | No | `200` | `400`, `404` |
 | `GET` | `/api/events/{id}/will-be-there/circle/` | Yes | `200` | `400`, `404` |
 
-A new mark writes one notification for each approved follower.
+A new mark writes one notification for each approved follower who has none for this person and this event.
+`DELETE` keeps the notifications. Thus a mark that the person removes and adds again writes no second notification.
 
 ### Favorites
 
@@ -390,6 +392,8 @@ The rating distribution has 10 buckets, one for each half step. This example sho
 | `review` | `id`, `event_id`, `event_title`, or `null`. Only for `review_like` |
 | `event` | `id`, `title`, or `null`. Only for `will_be_there` |
 | `created_at`, `read_at` | Times. `read_at` is `null` before the read |
+
+A like or a mark that the actor removes and adds again keeps the first notification, with its `created_at` and its `read_at`.
 
 ## Security rules of the API
 
