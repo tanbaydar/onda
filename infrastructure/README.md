@@ -31,16 +31,7 @@ Each image and each CI action uses a fixed digest.
 
 ## The delivery pipeline
 
-```mermaid
-flowchart LR
-    Push[Push to main] --> Checks{5 checks}
-    Checks -->|one fails| Stop[No deploy]
-    Checks -->|all pass| Job[Deploy job on the production runner]
-    Job -->|SSH, one permitted command| Script[deploy.sh with the commit]
-    Script --> Backup[Backup] --> Migrate[Build and migrate] --> Health{Health check}
-    Health -->|pass| Done[New version is live]
-    Health -->|fail| Failed[Job fails. The backup stays]
-```
+![A push to main starts 5 checks. If one check fails, there is no deploy. If all pass, a job on the production runner starts the deploy script through SSH. The script makes a backup, builds, migrates and does a health check. If the health check fails, the job fails and the backup stays.](../docs/assets/figures/delivery-pipeline.svg)
 
 | Check | What it does |
 |---|---|

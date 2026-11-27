@@ -369,6 +369,48 @@ def deployment() -> Figure:
     return fig
 
 
+def delivery_pipeline() -> Figure:
+    fig = Figure(
+        960, 448, "Delivery pipeline",
+        "A push to main starts 5 checks. If one check fails, there is no deploy. If all checks pass, "
+        "a job on the production runner starts the deploy script through SSH. The script makes a "
+        "backup, builds the images, applies the migrations and does a health check. If the health "
+        "check fails, the job fails and the backup stays.",
+    )
+    fig.overline(32, 34, "From a push to the deploy script")
+    y, h = 58, 68
+    mid = y + h / 2
+    fig.node(32, y, 150, h, "Push to main", ["one commit"], kind="external")
+    fig.node(222, y, 190, h, "5 checks", ["tests, audits, image scans"])
+    fig.node(482, y, 220, h, "Deploy job", ["on the runner onda-production"])
+    fig.node(742, y, 186, h, "deploy.sh", ["through SSH,", "one permitted command"], kind="trusted")
+    fig.arrow([(182, mid), (222, mid)])
+    fig.arrow([(412, mid), (482, mid)], stroke="s-accent", fill="accent", sw=1.5)
+    fig.text(447, mid - 10, "all pass", size=12.5, cls="accent", font="medium", anchor="middle")
+    fig.arrow([(702, mid), (742, mid)])
+    fig.arrow([(317, y + h), (317, 166)], stroke="s-warn", fill="warn", dash="4 3")
+    fig.text(329, 151, "one fails", size=12.5, cls="warn", font="medium")
+    fig.node(222, 166, 190, 44, "No deploy", kind="reject", size=14)
+
+    top = 246
+    fig.lane(32, top, 896, 178, "What deploy.sh does with that commit")
+    fig.arrow([(835, y + h), (835, top)])
+    row, rh = top + 42, 64
+    center = row + rh / 2
+    fig.node(56, row, 170, rh, "Backup", ["dump, compress, test"], size=14, sub_size=12)
+    fig.node(266, row, 210, rh, "Build and migrate", ["images, settings check, migrations"], size=14, sub_size=12)
+    fig.node(516, row, 180, rh, "Health check", ["a maximum of 12 attempts"], size=14, sub_size=12)
+    fig.node(752, row, 152, rh, "New version is live", kind="trusted", size=14)
+    fig.arrow([(226, center), (266, center)])
+    fig.arrow([(476, center), (516, center)])
+    fig.arrow([(696, center), (752, center)], stroke="s-accent", fill="accent", sw=1.5)
+    fig.text(724, center - 10, "pass", size=12.5, cls="accent", font="medium", anchor="middle")
+    fig.arrow([(606, row + rh), (606, row + rh + 26)], stroke="s-warn", fill="warn", dash="4 3")
+    fig.text(618, row + rh + 17, "fail", size=12.5, cls="warn", font="medium")
+    fig.node(486, row + rh + 26, 240, 36, "The job fails. The backup stays.", kind="reject", size=13)
+    return fig
+
+
 def journey() -> Figure:
     fig = Figure(
         960, 176, "The journey of one night",
@@ -501,6 +543,7 @@ FIGURES = {
     "keyset": keyset,
     "data-layers": data_layers,
     "deployment": deployment,
+    "delivery-pipeline": delivery_pipeline,
     "journey": journey,
     "er-evidence": er_evidence,
     "er-catalog": er_catalog,
